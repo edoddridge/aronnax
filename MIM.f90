@@ -222,10 +222,12 @@ program MIM
 
 
 ! Initialise the average fields
-    hav = 0.0
-    uav = 0.0
-    vav = 0.0
-    etaav = 0.0
+    if (avwrite .ne. 0) then
+        hav = 0.0
+        uav = 0.0
+        vav = 0.0
+        etaav = 0.0
+    end if
 
     if (wetMaskFile.eq.'') then
     ! 1 means ocean, 0 means land
@@ -286,10 +288,10 @@ program MIM
 ! if peridodic boundary conditions are ever implemented, then pi -> 2*pi in this calculation 
 
 ! Model currently only works with rigid lid (freesurfFac = 0)
-    if (freesurfFac .not..eq. 0) then
-        freesurfFac = 0d0
-        print *, 'free surface not implemented yet. freesurfFac set to 0.'
-    end if
+    ! if (freesurfFac .ne. 0) then
+    !     freesurfFac = 0d0
+    !     print *, 'free surface not implemented yet. freesurfFac set to 0.'
+    ! end if
     
 ! check that the supplied free surface anomaly and layer thicknesses are consistent
     h_norming = (freesurfFac*eta+depth)/sum(h,3)
@@ -298,7 +300,7 @@ program MIM
     end do
 
     if (maxval(abs(h_norming - 1d0)).gt. 1e-2) then
-        print *, 'inconsistency between h and eta (in %).', maxval(abs(h_norming - 1d0))*100d0
+        print *, 'inconsistency between h and eta (in %):', maxval(abs(h_norming - 1d0))*100d0
     end if
 
 
@@ -516,15 +518,15 @@ program MIM
     enddo
 
  ! calculate the barotropic velocities
-    call calc_baro_u(ub,unew,hnew,nx,ny,layers)
-    call calc_baro_v(vb,vnew,hnew,nx,ny,layers)
+    call calc_baro_u(ub,unew,hnew,eta,freesurfFac,nx,ny,layers)
+    call calc_baro_v(vb,vnew,hnew,eta,freesurfFac,nx,ny,layers)
 
 ! calculate divergence of ub and vb, and solve for the pressure field that removes it
     call calc_eta_star(ub,vb,eta,etastar,freesurfFac,nx,ny,dx,dy,dt)
 !print *, maxval(abs(etastar))
 
-    call SOR_solver(a,etanew,etastar,g_vec(1),freesurfFac,nx,ny, &
-        dt,rjac,eps,maxits)
+    call SOR_solver(a,etanew,etastar,freesurfFac,nx,ny, &
+        dt,rjac,eps,maxits,n)
 !print *, maxval(abs(etanew))
 
 ! now update the velocities using the barotropic tendency due to the pressure gradient
@@ -592,10 +594,12 @@ program MIM
     end do
 
 !    Accumulate average fields
-    hav = hav + hnew
-    uav = uav + unew
-    vav = vav + vnew
-    etaav = eta + etanew
+    if (avwrite .ne. 0) then
+        hav = hav + hnew
+        uav = uav + unew
+        vav = vav + vnew
+        etaav = eta + etanew
+    end if
 
 !     shuffle arrays: old -> very old,  present -> old, new -> present
 !    height and velocity fields
@@ -937,21 +941,27 @@ program MIM
     end subroutine
 !--------------------------------------------------------------------------------------
 !> Calculate the barotropic u velocity
-    subroutine calc_baro_u(ub,u,h,nx,ny,layers)
+    subroutine calc_baro_u(ub,u,h,eta,freesurfFac,nx,ny,layers)
 
     integer nx,ny,layers
     integer i,j,k
     double precision h(0:nx,0:ny,layers)
+    double precision h_temp(0:nx,0:ny,layers)
+    double precision eta(0:nx,0:ny)
+    double precision freesurfFac
     double precision u(nx,0:ny,layers),ub(nx,0:ny)
     double precision proto_ub
 
     ub = 0d0
+
+    ! add free surface elevation to the upper layer
+    h_temp(:,:,1) = h(:,:,1) + eta*freesurfFac
     
     do i = 2,nx-1
         do j = 1,ny-1
             proto_ub = 0d0
             do k = 1,layers
-                proto_ub = proto_ub + u(i,j,k)*(h(i,j,k)+h(i-1,j,k))/2d0
+                proto_ub = proto_ub + u(i,j,k)*(h_temp(i,j,k)+h_temp(i-1,j,k))/2d0
             end do
             ub(i,j) = proto_ub
         end do
@@ -960,25 +970,31 @@ program MIM
     return
     end subroutine
 
-
+kjlkj
 ! --------------------------------------------------------------
 
 !> Calculate the barotropic v velocity
-    subroutine calc_baro_v(vb,v,h,nx,ny,layers)
+    subroutine calc_baro_v(vb,v,h,eta,freesurfFac,nx,ny,layers)
 
     integer nx,ny,layers
     integer i,j,k
     double precision h(0:nx,0:ny,layers)
+    double precision h_temp(0:nx,0:ny,layers)
+    double precision eta(0:nx,0:ny)
+    double precision freesurfFac
     double precision v(0:nx,ny,layers),vb(0:nx,ny)
     double precision proto_vb
 
     vb = 0d0
+
+    ! add free surface elevation to the upper layer
+    h_temp(:,:,1) = h(:,:,1) + eta*freesurfFac
     
     do i = 1,nx-1
         do j = 2,ny-1
             proto_vb = 0d0
             do k = 1,layers
-                proto_vb = proto_vb + v(i,j,k)*(h(i,j,k)+h(i,j-1,k))/2d0
+                proto_vb = proto_vb + v(i,j,k)*(h_temp(i,j,k)+h_temp(i,j-1,k))/2d0
             end do
             vb(i,j) = proto_vb
         end do
@@ -1017,11 +1033,11 @@ program MIM
 
 !> Use successive over relaxation algorithm to solve the backwards Euler timestepping for the free surface anomaly, or for the surface pressure required to keep the barotropic flow nondivergent.
 
-subroutine SOR_solver(a,etanew,etastar,g, freesurfFac,nx,ny,dt,rjac,eps,maxits)
+subroutine SOR_solver(a,etanew,etastar,freesurfFac,nx,ny,dt,rjac,eps,maxits,n)
     double precision a(5,nx-1,ny-1)
     double precision etanew(0:nx,0:ny), etastar(0:nx,0:ny)
-    double precision g, freesurfFac
-    integer nx,ny, i,j, maxits
+    double precision freesurfFac
+    integer nx,ny, i,j, maxits, n
     double precision dt
     double precision rjac, eps
     double precision rhs(nx-1,ny-1), res(nx-1,ny-1)
@@ -1079,7 +1095,7 @@ subroutine SOR_solver(a,etanew,etastar,g, freesurfFac,nx,ny,dt,rjac,eps,maxits)
         endif
     end do
 
-    print *,'warning: maximum iterations exceeded.'
+    print *,'warning: maximum iterations exceeded at time step ', n
 
     return
     end subroutine
