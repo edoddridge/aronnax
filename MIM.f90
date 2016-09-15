@@ -37,7 +37,7 @@ program MIM
 !> number of x and y grid points
     integer nx,ny !< number of x and y grid points
     integer layers !< number of active layers in the model
-    parameter(nx=500,ny=500)
+    parameter(nx=300,ny=300)
 
 !   number of active layers
     parameter(layers = 2)
@@ -525,6 +525,9 @@ program MIM
     call calc_eta_star(ub,vb,eta,etastar,freesurfFac,nx,ny,dx,dy,dt)
 !print *, maxval(abs(etastar))
 
+    ! prevent barotropic signals from bouncing around outside the wet region of the model.
+    etastar = etastar*wetmask
+
     call SOR_solver(a,etanew,etastar,freesurfFac,nx,ny, &
         dt,rjac,eps,maxits,n)
 !print *, maxval(abs(etanew))
@@ -970,7 +973,7 @@ program MIM
     return
     end subroutine
 
-kjlkj
+
 ! --------------------------------------------------------------
 
 !> Calculate the barotropic v velocity
@@ -1041,9 +1044,9 @@ subroutine SOR_solver(a,etanew,etastar,freesurfFac,nx,ny,dt,rjac,eps,maxits,n)
     double precision dt
     double precision rjac, eps
     double precision rhs(nx-1,ny-1), res(nx-1,ny-1)
-    double precision norm, norm0
+    double precision norm, norm0, norm_old
     double precision relax_param
-
+    character(30) Format
 
     rhs = -etastar(1:nx-1,1:ny-1)/dt**2
     ! first guess for etanew
@@ -1068,8 +1071,11 @@ subroutine SOR_solver(a,etanew,etastar,freesurfFac,nx,ny,dt,rjac,eps,maxits,n)
         end do
     end do
 
+    !norm_old = norm0
+
 
     do nit = 1,maxits
+        !norm_old = norm
         norm=0.d0
         do i=1,nx-1
             do j=1,ny-1
@@ -1091,7 +1097,13 @@ subroutine SOR_solver(a,etanew,etastar,freesurfFac,nx,ny,dt,rjac,eps,maxits,n)
         endif
       
         if (nit.gt.1.and.norm.lt.eps*norm0) then
+            ! print 10014,  eps,  nit
+            ! 10014   format('Res less than eps of original. eps, iteration: ', F5.4, I7)
             return
+        ! elseif (nit.gt.1.and.abs(norm - norm_old).lt.norm_old*eps) then
+        !     print *, 'change in residual less than eps of previous residual. iteration:', eps, nit
+        !     return
+        ! This was not a good way of exiting the solver - it would occasionally leave after 2 or 3 iterations.
         endif
     end do
 
