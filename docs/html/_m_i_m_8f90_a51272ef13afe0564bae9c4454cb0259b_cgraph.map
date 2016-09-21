@@ -1,0 +1,18 @@
+<map id="mim" name="mim">
+<area shape="rect" id="node2" href="$_m_i_m_8f90.html#a69f80a28626705c84e515c006b8b0d32" title="read_input_fileu" alt="" coords="119,5,236,32"/>
+<area shape="rect" id="node3" href="$_m_i_m_8f90.html#ac2fef296bf303d9590eef30876cd1731" title="read_input_filev" alt="" coords="119,56,235,83"/>
+<area shape="rect" id="node4" href="$_m_i_m_8f90.html#a0770cc557e0cf165325eef39a6057bb1" title="read_input_fileh" alt="" coords="119,107,236,133"/>
+<area shape="rect" id="node5" href="$_m_i_m_8f90.html#a069ecc6b4f478d0d1ad26afe7f96fb44" title="read_input_fileh_2d" alt="" coords="108,157,247,184"/>
+<area shape="rect" id="node6" href="$_m_i_m_8f90.html#aa77eeae9c890383909340ffd790bcf24" title="Define masks for boundary conditions in u and v this finds locations where neighbouring grid boxes ar..." alt="" coords="100,208,255,235"/>
+<area shape="rect" id="node7" href="$_m_i_m_8f90.html#a9791962d8e0b678e91e49dd7df741039" title="Robustly produce a different random seed for each run. Code adapted from http://web.ph.surrey.ac.uk/fortweb/glossary/random_seed.html. " alt="" coords="142,259,213,285"/>
+<area shape="rect" id="node8" href="$_m_i_m_8f90.html#ac212f0f32a902306e04d30b073b9fc27" title="Evaluate the Bornoulli Potential for each grid box. B is evaluated at the tracer point, centre of the grid, for each grid box. " alt="" coords="134,309,221,336"/>
+<area shape="rect" id="node9" href="$_m_i_m_8f90.html#a3caa5708ec8224e253bd5f90d5b21160" title="Evaluate relative vorticity at lower left grid boundary (du/dy and dv/dx are at lower left corner as ..." alt="" coords="125,360,230,387"/>
+<area shape="rect" id="node10" href="$_m_i_m_8f90.html#abecbbd4002b33bbbf16d7af415e98889" title="Calculate the tendency of layer thickness for each of the active layers dh/dt is in the centre of eac..." alt="" coords="125,411,230,437"/>
+<area shape="rect" id="node11" href="$_m_i_m_8f90.html#a71f5a191ec3c53a8d01ad9712adcd957" title="Calculate the tendency of zonal velocity for each of the active layers. " alt="" coords="125,461,230,488"/>
+<area shape="rect" id="node12" href="$_m_i_m_8f90.html#ad55add598ade82054b08fa45eb49b629" title="Calculate the tendency of meridional velocity for each of the active layers. " alt="" coords="125,512,230,539"/>
+<area shape="rect" id="node13" href="$_m_i_m_8f90.html#a1e99ac464f4bb4fe7e5b1f2d8b8e8a65" title="Calculate the barotropic u velocity. " alt="" coords="130,563,225,589"/>
+<area shape="rect" id="node14" href="$_m_i_m_8f90.html#ab742f0b7fc9a5f072f266a7d4dbbedae" title="Calculate the barotropic v velocity. " alt="" coords="131,613,224,640"/>
+<area shape="rect" id="node15" href="$_m_i_m_8f90.html#a87137a53e806fdd7146603a583d777bc" title="calculate the free surface anomaly using the velocities " alt="" coords="127,664,228,691"/>
+<area shape="rect" id="node16" href="$_m_i_m_8f90.html#af97291f1a469132b784b68b8d19ba10e" title="Use successive over relaxation algorithm to solve the backwards Euler timestepping for the free surfa..." alt="" coords="135,715,219,741"/>
+<area shape="rect" id="node17" href="$_m_i_m_8f90.html#a094a647c581e90906c89bdf9dc3fc153" title="Check to see if there are any NaNs in the data field and stop the calculation if any are found..." alt="" coords="128,765,227,792"/>
+</map>
