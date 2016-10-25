@@ -724,9 +724,6 @@ program MIM
 !> Evaluate the Bornoulli Potential for each grid box.
 !! B is evaluated at the tracer point, centre of the grid, for each grid box.
 !!
-!! \f[
-!!    B = \frac{u \cdot u}{2} + g_{r}h
-!!  \f]
 !! 
 !!!
     subroutine evaluate_b(b,h,u,v,nx,ny,layers,g_vec)
