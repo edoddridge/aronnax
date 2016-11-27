@@ -1,4 +1,7 @@
 ! Parameter file. Change the values, but not the names.
+! 
+! Each namelist ends with a /
+! This is important and should not be deleted.
 !
 ! au is viscosity
 ! ah is thickness diffusivity
@@ -33,6 +36,7 @@
  hmean = 400.,1600.,
  depthFile = '',
  H0 = 2000.,
+ RedGrav = .False.,
  /
  &SPONGE
  spongeHTimeScaleFile = '',

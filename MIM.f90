@@ -104,6 +104,7 @@ program MIM
 
 !   model
     double precision hmean(layers)
+    logical :: RedGrav ! logical switch for using n + 1/2 layer physics, or using n layer physics
 
 !   loop variables
     integer i,j,k,n
@@ -144,10 +145,13 @@ program MIM
     character(30) initUfile,initVfile,initHfile,initEtaFile
     character(30) zonalWindFile,meridionalWindFile
 
+!   Set default values here
+!   Possibly wait until the model is split into multiple files, then hide the long unsightly code there.
+
     NAMELIST /NUMERICS/ au,ah,ar,dt,slip,nTimeSteps,dumpFreq, & 
                         avFreq,hmin, maxits, freesurfFac, eps
 
-    NAMELIST /MODEL/ hmean, depthFile, H0
+    NAMELIST /MODEL/ hmean, depthFile, H0, RedGrav
 
     NAMELIST /SPONGE/ spongeHTimeScaleFile,spongeUTimeScaleFile,spongeVTimeScaleFile, &
     spongeHfile,spongeUfile,spongeVfile
@@ -201,9 +205,11 @@ program MIM
     call read_input_fileU(initUfile,u,0.d0,nx,ny,layers)
     call read_input_fileV(initVfile,v,0.d0,nx,ny,layers)
     call read_input_fileH(initHfile,h,hmean,nx,ny,layers)
-    call read_input_fileH_2D(depthFile,depth,H0,nx,ny)
-    call read_input_fileH_2D(initEtaFile,eta,0.d0,nx,ny)
 
+    if (.not. RedGrav) then
+        call read_input_fileH_2D(depthFile,depth,H0,nx,ny)
+        call read_input_fileH_2D(initEtaFile,eta,0.d0,nx,ny)
+    endif
     ! Should probably check that bathymetry file and layer thicknesses are consistent with each other.
 
     call read_input_fileU(fUfile,fu,0.d0,nx,ny,1)
@@ -226,9 +232,12 @@ program MIM
         hav = 0.0
         uav = 0.0
         vav = 0.0
-        etaav = 0.0
-    end if
+        if (.not. RedGrav) then
+            etaav = 0.0
+        endif
+    endif
 
+!   For now the model can't do periodic boundaries - would be a good addition.
     if (wetMaskFile.eq.'') then
     ! 1 means ocean, 0 means land
         wetmask = 1d0 
@@ -258,51 +267,52 @@ program MIM
         n_stoch_wind = int(wind_period/dt)
     endif
 
-!   initialise arrays for pressure solver 
-! a =  derivatives of the depth field
-    do j=1,ny-1
+    if (.not. RedGrav) then
+        !   initialise arrays for pressure solver 
+        ! a =  derivatives of the depth field
+        do j=1,ny-1
+            do i=1,nx-1
+                a(1,i,j)=g_vec(1)*0.5*(depth(i+1,j)+depth(i,j))/dx**2
+                a(2,i,j)=g_vec(1)*0.5*(depth(i,j+1)+depth(i,j))/dy**2
+                a(3,i,j)=g_vec(1)*0.5*(depth(i,j)+depth(i-1,j))/dx**2
+                a(4,i,j)=g_vec(1)*0.5*(depth(i,j)+depth(i,j-1))/dy**2
+            end do 
+        end do
+        do j=1,ny-1
+            a(1,nx-1,j)=0.0
+            a(3,1,j)=0.0
+        end do
         do i=1,nx-1
-            a(1,i,j)=g_vec(1)*0.5*(depth(i+1,j)+depth(i,j))/dx**2
-            a(2,i,j)=g_vec(1)*0.5*(depth(i,j+1)+depth(i,j))/dy**2
-            a(3,i,j)=g_vec(1)*0.5*(depth(i,j)+depth(i-1,j))/dx**2
-            a(4,i,j)=g_vec(1)*0.5*(depth(i,j)+depth(i,j-1))/dy**2
-        end do 
-    end do
-    do j=1,ny-1
-        a(1,nx-1,j)=0.0
-        a(3,1,j)=0.0
-    end do
-    do i=1,nx-1
-        a(2,i,ny-1)=0.0
-        a(4,i,1)=0.0
-    end do
-    do j=1,ny-1
-        do i=1,nx-1
-            a(5,i,j)=-a(1,i,j)-a(2,i,j)-a(3,i,j)-a(4,i,j)
-        end do 
-    end do
+            a(2,i,ny-1)=0.0
+            a(4,i,1)=0.0
+        end do
+        do j=1,ny-1
+            do i=1,nx-1
+                a(5,i,j)=-a(1,i,j)-a(2,i,j)-a(3,i,j)-a(4,i,j)
+            end do 
+        end do
 
-! calculate the spectral radius of the grid for use by the successive over relaxation scheme
-    rjac=(cos(pi/real(nx))*dy**2+cos(pi/real(ny))*dx**2) & 
-            /(dx**2+dy**2)
-! if peridodic boundary conditions are ever implemented, then pi -> 2*pi in this calculation 
+        ! calculate the spectral radius of the grid for use by the successive over relaxation scheme
+        rjac=(cos(pi/real(nx))*dy**2+cos(pi/real(ny))*dx**2) & 
+                /(dx**2+dy**2)
+        ! if peridodic boundary conditions are ever implemented, then pi -> 2*pi in this calculation 
 
-! Model currently only works with rigid lid (freesurfFac = 0)
-    ! if (freesurfFac .ne. 0) then
-    !     freesurfFac = 0d0
-    !     print *, 'free surface not implemented yet. freesurfFac set to 0.'
-    ! end if
-    
-! check that the supplied free surface anomaly and layer thicknesses are consistent
-    h_norming = (freesurfFac*eta+depth)/sum(h,3)
-    do k = 1,layers
-        h(:,:,k) = h(:,:,k)*h_norming
-    end do
+        ! Model currently only works with rigid lid (freesurfFac = 0)
+        if (freesurfFac .ne. 0) then
+            freesurfFac = 0d0
+            print *, 'free surface not working yet. freesurfFac set to 0.'
+        end if
+        
+        ! check that the supplied free surface anomaly and layer thicknesses are consistent
+        h_norming = (freesurfFac*eta+depth)/sum(h,3)
+        do k = 1,layers
+            h(:,:,k) = h(:,:,k)*h_norming
+        end do
 
-    if (maxval(abs(h_norming - 1d0)).gt. 1e-2) then
-        print *, 'inconsistency between h and eta (in %):', maxval(abs(h_norming - 1d0))*100d0
-    end if
-
+        if (maxval(abs(h_norming - 1d0)).gt. 1e-2) then
+            print *, 'inconsistency between h and eta (in %):', maxval(abs(h_norming - 1d0))*100d0
+        end if
+    endif
 
 !    Do two initial time steps with Runge-Kutta second-order
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -317,7 +327,11 @@ program MIM
 
 
 !    calculate baroclinic Bernoulli potential
-    call evaluate_b(b,h,u,v,nx,ny,layers,g_vec)
+    if (RedGrav) then
+        call evaluate_b_RedGrav(b,h,u,v,nx,ny,layers,g_vec)
+    else
+        call evaluate_b_iso(b,h,u,v,nx,ny,layers,g_vec)
+    endif
 
 !    calculate relative vorticity
     call evaluate_zeta(zeta,u,v,nx,ny,layers,dx,dy)
@@ -340,7 +354,11 @@ program MIM
 
 
 !    calculate Bernoulli potential
-    call evaluate_b(b,hhalf,uhalf,vhalf,nx,ny,layers,g_vec)
+    if (RedGrav) then
+        call evaluate_b_RedGrav(b,hhalf,uhalf,vhalf,nx,ny,layers,g_vec)
+    else
+        call evaluate_b_iso(b,hhalf,uhalf,vhalf,nx,ny,layers,g_vec)
+    endif
 
 !    calculate relative vorticity
     call evaluate_zeta(zeta,uhalf,vhalf,nx,ny,layers,dx,dy)
@@ -380,7 +398,11 @@ program MIM
 !--------------------------- negative 1 time step -----------------------------
 !    Code to work out dhdtold, dudtold and dvdtold
 !    calculate Bernoulli potential
-    call evaluate_b(b,h,u,v,nx,ny,layers,g_vec)
+    if (RedGrav) then
+        call evaluate_b_RedGrav(b,h,u,v,nx,ny,layers,g_vec)
+    else
+        call evaluate_b_iso(b,h,u,v,nx,ny,layers,g_vec)
+    endif
 !
 !    calculate relative vorticity!
     call evaluate_zeta(zeta,u,v,nx,ny,layers,dx,dy)
@@ -402,8 +424,12 @@ program MIM
 
 
 !    calculate Bernoulli potential
-    call evaluate_b(b,hhalf,uhalf,vhalf,nx,ny,layers,g_vec)
-!
+    if (RedGrav) then
+        call evaluate_b_RedGrav(b,hhalf,uhalf,vhalf,nx,ny,layers,g_vec)
+    else
+        call evaluate_b_iso(b,hhalf,uhalf,vhalf,nx,ny,layers,g_vec)
+    endif
+
 !    calculate relative vorticity
     call evaluate_zeta(zeta,uhalf,vhalf,nx,ny,layers,dx,dy)
 
@@ -479,8 +505,12 @@ program MIM
 
 
 !     calculate Bernoulli potential
-    call evaluate_b(b,h,u,v,nx,ny,layers,g_vec)
-!
+    if (RedGrav) then
+        call evaluate_b_RedGrav(b,h,u,v,nx,ny,layers,g_vec)
+    else
+        call evaluate_b_iso(b,h,u,v,nx,ny,layers,g_vec)
+    endif
+
 !    calculate relative vorticity
     call evaluate_zeta(zeta,u,v,nx,ny,layers,dx,dy)
 !
@@ -517,60 +547,64 @@ program MIM
         vnew(:,:,k) = vnew(:,:,k)*hfacS*wetmask(:,1:ny)
     enddo
 
- ! calculate the barotropic velocities
-    call calc_baro_u(ub,unew,hnew,eta,freesurfFac,nx,ny,layers)
-    call calc_baro_v(vb,vnew,hnew,eta,freesurfFac,nx,ny,layers)
 
-! calculate divergence of ub and vb, and solve for the pressure field that removes it
-    call calc_eta_star(ub,vb,eta,etastar,freesurfFac,nx,ny,dx,dy,dt)
-!print *, maxval(abs(etastar))
+!   Do the isopycnal layer physics
+    if (.not. RedGrav) then
+        ! calculate the barotropic velocities
+        call calc_baro_u(ub,unew,hnew,eta,freesurfFac,nx,ny,layers)
+        call calc_baro_v(vb,vnew,hnew,eta,freesurfFac,nx,ny,layers)
 
-    ! prevent barotropic signals from bouncing around outside the wet region of the model.
-    etastar = etastar*wetmask
+        ! calculate divergence of ub and vb, and solve for the pressure field that removes it
+        call calc_eta_star(ub,vb,eta,etastar,freesurfFac,nx,ny,dx,dy,dt)
+        !print *, maxval(abs(etastar))
 
-    call SOR_solver(a,etanew,etastar,freesurfFac,nx,ny, &
-        dt,rjac,eps,maxits,n)
-!print *, maxval(abs(etanew))
+        ! prevent barotropic signals from bouncing around outside the wet region of the model.
+        etastar = etastar*wetmask
 
-! now update the velocities using the barotropic tendency due to the pressure gradient
-    dudt_bt = 0d0
-    dvdt_bt = 0d0
+        call SOR_solver(a,etanew,etastar,freesurfFac,nx,ny, &
+            dt,rjac,eps,maxits,n)
+        !print *, maxval(abs(etanew))
 
-    do i = 2,nx-1
-        do j = 1,ny-1
-            dudt_bt(i,j) = -g_vec(1)*(etanew(i,j) - etanew(i-1,j))/(dx)
-            unew(i,j,:) = unew(i,j,:) + 23d0*dt*dudt_bt(i,j)/12d0
+        ! now update the velocities using the barotropic tendency due to the pressure gradient
+        dudt_bt = 0d0
+        dvdt_bt = 0d0
+
+        do i = 2,nx-1
+            do j = 1,ny-1
+                dudt_bt(i,j) = -g_vec(1)*(etanew(i,j) - etanew(i-1,j))/(dx)
+                unew(i,j,:) = unew(i,j,:) + 23d0*dt*dudt_bt(i,j)/12d0
+            end do
         end do
-    end do
 
-    do i = 1,nx-1
-        do j = 2,ny-1
-            dvdt_bt(i,j) = -g_vec(1)*(etanew(i,j) - etanew(i,j-1))/(dy)
-            vnew(i,j,:) = vnew(i,j,:) + 23d0*dt*dvdt_bt(i,j)/12d0
+        do i = 1,nx-1
+            do j = 2,ny-1
+                dvdt_bt(i,j) = -g_vec(1)*(etanew(i,j) - etanew(i,j-1))/(dy)
+                vnew(i,j,:) = vnew(i,j,:) + 23d0*dt*dvdt_bt(i,j)/12d0
+            end do
         end do
-    end do
 
-! We now have correct velocities at the next time level, but the layer thicknesses were updated with the old velocities. force consistency by scaling thicknesses to agree with free surface.
+        ! We now have correct velocities at the next time level, but the layer thicknesses were updated with the old velocities. force consistency by scaling thicknesses to agree with free surface.
 
-    h_norming = (freesurfFac*etanew+depth)/sum(hnew,3)
-    do k = 1,layers
-        hnew(:,:,k) = hnew(:,:,k)*h_norming
-    end do
+        h_norming = (freesurfFac*etanew+depth)/sum(hnew,3)
+        do k = 1,layers
+            hnew(:,:,k) = hnew(:,:,k)*h_norming
+        end do
 
-    if (maxval(abs(h_norming - 1d0)).gt. 1e-2) then
-        print *, 'substantial inconsistency between h and eta (in %).', maxval(abs(h_norming - 1d0))*100
-    end if
+        if (maxval(abs(h_norming - 1d0)).gt. 1e-2) then
+            print *, 'substantial inconsistency between h and eta (in %).', maxval(abs(h_norming - 1d0))*100
+        end if
 
-!    Enforce no normal flow boundary condition
-!    and no flow in dry cells.
-!    no/free-slip is done inside dudt and dvdt subroutines.
-!    hfacW and hfacS are zero where the transition between
-!    wet and dry cells occurs. wetmask is 1 in wet cells,
-!    and zero in dry cells.
-    do k = 1,layers
-        unew(:,:,k) = unew(:,:,k)*hfacW*wetmask(1:nx,:)
-        vnew(:,:,k) = vnew(:,:,k)*hfacS*wetmask(:,1:ny)
-    enddo
+    !    Enforce no normal flow boundary condition
+    !    and no flow in dry cells.
+    !    no/free-slip is done inside dudt and dvdt subroutines.
+    !    hfacW and hfacS are zero where the transition between
+    !    wet and dry cells occurs. wetmask is 1 in wet cells,
+    !    and zero in dry cells.
+        do k = 1,layers
+            unew(:,:,k) = unew(:,:,k)*hfacW*wetmask(1:nx,:)
+            vnew(:,:,k) = vnew(:,:,k)*hfacS*wetmask(:,1:ny)
+        enddo
+    endif
     
 
     
@@ -601,7 +635,9 @@ program MIM
         hav = hav + hnew
         uav = uav + unew
         vav = vav + vnew
-        etaav = eta + etanew
+        if (.not. RedGrav) then
+            etaav = eta + etanew
+        endif
     end if
 
 !     shuffle arrays: old -> very old,  present -> old, new -> present
@@ -609,7 +645,9 @@ program MIM
     h = hnew
     u = unew
     v = vnew
-    eta = etanew
+    if (.not. RedGrav) then
+        eta = etanew
+    endif
 
 !    tendencies (old -> very old)
     dhdtveryold = dhdtold
@@ -644,9 +682,11 @@ program MIM
         open(unit = 10, status='replace',file='output/snap.v.'//num,form='unformatted')  
         write(10) v
         close(10) 
-        open(unit = 10, status='replace',file='output/snap.eta.'//num,form='unformatted')  
-        write(10) eta
-        close(10) 
+        if (.not. RedGrav) then
+            open(unit = 10, status='replace',file='output/snap.eta.'//num,form='unformatted')  
+            write(10) eta
+            close(10) 
+        endif
 
         if (DumpWind .eqv. .TRUE.) then
             open(unit = 10, status='replace',file='output/wind_x.'//num,form='unformatted')  
@@ -686,9 +726,11 @@ program MIM
         open(unit = 10, status='replace',file='output/av.v.'//num,form='unformatted')  
         write(10) vav
         close(10) 
-        open(unit = 10, status='replace',file='output/av.eta.'//num,form='unformatted')  
-        write(10) etaav
-        close(10) 
+        if (.not. RedGrav) then
+            open(unit = 10, status='replace',file='output/av.eta.'//num,form='unformatted')  
+            write(10) etaav
+            close(10) 
+        endif
 
         ! Check if there are NaNs in the data
         call break_if_NaN(h,nx,ny,layers,n)
@@ -699,7 +741,9 @@ program MIM
         hav = 0.0
         uav = 0.0
         vav = 0.0
-        etaav = 0.0
+        if (.not. RedGrav) then
+            etaav = 0.0
+        endif
         !       h2av=0.0
     
 120 endif
@@ -726,9 +770,8 @@ program MIM
 !!
 !! 
 !!!
-    subroutine evaluate_b(b,h,u,v,nx,ny,layers,g_vec)
-!    Evaluate baroclinic component of the Bernoulli Potential
-!    at centre of grid box
+    subroutine evaluate_b_iso(b,h,u,v,nx,ny,layers,g_vec)
+!    Evaluate baroclinic component of the Bernoulli Potential in the n-layer physics, at centre of grid box
     integer nx,ny,layers
     integer i,j,k
     double precision h(0:nx,0:ny,layers),u(nx,0:ny,layers),v(0:nx,ny,layers)
@@ -762,6 +805,40 @@ program MIM
 
     return
     end subroutine
+!---------------------------------------------------------------------------------------
+
+    subroutine evaluate_b_RedGrav(b,h,u,v,nx,ny,layers,gr)
+!    Evaluate Bernoulli Potential at centre of grid box
+    integer nx,ny,layers
+    integer i,j,k
+    double precision h(0:nx,0:ny,layers),u(nx,0:ny,layers),v(0:nx,ny,layers)
+    double precision b(nx,ny,layers), gr(layers)
+    double precision h_temp, b_proto
+
+    b = 0d0
+
+    do k = 1,layers !move through the different layers of the model
+      do j=1,ny-1 !move through longitude
+        do i=1,nx-1 ! move through latitude
+          ! The following loops are to get the pressure term in the Bernoulli Potential
+          b_proto = 0d0
+          do l = k,layers
+            h_temp = 0d0
+            do m = 1,l
+              h_temp = h_temp + h(i,j,m) !sum up the layer thicknesses
+            end do
+            b_proto = b_proto + gr(l)*h_temp !sum up the product of reduced gravity and summed layer thicknesses to form the pressure componenet of the Bernoulli Potential term
+          end do
+          b(i,j,k)= b_proto + (u(i,j,k)**2+u(i+1,j,k)**2+v(i,j,k)**2+v(i,j+1,k)**2)/4.0d0
+          ! Add the (u^2 + v^2)/2 term to the pressure componenet of the Bernoulli Potential
+        end do 
+      end do 
+    end do
+
+
+    return
+    end subroutine
+
 !---------------------------------------------------------------------------------------
 !>    Evaluate relative vorticity at lower left grid boundary (du/dy 
 !!    and dv/dx are at lower left corner as well)
