@@ -50,7 +50,7 @@ rm beta_plane_gyre.f90
 
 # run the example simulations
 echo 'running reduced gravity models'
-echo 'f plane example'
+echo '   f plane example'
 # run f_plane example
 cd examples/reduced_gravity/f_plane
 rm -r output
@@ -63,7 +63,7 @@ mkdir renders
 cd ../
 
 
-echo 'beta plane bump'
+echo '   beta plane bump'
 # run beta_plane_bump example
 cd beta_plane_bump
 rm -r output
@@ -75,8 +75,8 @@ mkdir renders
 ./beta_plane_bump.out
 cd ../
 
-echo 'beta plane gyres'
-echo 'no slip'
+echo '   beta plane gyres'
+echo '      no slip'
 # run beta_plane_gyre example
 # no slip
 cd beta_plane_gyre
@@ -90,7 +90,7 @@ mkdir output
 mkdir renders
 ../beta_plane_gyre.out
 
-echo 'free slip'
+echo '      free slip'
 cd ../free_slip
 rm -r output
 rm -r renders
