@@ -46,9 +46,10 @@
  spongeUfile = '',
  spongeVfile = '',
  /
+! rho0 = density of upper layer
  &PHYSICS
  g_vec = 9.8, 0.01,
- rho0 = 1035.,
+ rho0 = 1026.,
  /
  &GRID
  dx = 2e3,

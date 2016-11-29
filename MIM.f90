@@ -209,6 +209,11 @@ program MIM
     if (.not. RedGrav) then
         call read_input_fileH_2D(depthFile,depth,H0,nx,ny)
         call read_input_fileH_2D(initEtaFile,eta,0.d0,nx,ny)
+        ! check that depth is negative - it must be less than zero
+        if (minval(depth) .lt. 0) then
+            print *, "depths must be positive - fix this and try again"
+            STOP
+        endif
     endif
     ! Should probably check that bathymetry file and layer thicknesses are consistent with each other.
 
@@ -330,7 +335,7 @@ program MIM
     if (RedGrav) then
         call evaluate_b_RedGrav(b,h,u,v,nx,ny,layers,g_vec)
     else
-        call evaluate_b_iso(b,h,u,v,nx,ny,layers,g_vec)
+        call evaluate_b_iso(b,h,u,v,nx,ny,layers,g_vec,depth)
     endif
 
 !    calculate relative vorticity
@@ -357,7 +362,7 @@ program MIM
     if (RedGrav) then
         call evaluate_b_RedGrav(b,hhalf,uhalf,vhalf,nx,ny,layers,g_vec)
     else
-        call evaluate_b_iso(b,hhalf,uhalf,vhalf,nx,ny,layers,g_vec)
+        call evaluate_b_iso(b,hhalf,uhalf,vhalf,nx,ny,layers,g_vec,depth)
     endif
 
 !    calculate relative vorticity
@@ -401,7 +406,7 @@ program MIM
     if (RedGrav) then
         call evaluate_b_RedGrav(b,h,u,v,nx,ny,layers,g_vec)
     else
-        call evaluate_b_iso(b,h,u,v,nx,ny,layers,g_vec)
+        call evaluate_b_iso(b,h,u,v,nx,ny,layers,g_vec,depth)
     endif
 !
 !    calculate relative vorticity!
@@ -427,7 +432,7 @@ program MIM
     if (RedGrav) then
         call evaluate_b_RedGrav(b,hhalf,uhalf,vhalf,nx,ny,layers,g_vec)
     else
-        call evaluate_b_iso(b,hhalf,uhalf,vhalf,nx,ny,layers,g_vec)
+        call evaluate_b_iso(b,hhalf,uhalf,vhalf,nx,ny,layers,g_vec,depth)
     endif
 
 !    calculate relative vorticity
@@ -508,7 +513,7 @@ program MIM
     if (RedGrav) then
         call evaluate_b_RedGrav(b,h,u,v,nx,ny,layers,g_vec)
     else
-        call evaluate_b_iso(b,h,u,v,nx,ny,layers,g_vec)
+        call evaluate_b_iso(b,h,u,v,nx,ny,layers,g_vec,depth)
     endif
 
 !    calculate relative vorticity
@@ -585,7 +590,7 @@ program MIM
 
         ! We now have correct velocities at the next time level, but the layer thicknesses were updated with the old velocities. force consistency by scaling thicknesses to agree with free surface.
 
-        h_norming = (freesurfFac*etanew+depth)/sum(hnew,3)
+        h_norming = (freesurfFac*etanew + depth)/sum(hnew,3)
         do k = 1,layers
             hnew(:,:,k) = hnew(:,:,k)*h_norming
         end do
@@ -770,16 +775,36 @@ program MIM
 !!
 !! 
 !!!
-    subroutine evaluate_b_iso(b,h,u,v,nx,ny,layers,g_vec)
-!    Evaluate baroclinic component of the Bernoulli Potential in the n-layer physics, at centre of grid box
+    subroutine evaluate_b_iso(b,h,u,v,nx,ny,layers,g_vec,depth)
+!    Evaluate baroclinic component of the Bernoulli Potential (u dot u + Montgomery potential) in the n-layer physics, at centre of grid box
     integer nx,ny,layers
     integer i,j,k
+    double precision depth(0:nx,0:ny)
+    double precision z(0:nx,0:ny,layers)
     double precision h(0:nx,0:ny,layers),u(nx,0:ny,layers),v(0:nx,ny,layers)
     double precision b(nx,ny,layers), g_vec(layers)
-    double precision b_proto
+    double precision M(0:nx,0:ny,layers)
+
+
+!   calculate layer interface locations
+    z = 0d0
+    z(:,:,layers) = -depth
+
+    do k = 1,layers-1
+        z(:,:,layers - k) = z(:,:,layers-k+1) + h(:,:,layers-k+1)
+    enddo
+
+    M = 0d0
+    do k = 2,layers
+!       Calculate Montogmery potential
+        ! The following loop is to get the baroclinic Montgomery potential in each layer
+        M(:,:,k) = M(:,:,k-1) + g_vec(k)*z(:,:,k-1)
+    enddo
+
+
 
     b = 0d0
-!   no pressure contribution to the first layer Bernoulli potential 
+!   no baroclinic pressure contribution to the first layer Bernoulli potential 
 !   (the barotropic pressure contributes, but that's not done here).
     do j = 1,ny-1
         do i = 1,nx-1
@@ -791,14 +816,8 @@ program MIM
     do k = 2,layers !move through the different layers of the model
       do j=1,ny-1 !move through longitude
         do i=1,nx-1 ! move through latitude
-          ! The following loop is to get the baroclinic pressure term in the Bernoulli Potential
-          b_proto = 0d0
-
-          do l = 2,k
-            b_proto = b_proto + g_vec(l)*h(i,j,l) !sum up the product of reduced gravity and layer thicknesses to form the baroclinic pressure componenet of the Bernoulli Potential term.
-          end do
-          b(i,j,k)= b_proto + (u(i,j,k)**2+u(i+1,j,k)**2+v(i,j,k)**2+v(i,j+1,k)**2)/4.0d0
-          ! Add the (u^2 + v^2)/2 term to the pressure componenet of the Bernoulli Potential
+          b(i,j,k)= M(i,j,k) + (u(i,j,k)**2+u(i+1,j,k)**2+v(i,j,k)**2+v(i,j+1,k)**2)/4.0d0
+          ! Add the (u^2 + v^2)/2 term to the Montgomery Potential
         end do 
       end do 
     end do
