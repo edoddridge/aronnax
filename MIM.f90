@@ -588,7 +588,26 @@ program MIM
             end do
         end do
 
-        ! We now have correct velocities at the next time level, but the layer thicknesses were updated with the old velocities. force consistency by scaling thicknesses to agree with free surface.
+        ! Add the barotropic tendency to the baroclinic tendency so that it gets used in subsequent time steps.
+        do i = 2,nx-1
+            do j = 1,ny-1
+                do k = 1,layers
+                    dudt(i,j,k) = dudt(i,j,k) + dudt_bt(i,j)
+                end do
+            end do
+        end do
+
+        do i = 1,nx-1
+            do j = 2,ny-1
+                do k = 1,layers
+                    dvdt(i,j,k) = dvdt(i,j,k) + dvdt_bt(i,j)
+                end do
+            end do
+        end do
+
+
+
+        ! We now have correct velocities at the next time level, but the layer thicknesses were updated using the velocities without the barotropic pressure contribution. force consistency between layer thicknesses and ocean depth by scaling thicknesses to agree with free surface.
 
         h_norming = (freesurfFac*etanew + depth)/sum(hnew,3)
         do k = 1,layers
@@ -660,13 +679,12 @@ program MIM
     dvdtveryold = dvdtold
 
 !    tendencies (current -> old)
-    do k = 1,layers
-        dudtold(:,:,k) = dudt(:,:,k) + dudt_bt
-        dvdtold(:,:,k) = dvdt(:,:,k) + dvdt_bt
-    end do
+    dudtold = dudt
+    dvdtold = dvdt
     dhdtold = dhdt
 
-!     now have new fields in main arrays and old fields in old arrays
+
+!     now have new fields in main arrays and old fields in very old arrays
 
 !--------------------------- Code for generating output -------------------------------------
 !     write data to file? 
