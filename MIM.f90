@@ -574,22 +574,26 @@ program MIM
         dudt_bt = 0d0
         dvdt_bt = 0d0
 
-        do i = 2,nx-1
+        do i = 1,nx-1
             do j = 1,ny-1
-                dudt_bt(i,j) = -g_vec(1)*(etanew(i,j) - etanew(i-1,j))/(dx)
-                unew(i,j,:) = unew(i,j,:) + 23d0*dt*dudt_bt(i,j)/12d0
+                do k = 1,layers
+                    dudt_bt(i,j) = -g_vec(1)*(etanew(i,j) - etanew(i-1,j))/(dx)
+                    unew(i,j,k) = unew(i,j,k) + 23d0*dt*dudt_bt(i,j)/12d0
+                end do
             end do
         end do
 
         do i = 1,nx-1
-            do j = 2,ny-1
-                dvdt_bt(i,j) = -g_vec(1)*(etanew(i,j) - etanew(i,j-1))/(dy)
-                vnew(i,j,:) = vnew(i,j,:) + 23d0*dt*dvdt_bt(i,j)/12d0
+            do j = 1,ny-1
+                do k = 1,layers
+                    dvdt_bt(i,j) = -g_vec(1)*(etanew(i,j) - etanew(i,j-1))/(dy)
+                    vnew(i,j,k) = vnew(i,j,k) + 23d0*dt*dvdt_bt(i,j)/12d0
+                end do
             end do
         end do
 
         ! Add the barotropic tendency to the baroclinic tendency so that it gets used in subsequent time steps.
-        do i = 2,nx-1
+        do i = 1,nx-1
             do j = 1,ny-1
                 do k = 1,layers
                     dudt(i,j,k) = dudt(i,j,k) + dudt_bt(i,j)
@@ -598,7 +602,7 @@ program MIM
         end do
 
         do i = 1,nx-1
-            do j = 2,ny-1
+            do j = 1,ny-1
                 do k = 1,layers
                     dvdt(i,j,k) = dvdt(i,j,k) + dvdt_bt(i,j)
                 end do
@@ -824,14 +828,14 @@ program MIM
     b = 0d0
 !   no baroclinic pressure contribution to the first layer Bernoulli potential 
 !   (the barotropic pressure contributes, but that's not done here).
-    do j = 1,ny-1
-        do i = 1,nx-1
-            b(i,j,1) = (u(i,j,1)**2+u(i+1,j,1)**2+v(i,j,1)**2+v(i,j+1,1)**2)/4.0d0
-        end do
-    end do
+    ! do j = 1,ny-1
+    !     do i = 1,nx-1
+    !         b(i,j,1) = (u(i,j,1)**2+u(i+1,j,1)**2+v(i,j,1)**2+v(i,j+1,1)**2)/4.0d0
+    !     end do
+    ! end do
 
 !   for the rest of the layers we get a baroclinic pressure contribution
-    do k = 2,layers !move through the different layers of the model
+    do k = 1,layers !move through the different layers of the model
       do j=1,ny-1 !move through longitude
         do i=1,nx-1 ! move through latitude
           b(i,j,k)= M(i,j,k) + (u(i,j,k)**2+u(i+1,j,k)**2+v(i,j,k)**2+v(i,j+1,k)**2)/4.0d0
@@ -989,6 +993,7 @@ program MIM
                     dudt(i,j,k) = dudt(i,j,k) - 1.0d0*ar*(u(i,j,k) - 1.0d0*u(i,j,k+1))
                 else if (k .eq. layers) then ! bottom layer
                     dudt(i,j,k) = dudt(i,j,k) - 1.0d0*ar*(u(i,j,k) - 1.0d0*u(i,j,k-1))
+                    ! add bottom drag here in isopycnal version
                 else ! mid layer/s
                     dudt(i,j,k) = dudt(i,j,k) - 1.0d0*ar*(2.0d0*u(i,j,k) - 1.0d0*u(i,j,k-1) - 1.0d0*u(i,j,k+1))
                 endif
@@ -1043,6 +1048,7 @@ program MIM
                     dvdt(i,j,k) = dvdt(i,j,k) - 1.0d0*ar*(v(i,j,k) - 1.0d0*v(i,j,k+1))
                 else if (k .eq. layers) then ! bottom layer
                     dvdt(i,j,k) = dvdt(i,j,k) - 1.0d0*ar*(v(i,j,k) - 1.0d0*v(i,j,k-1))
+                    ! add bottom drag here in isopycnal version
                 else ! mid layer/s
                     dvdt(i,j,k) = dvdt(i,j,k) - 1.0d0*ar*(2.0d0*v(i,j,k) - 1.0d0*v(i,j,k-1) - 1.0d0*v(i,j,k+1))
                 endif
@@ -1064,20 +1070,18 @@ program MIM
     double precision eta(0:nx,0:ny)
     double precision freesurfFac
     double precision u(nx,0:ny,layers),ub(nx,0:ny)
-    double precision proto_ub
 
     ub = 0d0
 
+    h_temp = h
     ! add free surface elevation to the upper layer
     h_temp(:,:,1) = h(:,:,1) + eta*freesurfFac
     
-    do i = 2,nx-1
+    do i = 1,nx-1
         do j = 1,ny-1
-            proto_ub = 0d0
             do k = 1,layers
-                proto_ub = proto_ub + u(i,j,k)*(h_temp(i,j,k)+h_temp(i-1,j,k))/2d0
+                ub(i,j) = ub(i,j) + u(i,j,k)*(h_temp(i,j,k)+h_temp(i-1,j,k))/2d0
             end do
-            ub(i,j) = proto_ub
         end do
     end do
 
@@ -1097,20 +1101,18 @@ program MIM
     double precision eta(0:nx,0:ny)
     double precision freesurfFac
     double precision v(0:nx,ny,layers),vb(0:nx,ny)
-    double precision proto_vb
 
     vb = 0d0
 
+    h_temp = h
     ! add free surface elevation to the upper layer
     h_temp(:,:,1) = h(:,:,1) + eta*freesurfFac
     
     do i = 1,nx-1
-        do j = 2,ny-1
-            proto_vb = 0d0
+        do j = 1,ny-1
             do k = 1,layers
-                proto_vb = proto_vb + v(i,j,k)*(h_temp(i,j,k)+h_temp(i,j-1,k))/2d0
+                vb(i,j) = vb(i,j) + v(i,j,k)*(h_temp(i,j,k)+h_temp(i,j-1,k))/2d0
             end do
-            vb(i,j) = proto_vb
         end do
     end do
 
