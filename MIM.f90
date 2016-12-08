@@ -89,7 +89,8 @@ program MIM
     character(30) wetMaskFile
 
 !   Numerics
-    double precision pi,au,ah(layers),ar,dt
+    double precision pi, dt
+    double precision au,ah(layers),ar, botDrag
     double precision slip
     double precision hmin
     integer nTimeSteps
@@ -148,8 +149,8 @@ program MIM
 !   Set default values here
 !   Possibly wait until the model is split into multiple files, then hide the long unsightly code there.
 
-    NAMELIST /NUMERICS/ au,ah,ar,dt,slip,nTimeSteps,dumpFreq, & 
-                        avFreq,hmin, maxits, freesurfFac, eps
+    NAMELIST /NUMERICS/ au,ah,ar,botDrag,dt,slip,nTimeSteps, & 
+                        dumpFreq,avFreq,hmin, maxits, freesurfFac, eps
 
     NAMELIST /MODEL/ hmean, depthFile, H0, RedGrav
 
@@ -347,10 +348,10 @@ program MIM
 
     call evaluate_dudt(dudtveryold, h,u,v,b,zeta,wind_x,fu, au,ar,&
         slip,dx,dy,hfacN,hfacS,nx,ny,layers,rho0,&
-        spongeUTimeScale,spongeU)
+        spongeUTimeScale,spongeU,RedGrav,botDrag)
 
     call evaluate_dvdt(dvdtveryold, h,u,v,b,zeta,wind_y,fv, &
-        au,ar,slip,dx,dy,hfacW,hfacE,nx,ny,layers,rho0,spongeVTimeScale,spongeV)
+        au,ar,slip,dx,dy,hfacW,hfacE,nx,ny,layers,rho0,spongeVTimeScale,spongeV,RedGrav,botDrag)
 
 !    Calculate the values at half the time interval with Forward Euler
     hhalf = h+0.5d0*dt*dhdtveryold
@@ -373,11 +374,11 @@ program MIM
 
     call evaluate_dudt(dudtveryold, hhalf,uhalf,vhalf,b,zeta, &
         wind_x,fu, au,ar,slip,dx,dy,hfacN,hfacS,nx,ny,layers,rho0, &
-        spongeUTimeScale,spongeU)
+        spongeUTimeScale,spongeU,RedGrav,botDrag)
 
     call evaluate_dvdt(dvdtveryold, hhalf,uhalf,vhalf,b,zeta, &
         wind_y,fv, au,ar,slip ,dx,dy,hfacW,hfacE,nx,ny,layers,rho0,& 
-        spongeVTimeScale,spongeV)
+        spongeVTimeScale,spongeV,RedGrav,botDrag)
 !    These are the values to be stored in the 'veryold' variables ready to start 
 !    the proper model run.
 
@@ -415,12 +416,15 @@ program MIM
 !     Calculate dhdt, dudt, dvdt at current time step
     call evaluate_dhdt(dhdtold, h,u,v,ah,dx,dy,nx,ny,layers, spongeHTimeScale,spongeH,wetmask)
 
-    call evaluate_dudt(dudtold, h,u,v,b,zeta,wind_x,fu, au,ar,slip,dx,dy,hfacN,hfacS,nx,ny,layers,rho0,spongeUTimeScale,spongeU)
+    call evaluate_dudt(dudtold, h,u,v,b,zeta,wind_x,fu, & 
+        au,ar,slip,dx,dy,hfacN,hfacS,nx,ny,layers,rho0, &
+        spongeUTimeScale,spongeU,RedGrav,botDrag)
 
     !if the wind is changed to be meridional this code will need changing
 
-    call evaluate_dvdt(dvdtold, h,u,v,b,zeta,wind_y,fv, au,ar,slip, &
-        dx,dy,hfacW,hfacE,nx,ny,layers,rho0,spongeVTimeScale,spongeV)
+    call evaluate_dvdt(dvdtold, h,u,v,b,zeta,wind_y,fv, & 
+        au,ar,slip, dx,dy,hfacW,hfacE,nx,ny,layers,rho0, &
+        spongeVTimeScale,spongeV,RedGrav,botDrag)
 
 !    Calculate the values at half the time interval with Forward Euler
     hhalf = h+0.5d0*dt*dhdtold
@@ -442,11 +446,11 @@ program MIM
     call evaluate_dhdt(dhdtold, hhalf,uhalf,vhalf,ah,dx,dy,nx,ny,layers, spongeHTimeScale,spongeH,wetmask)
     call evaluate_dudt(dudtold, hhalf,uhalf,vhalf,b,zeta,wind_x,&
         fu, au,ar,slip,dx,dy,hfacN,hfacS,nx,ny,layers,rho0,&
-        spongeUTimeScale,spongeU)
+        spongeUTimeScale,spongeU,RedGrav,botDrag)
     !if the wind is changed to be meridional this code will need changing
     call evaluate_dvdt(dvdtold, hhalf,uhalf,vhalf,b,zeta,wind_y,&
         fv, au,ar,slip, dx,dy,hfacW,hfacE,nx,ny,layers,rho0,& 
-        spongeVTimeScale,spongeV)
+        spongeVTimeScale,spongeV,RedGrav,botDrag)
 !    These are the values to be stored in the 'old' variables ready to start 
 !    the proper model run.
 
@@ -525,10 +529,11 @@ program MIM
 
     call evaluate_dudt(dudt, h,u,v,b,zeta,wind_x,fu, au,ar,slip,&
         dx,dy,hfacN,hfacS,nx,ny,layers,rho0,&
-        spongeUTimeScale,spongeU)
+        spongeUTimeScale,spongeU,RedGrav,botDrag)
 
     call evaluate_dvdt(dvdt, h,u,v,b,zeta,wind_y,fv, au,ar,slip, &
-        dx,dy,hfacW,hfacE,nx,ny,layers,rho0,spongeVTimeScale,spongeV)
+        dx,dy,hfacW,hfacE,nx,ny,layers,rho0,&
+        spongeVTimeScale,spongeV,RedGrav,botDrag)
 
 !    Use dh/dt, du/dt and dv/dt to step h, u and v forward in time with
 !    Adams-Bashforth third order linear multistep method
@@ -950,7 +955,9 @@ program MIM
 !--------------------------------------------------------------------------------------------
 !> Calculate the tendency of zonal velocity for each of the active layers
 
-    subroutine evaluate_dudt(dudt, h,u,v,b,zeta,wind_x,fu, au,ar,slip,dx,dy,hfacN,hfacS,nx,ny,layers,rho0,spongeTimeScale,spongeU)
+    subroutine evaluate_dudt(dudt, h,u,v,b,zeta,wind_x,fu, & 
+        au,ar,slip,dx,dy,hfacN,hfacS,nx,ny,layers,rho0, & 
+        spongeTimeScale,spongeU,RedGrav,botDrag)
 !    dudt(i,j) is evaluated at the centre of the left edge of the grid box,
 !     the same place as u(i,j)
     integer nx,ny,layers
@@ -963,9 +970,10 @@ program MIM
     double precision spongeU(nx,0:ny,layers)
     double precision wind_x(nx, 0:ny)
     double precision dx, dy
-    double precision au, ar, rho0, slip
+    double precision au, ar, rho0, slip, botDrag
     double precision hfacN(0:nx,ny)
     double precision hfacS(0:nx,ny)
+    logical :: RedGrav
 
     dudt = 0d0
 
@@ -993,7 +1001,10 @@ program MIM
                     dudt(i,j,k) = dudt(i,j,k) - 1.0d0*ar*(u(i,j,k) - 1.0d0*u(i,j,k+1))
                 else if (k .eq. layers) then ! bottom layer
                     dudt(i,j,k) = dudt(i,j,k) - 1.0d0*ar*(u(i,j,k) - 1.0d0*u(i,j,k-1))
-                    ! add bottom drag here in isopycnal version
+                    if (.not. RedGrav) then
+                        ! add bottom drag here in isopycnal version
+                        dudt(i,j,k) = dudt(i,j,k) - 1.0d0*botDrag*(u(i,j,k))
+                    endif
                 else ! mid layer/s
                     dudt(i,j,k) = dudt(i,j,k) - 1.0d0*ar*(2.0d0*u(i,j,k) - 1.0d0*u(i,j,k-1) - 1.0d0*u(i,j,k+1))
                 endif
@@ -1006,7 +1017,9 @@ program MIM
 !------------------------------------------------------------------------------------
 !> Calculate the tendency of meridional velocity for each of the active layers
 
-    subroutine evaluate_dvdt(dvdt, h,u,v,b,zeta,wind_y,fv, au,ar,slip,dx,dy,hfacW,hfacE,nx,ny,layers,rho0,spongeTimeScale,spongeV)
+    subroutine evaluate_dvdt(dvdt, h,u,v,b,zeta,wind_y,fv, &
+        au,ar,slip,dx,dy,hfacW,hfacE,nx,ny,layers,rho0, & 
+        spongeTimeScale,spongeV,RedGrav,botDrag)
 !    dvdt(i,j) is evaluated at the centre of the bottom edge of the grid box,
 !     the same place as v(i,j)
     integer nx,ny,layers
@@ -1017,10 +1030,11 @@ program MIM
     double precision spongeV(0:nx,ny,layers)
     double precision wind_y(0:nx, ny)
     double precision dx, dy
-    double precision au, ar, slip
+    double precision au, ar, slip, botDrag
     double precision rho0
     double precision hfacW(nx,0:ny)
     double precision hfacE(nx,0:ny)
+    logical :: RedGrav
 
     dvdt = 0d0
     
@@ -1048,7 +1062,10 @@ program MIM
                     dvdt(i,j,k) = dvdt(i,j,k) - 1.0d0*ar*(v(i,j,k) - 1.0d0*v(i,j,k+1))
                 else if (k .eq. layers) then ! bottom layer
                     dvdt(i,j,k) = dvdt(i,j,k) - 1.0d0*ar*(v(i,j,k) - 1.0d0*v(i,j,k-1))
-                    ! add bottom drag here in isopycnal version
+                    if (.not. RedGrav) then
+                        ! add bottom drag here in isopycnal version
+                        dvdt(i,j,k) = dvdt(i,j,k) - 1.0d0*botDrag*(v(i,j,k))
+                    endif                
                 else ! mid layer/s
                     dvdt(i,j,k) = dvdt(i,j,k) - 1.0d0*ar*(2.0d0*v(i,j,k) - 1.0d0*v(i,j,k-1) - 1.0d0*v(i,j,k+1))
                 endif
