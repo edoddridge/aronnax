@@ -22,6 +22,7 @@
  au = 200.,
  ah = 0.0,
  ar = 1e-8,
+ botDrag = 1e-6,
  dt = 90.,
  slip = 1.0,
  nTimeSteps = 4001,
