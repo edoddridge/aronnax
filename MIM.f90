@@ -583,7 +583,7 @@ program MIM
             do j = 1,ny-1
                 do k = 1,layers
                     dudt_bt(i,j) = -g_vec(1)*(etanew(i,j) - etanew(i-1,j))/(dx)
-                    unew(i,j,k) = unew(i,j,k) + 23d0*dt*dudt_bt(i,j)/12d0
+                    unew(i,j,k) = unew(i,j,k) + dt*dudt_bt(i,j) !23d0*dt*dudt_bt(i,j)/12d0
                 end do
             end do
         end do
@@ -592,27 +592,27 @@ program MIM
             do j = 1,ny-1
                 do k = 1,layers
                     dvdt_bt(i,j) = -g_vec(1)*(etanew(i,j) - etanew(i,j-1))/(dy)
-                    vnew(i,j,k) = vnew(i,j,k) + 23d0*dt*dvdt_bt(i,j)/12d0
+                    vnew(i,j,k) = vnew(i,j,k) + dt*dvdt_bt(i,j)! 23d0*dt*dvdt_bt(i,j)/12d0
                 end do
             end do
         end do
 
         ! Add the barotropic tendency to the baroclinic tendency so that it gets used in subsequent time steps.
-        do i = 1,nx-1
-            do j = 1,ny-1
-                do k = 1,layers
-                    dudt(i,j,k) = dudt(i,j,k) + dudt_bt(i,j)
-                end do
-            end do
-        end do
+        ! do i = 1,nx-1
+        !     do j = 1,ny-1
+        !         do k = 1,layers
+        !             dudt(i,j,k) = dudt(i,j,k) + dudt_bt(i,j)
+        !         end do
+        !     end do
+        ! end do
 
-        do i = 1,nx-1
-            do j = 1,ny-1
-                do k = 1,layers
-                    dvdt(i,j,k) = dvdt(i,j,k) + dvdt_bt(i,j)
-                end do
-            end do
-        end do
+        ! do i = 1,nx-1
+        !     do j = 1,ny-1
+        !         do k = 1,layers
+        !             dvdt(i,j,k) = dvdt(i,j,k) + dvdt_bt(i,j)
+        !         end do
+        !     end do
+        ! end do
 
 
 
