@@ -966,10 +966,10 @@ program MIM
                         (1d0 - wetmask(i,j+1))*h(i,j,layers) & ! reflect value around boundary
                         + h(i,j-1,layers)*wetmask(i,j-1) + &
                         (1d0 - wetmask(i,j-1))*h(i,j,layers) & ! reflect value around boundary
-                        - 2*h(i,j,layers))/(dy*dy) - & !y-component horizontal diffusion
+                        - 2*h(i,j,layers))/(dy*dy) !y-component horizontal diffusion
           enddo
         enddo
-    else ! using n-layer physics
+    else if (.not. RedGrav) then ! using n-layer physics
         ! calculate bottom layer thickness tendency to balance layers above.
         dhdt_GM(:,:,layers) = -sum(dhdt_GM(:,:,:layers-1),3)
     endif
