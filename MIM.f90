@@ -9,7 +9,7 @@
 !>
 !>     @section Overview
 !>     This model is an isopycnal model on an Arakawa C-grid with n
-!>     layers and a rigid lid.
+!>     layers and arbitrary bathymetry.
 !>
 !>
 !>            
@@ -344,7 +344,7 @@ program MIM
 
 !     Calculate dhdt, dudt, dvdt at current time step
     call evaluate_dhdt(dhdtveryold, h,u,v,ah,dx,dy,nx,ny,layers,&
-        spongeHTimeScale,spongeH,wetmask)
+        spongeHTimeScale,spongeH,wetmask,RedGrav)
 
     call evaluate_dudt(dudtveryold, h,u,v,b,zeta,wind_x,fu, au,ar,&
         slip,dx,dy,hfacN,hfacS,nx,ny,layers,rho0,&
@@ -370,7 +370,7 @@ program MIM
     call evaluate_zeta(zeta,uhalf,vhalf,nx,ny,layers,dx,dy)
 
 !    Now calculate d/dt of u,v,h and store as dhdtveryold, dudtveryold and dvdtveryold
-    call evaluate_dhdt(dhdtveryold, hhalf,uhalf,vhalf,ah,dx,dy,nx,ny,layers, spongeHTimeScale,spongeH,wetmask)
+    call evaluate_dhdt(dhdtveryold, hhalf,uhalf,vhalf,ah,dx,dy,nx,ny,layers, spongeHTimeScale,spongeH,wetmask,RedGrav)
 
     call evaluate_dudt(dudtveryold, hhalf,uhalf,vhalf,b,zeta, &
         wind_x,fu, au,ar,slip,dx,dy,hfacN,hfacS,nx,ny,layers,rho0, &
@@ -414,7 +414,7 @@ program MIM
     call evaluate_zeta(zeta,u,v,nx,ny,layers,dx,dy)
 
 !     Calculate dhdt, dudt, dvdt at current time step
-    call evaluate_dhdt(dhdtold, h,u,v,ah,dx,dy,nx,ny,layers, spongeHTimeScale,spongeH,wetmask)
+    call evaluate_dhdt(dhdtold, h,u,v,ah,dx,dy,nx,ny,layers, spongeHTimeScale,spongeH,wetmask,RedGrav)
 
     call evaluate_dudt(dudtold, h,u,v,b,zeta,wind_x,fu, & 
         au,ar,slip,dx,dy,hfacN,hfacS,nx,ny,layers,rho0, &
@@ -443,7 +443,7 @@ program MIM
     call evaluate_zeta(zeta,uhalf,vhalf,nx,ny,layers,dx,dy)
 
 !    Now calculate d/dt of u,v,h and store as dhdtold, dudtold and dvdtold
-    call evaluate_dhdt(dhdtold, hhalf,uhalf,vhalf,ah,dx,dy,nx,ny,layers, spongeHTimeScale,spongeH,wetmask)
+    call evaluate_dhdt(dhdtold, hhalf,uhalf,vhalf,ah,dx,dy,nx,ny,layers, spongeHTimeScale,spongeH,wetmask,RedGrav)
     call evaluate_dudt(dudtold, hhalf,uhalf,vhalf,b,zeta,wind_x,&
         fu, au,ar,slip,dx,dy,hfacN,hfacS,nx,ny,layers,rho0,&
         spongeUTimeScale,spongeU,RedGrav,botDrag)
@@ -525,7 +525,7 @@ program MIM
 !
 !     Calculate dhdt, dudt, dvdt at current time step
     call evaluate_dhdt(dhdt, h,u,v,ah,dx,dy,nx,ny,layers, &
-        spongeHTimeScale,spongeH,wetmask)
+        spongeHTimeScale,spongeH,wetmask,RedGrav)
 
     call evaluate_dudt(dudt, h,u,v,b,zeta,wind_x,fu, au,ar,slip,&
         dx,dy,hfacN,hfacS,nx,ny,layers,rho0,&
@@ -910,35 +910,80 @@ program MIM
 !------------------------------------------------------------------------------------------
 !> Calculate the tendency of layer thickness for each of the active layers
 !! dh/dt is in the centre of each grid point.
-    subroutine evaluate_dhdt(dhdt, h,u,v,ah,dx,dy,nx,ny,layers, spongeTimeScale,spongeH,wetmask)
+    subroutine evaluate_dhdt(dhdt, h,u,v,ah,dx,dy,nx,ny,layers, & 
+        spongeTimeScale,spongeH,wetmask,RedGrav)
 !    dhdt is evaluated at the centre of the grid box
     integer nx,ny,layers
     integer i,j,k
     double precision dhdt(0:nx,0:ny,layers), h(0:nx,0:ny,layers)
     double precision u(nx,0:ny,layers),v(0:nx,ny,layers)
+    double precision dhdt_GM(0:nx,0:ny,layers) ! thickness tendency due to thickness difussion (equivalent to Gent McWilliams in a z coordinate model)
     double precision spongeTimeScale(0:nx,0:ny,layers)
     double precision spongeH(0:nx,0:ny,layers)
     double precision wetmask(0:nx,0:ny)
     double precision dx, dy
     double precision ah(layers)
+    logical :: RedGrav
 
+
+    ! Calculate tendency due to thickness diffusion (equivalent 
+    ! to GM in z coordinate model with the same diffusivity).
+    dhdt_GM = 0d0
+
+    ! loop through all layers except lowest and calculate 
+    ! thickness tendency due to diffusive mass fluxes
+    do k = 1,layers-1
+      do j=1,ny-1
+        do i=1,nx-1
+          dhdt_GM(i,j,k)=ah(k)*(h(i+1,j,k)*wetmask(i+1,j) + &
+                            (1d0 - wetmask(i+1,j))*h(i,j,k) & ! reflect around boundary
+                        + h(i-1,j,k)*wetmask(i-1,j) + &
+                            (1d0 - wetmask(i-1,j))*h(i,j,k) & ! refelct around boundary
+                        - 2*h(i,j,k))/(dx*dx) + & ! x-component
+
+                        ah(k)*(h(i,j+1,k)*wetmask(i,j+1) + &
+                        (1d0 - wetmask(i,j+1))*h(i,j,k) & ! reflect value around boundary
+                        + h(i,j-1,k)*wetmask(i,j-1) + &
+                        (1d0 - wetmask(i,j-1))*h(i,j,k) & ! reflect value around boundary
+                        - 2*h(i,j,k))/(dy*dy) !y-component horizontal diffusion
+        enddo
+      enddo
+    enddo
+
+    ! now do the lowest active layer, k = layers. If using reduced gravity physics 
+    ! this is unconstrained and calculated as above. If using n-layer 
+    ! physics it is constrained to balance the layers above it.
+    if (RedGrav) then
+        do j=1,ny-1
+          do i=1,nx-1
+            dhdt_GM(i,j,layers)=ah(layers)*(h(i+1,j,layers)*wetmask(i+1,j) + &
+                            (1d0 - wetmask(i+1,j))*h(i,j,layers) & ! boundary
+                        + h(i-1,j,layers)*wetmask(i-1,j) + &
+                            (1d0 - wetmask(i-1,j))*h(i,j,layers) & ! boundary
+                        - 2*h(i,j,layers))/ (dx*dx) + & ! x-componenet 
+
+                        ah(layers)*(h(i,j+1,layers)*wetmask(i,j+1) + &
+                        (1d0 - wetmask(i,j+1))*h(i,j,layers) & ! reflect value around boundary
+                        + h(i,j-1,layers)*wetmask(i,j-1) + &
+                        (1d0 - wetmask(i,j-1))*h(i,j,layers) & ! reflect value around boundary
+                        - 2*h(i,j,layers))/(dy*dy) - & !y-component horizontal diffusion
+          enddo
+        enddo
+    else ! using n-layer physics
+        ! calculate bottom layer thickness tendency to balance layers above.
+        dhdt_GM(:,:,layers) = -sum(dhdt_GM(:,:,:layers-1),3)
+    endif
+
+
+
+
+    ! Now add this to the thickness tendency due to the flow field and sponge regions
     dhdt = 0d0
 
     do k = 1,layers
       do j=1,ny-1
         do i=1,nx-1
-          dhdt(i,j,k)=ah(k)*(h(i+1,j,k)*wetmask(i+1,j) + &
-                            (1d0 - wetmask(i+1,j))*h(i,j,k) & ! boundary
-                        + h(i-1,j,k)*wetmask(i-1,j) + &
-                            (1d0 - wetmask(i-1,j))*h(i,j,k) & ! boundary
-                        - 2*h(i,j,k))/ &
-        (dx*dx) + & ! x-componenet 
-          ah(k)*(h(i,j+1,k)*wetmask(i,j+1) + &
-                (1d0 - wetmask(i,j+1))*h(i,j,k) & ! reflect value around boundary
-            + h(i,j-1,k)*wetmask(i,j-1) + &
-                (1d0 - wetmask(i,j-1))*h(i,j,k) & ! reflect value around boundary
-            - 2*h(i,j,k))/ &
-        (dy*dy) - & !y-component horizontal diffusion
+          dhdt(i,j,k)= dhdt_GM(i,j,k) - & ! horizontal thickness diffusion
         ((h(i,j,k)+h(i+1,j,k))*u(i+1,j,k) - (h(i-1,j,k)+h(i,j,k))*u(i,j,k))/(dx*2d0) - & !d(hu)/dx
         ((h(i,j,k)+h(i,j+1,k))*v(i,j+1,k) - (h(i,j-1,k)+h(i,j,k))*v(i,j,k))/(dy*2d0) + & !d(hv)/dy
         spongeTimeScale(i,j,k)*(spongeH(i,j,k)-h(i,j,k)) ! forced relaxtion in the sponge regions.
@@ -946,6 +991,7 @@ program MIM
       end do 
     end do
 
+    ! make sure the dynamics are only happening in the wet grid points.
     do k = 1,layers
         dhdt(:,:,k) = dhdt(:,:,k)*wetmask
     end do
