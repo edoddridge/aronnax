@@ -53,10 +53,13 @@ echo '   f plane example'
 cd reduced_gravity/f_plane
 if ls output; then
   rm -r output
+fi
 if ls renders; then
   rm -r renders
+fi
 if ls run_finished.txt; then
   rm run_finished.txt
+fi
 gfortran f_plane.f90 -o f_plane.out -Ofast
 if [ $? -ne 0 ]; then
   echo "Error while compiling model."
@@ -77,10 +80,13 @@ echo '   beta plane bump'
 cd beta_plane_bump
 if ls output; then
   rm -r output
+fi
 if ls renders; then
   rm -r renders
+fi
 if ls run_finished.txt; then
   rm run_finished.txt
+fi
 gfortran beta_plane_bump.f90 -o beta_plane_bump.out -Ofast
 if [ $? -ne 0 ]; then
   echo "Error while compiling model."
@@ -109,10 +115,13 @@ fi
 cd no_slip
 if ls output; then
   rm -r output
+fi
 if ls renders; then
   rm -r renders
+fi
 if ls run_finished.txt; then
   rm run_finished.txt
+fi
 mkdir output
 mkdir renders
 ../beta_plane_gyre.out
@@ -125,10 +134,13 @@ echo '      free slip'
 cd ../free_slip
 if ls output; then
   rm -r output
+fi
 if ls renders; then
   rm -r renders
+fi
 if ls run_finished.txt; then
   rm run_finished.txt
+fi
 mkdir output
 mkdir renders
 ../beta_plane_gyre.out
@@ -148,10 +160,13 @@ echo '   f plane example'
 cd n_layer/f_plane
 if ls output; then
   rm -r output
+fi
 if ls renders; then
   rm -r renders
+fi
 if ls run_finished.txt; then
   rm run_finished.txt
+fi
 gfortran f_plane.f90 -o f_plane.out -Ofast
 if [ $? -ne 0 ]; then
   echo "Error while compiling model."
@@ -172,10 +187,13 @@ echo '   beta plane bump'
 cd beta_plane_bump
 if ls output; then
   rm -r output
+fi
 if ls renders; then
   rm -r renders
+fi
 if ls run_finished.txt; then
   rm run_finished.txt
+fi
 gfortran beta_plane_bump.f90 -o beta_plane_bump.out -Ofast
 if [ $? -ne 0 ]; then
   echo "Error while compiling model."
@@ -204,10 +222,13 @@ fi
 cd no_slip
 if ls output; then
   rm -r output
+fi
 if ls renders; then
   rm -r renders
+fi
 if ls run_finished.txt; then
   rm run_finished.txt
+fi
 mkdir output
 mkdir renders
 ../beta_plane_gyre.out
@@ -220,10 +241,13 @@ echo '      free slip'
 cd ../free_slip
 if ls output; then
   rm -r output
+fi
 if ls renders; then
   rm -r renders
+fi
 if ls run_finished.txt; then
   rm run_finished.txt
+fi
 mkdir output
 mkdir renders
 ../beta_plane_gyre.out
