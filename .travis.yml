@@ -5,6 +5,8 @@ before_install:
   - cd $TRAVIS_BUILD_DIR/examples
 
 script:
-  - run_examples.sh
+  - pwd
+  - ls
+  - ./run_examples.sh
 
 after_success:
