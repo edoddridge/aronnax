@@ -971,6 +971,7 @@ program MIM
         enddo
     else if (.not. RedGrav) then ! using n-layer physics
         ! calculate bottom layer thickness tendency to balance layers above.
+        ! In the flat-bottomed case this will give the same answer
         dhdt_GM(:,:,layers) = -sum(dhdt_GM(:,:,:layers-1),3)
     endif
 
