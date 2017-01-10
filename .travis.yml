@@ -2,7 +2,7 @@ language: c
 sudo: required
 before_install: 
   - sudo apt-get install gfortran
-  - cd $TRAVIS_BUILD_DIR/project/examples
+  - cd $TRAVIS_BUILD_DIR/examples
 
 script:
   - run_examples.sh
