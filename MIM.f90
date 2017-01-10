@@ -89,7 +89,7 @@ program MIM
     double precision depth(0:nx+1,0:ny+1)
     double precision H0 ! default depth in no file specified
 !   Pressure solver variables
-    double precision a(5,nx,ny)
+    double precision a(5,0:nx+1,0:ny+1)
     double precision phi(0:nx+1,0:ny+1), phiold(0:nx+1,0:ny+1)
 !
 !     Bernoulli potential and relative vorticity 
@@ -422,9 +422,9 @@ program MIM
     enddo
 
 ! wrap fields around for periodic simulations
-    wrap_fields_3D(u,nx,ny,layers)
-    wrap_fields_3D(v,nx,ny,layers)
-    wrap_fields_3D(h,nx,ny,layers)
+    call wrap_fields_3D(u,nx,ny,layers)
+    call wrap_fields_3D(v,nx,ny,layers)
+    call wrap_fields_3D(h,nx,ny,layers)
 
 
 !--------------------------- negative 1 time step -----------------------------
@@ -498,9 +498,9 @@ program MIM
     enddo
 
 ! wrap fields around for periodic simulations
-    wrap_fields_3D(u,nx,ny,layers)
-    wrap_fields_3D(v,nx,ny,layers)
-    wrap_fields_3D(h,nx,ny,layers)
+    call wrap_fields_3D(u,nx,ny,layers)
+    call wrap_fields_3D(v,nx,ny,layers)
+    call wrap_fields_3D(h,nx,ny,layers)
 
 !    Now the model is ready to start.
 !    We have h, u, v at the zeroth time step, and the tendencies at two older time steps.
@@ -676,10 +676,10 @@ program MIM
     end do
 
 ! wrap fields around for periodic simulations
-    wrap_fields_3D(unew,nx,ny,layers)
-    wrap_fields_3D(vnew,nx,ny,layers)
-    wrap_fields_3D(hnew,nx,ny,layers)
-    wrap_fields_2D(etanew,nx,ny)
+    call wrap_fields_3D(unew,nx,ny,layers)
+    call wrap_fields_3D(vnew,nx,ny,layers)
+    call wrap_fields_3D(hnew,nx,ny,layers)
+    call wrap_fields_2D(etanew,nx,ny)
 
 
 !    Accumulate average fields
@@ -1265,7 +1265,7 @@ subroutine SOR_solver(a,etanew,etastar,freesurfFac,nx,ny,dt,rjac,eps,maxits,n)
     integer nx,ny, i,j, maxits, n
     double precision dt
     double precision rjac, eps
-    double precision rhs(nx,ny), 
+    double precision rhs(nx,ny) 
     double precision res(nx,ny)
     double precision norm, norm0, norm_old
     double precision relax_param
@@ -1539,10 +1539,10 @@ subroutine SOR_solver(a,etanew,etastar,freesurfFac,nx,ny,dt,rjac,eps,maxits,n)
         read(10) array
         close(10) 
         ! wrap array around for periodicity
-        array(0,:,) = array(nx,:,)
-        array(nx+1,:,) = array(1,:,)
-        array(:,0,) = array(:,ny,)
-        array(:,ny+1,) = array(:,1,)
+        array(0,:) = array(nx,:)
+        array(nx+1,:) = array(1,:)
+        array(:,0) = array(:,ny)
+        array(:,ny+1) = array(:,1)
     else
         array = default
     endif
@@ -1630,10 +1630,10 @@ subroutine SOR_solver(a,etanew,etastar,freesurfFac,nx,ny,dt,rjac,eps,maxits,n)
     integer nx,ny
 
     ! wrap array around for periodicity
-    array(0,:,) = array(nx,:,)
-    array(nx+1,:,) = array(1,:,)
-    array(:,0,) = array(:,ny,)
-    array(:,ny+1,) = array(:,1,)
+    array(0,:) = array(nx,:)
+    array(nx+1,:) = array(1,:)
+    array(:,0) = array(:,ny)
+    array(:,ny+1) = array(:,1)
 
     return
     end
