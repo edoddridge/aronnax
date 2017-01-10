@@ -788,6 +788,8 @@ program MIM
     1112      format( "run finished at time step ", 1i10.10)  
     CLOSE(UNIT=10)
 
+    print *, 'Execution ended normally' 
+
     stop 0
 
     END PROGRAM MIM
