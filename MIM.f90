@@ -788,7 +788,7 @@ program MIM
     1112      format( "run finished at time step ", 1i10.10)  
     CLOSE(UNIT=10)
 
-    stop
+    stop 0
 
     END PROGRAM MIM
 
@@ -1340,7 +1340,7 @@ subroutine SOR_solver(a,etanew,etastar,freesurfFac,nx,ny,dt,rjac,eps,maxits,n)
         ! print it on the screen
         print *, 'NaN detected' 
         ! Stop the code
-        STOP
+        STOP 'Nan detected'
         endif
       end do
       end do
