@@ -1,0 +1,9 @@
+language: c
+sudo: required
+before_install:
+  - sudo apt-get install gfortran
+
+script:
+  - examples/run_examples.sh
+
+after_success:
