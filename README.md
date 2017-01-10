@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/edoddridge/MIM.svg?branch=master)](https://travis-ci.org/edoddridge/MIM)
+
 # MIM
 Minimalist Isopycnal Model: a simplistic isopycnal model that can either be run as a reduced gravity model with n + 1/2 layers, or with n layers and variable bathymetry.
 
