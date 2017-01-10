@@ -51,26 +51,48 @@ echo 'running reduced gravity models'
 echo '   f plane example'
 # run f_plane example
 cd reduced_gravity/f_plane
-rm -r output
-rm -r renders
-rm run_finished.txt
+if ls output; then
+  rm -r output
+if ls renders; then
+  rm -r renders
+if ls run_finished.txt; then
+  rm run_finished.txt
 gfortran f_plane.f90 -o f_plane.out -Ofast
+if [ $? -ne 0 ]; then
+  echo "Error while compiling model."
+  exit
+fi
 mkdir output
 mkdir renders
 ./f_plane.out
+if [ $? -ne 0 ]; then
+  echo "Error while running model."
+  exit
+fi
 cd ../
 
 
 echo '   beta plane bump'
 # run beta_plane_bump example
 cd beta_plane_bump
-rm -r output
-rm -r renders
-rm run_finished.txt
+if ls output; then
+  rm -r output
+if ls renders; then
+  rm -r renders
+if ls run_finished.txt; then
+  rm run_finished.txt
 gfortran beta_plane_bump.f90 -o beta_plane_bump.out -Ofast
+if [ $? -ne 0 ]; then
+  echo "Error while compiling model."
+  exit
+fi
 mkdir output
 mkdir renders
 ./beta_plane_bump.out
+if [ $? -ne 0 ]; then
+  echo "Error while running model."
+  exit
+fi
 cd ../
 
 echo '   beta plane gyres'
@@ -79,23 +101,41 @@ echo '      no slip'
 # no slip
 cd beta_plane_gyre
 gfortran beta_plane_gyre.f90 -o beta_plane_gyre.out -Ofast
+if [ $? -ne 0 ]; then
+  echo "Error while compiling model."
+  exit
+fi
 
 cd no_slip
-rm -r output
-rm -r renders
-rm run_finished.txt
+if ls output; then
+  rm -r output
+if ls renders; then
+  rm -r renders
+if ls run_finished.txt; then
+  rm run_finished.txt
 mkdir output
 mkdir renders
 ../beta_plane_gyre.out
+if [ $? -ne 0 ]; then
+  echo "Error while running model."
+  exit
+fi
 
 echo '      free slip'
 cd ../free_slip
-rm -r output
-rm -r renders
-rm run_finished.txt
+if ls output; then
+  rm -r output
+if ls renders; then
+  rm -r renders
+if ls run_finished.txt; then
+  rm run_finished.txt
 mkdir output
 mkdir renders
 ../beta_plane_gyre.out
+if [ $? -ne 0 ]; then
+  echo "Error while running model."
+  exit
+fi
 
 cd ../../../
 
@@ -106,26 +146,48 @@ echo 'Run n layer examples'
 echo '   f plane example'
 # run f_plane example
 cd n_layer/f_plane
-rm -r output
-rm -r renders
-rm run_finished.txt
+if ls output; then
+  rm -r output
+if ls renders; then
+  rm -r renders
+if ls run_finished.txt; then
+  rm run_finished.txt
 gfortran f_plane.f90 -o f_plane.out -Ofast
+if [ $? -ne 0 ]; then
+  echo "Error while compiling model."
+  exit
+fi
 mkdir output
 mkdir renders
 ./f_plane.out
+if [ $? -ne 0 ]; then
+  echo "Error while running model."
+  exit
+fi
 cd ../
 
 
 echo '   beta plane bump'
 # run beta_plane_bump example
 cd beta_plane_bump
-rm -r output
-rm -r renders
-rm run_finished.txt
+if ls output; then
+  rm -r output
+if ls renders; then
+  rm -r renders
+if ls run_finished.txt; then
+  rm run_finished.txt
 gfortran beta_plane_bump.f90 -o beta_plane_bump.out -Ofast
+if [ $? -ne 0 ]; then
+  echo "Error while compiling model."
+  exit
+fi
 mkdir output
 mkdir renders
 ./beta_plane_bump.out
+if [ $? -ne 0 ]; then
+  echo "Error while running model."
+  exit
+fi
 cd ../
 
 echo '   beta plane gyres'
@@ -134,22 +196,40 @@ echo '      no slip'
 # no slip
 cd beta_plane_gyre
 gfortran beta_plane_gyre.f90 -o beta_plane_gyre.out -O1
+if [ $? -ne 0 ]; then
+  echo "Error while compiling model."
+  exit
+fi
 
 cd no_slip
-rm -r output
-rm -r renders
-rm run_finished.txt
+if ls output; then
+  rm -r output
+if ls renders; then
+  rm -r renders
+if ls run_finished.txt; then
+  rm run_finished.txt
 mkdir output
 mkdir renders
 ../beta_plane_gyre.out
+if [ $? -ne 0 ]; then
+  echo "Error while running model."
+  exit
+fi
 
 echo '      free slip'
 cd ../free_slip
-rm -r output
-rm -r renders
-rm run_finished.txt
+if ls output; then
+  rm -r output
+if ls renders; then
+  rm -r renders
+if ls run_finished.txt; then
+  rm run_finished.txt
 mkdir output
 mkdir renders
 ../beta_plane_gyre.out
+if [ $? -ne 0 ]; then
+  echo "Error while running model."
+  exit
+fi
 cd ../../
 echo 'Finished running examples'
