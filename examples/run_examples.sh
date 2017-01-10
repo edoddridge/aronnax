@@ -1,17 +1,16 @@
-
 # create code for each example ready to compile
 
 # reduced gravity configurations
 # f_plane.f90 - boring test with flat interface on f-plane
 sed '40s/.*/    parameter(nx=100,ny=100)/' ../MIM.f90 > f_plane.f90
-sed '43s/.*/    parameter(layers = 1)/' f_plane.f90 > examples/reduced_gravity/f_plane/f_plane.f90
+sed '43s/.*/    parameter(layers = 1)/' f_plane.f90 > ./reduced_gravity/f_plane/f_plane.f90
 
 rm f_plane.f90
 
 
 # beta_plane_bump - test with a bump on a beta-plane
 sed '40s/.*/    parameter(nx=100,ny=100)/' ../MIM.f90 > beta_plane_bump.f90
-sed '43s/.*/    parameter(layers = 1)/' beta_plane_bump.f90 > examples/reduced_gravity/beta_plane_bump/beta_plane_bump.f90
+sed '43s/.*/    parameter(layers = 1)/' beta_plane_bump.f90 > ./reduced_gravity/beta_plane_bump/beta_plane_bump.f90
 
 rm beta_plane_bump.f90
 
@@ -19,7 +18,7 @@ rm beta_plane_bump.f90
 
 # beta_plane_gyre - twin-gyre simulation on a beta-plane
 sed '40s/.*/    parameter(nx=100,ny=200)/' ../MIM.f90 > beta_plane_gyre.f90
-sed '43s/.*/    parameter(layers = 1)/' beta_plane_gyre.f90 > examples/reduced_gravity/beta_plane_gyre/beta_plane_gyre.f90
+sed '43s/.*/    parameter(layers = 1)/' beta_plane_gyre.f90 > ./reduced_gravity/beta_plane_gyre/beta_plane_gyre.f90
 
 rm beta_plane_gyre.f90
 
@@ -27,14 +26,14 @@ rm beta_plane_gyre.f90
 # n layer configurations
 # f_plane.f90 - boring test with flat interface on f-plane
 sed '40s/.*/    parameter(nx=100,ny=100)/' ../MIM.f90 > f_plane.f90
-sed '43s/.*/    parameter(layers = 2)/' f_plane.f90 > examples/n_layer/f_plane/f_plane.f90
+sed '43s/.*/    parameter(layers = 2)/' f_plane.f90 > ./n_layer/f_plane/f_plane.f90
 
 rm f_plane.f90
 
 
 # beta_plane_bump - test with a bump on a beta-plane
 sed '40s/.*/    parameter(nx=100,ny=100)/' ../MIM.f90 > beta_plane_bump.f90
-sed '43s/.*/    parameter(layers = 2)/' beta_plane_bump.f90 > examples/n_layer/beta_plane_bump/beta_plane_bump.f90
+sed '43s/.*/    parameter(layers = 2)/' beta_plane_bump.f90 > ./n_layer/beta_plane_bump/beta_plane_bump.f90
 
 rm beta_plane_bump.f90
 
@@ -42,7 +41,7 @@ rm beta_plane_bump.f90
 
 # beta_plane_gyre - twin-gyre simulation on a beta-plane
 sed '40s/.*/    parameter(nx=100,ny=200)/' ../MIM.f90 > beta_plane_gyre.f90
-sed '43s/.*/    parameter(layers = 2)/' beta_plane_gyre.f90 > examples/n_layer/beta_plane_gyre/beta_plane_gyre.f90
+sed '43s/.*/    parameter(layers = 2)/' beta_plane_gyre.f90 > ./n_layer/beta_plane_gyre/beta_plane_gyre.f90
 
 rm beta_plane_gyre.f90
 
