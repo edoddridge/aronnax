@@ -34,7 +34,6 @@ program MIM
 !
     implicit none
 
-!> number of x and y grid points
     integer nx,ny !< number of x and y grid points
     integer layers !< number of active layers in the model
     parameter(nx=300,ny=300)
@@ -42,49 +41,74 @@ program MIM
 !   number of active layers
     parameter(layers = 2)
 
-!     layer thickness (h), velocity components (u,v), free surface (eta)
-    double precision h(0:nx,0:ny,layers)
-    double precision u(nx,0:ny,layers),v(0:nx,ny,layers)
-    double precision eta(0:nx,0:ny)
-    double precision dhdt(0:nx,0:ny,layers)
-    double precision dudt(nx,0:ny,layers),dvdt(0:nx,ny,layers) 
-    double precision dudt_bt(nx,0:ny),dvdt_bt(0:nx,ny) 
-    double precision dhdtold(0:nx,0:ny,layers), dudtold(nx,0:ny,layers),dvdtold(0:nx,ny,layers)         
-    double precision dhdtveryold(0:nx,0:ny,layers), dudtveryold(nx,0:ny,layers),dvdtveryold(0:nx,ny,layers) 
-    double precision hnew(0:nx,0:ny,layers)
-    double precision unew(nx,0:ny,layers),vnew(0:nx,ny,layers)
-    double precision etastar(0:nx,0:ny) 
-    double precision etanew(0:nx,0:ny)
-! barotropic velocity components (for pressure solver)
-    double precision ub(nx,0:ny),vb(0:nx,ny)
+!   layer thickness (h), velocity components (u,v), free surface (eta)
+    double precision h(0:nx+1,0:ny+1,layers)
+    double precision dhdt(0:nx+1,0:ny+1,layers)
+    double precision dhdtold(0:nx+1,0:ny+1,layers)
+    double precision dhdtveryold(0:nx+1,0:ny+1,layers)
+    double precision hnew(0:nx+1,0:ny+1,layers)
+!   Arrays for initialisation
+    double precision hhalf(0:nx+1,0:ny+1,layers)
+!   for saving average fields
+    double precision hav(0:nx+1,0:ny+1,layers)
+
+    double precision u(0:nx+1,0:ny+1,layers)
+    double precision dudt(0:nx+1,0:ny+1,layers)
+    double precision dudtold(0:nx+1,0:ny+1,layers)
+    double precision dudtveryold(0:nx+1,0:ny+1,layers)
+    double precision unew(0:nx+1,0:ny+1,layers)
+    double precision dudt_bt(0:nx+1,0:ny+1)
+!   barotropic velocity components (for pressure solver)
+    double precision ub(0:nx+1,0:ny+1)
+!   Arrays for initialisation
+    double precision uhalf(0:nx+1,0:ny+1,layers)
+!   for saving average fields
+    double precision uav(0:nx+1,0:ny+1,layers)
+
+    double precision v(0:nx+1,0:ny+1,layers)
+    double precision dvdt(0:nx+1,0:ny+1,layers) 
+    double precision dvdtold(0:nx+1,0:ny+1,layers)         
+    double precision dvdtveryold(0:nx+1,0:ny+1,layers) 
+    double precision vnew(0:nx+1,0:ny+1,layers)
+    double precision dvdt_bt(nx+1,ny) 
+!   barotropic velocity components (for pressure solver)
+    double precision vb(nx+1,ny)
 !    Arrays for initialisation
-    double precision hhalf(0:nx, 0:ny,layers), uhalf(nx,0:ny,layers), vhalf(0:nx,ny,layers)
+    double precision vhalf(0:nx+1,0:ny+1,layers)
 !    for saving average fields
-    double precision hav(0:nx,0:ny,layers)
-    double precision uav(nx,0:ny,layers), vav(0:nx,ny,layers)
-    double precision etaav(0:nx,0:ny)
+    double precision vav(0:nx+1,0:ny+1,layers)
+
+    double precision eta(0:nx+1,0:ny+1)
+    double precision etastar(0:nx+1,0:ny+1) 
+    double precision etanew(0:nx+1,0:ny+1)
+!    for saving average fields
+    double precision etaav(0:nx+1,0:ny+1)
+
 !   bathymetry
     character(30) depthFile
-    double precision depth(0:nx,0:ny)
+    double precision depth(0:nx+1,0:ny+1)
     double precision H0 ! default depth in no file specified
 !   Pressure solver variables
-    double precision a(5,nx-1,ny-1)
-    double precision phi(0:nx,0:ny), phiold(0:nx,0:ny)
+    double precision a(5,nx,ny)
+    double precision phi(0:nx+1,0:ny+1), phiold(0:nx+1,0:ny+1)
 !
 !     Bernoulli potential and relative vorticity 
-    double precision b(nx,ny,layers),zeta(nx,ny,layers)
+    double precision b(0:nx+1,0:ny+1,layers)
+    double precision zeta(0:nx+1,0:ny+1,layers)
+
 
 !    Grid
     double precision dx, dy
-    double precision x_u(nx), y_u(0:ny)
-    double precision x_v(0:nx), y_v(ny)
-    double precision wetmask(0:nx,0:ny)
-    double precision hfacW(nx,0:ny)
-    double precision hfacE(nx,0:ny)
-    double precision hfacN(0:nx,ny)
-    double precision hfacS(0:nx,ny)
+    double precision x_u(0:nx), y_u(0:ny)
+    double precision x_v(0:nx), y_v(0:ny)
+    double precision wetmask(0:nx+1,0:ny+1)
+    double precision hfacW(0:nx+1,0:ny+1)
+    double precision hfacE(0:nx+1,0:ny+1)
+    double precision hfacN(0:nx+1,0:ny+1)
+    double precision hfacS(0:nx+1,0:ny+1)
 !    Coriolis parameter at u and v grid-points respectively
-    double precision fu(nx,0:ny),fv(0:nx,ny)
+    double precision fu(0:nx+1,0:ny+1)
+    double precision fv(0:nx+1,0:ny+1)
     character(30) fUfile, fVfile
     character(30) wetMaskFile
 
@@ -101,7 +125,7 @@ program MIM
     integer maxits
     double precision eps, rjac
     double precision freesurfFac
-    double precision h_norming(0:nx,0:ny)
+    double precision h_norming(0:nx+1,0:ny+1)
 
 !   model
     double precision hmean(layers)
@@ -118,8 +142,10 @@ program MIM
 
 
 !     Wind
-    double precision wind_x(nx, 0:ny),wind_y(0:nx, ny)
-    double precision base_wind_x(nx, 0:ny),base_wind_y(0:nx, ny)
+    double precision wind_x(0:nx+1,0:ny+1)
+    double precision wind_y(0:nx+1,0:ny+1)
+    double precision base_wind_x(0:nx+1,0:ny+1)
+    double precision base_wind_y(0:nx+1,0:ny+1)
     logical :: UseSinusoidWind
     logical :: UseStochWind
     logical :: DumpWind
@@ -129,12 +155,12 @@ program MIM
 
 
 !   Sponge
-    double precision spongeHTimeScale(0:nx,0:ny,layers)
-    double precision spongeUTimeScale(nx,0:ny,layers)
-    double precision spongeVTimeScale(0:nx,ny,layers)
-    double precision spongeH(0:nx,0:ny,layers)
-    double precision spongeU(nx,0:ny,layers)
-    double precision spongeV(0:nx,ny,layers)
+    double precision spongeHTimeScale(0:nx+1,0:ny+1,layers)
+    double precision spongeUTimeScale(0:nx+1,0:ny+1,layers)
+    double precision spongeVTimeScale(0:nx+1,0:ny+1,layers)
+    double precision spongeH(0:nx+1,0:ny+1,layers)
+    double precision spongeU(0:nx+1,0:ny+1,layers)
+    double precision spongeV(0:nx+1,0:ny+1,layers)
     character(30) spongeHTimeScaleFile
     character(30) spongeUTimeScaleFile
     character(30) spongeVTimeScaleFile
@@ -243,14 +269,10 @@ program MIM
         endif
     endif
 
-!   For now the model can't do periodic boundaries - would be a good addition.
+!   If nothing specified assume periodic boundaries
     if (wetMaskFile.eq.'') then
     ! 1 means ocean, 0 means land
         wetmask = 1d0 
-        wetmask(0,:) = 0d0
-        wetmask(:,0) = 0d0
-        wetmask(nx,:) = 0d0
-        wetmask(:,ny) = 0d0
     endif
 
     call calc_boundary_masks(wetmask,hfacW,hfacE,hfacS,hfacN,nx,ny)
@@ -276,24 +298,24 @@ program MIM
     if (.not. RedGrav) then
         !   initialise arrays for pressure solver 
         ! a =  derivatives of the depth field
-        do j=1,ny-1
-            do i=1,nx-1
+        do j=1,ny
+            do i=1,nx
                 a(1,i,j)=g_vec(1)*0.5*(depth(i+1,j)+depth(i,j))/dx**2
                 a(2,i,j)=g_vec(1)*0.5*(depth(i,j+1)+depth(i,j))/dy**2
                 a(3,i,j)=g_vec(1)*0.5*(depth(i,j)+depth(i-1,j))/dx**2
                 a(4,i,j)=g_vec(1)*0.5*(depth(i,j)+depth(i,j-1))/dy**2
             end do 
         end do
-        do j=1,ny-1
-            a(1,nx-1,j)=0.0
-            a(3,1,j)=0.0
+        do j=0,ny+1
+            a(1,nx+1,j)=0.0
+            a(3,0,j)=0.0
         end do
-        do i=1,nx-1
-            a(2,i,ny-1)=0.0
-            a(4,i,1)=0.0
+        do i=0,nx+1
+            a(2,i,ny+1)=0.0
+            a(4,i,0)=0.0
         end do
-        do j=1,ny-1
-            do i=1,nx-1
+        do j=0,ny+1
+            do i=0,nx+1
                 a(5,i,j)=-a(1,i,j)-a(2,i,j)-a(3,i,j)-a(4,i,j)
             end do 
         end do
@@ -303,11 +325,11 @@ program MIM
                 /(dx**2+dy**2)
         ! if peridodic boundary conditions are ever implemented, then pi -> 2*pi in this calculation 
 
-        ! Model currently only works with rigid lid (freesurfFac = 0)
-        if (freesurfFac .ne. 0) then
-            freesurfFac = 0d0
-            print *, 'free surface not working yet. freesurfFac set to 0.'
-        end if
+        ! ! Model currently only works with rigid lid (freesurfFac = 0)
+        ! if (freesurfFac .ne. 0) then
+        !     freesurfFac = 0d0
+        !     print *, 'free surface not working yet. freesurfFac set to 0.'
+        ! end if
         
         ! check that the supplied free surface anomaly and layer thicknesses are consistent
         h_norming = (freesurfFac*eta+depth)/sum(h,3)
@@ -395,10 +417,14 @@ program MIM
 !    wet and dry cells occurs. wetmask is 1 in wet cells,
 !    and zero in dry cells.
     do k = 1,layers
-        u(:,:,k) = u(:,:,k)*hfacW*wetmask(1:nx,:)
-        v(:,:,k) = v(:,:,k)*hfacS*wetmask(:,1:ny)
+        u(:,:,k) = u(:,:,k)*hfacW*wetmask(:,:)
+        v(:,:,k) = v(:,:,k)*hfacS*wetmask(:,:)
     enddo
 
+! wrap fields around for periodic simulations
+    wrap_fields_3D(u,nx,ny,layers)
+    wrap_fields_3D(v,nx,ny,layers)
+    wrap_fields_3D(h,nx,ny,layers)
 
 
 !--------------------------- negative 1 time step -----------------------------
@@ -467,10 +493,14 @@ program MIM
 !    wet and dry cells occurs. wetmask is 1 in wet cells,
 !    and zero in dry cells.
     do k = 1,layers
-        u(:,:,k) = u(:,:,k)*hfacW*wetmask(1:nx,:)
-        v(:,:,k) = v(:,:,k)*hfacS*wetmask(:,1:ny)
+        u(:,:,k) = u(:,:,k)*hfacW*wetmask(:,:)
+        v(:,:,k) = v(:,:,k)*hfacS*wetmask(:,:)
     enddo
 
+! wrap fields around for periodic simulations
+    wrap_fields_3D(u,nx,ny,layers)
+    wrap_fields_3D(v,nx,ny,layers)
+    wrap_fields_3D(h,nx,ny,layers)
 
 !    Now the model is ready to start.
 !    We have h, u, v at the zeroth time step, and the tendencies at two older time steps.
@@ -553,8 +583,8 @@ program MIM
 !    wet and dry cells occurs. wetmask is 1 in wet cells,
 !    and zero in dry cells.
     do k = 1,layers
-        unew(:,:,k) = unew(:,:,k)*hfacW*wetmask(1:nx,:)
-        vnew(:,:,k) = vnew(:,:,k)*hfacS*wetmask(:,1:ny)
+        unew(:,:,k) = unew(:,:,k)*hfacW*wetmask(:,:)
+        vnew(:,:,k) = vnew(:,:,k)*hfacS*wetmask(:,:)
     enddo
 
 
@@ -579,8 +609,8 @@ program MIM
         dudt_bt = 0d0
         dvdt_bt = 0d0
 
-        do i = 1,nx-1
-            do j = 1,ny-1
+        do i = 1,nx+1
+            do j = 0,ny+1
                 do k = 1,layers
                     dudt_bt(i,j) = -g_vec(1)*(etanew(i,j) - etanew(i-1,j))/(dx)
                     unew(i,j,k) = unew(i,j,k) + dt*dudt_bt(i,j) !23d0*dt*dudt_bt(i,j)/12d0
@@ -588,32 +618,14 @@ program MIM
             end do
         end do
 
-        do i = 1,nx-1
-            do j = 1,ny-1
+        do i = 0,nx+1
+            do j = 1,ny+1
                 do k = 1,layers
                     dvdt_bt(i,j) = -g_vec(1)*(etanew(i,j) - etanew(i,j-1))/(dy)
                     vnew(i,j,k) = vnew(i,j,k) + dt*dvdt_bt(i,j)! 23d0*dt*dvdt_bt(i,j)/12d0
                 end do
             end do
         end do
-
-        ! Add the barotropic tendency to the baroclinic tendency so that it gets used in subsequent time steps.
-        ! do i = 1,nx-1
-        !     do j = 1,ny-1
-        !         do k = 1,layers
-        !             dudt(i,j,k) = dudt(i,j,k) + dudt_bt(i,j)
-        !         end do
-        !     end do
-        ! end do
-
-        ! do i = 1,nx-1
-        !     do j = 1,ny-1
-        !         do k = 1,layers
-        !             dvdt(i,j,k) = dvdt(i,j,k) + dvdt_bt(i,j)
-        !         end do
-        !     end do
-        ! end do
-
 
 
         ! We now have correct velocities at the next time level, but the layer thicknesses were updated using the velocities without the barotropic pressure contribution. force consistency between layer thicknesses and ocean depth by scaling thicknesses to agree with free surface.
@@ -634,8 +646,8 @@ program MIM
     !    wet and dry cells occurs. wetmask is 1 in wet cells,
     !    and zero in dry cells.
         do k = 1,layers
-            unew(:,:,k) = unew(:,:,k)*hfacW*wetmask(1:nx,:)
-            vnew(:,:,k) = vnew(:,:,k)*hfacS*wetmask(:,1:ny)
+            unew(:,:,k) = unew(:,:,k)*hfacW*wetmask(:,:)
+            vnew(:,:,k) = vnew(:,:,k)*hfacS*wetmask(:,:)
         enddo
     endif
     
@@ -645,8 +657,8 @@ program MIM
     counter = 0
     
     do k = 1,layers
-      do j=1,ny-1
-        do i=1,nx-1    
+      do j=1,ny
+        do i=1,nx   
           if (hnew(i,j,k) .lt. hmin) then
         hnew(i,j,k) = hmin
         counter = counter + 1
@@ -662,6 +674,13 @@ program MIM
         end do
       end do
     end do
+
+! wrap fields around for periodic simulations
+    wrap_fields_3D(unew,nx,ny,layers)
+    wrap_fields_3D(vnew,nx,ny,layers)
+    wrap_fields_3D(hnew,nx,ny,layers)
+    wrap_fields_2D(etanew,nx,ny)
+
 
 !    Accumulate average fields
     if (avwrite .ne. 0) then
@@ -706,26 +725,26 @@ program MIM
         !output the data to a file
 
         open(unit = 10, status='replace',file='output/snap.h.'//num,form='unformatted')  
-        write(10) h
+        write(10) h(1:nx,1:ny,:)
         close(10) 
         open(unit = 10, status='replace',file='output/snap.u.'//num,form='unformatted')  
-        write(10) u
+        write(10) u(1:nx+1,1:ny,:)
         close(10) 
         open(unit = 10, status='replace',file='output/snap.v.'//num,form='unformatted')  
-        write(10) v
+        write(10) v(1:nx,1:ny+1,:)
         close(10) 
         if (.not. RedGrav) then
             open(unit = 10, status='replace',file='output/snap.eta.'//num,form='unformatted')  
-            write(10) eta
+            write(10) eta(1:nx,1:ny)
             close(10) 
         endif
 
         if (DumpWind .eqv. .TRUE.) then
             open(unit = 10, status='replace',file='output/wind_x.'//num,form='unformatted')  
-            write(10) wind_x
+            write(10) wind_x(1:nx+1,1:ny)
             close(10) 
             open(unit = 10, status='replace',file='output/wind_y.'//num,form='unformatted')  
-            write(10) wind_y
+            write(10) wind_y(1:nx,1:ny+1)
             close(10)
         endif 
 
@@ -750,17 +769,17 @@ program MIM
         !output the data to a file
 
         open(unit = 10, status='replace',file='output/av.h.'//num,form='unformatted')  
-        write(10) hav
+        write(10) hav(1:nx,1:ny,:)
         close(10) 
         open(unit = 10, status='replace',file='output/av.u.'//num,form='unformatted')  
-        write(10) uav
+        write(10) uav(1:nx+1,1:ny,:)
         close(10) 
         open(unit = 10, status='replace',file='output/av.v.'//num,form='unformatted')  
-        write(10) vav
+        write(10) vav(1:nx,1:ny+1,:)
         close(10) 
         if (.not. RedGrav) then
             open(unit = 10, status='replace',file='output/av.eta.'//num,form='unformatted')  
-            write(10) etaav
+            write(10) etaav(1:nx,1:ny)
             close(10) 
         endif
 
@@ -799,20 +818,25 @@ program MIM
 ! ----------------------------- Beginning of the subroutines --------------------
 !
 !-----------------------------------------------------------------------------------
-!> Evaluate the Bornoulli Potential for each grid box.
-!! B is evaluated at the tracer point, centre of the grid, for each grid box.
-!!
+!> Evaluate the Bornoulli Potential for n-layer physics.
+!! B is evaluated at the tracer point, for each grid box.
 !! 
 !!!
     subroutine evaluate_b_iso(b,h,u,v,nx,ny,layers,g_vec,depth)
 !    Evaluate baroclinic component of the Bernoulli Potential (u dot u + Montgomery potential) in the n-layer physics, at centre of grid box
-    integer nx,ny,layers
+
+    double precision, intent(out) :: b(0:nx+1,0:ny+1,layers) !< Bernoulli Potential
+    integer, intent(in) :: nx !< number of x grid points
+    integer, intent(in) :: ny !< number of y grid points
+    integer, intent(in) :: layers !< number of layers
     integer i,j,k
-    double precision depth(0:nx,0:ny)
+    double precision, intent(in) :: depth(0:nx+1,0:ny+1) !< total depth of fluid
     double precision z(0:nx,0:ny,layers)
-    double precision h(0:nx,0:ny,layers),u(nx,0:ny,layers),v(0:nx,ny,layers)
-    double precision b(nx,ny,layers), g_vec(layers)
-    double precision M(0:nx,0:ny,layers)
+    double precision, intent(in) :: h(0:nx+1,0:ny+1,layers) !< layer thicknesses
+    double precision, intent(in) :: u(0:nx+1,0:ny+1,layers) !< zonal velocities
+    double precision, intent(in) :: v(0:nx+1,0:ny+1,layers) !< meridional velocities
+    double precision, intent(in) :: g_vec(layers) !< reduced gravity at each interface
+    double precision M(0:nx+1,0:ny+1,layers)
 
 
 !   calculate layer interface locations
@@ -843,8 +867,8 @@ program MIM
 
 !   for the rest of the layers we get a baroclinic pressure contribution
     do k = 1,layers !move through the different layers of the model
-      do j=1,ny-1 !move through longitude
-        do i=1,nx-1 ! move through latitude
+      do j=1,ny !move through longitude
+        do i=1,nx ! move through latitude
           b(i,j,k)= M(i,j,k) + (u(i,j,k)**2+u(i+1,j,k)**2+v(i,j,k)**2+v(i,j+1,k)**2)/4.0d0
           ! Add the (u^2 + v^2)/2 term to the Montgomery Potential
         end do 
@@ -859,15 +883,18 @@ program MIM
 !    Evaluate Bernoulli Potential at centre of grid box
     integer nx,ny,layers
     integer i,j,k
-    double precision h(0:nx,0:ny,layers),u(nx,0:ny,layers),v(0:nx,ny,layers)
-    double precision b(nx,ny,layers), gr(layers)
+    double precision h(0:nx+1,0:ny+1,layers)
+    double precision u(0:nx+1,0:ny+1,layers)
+    double precision v(0:nx+1,0:ny+1,layers)
+    double precision b(0:nx+1,0:ny+1,layers)
+    double precision gr(layers)
     double precision h_temp, b_proto
 
     b = 0d0
 
     do k = 1,layers !move through the different layers of the model
-      do j=1,ny-1 !move through longitude
-        do i=1,nx-1 ! move through latitude
+      do j=1,ny !move through longitude
+        do i=1,nx ! move through latitude
           ! The following loops are to get the pressure term in the Bernoulli Potential
           b_proto = 0d0
           do l = k,layers
@@ -893,15 +920,17 @@ program MIM
     subroutine evaluate_zeta(zeta,u,v,nx,ny,layers,dx,dy)
     integer nx,ny,layers
     integer i,j,k
-    double precision h(0:nx,0:ny,layers),u(nx,0:ny,layers),v(0:nx,ny,layers)
-    double precision zeta(nx,ny,layers)
+    double precision h(0:nx,0:ny,layers)
+    double precision u(0:nx+1,0:ny+1,layers)
+    double precision v(0:nx+1,0:ny+1,layers)
+    double precision zeta(0:nx+1,0:ny+1,layers)
     double precision dx, dy
 
     zeta = 0d0
     
     do k = 1,layers
-      do j=1,ny
-        do i=1,nx
+      do j=1,ny+1
+        do i=1,nx+1
           zeta(i,j,k)=(v(i,j,k)-v(i-1,j,k))/dx-(u(i,j,k)-u(i,j-1,k))/dy
         end do 
       end do 
@@ -917,12 +946,14 @@ program MIM
 !    dhdt is evaluated at the centre of the grid box
     integer nx,ny,layers
     integer i,j,k
-    double precision dhdt(0:nx,0:ny,layers), h(0:nx,0:ny,layers)
-    double precision u(nx,0:ny,layers),v(0:nx,ny,layers)
-    double precision dhdt_GM(0:nx,0:ny,layers) ! thickness tendency due to thickness difussion (equivalent to Gent McWilliams in a z coordinate model)
-    double precision spongeTimeScale(0:nx,0:ny,layers)
-    double precision spongeH(0:nx,0:ny,layers)
-    double precision wetmask(0:nx,0:ny)
+    double precision dhdt(0:nx+1,0:ny+1,layers)
+    double precision h(0:nx+1,0:ny+1,layers)
+    double precision u(0:nx+1,0:ny+1,layers)
+    double precision v(0:nx+1,0:ny+1,layers)
+    double precision dhdt_GM(0:nx+1,0:ny+1,layers) ! thickness tendency due to thickness difussion (equivalent to Gent McWilliams in a z coordinate model)
+    double precision spongeTimeScale(0:nx+1,0:ny+1,layers)
+    double precision spongeH(0:nx+1,0:ny+1,layers)
+    double precision wetmask(0:nx+1,0:ny+1)
     double precision dx, dy
     double precision ah(layers)
     logical :: RedGrav
@@ -935,8 +966,8 @@ program MIM
     ! loop through all layers except lowest and calculate 
     ! thickness tendency due to diffusive mass fluxes
     do k = 1,layers-1
-      do j=1,ny-1
-        do i=1,nx-1
+      do j=1,ny
+        do i=1,nx
           dhdt_GM(i,j,k)=ah(k)*(h(i+1,j,k)*wetmask(i+1,j) + &
                             (1d0 - wetmask(i+1,j))*h(i,j,k) & ! reflect around boundary
                         + h(i-1,j,k)*wetmask(i-1,j) + &
@@ -956,8 +987,8 @@ program MIM
     ! this is unconstrained and calculated as above. If using n-layer 
     ! physics it is constrained to balance the layers above it.
     if (RedGrav) then
-        do j=1,ny-1
-          do i=1,nx-1
+        do j=1,ny
+          do i=1,nx
             dhdt_GM(i,j,layers)=ah(layers)*(h(i+1,j,layers)*wetmask(i+1,j) + &
                             (1d0 - wetmask(i+1,j))*h(i,j,layers) & ! boundary
                         + h(i-1,j,layers)*wetmask(i-1,j) + &
@@ -984,8 +1015,8 @@ program MIM
     dhdt = 0d0
 
     do k = 1,layers
-      do j=1,ny-1
-        do i=1,nx-1
+      do j=1,ny
+        do i=1,nx
           dhdt(i,j,k)= dhdt_GM(i,j,k) - & ! horizontal thickness diffusion
         ((h(i,j,k)+h(i+1,j,k))*u(i+1,j,k) - (h(i-1,j,k)+h(i,j,k))*u(i,j,k))/(dx*2d0) - & !d(hu)/dx
         ((h(i,j,k)+h(i,j+1,k))*v(i,j+1,k) - (h(i,j-1,k)+h(i,j,k))*v(i,j,k))/(dy*2d0) + & !d(hv)/dy
@@ -1011,24 +1042,27 @@ program MIM
 !     the same place as u(i,j)
     integer nx,ny,layers
     integer i,j,k
-    double precision dudt(nx,0:ny,layers), h(0:nx,0:ny,layers)
-    double precision u(nx,0:ny,layers),v(0:nx,ny,layers)
-    double precision fu(nx,0:ny), zeta(nx,ny,layers)
-    double precision b(nx,ny,layers)
-    double precision spongeTimeScale(nx,0:ny,layers)
-    double precision spongeU(nx,0:ny,layers)
-    double precision wind_x(nx, 0:ny)
+    double precision dudt(0:nx+1,0:ny+1,layers)
+    double precision h(0:nx+1,0:ny+1,layers)
+    double precision u(0:nx+1,0:ny+1,layers)
+    double precision v(0:nx+1,0:ny+1,layers)
+    double precision fu(0:nx+1,0:ny+1)
+    double precision zeta(0:nx+1,0:ny+1,layers)
+    double precision b(0:nx+1,0:ny+1,layers)
+    double precision spongeTimeScale(0:nx+1,0:ny+1,layers)
+    double precision spongeU(0:nx+1,0:ny+1,layers)
+    double precision wind_x(0:nx+1,0:ny+1)
     double precision dx, dy
     double precision au, ar, rho0, slip, botDrag
-    double precision hfacN(0:nx,ny)
-    double precision hfacS(0:nx,ny)
+    double precision hfacN(0:nx+1,0:ny+1)
+    double precision hfacS(0:nx+1,0:ny+1)
     logical :: RedGrav
 
     dudt = 0d0
 
     do k = 1,layers
-      do i=2,nx-1  
-        do j=1,ny-1
+      do i=1,nx  
+        do j=1,ny
             dudt(i,j,k)= au*(u(i+1,j,k)+u(i-1,j,k)-2.0d0*u(i,j,k))/ & 
             (dx*dx)  + &   !    x-component
             au*(u(i,j+1,k)+u(i,j-1,k)-2.0d0*u(i,j,k)+ &
@@ -1073,23 +1107,28 @@ program MIM
 !     the same place as v(i,j)
     integer nx,ny,layers
     integer i,j,k
-    double precision dvdt(0:nx,ny,layers), h(0:nx,0:ny,layers),u(nx,0:ny,layers),v(0:nx,ny,layers)
-    double precision fv(0:nx,ny), zeta(nx,ny,layers), b(nx,ny,layers)
-    double precision spongeTimeScale(0:nx,ny,layers)
-    double precision spongeV(0:nx,ny,layers)
-    double precision wind_y(0:nx, ny)
+    double precision dvdt(0:nx+1,0:ny+1,layers)
+    double precision h(0:nx+1,0:ny+1,layers)
+    double precision u(0:nx+1,0:ny+1,layers)
+    double precision v(0:nx+1,0:ny+1,layers)
+    double precision fv(0:nx+1,0:ny+1)
+    double precision zeta(0:nx+1,0:ny+1,layers)
+    double precision b(0:nx+1,0:ny+1,layers)
+    double precision spongeTimeScale(0:nx+1,0:ny+1,layers)
+    double precision spongeV(0:nx+1,0:ny+1,layers)
+    double precision wind_y(0:nx+1,0:ny+1)
     double precision dx, dy
     double precision au, ar, slip, botDrag
     double precision rho0
-    double precision hfacW(nx,0:ny)
-    double precision hfacE(nx,0:ny)
+    double precision hfacW(0:nx+1,0:ny+1)
+    double precision hfacE(0:nx+1,0:ny+1)
     logical :: RedGrav
 
     dvdt = 0d0
     
     do k = 1,layers
-      do j=2,ny-1
-        do i=1,nx-1
+      do j=1,ny
+        do i=1,nx
             dvdt(i,j,k)=au*(v(i+1,j,k)+v(i-1,j,k)-2.0d0*v(i,j,k) + & 
             ! boundary conditions
             (1.0d0 - 2.0d0*slip)*(1.0d0 - hfacW(i,j))*v(i,j,k) + &
@@ -1131,11 +1170,12 @@ program MIM
 
     integer nx,ny,layers
     integer i,j,k
-    double precision h(0:nx,0:ny,layers)
-    double precision h_temp(0:nx,0:ny,layers)
-    double precision eta(0:nx,0:ny)
+    double precision h(0:nx+1,0:ny+1,layers)
+    double precision h_temp(0:nx+1,0:ny+1,layers)
+    double precision eta(0:nx+1,0:ny+1)
     double precision freesurfFac
-    double precision u(nx,0:ny,layers),ub(nx,0:ny)
+    double precision u(0:nx+1,0:ny+1,layers)
+    double precision ub(0:nx+1,0:ny+1)
 
     ub = 0d0
 
@@ -1143,8 +1183,8 @@ program MIM
     ! add free surface elevation to the upper layer
     h_temp(:,:,1) = h(:,:,1) + eta*freesurfFac
     
-    do i = 1,nx-1
-        do j = 1,ny-1
+    do i = 1,nx
+        do j = 1,ny
             do k = 1,layers
                 ub(i,j) = ub(i,j) + u(i,j,k)*(h_temp(i,j,k)+h_temp(i-1,j,k))/2d0
             end do
@@ -1162,11 +1202,12 @@ program MIM
 
     integer nx,ny,layers
     integer i,j,k
-    double precision h(0:nx,0:ny,layers)
-    double precision h_temp(0:nx,0:ny,layers)
-    double precision eta(0:nx,0:ny)
+    double precision h(0:nx+1,0:ny+1,layers)
+    double precision h_temp(0:nx+1,0:ny+1,layers)
+    double precision eta(0:nx+1,0:ny+1)
     double precision freesurfFac
-    double precision v(0:nx,ny,layers),vb(0:nx,ny)
+    double precision v(0:nx+1,0:ny+1,layers)
+    double precision vb(0:nx+1,0:ny+1)
 
     vb = 0d0
 
@@ -1174,8 +1215,8 @@ program MIM
     ! add free surface elevation to the upper layer
     h_temp(:,:,1) = h(:,:,1) + eta*freesurfFac
     
-    do i = 1,nx-1
-        do j = 1,ny-1
+    do i = 1,nx
+        do j = 1,ny
             do k = 1,layers
                 vb(i,j) = vb(i,j) + v(i,j,k)*(h_temp(i,j,k)+h_temp(i,j-1,k))/2d0
             end do
@@ -1194,15 +1235,16 @@ program MIM
     subroutine calc_eta_star(ub,vb,eta,etastar,freesurfFac,nx,ny,dx,dy,dt)
     integer nx,ny,layers
     integer i,j,k
-    double precision eta(0:nx,0:ny)
-    double precision etastar(0:nx,0:ny)
-    double precision ub(nx,0:ny), vb(0:nx,ny)
+    double precision eta(0:nx+1,0:ny+1)
+    double precision etastar(0:nx+1,0:ny+1)
+    double precision ub(0:nx+1,0:ny+1)
+    double precision vb(0:nx+1,0:ny+1)
     double precision freesurfFac, dx,dy,dt
 
     etastar = 0d0
 
-    do i = 1,nx-1
-        do j = 1,ny-1
+    do i = 1,nx
+        do j = 1,ny
             etastar(i,j) = freesurfFac*eta(i,j) - &
                     dt*((ub(i+1,j) - ub(i,j))/dx + (vb(i,j+1) - vb(i,j))/dy)
         end do
@@ -1217,17 +1259,19 @@ program MIM
 
 subroutine SOR_solver(a,etanew,etastar,freesurfFac,nx,ny,dt,rjac,eps,maxits,n)
     double precision a(5,nx-1,ny-1)
-    double precision etanew(0:nx,0:ny), etastar(0:nx,0:ny)
+    double precision etanew(0:nx+1,0:ny+1)
+    double precision etastar(0:nx+1,0:ny+1)
     double precision freesurfFac
     integer nx,ny, i,j, maxits, n
     double precision dt
     double precision rjac, eps
-    double precision rhs(nx-1,ny-1), res(nx-1,ny-1)
+    double precision rhs(nx,ny), 
+    double precision res(nx,ny)
     double precision norm, norm0, norm_old
     double precision relax_param
     character(30) Format
 
-    rhs = -etastar(1:nx-1,1:ny-1)/dt**2
+    rhs = -etastar(1:nx,1:ny)/dt**2
     ! first guess for etanew
     etanew = etastar
 
@@ -1236,8 +1280,8 @@ subroutine SOR_solver(a,etanew,etastar,freesurfFac,nx,ny,dt,rjac,eps,maxits,n)
 
 ! calculate initial residual, so that we can stop the loop when the current residual = norm0*eps
     norm0 = 0.d0
-    do i = 1,nx-1
-        do j = 1,ny-1
+    do i = 1,nx
+        do j = 1,ny
           res(i,j) = a(1,i,j)*etanew(i+1,j) &
                    + a(2,i,j)*etanew(i,j+1) &
                    + a(3,i,j)*etanew(i-1,j) &
@@ -1256,8 +1300,8 @@ subroutine SOR_solver(a,etanew,etastar,freesurfFac,nx,ny,dt,rjac,eps,maxits,n)
     do nit = 1,maxits
         !norm_old = norm
         norm=0.d0
-        do i=1,nx-1
-            do j=1,ny-1
+        do i=1,nx
+            do j=1,ny
               res(i,j) = a(1,i,j)*etanew(i+1,j) &
                        + a(2,i,j)*etanew(i,j+1) &
                        + a(3,i,j)*etanew(i-1,j) &
@@ -1297,11 +1341,13 @@ subroutine SOR_solver(a,etanew,etastar,freesurfFac,nx,ny,dt,rjac,eps,maxits,n)
     subroutine write_data(data,nx,ny,filename)
 
 !    A subroutine to output data as a 2D array for plotting and things
+!
+!   Deprecated - standard fortran output is used instead
 
     implicit none
 
     integer nx,ny
-    double precision data(0:nx,0:ny)
+    double precision data(0:nx+1,0:ny+1)
     character (len=*) filename
     integer i,j
 
@@ -1312,7 +1358,7 @@ subroutine SOR_solver(a,etanew,etastar,freesurfFac,nx,ny,dt,rjac,eps,maxits,n)
         FORM="formatted")
 
     do j=1,ny-1
-        write(13,1000) (data(i,j),i=1,nx-1)
+        write(13,1000) (data(i,j),i=1,nx)
 1000         format( 400f32.16)  
     end do  
     CLOSE(UNIT=13)
@@ -1326,12 +1372,12 @@ subroutine SOR_solver(a,etanew,etastar,freesurfFac,nx,ny,dt,rjac,eps,maxits,n)
 !     To stop the program if it detects at NaN in the variable being checked
 
     integer nx, ny,layers,n
-    double precision data(0:nx, 0:ny,layers)
+    double precision data(0:nx+1, 0:ny+1,layers)
 
 
       do k=1,layers
-      do j=1,ny-1
-      do i=1,nx-1
+      do j=1,ny
+      do i=1,nx
         if (data(i,j,k).ne.data(i,j,k))  then
         ! write a file saying so
         OPEN(UNIT=10, FILE='NaN detected.txt', ACTION="write", STATUS="replace", &
@@ -1361,90 +1407,93 @@ subroutine SOR_solver(a,etanew,etastar,freesurfFac,nx,ny,dt,rjac,eps,maxits,n)
     subroutine calc_boundary_masks(wetmask,hfacW,hfacE,hfacS,hfacN,nx,ny)
 
     implicit none
-    integer nx, ny
-    double precision wetmask(0:nx,0:ny)
-    double precision temp(0:nx,0:ny)
-    double precision hfacW(nx,0:ny)
-    double precision hfacE(nx,0:ny)
-    double precision hfacN(0:nx,ny)
-    double precision hfacS(0:nx,ny)
+    integer nx !< number of grid points in x direction 
+    integer ny !< number of grid points in y direction
+    double precision wetmask(0:nx+1,0:ny+1)
+    double precision temp(0:nx+1,0:ny+1)
+    double precision hfacW(0:nx+1,0:ny+1)
+    double precision hfacE(0:nx+1,0:ny+1)
+    double precision hfacN(0:nx+1,0:ny+1)
+    double precision hfacS(0:nx+1,0:ny+1)
     integer i,j
 
 
     hfacW = 1d0
-! and now for all  western cells
-    hfacW(1,:) = 0d0
     
     temp = 0.0
-    do j = 0,ny
-      do i = 1,nx
+    do j = 0,ny+1
+      do i = 1,nx+1
         temp(i,j) = wetmask(i-1,j)- wetmask(i,j)
       enddo
     enddo
-        
-    do j = 0,ny
-      do i = 1,nx
+
+    do j = 0,ny+1
+      do i = 1,nx+1
         if (temp(i,j) .ne. 0.0) then
           hfacW(i,j) = 0d0
         endif
       enddo
     enddo
+! and now for all  western cells
+    hfacW(0,:) = hfacW(nx,:)
 
-    hfacE = 1
-! and now for all  eastern cells
-    hfacE(nx,:) = 0
+
+    hfacE = 1d0
     
     temp = 0.0
-    do j = 0,ny
-      do i = 1,nx-1
+    do j = 0,ny+1
+      do i = 0,nx
         temp(i,j) = wetmask(i,j)- wetmask(i+1,j)
       enddo
     enddo
         
-    do j = 0,ny
-      do i = 1,nx
+    do j = 0,ny+1
+      do i = 0,nx
         if (temp(i,j) .ne. 0.0) then
           hfacE(i,j) = 0d0
         endif
       enddo
     enddo
+! and now for all  eastern cells
+    hfacE(nx+1,:) = hfacE(1,:)
 
 
     hfacS = 1
-!   all southern cells
-    hfacS(:,1) = 0
+
     temp = 0.0
-    do j = 1,ny
-      do i = 0,nx
+    do j = 1,ny+1
+      do i = 0,nx+1
         temp(i,j) = wetmask(i,j-1)- wetmask(i,j)
       enddo
     enddo
     
-    do j = 1,ny
-      do i = 0,nx
+    do j = 1,ny+1
+      do i = 0,nx+1
         if (temp(i,j) .ne. 0.0) then
           hfacS(i,j) = 0d0
         endif
       enddo
     enddo
+!   all southern cells
+    hfacS(:,0) = hfacS(:,ny)
 
     hfacN = 1
-!   all northern cells
-    hfacN(:,ny) = 0
     temp = 0.0
-    do j = 1,ny-1
-      do i = 0,nx
+    do j = 0,ny
+      do i = 0,nx+1
         temp(i,j) = wetmask(i,j)- wetmask(i,j+1)
       enddo
     enddo
     
-    do j = 1,ny
-      do i = 0,nx
+    do j = 0,ny
+      do i = 0,nx+1
         if (temp(i,j) .ne. 0.0) then
           hfacN(i,j) = 0d0
         endif
       enddo
     enddo
+!   all northern cells
+    hfacN(:,ny+1) = hfacN(:,1)
 
     return
     end
@@ -1457,12 +1506,17 @@ subroutine SOR_solver(a,etanew,etastar,freesurfFac,nx,ny,dt,rjac,eps,maxits,n)
     implicit none
     character(30) name
     integer nx, ny, layers, k
-    double precision array(0:nx,0:ny,layers), default(layers)
+    double precision array(0:nx+1,0:ny+1,layers), default(layers)
 
     if (name.ne.'') then
         open(unit = 10, form='unformatted', file=name)  
-        read(10) array
+        read(10) array(1:nx,1:ny,layers)
         close(10) 
+        ! wrap array around for periodicity
+        array(0,:,:) = array(nx,:,:)
+        array(nx+1,:,:) = array(1,:,:)
+        array(:,0,:) = array(:,ny,:)
+        array(:,ny+1,:) = array(:,1,:)
     else
       do k = 1,layers
         array(:,:,k) = default(k)
@@ -1478,12 +1532,17 @@ subroutine SOR_solver(a,etanew,etastar,freesurfFac,nx,ny,dt,rjac,eps,maxits,n)
     implicit none
     character(30) name
     integer nx, ny
-    double precision array(0:nx,0:ny), default
+    double precision array(0:nx+1,0:ny+1), default
 
     if (name.ne.'') then
         open(unit = 10, form='unformatted', file=name)  
         read(10) array
         close(10) 
+        ! wrap array around for periodicity
+        array(0,:,) = array(nx,:,)
+        array(nx+1,:,) = array(1,:,)
+        array(:,0,) = array(:,ny,)
+        array(:,ny+1,) = array(:,1,)
     else
         array = default
     endif
@@ -1498,12 +1557,17 @@ subroutine SOR_solver(a,etanew,etastar,freesurfFac,nx,ny,dt,rjac,eps,maxits,n)
     implicit none
     character(30) name
     integer nx, ny,layers
-    double precision array(nx,0:ny,layers), default
+    double precision array(0:nx+1,0:ny+1,layers), default
 
     if (name.ne.'') then
         open(unit = 10, form='unformatted', file=name)  
         read(10) array
-        close(10) 
+        close(10)
+        ! wrap array around for periodicity
+        array(0,:,:) = array(nx,:,:)
+        array(nx+1,:,:) = array(1,:,:)
+        array(:,0,:) = array(:,ny,:)
+        array(:,ny+1,:) = array(:,1,:)
     else
         array = default
     endif
@@ -1517,15 +1581,59 @@ subroutine SOR_solver(a,etanew,etastar,freesurfFac,nx,ny,dt,rjac,eps,maxits,n)
     implicit none
     character(30) name
     integer nx, ny, layers
-    double precision array(0:nx,ny,layers), default
+    double precision array(0:nx+1,0:ny+1,layers), default
 
     if (name.ne.'') then
         open(unit = 10, form='unformatted', file=name)  
         read(10) array
-        close(10) 
+        close(10)
+        ! wrap array around for periodicity
+        array(0,:,:) = array(nx,:,:)
+        array(nx+1,:,:) = array(1,:,:)
+        array(:,0,:) = array(:,ny,:)
+        array(:,ny+1,:) = array(:,1,:)
     else
         array = default
     endif
+
+    return
+    end
+
+
+!-----------------------------------------------------------------
+!> wrap 3D fields around for periodic boundary conditions
+
+    subroutine wrap_fields_3D(array,nx,ny,layers)
+    
+    implicit none
+
+    double precision array(0:nx+1,0:ny+1,layers)
+    integer nx,ny,layers
+
+    ! wrap array around for periodicity
+    array(0,:,:) = array(nx,:,:)
+    array(nx+1,:,:) = array(1,:,:)
+    array(:,0,:) = array(:,ny,:)
+    array(:,ny+1,:) = array(:,1,:)
+
+    return
+    end
+
+!-----------------------------------------------------------------
+!> wrap 2D fields around for periodic boundary conditions
+
+    subroutine wrap_fields_2D(array,nx,ny)
+    
+    implicit none
+
+    double precision array(0:nx+1,0:ny+1)
+    integer nx,ny
+
+    ! wrap array around for periodicity
+    array(0,:,) = array(nx,:,)
+    array(nx+1,:,) = array(1,:,)
+    array(:,0,) = array(:,ny,)
+    array(:,ny+1,) = array(:,1,)
 
     return
     end
