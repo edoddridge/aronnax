@@ -34,118 +34,115 @@ program MIM
 !
     implicit none
 
-    integer nx,ny !< number of x and y grid points
-    integer layers !< number of active layers in the model
-    parameter(nx=300,ny=300)
-
-!   number of active layers
-    parameter(layers = 2)
+    integer, parameter :: nx = 300 !< number of x grid points
+    integer, parameter :: ny = 300 !< number of y grid points
+    integer, parameter :: layers = 2 !< number of active layers in the model
 
 !   layer thickness (h), velocity components (u,v), free surface (eta)
-    double precision h(0:nx+1,0:ny+1,layers)
-    double precision dhdt(0:nx+1,0:ny+1,layers)
-    double precision dhdtold(0:nx+1,0:ny+1,layers)
-    double precision dhdtveryold(0:nx+1,0:ny+1,layers)
-    double precision hnew(0:nx+1,0:ny+1,layers)
+    double precision :: h(0:nx+1,0:ny+1,layers)
+    double precision :: dhdt(0:nx+1,0:ny+1,layers)
+    double precision :: dhdtold(0:nx+1,0:ny+1,layers)
+    double precision :: dhdtveryold(0:nx+1,0:ny+1,layers)
+    double precision :: hnew(0:nx+1,0:ny+1,layers)
 !   Arrays for initialisation
-    double precision hhalf(0:nx+1,0:ny+1,layers)
+    double precision :: hhalf(0:nx+1,0:ny+1,layers)
 !   for saving average fields
-    double precision hav(0:nx+1,0:ny+1,layers)
+    double precision :: hav(0:nx+1,0:ny+1,layers)
 
-    double precision u(0:nx+1,0:ny+1,layers)
-    double precision dudt(0:nx+1,0:ny+1,layers)
-    double precision dudtold(0:nx+1,0:ny+1,layers)
-    double precision dudtveryold(0:nx+1,0:ny+1,layers)
-    double precision unew(0:nx+1,0:ny+1,layers)
-    double precision dudt_bt(0:nx+1,0:ny+1)
+    double precision :: u(0:nx+1,0:ny+1,layers)
+    double precision :: dudt(0:nx+1,0:ny+1,layers)
+    double precision :: dudtold(0:nx+1,0:ny+1,layers)
+    double precision :: dudtveryold(0:nx+1,0:ny+1,layers)
+    double precision :: unew(0:nx+1,0:ny+1,layers)
+    double precision :: dudt_bt(0:nx+1,0:ny+1)
 !   barotropic velocity components (for pressure solver)
-    double precision ub(0:nx+1,0:ny+1)
+    double precision :: ub(0:nx+1,0:ny+1)
 !   Arrays for initialisation
-    double precision uhalf(0:nx+1,0:ny+1,layers)
+    double precision :: uhalf(0:nx+1,0:ny+1,layers)
 !   for saving average fields
-    double precision uav(0:nx+1,0:ny+1,layers)
+    double precision :: uav(0:nx+1,0:ny+1,layers)
 
-    double precision v(0:nx+1,0:ny+1,layers)
-    double precision dvdt(0:nx+1,0:ny+1,layers) 
-    double precision dvdtold(0:nx+1,0:ny+1,layers)         
-    double precision dvdtveryold(0:nx+1,0:ny+1,layers) 
-    double precision vnew(0:nx+1,0:ny+1,layers)
-    double precision dvdt_bt(nx+1,ny) 
+    double precision :: v(0:nx+1,0:ny+1,layers)
+    double precision :: dvdt(0:nx+1,0:ny+1,layers) 
+    double precision :: dvdtold(0:nx+1,0:ny+1,layers)         
+    double precision :: dvdtveryold(0:nx+1,0:ny+1,layers) 
+    double precision :: vnew(0:nx+1,0:ny+1,layers)
+    double precision :: dvdt_bt(nx+1,ny) 
 !   barotropic velocity components (for pressure solver)
-    double precision vb(nx+1,ny)
+    double precision :: vb(nx+1,ny)
 !    Arrays for initialisation
-    double precision vhalf(0:nx+1,0:ny+1,layers)
+    double precision :: vhalf(0:nx+1,0:ny+1,layers)
 !    for saving average fields
-    double precision vav(0:nx+1,0:ny+1,layers)
+    double precision :: vav(0:nx+1,0:ny+1,layers)
 
-    double precision eta(0:nx+1,0:ny+1)
-    double precision etastar(0:nx+1,0:ny+1) 
-    double precision etanew(0:nx+1,0:ny+1)
+    double precision :: eta(0:nx+1,0:ny+1)
+    double precision :: etastar(0:nx+1,0:ny+1) 
+    double precision :: etanew(0:nx+1,0:ny+1)
 !    for saving average fields
-    double precision etaav(0:nx+1,0:ny+1)
+    double precision :: etaav(0:nx+1,0:ny+1)
 
 !   bathymetry
-    character(30) depthFile
-    double precision depth(0:nx+1,0:ny+1)
-    double precision H0 ! default depth in no file specified
+    character(30) :: depthFile
+    double precision :: depth(0:nx+1,0:ny+1)
+    double precision :: H0 ! default depth in no file specified
 !   Pressure solver variables
-    double precision a(5,0:nx+1,0:ny+1)
-    double precision phi(0:nx+1,0:ny+1), phiold(0:nx+1,0:ny+1)
+    double precision :: a(5,0:nx+1,0:ny+1)
+    double precision :: phi(0:nx+1,0:ny+1), phiold(0:nx+1,0:ny+1)
 !
 !     Bernoulli potential and relative vorticity 
-    double precision b(0:nx+1,0:ny+1,layers)
-    double precision zeta(0:nx+1,0:ny+1,layers)
+    double precision :: b(0:nx+1,0:ny+1,layers)
+    double precision :: zeta(0:nx+1,0:ny+1,layers)
 
 
 !    Grid
-    double precision dx, dy
-    double precision x_u(0:nx), y_u(0:ny)
-    double precision x_v(0:nx), y_v(0:ny)
-    double precision wetmask(0:nx+1,0:ny+1)
-    double precision hfacW(0:nx+1,0:ny+1)
-    double precision hfacE(0:nx+1,0:ny+1)
-    double precision hfacN(0:nx+1,0:ny+1)
-    double precision hfacS(0:nx+1,0:ny+1)
+    double precision :: dx, dy
+    double precision :: x_u(0:nx), y_u(0:ny)
+    double precision :: x_v(0:nx), y_v(0:ny)
+    double precision :: wetmask(0:nx+1,0:ny+1)
+    double precision :: hfacW(0:nx+1,0:ny+1)
+    double precision :: hfacE(0:nx+1,0:ny+1)
+    double precision :: hfacN(0:nx+1,0:ny+1)
+    double precision :: hfacS(0:nx+1,0:ny+1)
 !    Coriolis parameter at u and v grid-points respectively
-    double precision fu(0:nx+1,0:ny+1)
-    double precision fv(0:nx+1,0:ny+1)
-    character(30) fUfile, fVfile
-    character(30) wetMaskFile
+    double precision :: fu(0:nx+1,0:ny+1)
+    double precision :: fv(0:nx+1,0:ny+1)
+    character(30) :: fUfile, fVfile
+    character(30) :: wetMaskFile
 
 !   Numerics
-    double precision pi, dt
-    double precision au,ah(layers),ar, botDrag
-    double precision slip
-    double precision hmin
+    double precision :: pi, dt
+    double precision :: au,ah(layers),ar, botDrag
+    double precision :: slip
+    double precision :: hmin
     integer nTimeSteps
-    double precision dumpFreq, avFreq
+    double precision :: dumpFreq, avFreq
     integer counter
     integer nwrite, avwrite
-    double precision zeros(layers)
+    double precision :: zeros(layers)
     integer maxits
-    double precision eps, rjac
-    double precision freesurfFac
-    double precision h_norming(0:nx+1,0:ny+1)
+    double precision :: eps, rjac
+    double precision :: freesurfFac
+    double precision :: h_norming(0:nx+1,0:ny+1)
 
 !   model
-    double precision hmean(layers)
+    double precision :: hmean(layers)
     logical :: RedGrav ! logical switch for using n + 1/2 layer physics, or using n layer physics
 
 !   loop variables
-    integer i,j,k,n
+    integer :: i,j,k,n
 
 !   character variable for numbering the outputs
-    character(10) num
+    character(10) :: num
 
 !   Physics
-    double precision g_vec(layers), rho0
+    double precision :: g_vec(layers), rho0
 
 
 !     Wind
-    double precision wind_x(0:nx+1,0:ny+1)
-    double precision wind_y(0:nx+1,0:ny+1)
-    double precision base_wind_x(0:nx+1,0:ny+1)
-    double precision base_wind_y(0:nx+1,0:ny+1)
+    double precision :: wind_x(0:nx+1,0:ny+1)
+    double precision :: wind_y(0:nx+1,0:ny+1)
+    double precision :: base_wind_x(0:nx+1,0:ny+1)
+    double precision :: base_wind_y(0:nx+1,0:ny+1)
     logical :: UseSinusoidWind
     logical :: UseStochWind
     logical :: DumpWind
@@ -155,22 +152,22 @@ program MIM
 
 
 !   Sponge
-    double precision spongeHTimeScale(0:nx+1,0:ny+1,layers)
-    double precision spongeUTimeScale(0:nx+1,0:ny+1,layers)
-    double precision spongeVTimeScale(0:nx+1,0:ny+1,layers)
-    double precision spongeH(0:nx+1,0:ny+1,layers)
-    double precision spongeU(0:nx+1,0:ny+1,layers)
-    double precision spongeV(0:nx+1,0:ny+1,layers)
-    character(30) spongeHTimeScaleFile
-    character(30) spongeUTimeScaleFile
-    character(30) spongeVTimeScaleFile
-    character(30) spongeHfile
-    character(30) spongeUfile
-    character(30) spongeVfile
+    double precision :: spongeHTimeScale(0:nx+1,0:ny+1,layers)
+    double precision :: spongeUTimeScale(0:nx+1,0:ny+1,layers)
+    double precision :: spongeVTimeScale(0:nx+1,0:ny+1,layers)
+    double precision :: spongeH(0:nx+1,0:ny+1,layers)
+    double precision :: spongeU(0:nx+1,0:ny+1,layers)
+    double precision :: spongeV(0:nx+1,0:ny+1,layers)
+    character(30) :: spongeHTimeScaleFile
+    character(30) :: spongeUTimeScaleFile
+    character(30) :: spongeVTimeScaleFile
+    character(30) :: spongeHfile
+    character(30) :: spongeUfile
+    character(30) :: spongeVfile
 
 !   input files
-    character(30) initUfile,initVfile,initHfile,initEtaFile
-    character(30) zonalWindFile,meridionalWindFile
+    character(30) :: initUfile,initVfile,initHfile,initEtaFile
+    character(30) :: zonalWindFile,meridionalWindFile
 
 !   Set default values here
 !   Possibly wait until the model is split into multiple files, then hide the long unsightly code there.
@@ -1507,11 +1504,14 @@ subroutine SOR_solver(a,etanew,etastar,freesurfFac,nx,ny,dt,rjac,eps,maxits,n)
     character(30) name
     integer nx, ny, layers, k
     double precision array(0:nx+1,0:ny+1,layers), default(layers)
+    double precision array_small(nx,ny,layers)
 
     if (name.ne.'') then
         open(unit = 10, form='unformatted', file=name)  
-        read(10) array(1:nx,1:ny,layers)
+        read(10) array_small
         close(10) 
+
+        array(1:nx,1:ny,:) = array_small
         ! wrap array around for periodicity
         array(0,:,:) = array(nx,:,:)
         array(nx+1,:,:) = array(1,:,:)
@@ -1533,11 +1533,14 @@ subroutine SOR_solver(a,etanew,etastar,freesurfFac,nx,ny,dt,rjac,eps,maxits,n)
     character(30) name
     integer nx, ny
     double precision array(0:nx+1,0:ny+1), default
+    double precision array_small(nx,ny)
 
     if (name.ne.'') then
         open(unit = 10, form='unformatted', file=name)  
-        read(10) array
+        read(10) array_small
         close(10) 
+
+        array(1:nx,1:ny) = array_small
         ! wrap array around for periodicity
         array(0,:) = array(nx,:)
         array(nx+1,:) = array(1,:)
@@ -1558,11 +1561,14 @@ subroutine SOR_solver(a,etanew,etastar,freesurfFac,nx,ny,dt,rjac,eps,maxits,n)
     character(30) name
     integer nx, ny,layers
     double precision array(0:nx+1,0:ny+1,layers), default
+    double precision array_small(nx,ny,layers)
 
     if (name.ne.'') then
         open(unit = 10, form='unformatted', file=name)  
-        read(10) array
+        read(10) array_small
         close(10)
+
+        array(1:nx,1:ny,:) = array_small
         ! wrap array around for periodicity
         array(0,:,:) = array(nx,:,:)
         array(nx+1,:,:) = array(1,:,:)
@@ -1582,11 +1588,14 @@ subroutine SOR_solver(a,etanew,etastar,freesurfFac,nx,ny,dt,rjac,eps,maxits,n)
     character(30) name
     integer nx, ny, layers
     double precision array(0:nx+1,0:ny+1,layers), default
+    double precision array_small(nx,ny,layers)
 
     if (name.ne.'') then
         open(unit = 10, form='unformatted', file=name)  
-        read(10) array
+        read(10) array_small
         close(10)
+
+        array(1:nx,1:ny,:) = array_small
         ! wrap array around for periodicity
         array(0,:,:) = array(nx,:,:)
         array(nx+1,:,:) = array(1,:,:)
@@ -1598,6 +1607,7 @@ subroutine SOR_solver(a,etanew,etastar,freesurfFac,nx,ny,dt,rjac,eps,maxits,n)
 
     return
     end
+
 
 
 !-----------------------------------------------------------------
