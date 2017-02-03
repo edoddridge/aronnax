@@ -86,7 +86,7 @@ program MIM
     double precision :: depth(0:nx+1,0:ny+1)
     double precision :: H0 ! default depth in no file specified
 !   Pressure solver variables
-    double precision :: a(5,0:nx+1,0:ny+1)
+    double precision :: a(5,nx,ny)
     double precision :: phi(0:nx+1,0:ny+1), phiold(0:nx+1,0:ny+1)
 !
 !     Bernoulli potential and relative vorticity 
@@ -274,7 +274,18 @@ program MIM
 
     call calc_boundary_masks(wetmask,hfacW,hfacE,hfacS,hfacN,nx,ny)
      
-
+!    Apply the boundary conditions
+!    Enforce no normal flow boundary condition
+!    and no flow in dry cells.
+!    no/free-slip is done inside dudt and dvdt subroutines.
+!    hfacW and hfacS are zero where the transition between
+!    wet and dry cells occurs. wetmask is 1 in wet cells,
+!    and zero in dry cells.
+    do k = 1,layers
+        !h(:,:,k) = h(:,:,k)*wetmask(:,:)
+        u(:,:,k) = u(:,:,k)*hfacW*wetmask(:,:)
+        v(:,:,k) = v(:,:,k)*hfacS*wetmask(:,:)
+    enddo
 
 !   If the winds are static, then set wind_ = base_wind_
     if (.not. UseSinusoidWind .and. .not. UseStochWind)  then
@@ -303,16 +314,16 @@ program MIM
                 a(4,i,j)=g_vec(1)*0.5*(depth(i,j)+depth(i,j-1))/dy**2
             end do 
         end do
-        do j=0,ny+1
-            a(1,nx+1,j)=0.0
-            a(3,0,j)=0.0
+        do j=1,ny
+            a(1,nx,j)=0.0
+            a(3,1,j)=0.0
         end do
-        do i=0,nx+1
-            a(2,i,ny+1)=0.0
-            a(4,i,0)=0.0
+        do i=1,nx
+            a(2,i,ny)=0.0
+            a(4,i,1)=0.0
         end do
-        do j=0,ny+1
-            do i=0,nx+1
+        do j=1,ny
+            do i=1,nx
                 a(5,i,j)=-a(1,i,j)-a(2,i,j)-a(3,i,j)-a(4,i,j)
             end do 
         end do
@@ -596,18 +607,21 @@ program MIM
         !print *, maxval(abs(etastar))
 
         ! prevent barotropic signals from bouncing around outside the wet region of the model.
-        etastar = etastar*wetmask
+        !etastar = etastar*wetmask
 
         call SOR_solver(a,etanew,etastar,freesurfFac,nx,ny, &
             dt,rjac,eps,maxits,n)
         !print *, maxval(abs(etanew))
 
+        etanew = etanew*wetmask
+        call wrap_fields_2D(etanew,nx,ny)
+
         ! now update the velocities using the barotropic tendency due to the pressure gradient
         dudt_bt = 0d0
         dvdt_bt = 0d0
 
-        do i = 1,nx+1
-            do j = 0,ny+1
+        do i = 1,nx
+            do j = 0,ny
                 do k = 1,layers
                     dudt_bt(i,j) = -g_vec(1)*(etanew(i,j) - etanew(i-1,j))/(dx)
                     unew(i,j,k) = unew(i,j,k) + dt*dudt_bt(i,j) !23d0*dt*dudt_bt(i,j)/12d0
@@ -615,8 +629,8 @@ program MIM
             end do
         end do
 
-        do i = 0,nx+1
-            do j = 1,ny+1
+        do i = 0,nx
+            do j = 1,ny
                 do k = 1,layers
                     dvdt_bt(i,j) = -g_vec(1)*(etanew(i,j) - etanew(i,j-1))/(dy)
                     vnew(i,j,k) = vnew(i,j,k) + dt*dvdt_bt(i,j)! 23d0*dt*dvdt_bt(i,j)/12d0
@@ -1027,6 +1041,8 @@ program MIM
         dhdt(:,:,k) = dhdt(:,:,k)*wetmask
     end do
 
+    call wrap_fields_3D(dhdt,nx,ny,layers)
+
     return
     end subroutine
 !--------------------------------------------------------------------------------------------
@@ -1092,6 +1108,9 @@ program MIM
         end do
       end do
     end do
+
+    call wrap_fields_3D(dudt,nx,ny,layers)
+
     return
     end subroutine
 !------------------------------------------------------------------------------------
@@ -1159,6 +1178,8 @@ program MIM
       end do 
     end do
 
+    call wrap_fields_3D(dvdt,nx,ny,layers)
+
     return
     end subroutine
 !--------------------------------------------------------------------------------------
@@ -1187,6 +1208,8 @@ program MIM
             end do
         end do
     end do
+
+    call wrap_fields_2D(ub,nx,ny)
 
     return
     end subroutine
@@ -1220,6 +1243,8 @@ program MIM
         end do
     end do
 
+    call wrap_fields_2D(vb,nx,ny)
+
     return
     end subroutine
 
@@ -1247,6 +1272,8 @@ program MIM
         end do
     end do
 
+    call wrap_fields_2D(etastar,nx,ny)
+
     return
     end subroutine
 
@@ -1255,7 +1282,7 @@ program MIM
 !> Use successive over relaxation algorithm to solve the backwards Euler timestepping for the free surface anomaly, or for the surface pressure required to keep the barotropic flow nondivergent.
 
 subroutine SOR_solver(a,etanew,etastar,freesurfFac,nx,ny,dt,rjac,eps,maxits,n)
-    double precision a(5,nx-1,ny-1)
+    double precision a(5,nx,ny)
     double precision etanew(0:nx+1,0:ny+1)
     double precision etastar(0:nx+1,0:ny+1)
     double precision freesurfFac
@@ -1315,6 +1342,8 @@ subroutine SOR_solver(a,etanew,etastar,freesurfFac,nx,ny,dt,rjac,eps,maxits,n)
         else
             relax_param=1.d0/(1.d0-0.25d0*rjac**2*relax_param)
         endif
+
+        call wrap_fields_2D(etanew,nx,ny)
       
         if (nit.gt.1.and.norm.lt.eps*norm0) then
             ! print 10014,  eps,  nit
@@ -1333,34 +1362,6 @@ subroutine SOR_solver(a,etanew,etastar,freesurfFac,nx,ny,dt,rjac,eps,maxits,n)
     end subroutine
 
 
-! ------------------------------------------------
-!> Export data to file
-    subroutine write_data(data,nx,ny,filename)
-
-!    A subroutine to output data as a 2D array for plotting and things
-!
-!   Deprecated - standard fortran output is used instead
-
-    implicit none
-
-    integer nx,ny
-    double precision data(0:nx+1,0:ny+1)
-    character (len=*) filename
-    integer i,j
-
-!    to show which field is being output
-!    print *,filename 
-
-    OPEN(UNIT=13, FILE=filename, ACTION="write", STATUS="replace", &
-        FORM="formatted")
-
-    do j=1,ny-1
-        write(13,1000) (data(i,j),i=1,nx)
-1000         format( 400f32.16)  
-    end do  
-    CLOSE(UNIT=13)
-    return
-    end
 !------------------------------------------------------------------------------------
 !> Check to see if there are any NaNs in the data field and stop the calculation
 !! if any are found.
@@ -1561,14 +1562,14 @@ subroutine SOR_solver(a,etanew,etastar,freesurfFac,nx,ny,dt,rjac,eps,maxits,n)
     character(30) name
     integer nx, ny,layers
     double precision array(0:nx+1,0:ny+1,layers), default
-    double precision array_small(nx,ny,layers)
+    double precision array_small(nx+1,ny,layers)
 
     if (name.ne.'') then
         open(unit = 10, form='unformatted', file=name)  
         read(10) array_small
         close(10)
 
-        array(1:nx,1:ny,:) = array_small
+        array(1:nx+1,1:ny,:) = array_small
         ! wrap array around for periodicity
         array(0,:,:) = array(nx,:,:)
         array(nx+1,:,:) = array(1,:,:)
@@ -1588,14 +1589,14 @@ subroutine SOR_solver(a,etanew,etastar,freesurfFac,nx,ny,dt,rjac,eps,maxits,n)
     character(30) name
     integer nx, ny, layers
     double precision array(0:nx+1,0:ny+1,layers), default
-    double precision array_small(nx,ny,layers)
+    double precision array_small(nx,ny+1,layers)
 
     if (name.ne.'') then
         open(unit = 10, form='unformatted', file=name)  
         read(10) array_small
         close(10)
 
-        array(1:nx,1:ny,:) = array_small
+        array(1:nx,1:ny+1,:) = array_small
         ! wrap array around for periodicity
         array(0,:,:) = array(nx,:,:)
         array(nx+1,:,:) = array(1,:,:)
