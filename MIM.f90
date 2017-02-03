@@ -253,7 +253,7 @@ program MIM
     call read_input_fileU(spongeUfile,spongeU,0.d0,nx,ny,layers)
     call read_input_fileV(spongeVTimeScaleFile,spongeVTimeScale,0.d0,nx,ny,layers)
     call read_input_fileV(spongeVfile,spongeV,0.d0,nx,ny,layers)
-    call read_input_fileH_2D(wetMaskFile,wetmask,0.d0,nx,ny)
+    call read_input_fileH_2D(wetMaskFile,wetmask,1.d0,nx,ny)
 
 
 ! Initialise the average fields
@@ -271,6 +271,13 @@ program MIM
     ! 1 means ocean, 0 means land
         wetmask = 1d0 
     endif
+
+    ! For now enforce wetmask to have zeros around the edge
+    wetmask(0,:) = 0d0
+    wetmask(nx+1,:) = 0d0
+    wetmask(:,0) = 0d0
+    wetmask(:,ny+1) = 0d0
+    ! this will change one day when the model can do periodic boundary conditions.
 
     call calc_boundary_masks(wetmask,hfacW,hfacE,hfacS,hfacN,nx,ny)
      
