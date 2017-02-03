@@ -333,11 +333,7 @@ program MIM
                 /(dx**2+dy**2)
         ! if peridodic boundary conditions are ever implemented, then pi -> 2*pi in this calculation 
 
-        ! ! Model currently only works with rigid lid (freesurfFac = 0)
-        ! if (freesurfFac .ne. 0) then
-        !     freesurfFac = 0d0
-        !     print *, 'free surface not working yet. freesurfFac set to 0.'
-        ! end if
+
         
         ! check that the supplied free surface anomaly and layer thicknesses are consistent
         h_norming = (freesurfFac*eta+depth)/sum(h,3)
