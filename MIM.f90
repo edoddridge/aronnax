@@ -206,7 +206,7 @@ program MIM
     avwrite = int(avFreq/dt)
 
 !    Pi, the constant
-    pi=3.14159
+    pi=3.1415926535897932384
 !   Zero vector - for internal use only
     zeros = 0d0
 
