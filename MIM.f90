@@ -266,12 +266,6 @@ program MIM
         endif
     endif
 
-!   If nothing specified assume periodic boundaries
-    if (wetMaskFile.eq.'') then
-    ! 1 means ocean, 0 means land
-        wetmask = 1d0 
-    endif
-
     ! For now enforce wetmask to have zeros around the edge
     wetmask(0,:) = 0d0
     wetmask(nx+1,:) = 0d0
