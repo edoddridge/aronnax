@@ -8,6 +8,8 @@ self_path = p.dirname(p.abspath(__file__))
 import numpy as np
 from scipy.io import FortranFile
 
+import MIMutils as mim
+
 @contextmanager
 def fortran_file(*args, **kwargs):
     f = FortranFile(*args, **kwargs)
@@ -77,4 +79,40 @@ def write_input_f_plane(nx, ny, layers):
 def test_f_plane():
     with working_directory(p.join(self_path, "f_plane")):
         run_experiment(write_input_f_plane, 10, 10, 2)
+        sub.check_call(["diff", "-ru", "good-output/", "output/"])
+
+def write_input_beta_plane_bump_red(nx, ny, _layers):
+    xlen = 1e6
+    ylen = 1e6
+    grid = mim.Grid(nx, ny, xlen / nx, ylen / ny)
+
+    f0 = 1e-5
+    beta = 2e-11
+
+    with fortran_file('fu.bin', 'w') as f:
+        X,Y = np.meshgrid(grid.xp1,grid.y)
+        fu = f0 + Y*beta
+        f.write_record(fu.astype(np.float64))
+
+    with fortran_file('fv.bin', 'w') as f:
+        X,Y = np.meshgrid(grid.x,grid.yp1)
+        fv = f0 + Y*beta
+        f.write_record(fv.astype(np.float64))
+
+    with fortran_file('wetmask.bin', 'w') as f:
+        wetmask = np.ones((nx, ny), dtype=np.float64)
+        wetmask[0,:] = 0
+        wetmask[-1,:] = 0
+        wetmask[:,0] = 0
+        wetmask[:,-1] = 0
+        f.write_record(wetmask.astype(np.float64))
+
+    with fortran_file('initH.bin', 'w') as f:
+        X,Y = np.meshgrid(grid.x,grid.y)
+        initH = 500 + 20*np.exp(-((6e5-X)**2 + (5e5-Y)**2)/(2*1e5**2))
+        f.write_record(initH.astype(np.float64))
+
+def test_gaussian_bump_red():
+    with working_directory(p.join(self_path, "beta_plane_bump_red")):
+        run_experiment(write_input_beta_plane_bump_red, 10, 10, 1)
         sub.check_call(["diff", "-ru", "good-output/", "output/"])
