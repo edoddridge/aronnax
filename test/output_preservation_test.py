@@ -10,6 +10,8 @@ from scipy.io import FortranFile
 
 import MIMutils as mim
 
+### General helpers
+
 @contextmanager
 def fortran_file(*args, **kwargs):
     f = FortranFile(*args, **kwargs)
@@ -37,6 +39,17 @@ def compile_mim(nx, ny, layers):
         "| sed 's/^    integer, parameter :: layers =.*$/    integer, parameter :: layers = %d/'" % (layers,) +
         "> MIM.f90", shell=True)
     sub.check_call(["gfortran", "-Ofast", "MIM.f90", "-o", "MIM"])
+
+def run_experiment(write_input, nx, ny, layers):
+    sub.check_call(["rm", "-rf", "input/"])
+    sub.check_call(["rm", "-rf", "output/"])
+    sub.check_call(["mkdir", "-p", "output/"])
+    with working_directory("input"):
+        write_input(nx, ny, layers)
+    compile_mim(nx, ny, layers)
+    sub.check_call(["MIM"])
+
+### Input construction helpers
 
 def write_f_plane(nx, ny, coeff):
     """Write files defining an f-plane approximation to the Coriolis force."""
@@ -66,21 +79,14 @@ def write_rectangular_pool(nx, ny):
         wetmask[ :,-1] = 0
         f.write_record(wetmask)
 
+### The test cases themselves
+
 def write_input_f_plane_red(nx, ny, layers):
     assert layers == 1
     write_f_plane(nx, ny, 10e-4)
     write_rectangular_pool(nx, ny)
     with fortran_file('initH.bin', 'w') as f:
         f.write_record(np.ones((nx, ny), dtype=np.float64) * 400)
-
-def run_experiment(write_input, nx, ny, layers):
-    sub.check_call(["rm", "-rf", "input/"])
-    sub.check_call(["rm", "-rf", "output/"])
-    sub.check_call(["mkdir", "-p", "output/"])
-    with working_directory("input"):
-        write_input(nx, ny, layers)
-    compile_mim(nx, ny, layers)
-    sub.check_call(["MIM"])
 
 def test_f_plane_red():
     with working_directory(p.join(self_path, "f_plane_red")):
