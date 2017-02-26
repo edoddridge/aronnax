@@ -49,7 +49,7 @@ def write_input_f_plane_red(nx, ny, _layers):
         wetmask[ :,-1] = 0
         f.write_record(wetmask)
     with fortran_file('initH.bin', 'w') as f:
-        f.write_record(np.ones((nx, ny), dtype=np.float64)*10e-4)
+        f.write_record(np.ones((nx, ny), dtype=np.float64)*400)
 
 def run_experiment(write_input, nx, ny, layers):
     sub.check_call(["rm", "-rf", "input/"])
