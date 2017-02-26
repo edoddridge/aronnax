@@ -1,6 +1,7 @@
 # create code for each example ready to compile
 
 set -e # Fail if a subcommand fails
+set -x # Echo executed commands
 
 # reduced gravity configurations
 # f_plane.f90 - boring test with flat interface on f-plane
