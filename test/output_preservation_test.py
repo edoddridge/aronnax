@@ -163,3 +163,29 @@ def test_beta_plane_gyre_red():
     with working_directory(p.join(self_path, "beta_plane_gyre_red")):
         run_experiment(write_input_beta_plane_gyre_red, 10, 10, 1)
         sub.check_call(["diff", "-ru", "good-output/", "output/"])
+
+def write_input_beta_plane_gyre(nx, ny, layers):
+    assert layers == 2
+    xlen = 1e6
+    ylen = 2e6
+    grid = mim.Grid(nx, ny, xlen / nx, ylen / ny)
+
+    write_beta_plane(grid, 1e-5, 2e-11)
+    write_rectangular_pool(nx, ny)
+
+    with fortran_file('initH.bin', 'w') as f:
+        _, Y = np.meshgrid(grid.x, grid.y)
+        initH = np.ones((2, ny, nx))
+        initH[0,:,:] = 600.
+        initH[1,:,:] = 2000. - initH[0,:,:]
+        f.write_record(initH.astype(np.float64))
+
+    with fortran_file('wind_x.bin', 'w') as f:
+        _, Y = np.meshgrid(grid.xp1, grid.y)
+        wind_x = 0.05 * (1 - np.cos(2*np.pi * Y/np.max(grid.y)))
+        f.write_record(wind_x.astype(np.float64))
+
+def test_beta_plane_gyre():
+    with working_directory(p.join(self_path, "beta_plane_gyre")):
+        run_experiment(write_input_beta_plane_gyre, 10, 10, 2)
+        sub.check_call(["diff", "-ru", "good-output/", "output/"])
