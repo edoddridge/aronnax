@@ -38,11 +38,15 @@ def compile_mim(nx, ny, layers):
         "> MIM.f90", shell=True)
     sub.check_call(["gfortran", "-Ofast", "MIM.f90", "-o", "MIM"])
 
-def write_input_f_plane_red(nx, ny, _layers):
+def write_f_plane(nx, ny, coeff):
+    """Write files defining an f-plane approximation to the Coriolis force."""
     with fortran_file('fu.bin', 'w') as f:
-        f.write_record(np.ones((nx, ny+1), dtype=np.float64)*10e-4)
+        f.write_record(np.ones((nx, ny+1), dtype=np.float64) * coeff)
     with fortran_file('fv.bin', 'w') as f:
-        f.write_record(np.ones((nx+1, ny), dtype=np.float64)*10e-4)
+        f.write_record(np.ones((nx+1, ny), dtype=np.float64) * coeff)
+
+def write_rectangular_pool(nx, ny):
+    """Write the wet mask file for a maximal rectangular pool."""
     with fortran_file('wetmask.bin', 'w') as f:
         wetmask = np.ones((nx, ny), dtype=np.float64)
         wetmask[ 0, :] = 0
@@ -50,6 +54,11 @@ def write_input_f_plane_red(nx, ny, _layers):
         wetmask[ :, 0] = 0
         wetmask[ :,-1] = 0
         f.write_record(wetmask)
+
+def write_input_f_plane_red(nx, ny, layers):
+    assert layers == 1
+    write_f_plane(nx, ny, 10e-4)
+    write_rectangular_pool(nx, ny)
     with fortran_file('initH.bin', 'w') as f:
         f.write_record(np.ones((nx, ny), dtype=np.float64)*400)
 
@@ -69,7 +78,8 @@ def test_f_plane_red():
 
 def write_input_f_plane(nx, ny, layers):
     assert layers == 2
-    write_input_f_plane_red(nx, ny, 1)
+    write_f_plane(nx, ny, 10e-4)
+    write_rectangular_pool(nx, ny)
     with fortran_file('initH.bin', 'w') as f:
         initH = np.ones((2,nx,ny), dtype=np.float64)
         initH[0,:,:] = 400
@@ -81,7 +91,8 @@ def test_f_plane():
         run_experiment(write_input_f_plane, 10, 10, 2)
         sub.check_call(["diff", "-ru", "good-output/", "output/"])
 
-def write_input_beta_plane_bump_red(nx, ny, _layers):
+def write_input_beta_plane_bump_red(nx, ny, layers):
+    assert layers == 1
     xlen = 1e6
     ylen = 1e6
     grid = mim.Grid(nx, ny, xlen / nx, ylen / ny)
@@ -99,13 +110,7 @@ def write_input_beta_plane_bump_red(nx, ny, _layers):
         fv = f0 + Y*beta
         f.write_record(fv.astype(np.float64))
 
-    with fortran_file('wetmask.bin', 'w') as f:
-        wetmask = np.ones((nx, ny), dtype=np.float64)
-        wetmask[0,:] = 0
-        wetmask[-1,:] = 0
-        wetmask[:,0] = 0
-        wetmask[:,-1] = 0
-        f.write_record(wetmask.astype(np.float64))
+    write_rectangular_pool(nx, ny)
 
     with fortran_file('initH.bin', 'w') as f:
         X,Y = np.meshgrid(grid.x,grid.y)
