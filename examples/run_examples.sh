@@ -71,17 +71,9 @@ rm -rf renders
 rm -f run_finished.txt
 
 gfortran f_plane.f90 -o f_plane.out -Ofast
-if [ $? -ne 0 ]; then
-  echo "Error while compiling model."
-  exit
-fi
 mkdir output
 mkdir renders
 ./f_plane.out
-if [ $? -ne 0 ]; then
-  echo "Error while running model."
-  exit
-fi
 cd ../
 
 
@@ -93,17 +85,9 @@ rm -rf renders
 rm -f run_finished.txt
 
 gfortran beta_plane_bump.f90 -o beta_plane_bump.out -Ofast
-if [ $? -ne 0 ]; then
-  echo "Error while compiling model."
-  exit
-fi
 mkdir output
 mkdir renders
 ./beta_plane_bump.out
-if [ $? -ne 0 ]; then
-  echo "Error while running model."
-  exit
-fi
 cd ../
 
 echo '   beta plane gyres'
@@ -112,10 +96,6 @@ echo '      no slip'
 # no slip
 cd beta_plane_gyre
 gfortran beta_plane_gyre.f90 -o beta_plane_gyre.out -Ofast
-if [ $? -ne 0 ]; then
-  echo "Error while compiling model."
-  exit
-fi
 
 cd no_slip
 rm -rf output
@@ -125,10 +105,6 @@ rm -f run_finished.txt
 mkdir output
 mkdir renders
 ../beta_plane_gyre.out
-if [ $? -ne 0 ]; then
-  echo "Error while running model."
-  exit
-fi
 
 echo '      free slip'
 cd ../free_slip
@@ -139,10 +115,6 @@ rm -f run_finished.txt
 mkdir output
 mkdir renders
 ../beta_plane_gyre.out
-if [ $? -ne 0 ]; then
-  echo "Error while running model."
-  exit
-fi
 
 cd ../../../
 
@@ -158,17 +130,9 @@ rm -rf renders
 rm -f run_finished.txt
 
 gfortran f_plane.f90 -o f_plane.out -Ofast
-if [ $? -ne 0 ]; then
-  echo "Error while compiling model."
-  exit
-fi
 mkdir output
 mkdir renders
 ./f_plane.out
-if [ $? -ne 0 ]; then
-  echo "Error while running model."
-  exit
-fi
 cd ../
 
 
@@ -180,17 +144,9 @@ rm -rf renders
 rm -f run_finished.txt
 
 gfortran beta_plane_bump.f90 -o beta_plane_bump.out -Ofast
-if [ $? -ne 0 ]; then
-  echo "Error while compiling model."
-  exit
-fi
 mkdir output
 mkdir renders
 ./beta_plane_bump.out
-if [ $? -ne 0 ]; then
-  echo "Error while running model."
-  exit
-fi
 cd ../
 
 echo '   beta plane gyres'
@@ -199,10 +155,6 @@ echo '      no slip'
 # no slip
 cd beta_plane_gyre
 gfortran beta_plane_gyre.f90 -o beta_plane_gyre.out -O1
-if [ $? -ne 0 ]; then
-  echo "Error while compiling model."
-  exit
-fi
 
 cd no_slip
 rm -rf output
@@ -212,10 +164,6 @@ rm -f run_finished.txt
 mkdir output
 mkdir renders
 ../beta_plane_gyre.out
-if [ $? -ne 0 ]; then
-  echo "Error while running model."
-  exit
-fi
 
 echo '      free slip'
 cd ../free_slip
@@ -226,9 +174,5 @@ rm -f run_finished.txt
 mkdir output
 mkdir renders
 ../beta_plane_gyre.out
-if [ $? -ne 0 ]; then
-  echo "Error while running model."
-  exit
-fi
 cd ../../
 echo 'Finished running examples'
