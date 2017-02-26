@@ -36,7 +36,7 @@ def compile_mim(nx, ny, layers):
         "> MIM.f90", shell=True)
     sub.check_call(["gfortran", "-Ofast", "MIM.f90", "-o", "MIM"])
 
-def write_input_f_plane(nx, ny, _layers):
+def write_input_f_plane_red(nx, ny, _layers):
     with fortran_file('fu.bin', 'w') as f:
         f.write_record(np.ones((nx, ny+1), dtype=np.float64)*10e-4)
     with fortran_file('fv.bin', 'w') as f:
@@ -60,8 +60,21 @@ def run_experiment(write_input, nx, ny, layers):
     compile_mim(nx, ny, layers)
     sub.check_call(["MIM"])
 
-
 def test_f_plane_red():
     with working_directory(p.join(self_path, "f_plane_red")):
-        run_experiment(write_input_f_plane, 10, 10, 1)
+        run_experiment(write_input_f_plane_red, 10, 10, 1)
+        sub.check_call(["diff", "-ru", "good-output/", "output/"])
+
+def write_input_f_plane(nx, ny, layers):
+    assert layers == 2
+    write_input_f_plane_red(nx, ny, 1)
+    with fortran_file('initH.bin', 'w') as f:
+        initH = np.ones((2,nx,ny), dtype=np.float64)
+        initH[0,:,:] = 400
+        initH[1,:,:] = 2000 - initH[0,:,:]
+        f.write_record(initH)
+
+def test_f_plane():
+    with working_directory(p.join(self_path, "f_plane")):
+        run_experiment(write_input_f_plane, 10, 10, 2)
         sub.check_call(["diff", "-ru", "good-output/", "output/"])
