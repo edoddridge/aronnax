@@ -45,6 +45,17 @@ def write_f_plane(nx, ny, coeff):
     with fortran_file('fv.bin', 'w') as f:
         f.write_record(np.ones((nx+1, ny), dtype=np.float64) * coeff)
 
+def write_beta_plane(grid, f0, beta):
+    """Write files defining a beta-plane approximation to the Coriolis force."""
+    with fortran_file('fu.bin', 'w') as f:
+        _, Y = np.meshgrid(grid.xp1, grid.y)
+        fu = f0 + Y*beta
+        f.write_record(fu.astype(np.float64))
+    with fortran_file('fv.bin', 'w') as f:
+        _, Y = np.meshgrid(grid.x, grid.yp1)
+        fv = f0 + Y*beta
+        f.write_record(fv.astype(np.float64))
+
 def write_rectangular_pool(nx, ny):
     """Write the wet mask file for a maximal rectangular pool."""
     with fortran_file('wetmask.bin', 'w') as f:
@@ -97,19 +108,7 @@ def write_input_beta_plane_bump_red(nx, ny, layers):
     ylen = 1e6
     grid = mim.Grid(nx, ny, xlen / nx, ylen / ny)
 
-    f0 = 1e-5
-    beta = 2e-11
-
-    with fortran_file('fu.bin', 'w') as f:
-        X,Y = np.meshgrid(grid.xp1,grid.y)
-        fu = f0 + Y*beta
-        f.write_record(fu.astype(np.float64))
-
-    with fortran_file('fv.bin', 'w') as f:
-        X,Y = np.meshgrid(grid.x,grid.yp1)
-        fv = f0 + Y*beta
-        f.write_record(fv.astype(np.float64))
-
+    write_beta_plane(grid, 1e-5, 2e-11)
     write_rectangular_pool(nx, ny)
 
     with fortran_file('initH.bin', 'w') as f:
