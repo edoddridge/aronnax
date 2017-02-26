@@ -71,7 +71,7 @@ def write_input_f_plane_red(nx, ny, layers):
     write_f_plane(nx, ny, 10e-4)
     write_rectangular_pool(nx, ny)
     with fortran_file('initH.bin', 'w') as f:
-        f.write_record(np.ones((nx, ny), dtype=np.float64)*400)
+        f.write_record(np.ones((nx, ny), dtype=np.float64) * 400)
 
 def run_experiment(write_input, nx, ny, layers):
     sub.check_call(["rm", "-rf", "input/"])
@@ -140,4 +140,26 @@ def write_input_beta_plane_bump(nx, ny, layers):
 def test_gaussian_bump():
     with working_directory(p.join(self_path, "beta_plane_bump")):
         run_experiment(write_input_beta_plane_bump, 10, 10, 2)
+        sub.check_call(["diff", "-ru", "good-output/", "output/"])
+
+def write_input_beta_plane_gyre_red(nx, ny, layers):
+    assert layers == 1
+    xlen = 1e6
+    ylen = 2e6
+    grid = mim.Grid(nx, ny, xlen / nx, ylen / ny)
+
+    write_beta_plane(grid, 1e-5, 2e-11)
+    write_rectangular_pool(nx, ny)
+
+    with fortran_file('initH.bin', 'w') as f:
+        f.write_record(np.ones((nx, ny), dtype=np.float64) * 400)
+
+    with fortran_file('wind_x.bin', 'w') as f:
+        _, Y = np.meshgrid(grid.xp1, grid.y)
+        wind_x = 0.05 * (1 - np.cos(2*np.pi * Y/np.max(grid.y)))
+        f.write_record(wind_x.astype(np.float64))
+
+def test_beta_plane_gyre_red():
+    with working_directory(p.join(self_path, "beta_plane_gyre_red")):
+        run_experiment(write_input_beta_plane_gyre_red, 10, 10, 1)
         sub.check_call(["diff", "-ru", "good-output/", "output/"])
