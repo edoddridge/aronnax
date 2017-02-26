@@ -52,8 +52,8 @@ def write_input_f_plane(nx, ny):
         f.write_record(np.ones((nx, ny), dtype=np.float64)*10e-4)
 
 def test_f_plane_red():
-    nx = 100
-    ny = 100
+    nx = 10
+    ny = 10
     with working_directory(p.join(self_path, "f_plane_red")):
         sub.check_call(["rm", "-rf", "input/"])
         sub.check_call(["rm", "-rf", "output/"])
@@ -62,3 +62,4 @@ def test_f_plane_red():
             write_input_f_plane(nx, ny)
         compile_mim(nx, ny, 1)
         sub.check_call(["MIM"])
+        sub.check_call(["diff", "-ru", "good-output/", "output/"])
