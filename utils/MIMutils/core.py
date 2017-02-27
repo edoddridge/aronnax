@@ -16,7 +16,7 @@ class Grid():
         """!Instantiate a grid object for MIM."""
 
         # axes for vorticity points
-        self.xp1 = np.linspace(y0,nx*dx+x0,nx+1)
+        self.xp1 = np.linspace(x0,nx*dx+x0,nx+1)
         self.yp1 = np.linspace(y0,ny*dy+y0,ny+1)
 
         # Axes for tracer points.
