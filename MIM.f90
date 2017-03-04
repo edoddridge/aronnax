@@ -841,6 +841,8 @@ end program MIM
 !> Evaluate the Bornoulli Potential for n-layer physics.
 !! B is evaluated at the tracer point, for each grid box.
 subroutine evaluate_b_iso(b,h,u,v,nx,ny,layers,g_vec,depth)
+  implicit none
+
   ! Evaluate the baroclinic component of the Bernoulli Potential
   ! (u dot u + Montgomery potential) in the n-layer physics, at centre
   ! of grid box
@@ -899,9 +901,11 @@ end subroutine evaluate_b_iso
 ! -----------------------------------------------------------------------------
 
 subroutine evaluate_b_RedGrav(b,h,u,v,nx,ny,layers,gr)
+  implicit none
+
   ! Evaluate Bernoulli Potential at centre of grid box
   integer nx,ny,layers
-  integer i,j,k
+  integer i,j,k,l,m
   double precision h(0:nx+1,0:ny+1,layers)
   double precision u(0:nx+1,0:ny+1,layers)
   double precision v(0:nx+1,0:ny+1,layers)
@@ -941,6 +945,8 @@ end subroutine evaluate_b_RedGrav
 !> Evaluate relative vorticity at lower left grid boundary (du/dy
 !! and dv/dx are at lower left corner as well)
 subroutine evaluate_zeta(zeta,u,v,nx,ny,layers,dx,dy)
+  implicit none
+
   integer nx,ny,layers
   integer i,j,k
   double precision h(0:nx,0:ny,layers)
@@ -967,6 +973,8 @@ end subroutine evaluate_zeta
 !! dh/dt is in the centre of each grid point.
 subroutine evaluate_dhdt(dhdt, h,u,v,ah,dx,dy,nx,ny,layers, &
     spongeTimeScale,spongeH,wetmask,RedGrav)
+  implicit none
+
   ! dhdt is evaluated at the centre of the grid box
   integer nx,ny,layers
   integer i,j,k
@@ -1070,6 +1078,8 @@ end subroutine evaluate_dhdt
 subroutine evaluate_dudt(dudt, h,u,v,b,zeta,wind_x,fu, &
     au,ar,slip,dx,dy,hfacN,hfacS,nx,ny,layers,rho0, &
     spongeTimeScale,spongeU,RedGrav,botDrag)
+  implicit none
+
   ! dudt(i,j) is evaluated at the centre of the left edge of the grid
   ! box, the same place as u(i,j).
   integer nx,ny,layers
@@ -1138,6 +1148,8 @@ end subroutine evaluate_dudt
 subroutine evaluate_dvdt(dvdt, h,u,v,b,zeta,wind_y,fv, &
     au,ar,slip,dx,dy,hfacW,hfacE,nx,ny,layers,rho0, &
     spongeTimeScale,spongeV,RedGrav,botDrag)
+  implicit none
+
   ! dvdt(i,j) is evaluated at the centre of the bottom edge of the
   ! grid box, the same place as v(i,j)
   integer nx,ny,layers
@@ -1204,6 +1216,7 @@ end subroutine evaluate_dvdt
 ! -----------------------------------------------------------------------------
 !> Calculate the barotropic u velocity
 subroutine calc_baro_u(ub,u,h,eta,freesurfFac,nx,ny,layers)
+  implicit none
 
   integer nx,ny,layers
   integer i,j,k
@@ -1237,6 +1250,7 @@ end subroutine calc_baro_u
 
 !> Calculate the barotropic v velocity
 subroutine calc_baro_v(vb,v,h,eta,freesurfFac,nx,ny,layers)
+  implicit none
 
   integer nx,ny,layers
   integer i,j,k
@@ -1272,6 +1286,8 @@ end subroutine calc_baro_v
 !! timestepped with the tendencies excluding the free surface
 !! pressure gradient.
 subroutine calc_eta_star(ub,vb,eta,etastar,freesurfFac,nx,ny,dx,dy,dt)
+  implicit none
+
   integer nx,ny,layers
   integer i,j,k
   double precision eta(0:nx+1,0:ny+1)
@@ -1300,11 +1316,13 @@ end subroutine calc_eta_star
 !! pressure required to keep the barotropic flow nondivergent.
 
 subroutine SOR_solver(a,etanew,etastar,freesurfFac,nx,ny,dt,rjac,eps,maxits,n)
+  implicit none
+
   double precision a(5,nx,ny)
   double precision etanew(0:nx+1,0:ny+1)
   double precision etastar(0:nx+1,0:ny+1)
   double precision freesurfFac
-  integer nx,ny, i,j, maxits, n
+  integer nx,ny,i,j,maxits,n,nit
   double precision dt
   double precision rjac, eps
   double precision rhs(nx,ny)
@@ -1384,10 +1402,11 @@ end subroutine SOR_solver
 !> Check to see if there are any NaNs in the data field and stop the
 !! calculation if any are found.
 subroutine break_if_NaN(data,nx,ny,layers,n)
+  implicit none
 
   ! To stop the program if it detects at NaN in the variable being checked
 
-  integer nx, ny,layers,n
+  integer nx,ny,layers,n,i,j,k
   double precision data(0:nx+1, 0:ny+1,layers)
 
   do k=1,layers
@@ -1421,8 +1440,8 @@ end subroutine break_if_NaN
 !! 1 mean open
 
 subroutine calc_boundary_masks(wetmask,hfacW,hfacE,hfacS,hfacN,nx,ny)
-
   implicit none
+
   integer nx !< number of grid points in x direction
   integer ny !< number of grid points in y direction
   double precision wetmask(0:nx+1,0:ny+1)
@@ -1517,8 +1536,8 @@ end subroutine calc_boundary_masks
 ! -----------------------------------------------------------------------------
 
 subroutine read_input_fileH(name,array,default,nx,ny,layers)
-
   implicit none
+
   character(30) name
   integer nx, ny, layers, k
   double precision array(0:nx+1,0:ny+1,layers), default(layers)
@@ -1547,8 +1566,8 @@ end subroutine read_input_fileH
 ! -----------------------------------------------------------------------------
 
 subroutine read_input_fileH_2D(name,array,default,nx,ny)
-
   implicit none
+
   character(30) name
   integer nx, ny
   double precision array(0:nx+1,0:ny+1), default
@@ -1575,8 +1594,8 @@ end subroutine read_input_fileH_2D
 ! -----------------------------------------------------------------------------
 
 subroutine read_input_fileU(name,array,default,nx,ny,layers)
-
   implicit none
+
   character(30) name
   integer nx, ny,layers
   double precision array(0:nx+1,0:ny+1,layers), default
@@ -1603,8 +1622,8 @@ end subroutine read_input_fileU
 ! -----------------------------------------------------------------------------
 
 subroutine read_input_fileV(name,array,default,nx,ny,layers)
-
   implicit none
+
   character(30) name
   integer nx, ny, layers
   double precision array(0:nx+1,0:ny+1,layers), default
@@ -1632,7 +1651,6 @@ end subroutine read_input_fileV
 !> Wrap 3D fields around for periodic boundary conditions
 
 subroutine wrap_fields_3D(array,nx,ny,layers)
-
   implicit none
 
   double precision array(0:nx+1,0:ny+1,layers)
@@ -1651,7 +1669,6 @@ end subroutine wrap_fields_3D
 !> Wrap 2D fields around for periodic boundary conditions
 
 subroutine wrap_fields_2D(array,nx,ny)
-
   implicit none
 
   double precision array(0:nx+1,0:ny+1)
@@ -1672,7 +1689,6 @@ end subroutine wrap_fields_2D
 !! http://web.ph.surrey.ac.uk/fortweb/glossary/random_seed.html
 
 subroutine ranseed()
-
   implicit none
 
   ! ----- variables for portable seed setting -----
