@@ -217,17 +217,17 @@ program MIM
   if (UseSinusoidWind .and. UseStochWind)  then
     ! Can't use both sinusiodal and stochastic wind variation.
     ! Write a file saying so
-    OPEN(UNIT=99, FILE='errors.txt', ACTION="write", STATUS="replace", &
-        FORM="formatted")
+    open(unit=99, file='errors.txt', action="write", status="replace", &
+        form="formatted")
     write(99,*) "Can't have both stochastic and sinusoidally varying &
         &wind forcings. Choose one."
-    CLOSE(UNIT=99)
+    close(unit=99)
 
     ! Print it on the screen
     print *, "Can't have both stochastic and sinusoidally varying &
         &wind forcings. Choose one."
     ! Stop the program
-    STOP
+    stop
   endif
 
   ! Read in arrays from the input files
@@ -241,7 +241,7 @@ program MIM
     ! Check that depth is negative - it must be less than zero
     if (minval(depth) .lt. 0) then
       print *, "depths must be positive - fix this and try again"
-      STOP
+      stop
     endif
   endif
 
@@ -531,12 +531,12 @@ program MIM
   do n=1,nTimeSteps
 
     ! Time varying winds
-    if (UseSinusoidWind .eqv. .TRUE.) then
+    if (UseSinusoidWind .eqv. .true.) then
       wind_x = base_wind_x*(wind_alpha +  &
           wind_beta*sin(((2d0*pi*n*dt)/wind_period) - wind_t_offset))
       wind_y = base_wind_y*(wind_alpha +  &
           wind_beta*sin(((2d0*pi*n*dt)/wind_period) - wind_t_offset))
-    else if (UseStochWind .eqv. .TRUE.) then
+    else if (UseStochWind .eqv. .true.) then
       if (mod(n-1,n_stoch_wind).eq.0) then
         ! Gives a pseudorandom number in range 0 <= x < 1
         call random_number(stoch_wind_mag)
@@ -676,12 +676,12 @@ program MIM
             if (counter .eq. 1) then
               ! Write a file saying that the layer thickness value
               ! dropped below hmin and this line has been used.
-              OPEN(UNIT=10, FILE='layer thickness dropped below hmin.txt', &
-                  ACTION="write", STATUS="unknown", &
-                  FORM="formatted", POSITION = "append")
+              open(unit=10, file='layer thickness dropped below hmin.txt', &
+                  action="write", status="unknown", &
+                  form="formatted", position = "append")
               write(10,1111) n
 1111          format("layer thickness dropped below hmin at time step ", 1i10.10)
-              CLOSE(UNIT=10)
+              close(unit=10)
             endif
           endif
         end do
@@ -753,7 +753,7 @@ program MIM
         close(10)
       endif
 
-      if (DumpWind .eqv. .TRUE.) then
+      if (DumpWind .eqv. .true.) then
         open(unit = 10, status='replace',file='output/wind_x.'//num, &
             form='unformatted')
         write(10) wind_x(1:nx+1,1:ny)
@@ -821,17 +821,17 @@ program MIM
 
   end do
 
-  OPEN(UNIT=10, FILE='run_finished.txt', ACTION="write", STATUS="unknown", &
-      FORM="formatted", POSITION = "append")
+  open(unit=10, file='run_finished.txt', action="write", status="unknown", &
+      form="formatted", position = "append")
   write(10,1112) n
 1112 format( "run finished at time step ", 1i10.10)
-  CLOSE(UNIT=10)
+  close(unit=10)
 
   print *, 'Execution ended normally'
 
   stop 0
 
-END PROGRAM MIM
+end program MIM
 
 
 ! ------------------------- Beginning of the subroutines ----------------------
@@ -1395,15 +1395,15 @@ subroutine break_if_NaN(data,nx,ny,layers,n)
       do i=1,nx
         if (data(i,j,k).ne.data(i,j,k))  then
           ! write a file saying so
-          OPEN(UNIT=10, FILE='NaN detected.txt', ACTION="write", &
-              STATUS="replace", FORM="formatted")
+          open(unit=10, file='NaN detected.txt', action="write", &
+              status="replace", form="formatted")
           write(10,1000) n
 1000      format( "NaN detected at time step ", 1i10.10)
-          CLOSE(UNIT=10)
+          close(unit=10)
           ! print it on the screen
           print *, 'NaN detected'
           ! Stop the code
-          STOP 'Nan detected'
+          stop 'Nan detected'
         endif
       end do
     end do
@@ -1676,16 +1676,16 @@ subroutine ranseed()
   implicit none
 
   ! ----- variables for portable seed setting -----
-  INTEGER :: i_seed
-  INTEGER, DIMENSION(:), ALLOCATABLE :: a_seed
-  INTEGER, DIMENSION(1:8) :: dt_seed
+  integer :: i_seed
+  integer, dimension(:), allocatable :: a_seed
+  integer, dimension(1:8) :: dt_seed
   ! ----- end of variables for seed setting -----
 
   ! ----- Set up random seed portably -----
-  CALL RANDOM_SEED(size=i_seed)
-  ALLOCATE(a_seed(1:i_seed))
-  CALL RANDOM_SEED(get=a_seed)
-  CALL DATE_AND_TIME(values=dt_seed)
+  call random_seed(size=i_seed)
+  allocate(a_seed(1:i_seed))
+  call random_seed(get=a_seed)
+  call date_and_time(values=dt_seed)
   a_seed(i_seed)=dt_seed(8); a_seed(1)=dt_seed(8)*dt_seed(7)*dt_seed(6)
   call random_seed(put=a_seed)
   return
