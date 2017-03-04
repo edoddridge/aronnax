@@ -228,7 +228,7 @@ program MIM
         &wind forcings. Choose one."
     ! Stop the program
     stop
-  endif
+  end if
 
   ! Read in arrays from the input files
   call read_input_fileU(initUfile,u,0.d0,nx,ny,layers)
@@ -242,8 +242,8 @@ program MIM
     if (minval(depth) .lt. 0) then
       print *, "depths must be positive - fix this and try again"
       stop
-    endif
-  endif
+    end if
+  end if
 
   ! TODO Should probably check that bathymetry file and layer
   ! thicknesses are consistent with each other.
@@ -272,8 +272,8 @@ program MIM
     vav = 0.0
     if (.not. RedGrav) then
       etaav = 0.0
-    endif
-  endif
+    end if
+  end if
 
   ! For now enforce wetmask to have zeros around the edge.
   wetmask(0,:) = 0d0
@@ -296,13 +296,13 @@ program MIM
     ! h(:,:,k) = h(:,:,k)*wetmask(:,:)
     u(:,:,k) = u(:,:,k)*hfacW*wetmask(:,:)
     v(:,:,k) = v(:,:,k)*hfacS*wetmask(:,:)
-  enddo
+  end do
 
   ! If the winds are static, then set wind_ = base_wind_
   if (.not. UseSinusoidWind .and. .not. UseStochWind)  then
     wind_x = base_wind_x
     wind_y = base_wind_y
-  endif
+  end if
 
   ! Initialise random numbers for stochastic winds
   if (UseStochWind) then
@@ -311,7 +311,7 @@ program MIM
     call ranseed()
     ! Number of timesteps between updating the perturbed wind field.
     n_stoch_wind = int(wind_period/dt)
-  endif
+  end if
 
   if (.not. RedGrav) then
     ! Initialise arrays for pressure solver
@@ -356,7 +356,7 @@ program MIM
       print *, 'inconsistency between h and eta (in %):', &
           maxval(abs(h_norming - 1d0))*100d0
     end if
-  endif
+  end if
 
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !!!  Initialisation of the model STARTS HERE                              !!!
@@ -373,7 +373,7 @@ program MIM
     call evaluate_b_RedGrav(b,h,u,v,nx,ny,layers,g_vec)
   else
     call evaluate_b_iso(b,h,u,v,nx,ny,layers,g_vec,depth)
-  endif
+  end if
 
   ! Calculate relative vorticity
   call evaluate_zeta(zeta,u,v,nx,ny,layers,dx,dy)
@@ -400,7 +400,7 @@ program MIM
     call evaluate_b_RedGrav(b,hhalf,uhalf,vhalf,nx,ny,layers,g_vec)
   else
     call evaluate_b_iso(b,hhalf,uhalf,vhalf,nx,ny,layers,g_vec,depth)
-  endif
+  end if
 
   ! Calculate relative vorticity
   call evaluate_zeta(zeta,uhalf,vhalf,nx,ny,layers,dx,dy)
@@ -435,7 +435,7 @@ program MIM
   do k = 1,layers
     u(:,:,k) = u(:,:,k)*hfacW*wetmask(:,:)
     v(:,:,k) = v(:,:,k)*hfacS*wetmask(:,:)
-  enddo
+  end do
 
   ! Wrap fields around for periodic simulations
   call wrap_fields_3D(u,nx,ny,layers)
@@ -450,7 +450,7 @@ program MIM
     call evaluate_b_RedGrav(b,h,u,v,nx,ny,layers,g_vec)
   else
     call evaluate_b_iso(b,h,u,v,nx,ny,layers,g_vec,depth)
-  endif
+  end if
 
   ! Calculate relative vorticity
   call evaluate_zeta(zeta,u,v,nx,ny,layers,dx,dy)
@@ -478,7 +478,7 @@ program MIM
     call evaluate_b_RedGrav(b,hhalf,uhalf,vhalf,nx,ny,layers,g_vec)
   else
     call evaluate_b_iso(b,hhalf,uhalf,vhalf,nx,ny,layers,g_vec,depth)
-  endif
+  end if
 
   ! Calculate relative vorticity
   call evaluate_zeta(zeta,uhalf,vhalf,nx,ny,layers,dx,dy)
@@ -511,7 +511,7 @@ program MIM
   do k = 1,layers
     u(:,:,k) = u(:,:,k)*hfacW*wetmask(:,:)
     v(:,:,k) = v(:,:,k)*hfacS*wetmask(:,:)
-  enddo
+  end do
 
   ! Wrap fields around for periodic simulations
   call wrap_fields_3D(u,nx,ny,layers)
@@ -546,15 +546,15 @@ program MIM
             wind_beta*stoch_wind_mag)
         wind_y = base_wind_y*(wind_alpha +  &
             wind_beta*stoch_wind_mag)
-      endif
-    endif
+      end if
+    end if
 
     ! Calculate Bernoulli potential
     if (RedGrav) then
       call evaluate_b_RedGrav(b,h,u,v,nx,ny,layers,g_vec)
     else
       call evaluate_b_iso(b,h,u,v,nx,ny,layers,g_vec,depth)
-    endif
+    end if
 
     ! Calculate relative vorticity
     call evaluate_zeta(zeta,u,v,nx,ny,layers,dx,dy)
@@ -588,7 +588,7 @@ program MIM
     do k = 1,layers
       unew(:,:,k) = unew(:,:,k)*hfacW*wetmask(:,:)
       vnew(:,:,k) = vnew(:,:,k)*hfacS*wetmask(:,:)
-    enddo
+    end do
 
     ! Do the isopycnal layer physics
     if (.not. RedGrav) then
@@ -661,8 +661,8 @@ program MIM
       do k = 1,layers
         unew(:,:,k) = unew(:,:,k)*hfacW*wetmask(:,:)
         vnew(:,:,k) = vnew(:,:,k)*hfacS*wetmask(:,:)
-      enddo
-    endif
+      end do
+    end if
 
     ! Code to stop layers from getting too thin
     counter = 0
@@ -682,8 +682,8 @@ program MIM
               write(10,1111) n
 1111          format("layer thickness dropped below hmin at time step ", 1i10.10)
               close(unit=10)
-            endif
-          endif
+            end if
+          end if
         end do
       end do
     end do
@@ -701,7 +701,7 @@ program MIM
       vav = vav + vnew
       if (.not. RedGrav) then
         etaav = eta + etanew
-      endif
+      end if
     end if
 
     ! Shuffle arrays: old -> very old,  present -> old, new -> present
@@ -711,7 +711,7 @@ program MIM
     v = vnew
     if (.not. RedGrav) then
       eta = etanew
-    endif
+    end if
 
     ! Tendencies (old -> very old)
     dhdtveryold = dhdtold
@@ -751,7 +751,7 @@ program MIM
             form='unformatted')
         write(10) eta(1:nx,1:ny)
         close(10)
-      endif
+      end if
 
       if (DumpWind .eqv. .true.) then
         open(unit = 10, status='replace',file='output/wind_x.'//num, &
@@ -762,14 +762,14 @@ program MIM
             form='unformatted')
         write(10) wind_y(1:nx,1:ny+1)
         close(10)
-      endif
+      end if
 
       ! Check if there are NaNs in the data
       call break_if_NaN(h,nx,ny,layers,n)
       ! call break_if_NaN(u,nx,ny,layers,n)
       ! call break_if_NaN(v,nx,ny,layers,n)
 
-    endif
+    end if
 
     ! ----------------------- Average Output -----------------
     if (avwrite .eq. 0) then
@@ -801,7 +801,7 @@ program MIM
             form='unformatted')
         write(10) etaav(1:nx,1:ny)
         close(10)
-      endif
+      end if
 
       ! Check if there are NaNs in the data
       call break_if_NaN(h,nx,ny,layers,n)
@@ -814,10 +814,10 @@ program MIM
       vav = 0.0
       if (.not. RedGrav) then
         etaav = 0.0
-      endif
+      end if
       ! h2av=0.0
 
-    endif
+    end if
 
   end do
 
@@ -866,7 +866,7 @@ subroutine evaluate_b_iso(b,h,u,v,nx,ny,layers,g_vec,depth)
 
   do k = 1,layers-1
     z(:,:,layers - k) = z(:,:,layers-k+1) + h(:,:,layers-k+1)
-  enddo
+  end do
 
   ! Calculate Montogmery potential
   ! The following loop is to get the baroclinic Montgomery potential
@@ -874,7 +874,7 @@ subroutine evaluate_b_iso(b,h,u,v,nx,ny,layers,g_vec,depth)
   M = 0d0
   do k = 2,layers
     M(:,:,k) = M(:,:,k-1) + g_vec(k)*z(:,:,k-1)
-  enddo
+  end do
 
   b = 0d0
   ! No baroclinic pressure contribution to the first layer Bernoulli potential
@@ -1013,9 +1013,9 @@ subroutine evaluate_dhdt(dhdt, h,u,v,ah,dx,dy,nx,ny,layers, &
               + h(i,j-1,k)*wetmask(i,j-1)       &
               + (1d0 - wetmask(i,j-1))*h(i,j,k) & ! reflect value around boundary
               - 2*h(i,j,k))/(dy*dy) ! y-component horizontal diffusion
-      enddo
-    enddo
-  enddo
+      end do
+    end do
+  end do
 
   ! Now do the lowest active layer, k = layers. If using reduced
   ! gravity physics, this is unconstrained and calculated as above. If
@@ -1036,13 +1036,13 @@ subroutine evaluate_dhdt(dhdt, h,u,v,ah,dx,dy,nx,ny,layers, &
               + h(i,j-1,layers)*wetmask(i,j-1)           &
               + (1d0 - wetmask(i,j-1))*h(i,j,layers)     & ! reflect value around boundary
               - 2*h(i,j,layers))/(dy*dy) ! y-component horizontal diffusion
-      enddo
-    enddo
+      end do
+    end do
   else if (.not. RedGrav) then ! using n-layer physics
     ! Calculate bottom layer thickness tendency to balance layers above.
     ! In the flat-bottomed case this will give the same answer.
     dhdt_GM(:,:,layers) = -sum(dhdt_GM(:,:,:layers-1),3)
-  endif
+  end if
 
   ! Now add this to the thickness tendency due to the flow field and
   ! sponge regions
@@ -1118,7 +1118,7 @@ subroutine evaluate_dudt(dudt, h,u,v,b,zeta,wind_x,fu, &
         if (k .eq. 1) then ! only have wind forcing on the top layer
           ! This will need refining in the event of allowing outcropping.
           dudt(i,j,k) = dudt(i,j,k) + wind_x(i,j)/(rho0*h(i,j,k)) ! wind forcing
-        endif
+        end if
         if (layers .gt. 1) then ! only evaluate vertical momentum diffusivity if more than 1 layer
           if (k .eq. 1) then ! adapt vertical momentum diffusivity for 2+ layer model -> top layer
             dudt(i,j,k) = dudt(i,j,k) - 1.0d0*ar*(u(i,j,k) - 1.0d0*u(i,j,k+1))
@@ -1127,12 +1127,12 @@ subroutine evaluate_dudt(dudt, h,u,v,b,zeta,wind_x,fu, &
             if (.not. RedGrav) then
               ! add bottom drag here in isopycnal version
               dudt(i,j,k) = dudt(i,j,k) - 1.0d0*botDrag*(u(i,j,k))
-            endif
+            end if
           else ! mid layer/s
             dudt(i,j,k) = dudt(i,j,k) - &
                 1.0d0*ar*(2.0d0*u(i,j,k) - 1.0d0*u(i,j,k-1) - 1.0d0*u(i,j,k+1))
-          endif
-        endif
+          end if
+        end if
       end do
     end do
   end do
@@ -1190,7 +1190,7 @@ subroutine evaluate_dvdt(dvdt, h,u,v,b,zeta,wind_y,fv, &
         if (k .eq. 1) then ! only have wind forcing on the top layer
           ! This will need refining in the event of allowing outcropping.
           dvdt(i,j,k) = dvdt(i,j,k) + wind_y(i,j)/(rho0*h(i,j,k)) ! wind forcing
-        endif
+        end if
         if (layers .gt. 1) then ! only evaluate vertical momentum diffusivity if more than 1 layer
           if (k .eq. 1) then ! adapt vertical momentum diffusivity for 2+ layer model -> top layer
             dvdt(i,j,k) = dvdt(i,j,k) - 1.0d0*ar*(v(i,j,k) - 1.0d0*v(i,j,k+1))
@@ -1199,11 +1199,11 @@ subroutine evaluate_dvdt(dvdt, h,u,v,b,zeta,wind_y,fv, &
             if (.not. RedGrav) then
               ! add bottom drag here in isopycnal version
               dvdt(i,j,k) = dvdt(i,j,k) - 1.0d0*botDrag*(v(i,j,k))
-            endif
+            end if
           else ! mid layer/s
             dvdt(i,j,k) = dvdt(i,j,k) - 1.0d0*ar*(2.0d0*v(i,j,k) - 1.0d0*v(i,j,k-1) - 1.0d0*v(i,j,k+1))
-          endif
-        endif
+          end if
+        end if
       end do
     end do
   end do
@@ -1378,7 +1378,7 @@ subroutine SOR_solver(a,etanew,etastar,freesurfFac,nx,ny,dt,rjac,eps,maxits,n)
       relax_param=1.d0/(1.d0-0.5d0*rjac**2)
     else
       relax_param=1.d0/(1.d0-0.25d0*rjac**2*relax_param)
-    endif
+    end if
 
     call wrap_fields_2D(etanew,nx,ny)
 
@@ -1390,7 +1390,7 @@ subroutine SOR_solver(a,etanew,etastar,freesurfFac,nx,ny,dt,rjac,eps,maxits,n)
       !     print *, 'change in residual less than eps of previous residual. iteration:', eps, nit
       !     return
       ! This was not a good way of exiting the solver - it would occasionally leave after 2 or 3 iterations.
-    endif
+    end if
   end do
 
   print *,'warning: maximum iterations exceeded at time step ', n
@@ -1423,7 +1423,7 @@ subroutine break_if_NaN(data,nx,ny,layers,n)
           print *, 'NaN detected'
           ! Stop the code
           stop 'Nan detected'
-        endif
+        end if
       end do
     end do
   end do
@@ -1458,16 +1458,16 @@ subroutine calc_boundary_masks(wetmask,hfacW,hfacE,hfacS,hfacN,nx,ny)
   do j = 0,ny+1
     do i = 1,nx+1
       temp(i,j) = wetmask(i-1,j)- wetmask(i,j)
-    enddo
-  enddo
+    end do
+  end do
 
   do j = 0,ny+1
     do i = 1,nx+1
       if (temp(i,j) .ne. 0.0) then
         hfacW(i,j) = 0d0
-      endif
-    enddo
-  enddo
+      end if
+    end do
+  end do
 
   ! and now for all  western cells
   hfacW(0,:) = hfacW(nx,:)
@@ -1478,16 +1478,16 @@ subroutine calc_boundary_masks(wetmask,hfacW,hfacE,hfacS,hfacN,nx,ny)
   do j = 0,ny+1
     do i = 0,nx
       temp(i,j) = wetmask(i,j)- wetmask(i+1,j)
-    enddo
-  enddo
+    end do
+  end do
 
   do j = 0,ny+1
     do i = 0,nx
       if (temp(i,j) .ne. 0.0) then
         hfacE(i,j) = 0d0
-      endif
-    enddo
-  enddo
+      end if
+    end do
+  end do
 
   ! and now for all  eastern cells
   hfacE(nx+1,:) = hfacE(1,:)
@@ -1498,16 +1498,16 @@ subroutine calc_boundary_masks(wetmask,hfacW,hfacE,hfacS,hfacN,nx,ny)
   do j = 1,ny+1
     do i = 0,nx+1
       temp(i,j) = wetmask(i,j-1)- wetmask(i,j)
-    enddo
-  enddo
+    end do
+  end do
 
   do j = 1,ny+1
     do i = 0,nx+1
       if (temp(i,j) .ne. 0.0) then
         hfacS(i,j) = 0d0
-      endif
-    enddo
-  enddo
+      end if
+    end do
+  end do
 
   ! all southern cells
   hfacS(:,0) = hfacS(:,ny)
@@ -1517,16 +1517,16 @@ subroutine calc_boundary_masks(wetmask,hfacW,hfacE,hfacS,hfacN,nx,ny)
   do j = 0,ny
     do i = 0,nx+1
       temp(i,j) = wetmask(i,j)- wetmask(i,j+1)
-    enddo
-  enddo
+    end do
+  end do
 
   do j = 0,ny
     do i = 0,nx+1
       if (temp(i,j) .ne. 0.0) then
         hfacN(i,j) = 0d0
-      endif
-    enddo
-  enddo
+      end if
+    end do
+  end do
   ! all northern cells
   hfacN(:,ny+1) = hfacN(:,1)
 
@@ -1557,8 +1557,8 @@ subroutine read_input_fileH(name,array,default,nx,ny,layers)
   else
     do k = 1,layers
       array(:,:,k) = default(k)
-    enddo
-  endif
+    end do
+  end if
 
   return
 end subroutine read_input_fileH
@@ -1586,7 +1586,7 @@ subroutine read_input_fileH_2D(name,array,default,nx,ny)
     array(:,ny+1) = array(:,1)
   else
     array = default
-  endif
+  end if
 
   return
 end subroutine read_input_fileH_2D
@@ -1614,7 +1614,7 @@ subroutine read_input_fileU(name,array,default,nx,ny,layers)
     array(:,ny+1,:) = array(:,1,:)
   else
     array = default
-  endif
+  end if
 
   return
 end subroutine read_input_fileU
@@ -1642,7 +1642,7 @@ subroutine read_input_fileV(name,array,default,nx,ny,layers)
     array(:,ny+1,:) = array(:,1,:)
   else
     array = default
-  endif
+  end if
 
   return
 end subroutine read_input_fileV
