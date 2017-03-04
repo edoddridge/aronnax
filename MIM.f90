@@ -773,7 +773,7 @@ program MIM
 
     ! ----------------------- Average Output -----------------
     if (avwrite .eq. 0) then
-      go to 120
+      ! OK
     else if (mod(n-1,avwrite).eq.0) then
 
       hav=hav/real(avwrite)
@@ -817,7 +817,7 @@ program MIM
       endif
       ! h2av=0.0
 
-120 endif
+    endif
 
   end do
 
