@@ -821,238 +821,249 @@ program MIM
 
   end do
 
-    OPEN(UNIT=10, FILE='run_finished.txt', ACTION="write", STATUS="unknown", &
-        FORM="formatted", POSITION = "append")
-    write(10,1112) n
+  OPEN(UNIT=10, FILE='run_finished.txt', ACTION="write", STATUS="unknown", &
+      FORM="formatted", POSITION = "append")
+  write(10,1112) n
 1112 format( "run finished at time step ", 1i10.10)
-    CLOSE(UNIT=10)
+  CLOSE(UNIT=10)
 
-    print *, 'Execution ended normally'
+  print *, 'Execution ended normally'
 
-    stop 0
+  stop 0
 
-  END PROGRAM MIM
+END PROGRAM MIM
 
 
-! ----------------------------- Beginning of the subroutines --------------------
+! ------------------------- Beginning of the subroutines ----------------------
 !
-!-----------------------------------------------------------------------------------
+! -----------------------------------------------------------------------------
+
 !> Evaluate the Bornoulli Potential for n-layer physics.
 !! B is evaluated at the tracer point, for each grid box.
-!! 
-!!!
-    subroutine evaluate_b_iso(b,h,u,v,nx,ny,layers,g_vec,depth)
-!    Evaluate baroclinic component of the Bernoulli Potential (u dot u + Montgomery potential) in the n-layer physics, at centre of grid box
+subroutine evaluate_b_iso(b,h,u,v,nx,ny,layers,g_vec,depth)
+  ! Evaluate the baroclinic component of the Bernoulli Potential
+  ! (u dot u + Montgomery potential) in the n-layer physics, at centre
+  ! of grid box
 
-    double precision, intent(out) :: b(0:nx+1,0:ny+1,layers) !< Bernoulli Potential
-    integer, intent(in) :: nx !< number of x grid points
-    integer, intent(in) :: ny !< number of y grid points
-    integer, intent(in) :: layers !< number of layers
-    integer i,j,k
-    double precision, intent(in) :: depth(0:nx+1,0:ny+1) !< total depth of fluid
-    double precision z(0:nx,0:ny,layers)
-    double precision, intent(in) :: h(0:nx+1,0:ny+1,layers) !< layer thicknesses
-    double precision, intent(in) :: u(0:nx+1,0:ny+1,layers) !< zonal velocities
-    double precision, intent(in) :: v(0:nx+1,0:ny+1,layers) !< meridional velocities
-    double precision, intent(in) :: g_vec(layers) !< reduced gravity at each interface
-    double precision M(0:nx+1,0:ny+1,layers)
+  double precision, intent(out) :: b(0:nx+1,0:ny+1,layers) !< Bernoulli Potential
+  integer, intent(in) :: nx !< number of x grid points
+  integer, intent(in) :: ny !< number of y grid points
+  integer, intent(in) :: layers !< number of layers
+  integer i,j,k
+  double precision, intent(in) :: depth(0:nx+1,0:ny+1) !< total depth of fluid
+  double precision z(0:nx,0:ny,layers)
+  double precision, intent(in) :: h(0:nx+1,0:ny+1,layers) !< layer thicknesses
+  double precision, intent(in) :: u(0:nx+1,0:ny+1,layers) !< zonal velocities
+  double precision, intent(in) :: v(0:nx+1,0:ny+1,layers) !< meridional velocities
+  double precision, intent(in) :: g_vec(layers) !< reduced gravity at each interface
+  double precision M(0:nx+1,0:ny+1,layers)
 
+  ! Calculate layer interface locations
+  z = 0d0
+  z(:,:,layers) = -depth
 
-!   calculate layer interface locations
-    z = 0d0
-    z(:,:,layers) = -depth
+  do k = 1,layers-1
+    z(:,:,layers - k) = z(:,:,layers-k+1) + h(:,:,layers-k+1)
+  enddo
 
-    do k = 1,layers-1
-        z(:,:,layers - k) = z(:,:,layers-k+1) + h(:,:,layers-k+1)
-    enddo
+  ! Calculate Montogmery potential
+  ! The following loop is to get the baroclinic Montgomery potential
+  ! in each layer
+  M = 0d0
+  do k = 2,layers
+    M(:,:,k) = M(:,:,k-1) + g_vec(k)*z(:,:,k-1)
+  enddo
 
-    M = 0d0
-    do k = 2,layers
-!       Calculate Montogmery potential
-        ! The following loop is to get the baroclinic Montgomery potential in each layer
-        M(:,:,k) = M(:,:,k-1) + g_vec(k)*z(:,:,k-1)
-    enddo
+  b = 0d0
+  ! No baroclinic pressure contribution to the first layer Bernoulli potential
+  ! (the barotropic pressure contributes, but that's not done here).
+  ! do j = 1,ny-1
+  !     do i = 1,nx-1
+  !         b(i,j,1) = (u(i,j,1)**2+u(i+1,j,1)**2+v(i,j,1)**2+v(i,j+1,1)**2)/4.0d0
+  !     end do
+  ! end do
 
-
-
-    b = 0d0
-!   no baroclinic pressure contribution to the first layer Bernoulli potential 
-!   (the barotropic pressure contributes, but that's not done here).
-    ! do j = 1,ny-1
-    !     do i = 1,nx-1
-    !         b(i,j,1) = (u(i,j,1)**2+u(i+1,j,1)**2+v(i,j,1)**2+v(i,j+1,1)**2)/4.0d0
-    !     end do
-    ! end do
-
-!   for the rest of the layers we get a baroclinic pressure contribution
-    do k = 1,layers !move through the different layers of the model
-      do j=1,ny !move through longitude
-        do i=1,nx ! move through latitude
-          b(i,j,k)= M(i,j,k) + (u(i,j,k)**2+u(i+1,j,k)**2+v(i,j,k)**2+v(i,j+1,k)**2)/4.0d0
-          ! Add the (u^2 + v^2)/2 term to the Montgomery Potential
-        end do 
-      end do 
+  ! For the rest of the layers we get a baroclinic pressure contribution
+  do k = 1,layers ! move through the different layers of the model
+    do j=1,ny ! move through longitude
+      do i=1,nx ! move through latitude
+        b(i,j,k)= M(i,j,k) + (u(i,j,k)**2+u(i+1,j,k)**2+v(i,j,k)**2+v(i,j+1,k)**2)/4.0d0
+        ! Add the (u^2 + v^2)/2 term to the Montgomery Potential
+      end do
     end do
+  end do
 
-    return
-    end subroutine
-!---------------------------------------------------------------------------------------
+  return
+end subroutine evaluate_b_iso
 
-    subroutine evaluate_b_RedGrav(b,h,u,v,nx,ny,layers,gr)
-!    Evaluate Bernoulli Potential at centre of grid box
-    integer nx,ny,layers
-    integer i,j,k
-    double precision h(0:nx+1,0:ny+1,layers)
-    double precision u(0:nx+1,0:ny+1,layers)
-    double precision v(0:nx+1,0:ny+1,layers)
-    double precision b(0:nx+1,0:ny+1,layers)
-    double precision gr(layers)
-    double precision h_temp, b_proto
+! -----------------------------------------------------------------------------
 
-    b = 0d0
+subroutine evaluate_b_RedGrav(b,h,u,v,nx,ny,layers,gr)
+  ! Evaluate Bernoulli Potential at centre of grid box
+  integer nx,ny,layers
+  integer i,j,k
+  double precision h(0:nx+1,0:ny+1,layers)
+  double precision u(0:nx+1,0:ny+1,layers)
+  double precision v(0:nx+1,0:ny+1,layers)
+  double precision b(0:nx+1,0:ny+1,layers)
+  double precision gr(layers)
+  double precision h_temp, b_proto
 
-    do k = 1,layers !move through the different layers of the model
-      do j=1,ny !move through longitude
-        do i=1,nx ! move through latitude
-          ! The following loops are to get the pressure term in the Bernoulli Potential
-          b_proto = 0d0
-          do l = k,layers
-            h_temp = 0d0
-            do m = 1,l
-              h_temp = h_temp + h(i,j,m) !sum up the layer thicknesses
-            end do
-            b_proto = b_proto + gr(l)*h_temp !sum up the product of reduced gravity and summed layer thicknesses to form the pressure componenet of the Bernoulli Potential term
+  b = 0d0
+
+  do k = 1,layers ! move through the different layers of the model
+    do j=1,ny ! move through longitude
+      do i=1,nx ! move through latitude
+        ! The following loops are to get the pressure term in the
+        ! Bernoulli Potential
+        b_proto = 0d0
+        do l = k,layers
+          h_temp = 0d0
+          do m = 1,l
+            h_temp = h_temp + h(i,j,m) ! sum up the layer thicknesses
           end do
-          b(i,j,k)= b_proto + (u(i,j,k)**2+u(i+1,j,k)**2+v(i,j,k)**2+v(i,j+1,k)**2)/4.0d0
-          ! Add the (u^2 + v^2)/2 term to the pressure componenet of the Bernoulli Potential
-        end do 
-      end do 
+          ! Sum up the product of reduced gravity and summed layer
+          ! thicknesses to form the pressure componenet of the
+          ! Bernoulli Potential term
+          b_proto = b_proto + gr(l)*h_temp
+        end do
+        ! Add the (u^2 + v^2)/2 term to the pressure componenet of the
+        ! Bernoulli Potential
+        b(i,j,k)= b_proto + (u(i,j,k)**2+u(i+1,j,k)**2+v(i,j,k)**2+v(i,j+1,k)**2)/4.0d0
+      end do
     end do
+  end do
 
+  return
+end subroutine evaluate_b_RedGrav
 
-    return
-    end subroutine
+! -----------------------------------------------------------------------------
+!> Evaluate relative vorticity at lower left grid boundary (du/dy
+!! and dv/dx are at lower left corner as well)
+subroutine evaluate_zeta(zeta,u,v,nx,ny,layers,dx,dy)
+  integer nx,ny,layers
+  integer i,j,k
+  double precision h(0:nx,0:ny,layers)
+  double precision u(0:nx+1,0:ny+1,layers)
+  double precision v(0:nx+1,0:ny+1,layers)
+  double precision zeta(0:nx+1,0:ny+1,layers)
+  double precision dx, dy
 
-!---------------------------------------------------------------------------------------
-!>    Evaluate relative vorticity at lower left grid boundary (du/dy 
-!!    and dv/dx are at lower left corner as well)
-    subroutine evaluate_zeta(zeta,u,v,nx,ny,layers,dx,dy)
-    integer nx,ny,layers
-    integer i,j,k
-    double precision h(0:nx,0:ny,layers)
-    double precision u(0:nx+1,0:ny+1,layers)
-    double precision v(0:nx+1,0:ny+1,layers)
-    double precision zeta(0:nx+1,0:ny+1,layers)
-    double precision dx, dy
+  zeta = 0d0
 
-    zeta = 0d0
-    
-    do k = 1,layers
-      do j=1,ny+1
-        do i=1,nx+1
-          zeta(i,j,k)=(v(i,j,k)-v(i-1,j,k))/dx-(u(i,j,k)-u(i,j-1,k))/dy
-        end do 
-      end do 
+  do k = 1,layers
+    do j=1,ny+1
+      do i=1,nx+1
+        zeta(i,j,k)=(v(i,j,k)-v(i-1,j,k))/dx-(u(i,j,k)-u(i,j-1,k))/dy
+      end do
     end do
+  end do
 
-    return
-    end subroutine
-!------------------------------------------------------------------------------------------
+  return
+end subroutine evaluate_zeta
+
+! -----------------------------------------------------------------------------
 !> Calculate the tendency of layer thickness for each of the active layers
 !! dh/dt is in the centre of each grid point.
-    subroutine evaluate_dhdt(dhdt, h,u,v,ah,dx,dy,nx,ny,layers, & 
-        spongeTimeScale,spongeH,wetmask,RedGrav)
-!    dhdt is evaluated at the centre of the grid box
-    integer nx,ny,layers
-    integer i,j,k
-    double precision dhdt(0:nx+1,0:ny+1,layers)
-    double precision h(0:nx+1,0:ny+1,layers)
-    double precision u(0:nx+1,0:ny+1,layers)
-    double precision v(0:nx+1,0:ny+1,layers)
-    double precision dhdt_GM(0:nx+1,0:ny+1,layers) ! thickness tendency due to thickness difussion (equivalent to Gent McWilliams in a z coordinate model)
-    double precision spongeTimeScale(0:nx+1,0:ny+1,layers)
-    double precision spongeH(0:nx+1,0:ny+1,layers)
-    double precision wetmask(0:nx+1,0:ny+1)
-    double precision dx, dy
-    double precision ah(layers)
-    logical :: RedGrav
+subroutine evaluate_dhdt(dhdt, h,u,v,ah,dx,dy,nx,ny,layers, &
+    spongeTimeScale,spongeH,wetmask,RedGrav)
+  ! dhdt is evaluated at the centre of the grid box
+  integer nx,ny,layers
+  integer i,j,k
+  double precision dhdt(0:nx+1,0:ny+1,layers)
+  double precision h(0:nx+1,0:ny+1,layers)
+  double precision u(0:nx+1,0:ny+1,layers)
+  double precision v(0:nx+1,0:ny+1,layers)
+  ! Thickness tendency due to thickness diffusion (equivalent to Gent
+  ! McWilliams in a z coordinate model)
+  double precision dhdt_GM(0:nx+1,0:ny+1,layers)
+  double precision spongeTimeScale(0:nx+1,0:ny+1,layers)
+  double precision spongeH(0:nx+1,0:ny+1,layers)
+  double precision wetmask(0:nx+1,0:ny+1)
+  double precision dx, dy
+  double precision ah(layers)
+  logical :: RedGrav
 
+  ! Calculate tendency due to thickness diffusion (equivalent
+  ! to GM in z coordinate model with the same diffusivity).
+  dhdt_GM = 0d0
 
-    ! Calculate tendency due to thickness diffusion (equivalent 
-    ! to GM in z coordinate model with the same diffusivity).
-    dhdt_GM = 0d0
+  ! Loop through all layers except lowest and calculate
+  ! thickness tendency due to diffusive mass fluxes
+  do k = 1,layers-1
+    do j=1,ny
+      do i=1,nx
+        dhdt_GM(i,j,k) = &
+            ah(k)*(h(i+1,j,k)*wetmask(i+1,j)    &
+              + (1d0 - wetmask(i+1,j))*h(i,j,k) & ! reflect around boundary
+              + h(i-1,j,k)*wetmask(i-1,j)       &
+              + (1d0 - wetmask(i-1,j))*h(i,j,k) & ! refelct around boundary
+              - 2*h(i,j,k))/(dx*dx)             & ! x-component
 
-    ! loop through all layers except lowest and calculate 
-    ! thickness tendency due to diffusive mass fluxes
-    do k = 1,layers-1
-      do j=1,ny
-        do i=1,nx
-          dhdt_GM(i,j,k)=ah(k)*(h(i+1,j,k)*wetmask(i+1,j) + &
-                            (1d0 - wetmask(i+1,j))*h(i,j,k) & ! reflect around boundary
-                        + h(i-1,j,k)*wetmask(i-1,j) + &
-                            (1d0 - wetmask(i-1,j))*h(i,j,k) & ! refelct around boundary
-                        - 2*h(i,j,k))/(dx*dx) + & ! x-component
-
-                        ah(k)*(h(i,j+1,k)*wetmask(i,j+1) + &
-                        (1d0 - wetmask(i,j+1))*h(i,j,k) & ! reflect value around boundary
-                        + h(i,j-1,k)*wetmask(i,j-1) + &
-                        (1d0 - wetmask(i,j-1))*h(i,j,k) & ! reflect value around boundary
-                        - 2*h(i,j,k))/(dy*dy) !y-component horizontal diffusion
-        enddo
+            + ah(k)*(h(i,j+1,k)*wetmask(i,j+1) &
+              + (1d0 - wetmask(i,j+1))*h(i,j,k) & ! reflect value around boundary
+              + h(i,j-1,k)*wetmask(i,j-1)       &
+              + (1d0 - wetmask(i,j-1))*h(i,j,k) & ! reflect value around boundary
+              - 2*h(i,j,k))/(dy*dy) ! y-component horizontal diffusion
       enddo
     enddo
+  enddo
 
-    ! now do the lowest active layer, k = layers. If using reduced gravity physics 
-    ! this is unconstrained and calculated as above. If using n-layer 
-    ! physics it is constrained to balance the layers above it.
-    if (RedGrav) then
-        do j=1,ny
-          do i=1,nx
-            dhdt_GM(i,j,layers)=ah(layers)*(h(i+1,j,layers)*wetmask(i+1,j) + &
-                            (1d0 - wetmask(i+1,j))*h(i,j,layers) & ! boundary
-                        + h(i-1,j,layers)*wetmask(i-1,j) + &
-                            (1d0 - wetmask(i-1,j))*h(i,j,layers) & ! boundary
-                        - 2*h(i,j,layers))/ (dx*dx) + & ! x-componenet 
+  ! Now do the lowest active layer, k = layers. If using reduced
+  ! gravity physics, this is unconstrained and calculated as above. If
+  ! using n-layer physics it is constrained to balance the layers
+  ! above it.
+  if (RedGrav) then
+    do j=1,ny
+      do i=1,nx
+        dhdt_GM(i,j,layers) = &
+            ah(layers)*(h(i+1,j,layers)*wetmask(i+1,j)   &
+              + (1d0 - wetmask(i+1,j))*h(i,j,layers)     & ! boundary
+              + h(i-1,j,layers)*wetmask(i-1,j)           &
+              + (1d0 - wetmask(i-1,j))*h(i,j,layers)     & ! boundary
+              - 2*h(i,j,layers))/(dx*dx)                 & ! x-component
 
-                        ah(layers)*(h(i,j+1,layers)*wetmask(i,j+1) + &
-                        (1d0 - wetmask(i,j+1))*h(i,j,layers) & ! reflect value around boundary
-                        + h(i,j-1,layers)*wetmask(i,j-1) + &
-                        (1d0 - wetmask(i,j-1))*h(i,j,layers) & ! reflect value around boundary
-                        - 2*h(i,j,layers))/(dy*dy) !y-component horizontal diffusion
-          enddo
-        enddo
-    else if (.not. RedGrav) then ! using n-layer physics
-        ! calculate bottom layer thickness tendency to balance layers above.
-        ! In the flat-bottomed case this will give the same answer
-        dhdt_GM(:,:,layers) = -sum(dhdt_GM(:,:,:layers-1),3)
-    endif
+            + ah(layers)*(h(i,j+1,layers)*wetmask(i,j+1) &
+              + (1d0 - wetmask(i,j+1))*h(i,j,layers)     & ! reflect value around boundary
+              + h(i,j-1,layers)*wetmask(i,j-1)           &
+              + (1d0 - wetmask(i,j-1))*h(i,j,layers)     & ! reflect value around boundary
+              - 2*h(i,j,layers))/(dy*dy) ! y-component horizontal diffusion
+      enddo
+    enddo
+  else if (.not. RedGrav) then ! using n-layer physics
+    ! Calculate bottom layer thickness tendency to balance layers above.
+    ! In the flat-bottomed case this will give the same answer.
+    dhdt_GM(:,:,layers) = -sum(dhdt_GM(:,:,:layers-1),3)
+  endif
 
+  ! Now add this to the thickness tendency due to the flow field and
+  ! sponge regions
+  dhdt = 0d0
 
-
-
-    ! Now add this to the thickness tendency due to the flow field and sponge regions
-    dhdt = 0d0
-
-    do k = 1,layers
-      do j=1,ny
-        do i=1,nx
-          dhdt(i,j,k)= dhdt_GM(i,j,k) - & ! horizontal thickness diffusion
-        ((h(i,j,k)+h(i+1,j,k))*u(i+1,j,k) - (h(i-1,j,k)+h(i,j,k))*u(i,j,k))/(dx*2d0) - & !d(hu)/dx
-        ((h(i,j,k)+h(i,j+1,k))*v(i,j+1,k) - (h(i,j-1,k)+h(i,j,k))*v(i,j,k))/(dy*2d0) + & !d(hv)/dy
-        spongeTimeScale(i,j,k)*(spongeH(i,j,k)-h(i,j,k)) ! forced relaxtion in the sponge regions.
-        end do 
-      end do 
+  do k = 1,layers
+    do j=1,ny
+      do i=1,nx
+        dhdt(i,j,k) = &
+            dhdt_GM(i,j,k) & ! horizontal thickness diffusion
+            - ((h(i,j,k)+h(i+1,j,k))*u(i+1,j,k) &
+               - (h(i-1,j,k)+h(i,j,k))*u(i,j,k))/(dx*2d0) & ! d(hu)/dx
+            - ((h(i,j,k)+h(i,j+1,k))*v(i,j+1,k) &
+              - (h(i,j-1,k)+h(i,j,k))*v(i,j,k))/(dy*2d0)  & ! d(hv)/dy
+            + spongeTimeScale(i,j,k)*(spongeH(i,j,k)-h(i,j,k)) ! forced relaxtion in the sponge regions.
+      end do
     end do
+  end do
 
-    ! make sure the dynamics are only happening in the wet grid points.
-    do k = 1,layers
-        dhdt(:,:,k) = dhdt(:,:,k)*wetmask
-    end do
+  ! Make sure the dynamics are only happening in the wet grid points.
+  do k = 1,layers
+    dhdt(:,:,k) = dhdt(:,:,k)*wetmask
+  end do
 
-    call wrap_fields_3D(dhdt,nx,ny,layers)
+  call wrap_fields_3D(dhdt,nx,ny,layers)
 
-    return
-    end subroutine
+  return
+end subroutine evaluate_dhdt
+
 !--------------------------------------------------------------------------------------------
 !> Calculate the tendency of zonal velocity for each of the active layers
 
