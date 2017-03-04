@@ -528,7 +528,7 @@ program MIM
   !!! MAIN LOOP OF THE MODEL STARTS HERE                                    !!!
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-  do 9999 n=1,nTimeSteps
+  do n=1,nTimeSteps
 
     ! Time varying winds
     if (UseSinusoidWind .eqv. .TRUE.) then
@@ -819,7 +819,7 @@ program MIM
 
 120 endif
 
-9999 continue
+  end do
 
     OPEN(UNIT=10, FILE='run_finished.txt', ACTION="write", STATUS="unknown", &
         FORM="formatted", POSITION = "append")
