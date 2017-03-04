@@ -1064,633 +1064,629 @@ subroutine evaluate_dhdt(dhdt, h,u,v,ah,dx,dy,nx,ny,layers, &
   return
 end subroutine evaluate_dhdt
 
-!--------------------------------------------------------------------------------------------
+! -----------------------------------------------------------------------------
 !> Calculate the tendency of zonal velocity for each of the active layers
 
-    subroutine evaluate_dudt(dudt, h,u,v,b,zeta,wind_x,fu, & 
-        au,ar,slip,dx,dy,hfacN,hfacS,nx,ny,layers,rho0, & 
-        spongeTimeScale,spongeU,RedGrav,botDrag)
-!    dudt(i,j) is evaluated at the centre of the left edge of the grid box,
-!     the same place as u(i,j)
-    integer nx,ny,layers
-    integer i,j,k
-    double precision dudt(0:nx+1,0:ny+1,layers)
-    double precision h(0:nx+1,0:ny+1,layers)
-    double precision u(0:nx+1,0:ny+1,layers)
-    double precision v(0:nx+1,0:ny+1,layers)
-    double precision fu(0:nx+1,0:ny+1)
-    double precision zeta(0:nx+1,0:ny+1,layers)
-    double precision b(0:nx+1,0:ny+1,layers)
-    double precision spongeTimeScale(0:nx+1,0:ny+1,layers)
-    double precision spongeU(0:nx+1,0:ny+1,layers)
-    double precision wind_x(0:nx+1,0:ny+1)
-    double precision dx, dy
-    double precision au, ar, rho0, slip, botDrag
-    double precision hfacN(0:nx+1,0:ny+1)
-    double precision hfacS(0:nx+1,0:ny+1)
-    logical :: RedGrav
+subroutine evaluate_dudt(dudt, h,u,v,b,zeta,wind_x,fu, &
+    au,ar,slip,dx,dy,hfacN,hfacS,nx,ny,layers,rho0, &
+    spongeTimeScale,spongeU,RedGrav,botDrag)
+  ! dudt(i,j) is evaluated at the centre of the left edge of the grid
+  ! box, the same place as u(i,j).
+  integer nx,ny,layers
+  integer i,j,k
+  double precision dudt(0:nx+1,0:ny+1,layers)
+  double precision h(0:nx+1,0:ny+1,layers)
+  double precision u(0:nx+1,0:ny+1,layers)
+  double precision v(0:nx+1,0:ny+1,layers)
+  double precision fu(0:nx+1,0:ny+1)
+  double precision zeta(0:nx+1,0:ny+1,layers)
+  double precision b(0:nx+1,0:ny+1,layers)
+  double precision spongeTimeScale(0:nx+1,0:ny+1,layers)
+  double precision spongeU(0:nx+1,0:ny+1,layers)
+  double precision wind_x(0:nx+1,0:ny+1)
+  double precision dx, dy
+  double precision au, ar, rho0, slip, botDrag
+  double precision hfacN(0:nx+1,0:ny+1)
+  double precision hfacS(0:nx+1,0:ny+1)
+  logical :: RedGrav
 
-    dudt = 0d0
+  dudt = 0d0
 
-    do k = 1,layers
-      do i=1,nx  
-        do j=1,ny
-            dudt(i,j,k)= au*(u(i+1,j,k)+u(i-1,j,k)-2.0d0*u(i,j,k))/ & 
-            (dx*dx)  + &   !    x-component
-            au*(u(i,j+1,k)+u(i,j-1,k)-2.0d0*u(i,j,k)+ &
-            ! boundary conditions
-            (1.0d0 - 2.0d0*slip)*(1.0d0 - hfacN(i,j))*u(i,j,k) + &
-            (1.0d0 - 2.0d0*slip)*(1.0d0 - hfacS(i,j))*u(i,j,k))/ &
-            (dy*dy) + & !y-component
-    !    together make the horizontal diffusion term
-            0.25d0*(fu(i,j)+0.5d0*(zeta(i,j,k)+zeta(i,j+1,k)))* &
-            (v(i-1,j,k)+v(i,j,k)+v(i-1,j+1,k)+v(i,j+1,k)) - & !vorticity term
-            (b(i,j,k) - b(i-1,j,k))/dx + & !Bernoulli Potential term
-            spongeTimeScale(i,j,k)*(spongeU(i,j,k)-u(i,j,k)) ! forced relaxtion in the sponge regions)
-            if (k .eq. 1) then ! only have wind forcing on the top layer
-                !This will need refining in the event of allowing outcropping.
-                dudt(i,j,k) = dudt(i,j,k) + wind_x(i,j)/(rho0*h(i,j,k)) !wind forcing
+  do k = 1,layers
+    do i=1,nx
+      do j=1,ny
+        dudt(i,j,k) = au*(u(i+1,j,k)+u(i-1,j,k)-2.0d0*u(i,j,k))/(dx*dx) & ! x-component
+            + au*(u(i,j+1,k)+u(i,j-1,k)-2.0d0*u(i,j,k) &
+              ! boundary conditions
+              + (1.0d0 - 2.0d0*slip)*(1.0d0 - hfacN(i,j))*u(i,j,k) &
+              + (1.0d0 - 2.0d0*slip)*(1.0d0 - hfacS(i,j))*u(i,j,k))/(dy*dy) & ! y-component
+              ! Together make the horizontal diffusion term
+            + 0.25d0*(fu(i,j)+0.5d0*(zeta(i,j,k)+zeta(i,j+1,k))) &
+              *(v(i-1,j,k)+v(i,j,k)+v(i-1,j+1,k)+v(i,j+1,k)) & ! vorticity term
+            - (b(i,j,k) - b(i-1,j,k))/dx & ! Bernoulli potential term
+            + spongeTimeScale(i,j,k)*(spongeU(i,j,k)-u(i,j,k)) ! forced relaxtion in the sponge regions
+        if (k .eq. 1) then ! only have wind forcing on the top layer
+          ! This will need refining in the event of allowing outcropping.
+          dudt(i,j,k) = dudt(i,j,k) + wind_x(i,j)/(rho0*h(i,j,k)) ! wind forcing
+        endif
+        if (layers .gt. 1) then ! only evaluate vertical momentum diffusivity if more than 1 layer
+          if (k .eq. 1) then ! adapt vertical momentum diffusivity for 2+ layer model -> top layer
+            dudt(i,j,k) = dudt(i,j,k) - 1.0d0*ar*(u(i,j,k) - 1.0d0*u(i,j,k+1))
+          else if (k .eq. layers) then ! bottom layer
+            dudt(i,j,k) = dudt(i,j,k) - 1.0d0*ar*(u(i,j,k) - 1.0d0*u(i,j,k-1))
+            if (.not. RedGrav) then
+              ! add bottom drag here in isopycnal version
+              dudt(i,j,k) = dudt(i,j,k) - 1.0d0*botDrag*(u(i,j,k))
             endif
-            if (layers .gt. 1) then ! only evaluate vertical momentum diffusivity if more than 1 layer
-                if (k .eq. 1) then ! adapt vertical momentum diffusivity for 2+ layer model -> top layer
-                    dudt(i,j,k) = dudt(i,j,k) - 1.0d0*ar*(u(i,j,k) - 1.0d0*u(i,j,k+1))
-                else if (k .eq. layers) then ! bottom layer
-                    dudt(i,j,k) = dudt(i,j,k) - 1.0d0*ar*(u(i,j,k) - 1.0d0*u(i,j,k-1))
-                    if (.not. RedGrav) then
-                        ! add bottom drag here in isopycnal version
-                        dudt(i,j,k) = dudt(i,j,k) - 1.0d0*botDrag*(u(i,j,k))
-                    endif
-                else ! mid layer/s
-                    dudt(i,j,k) = dudt(i,j,k) - 1.0d0*ar*(2.0d0*u(i,j,k) - 1.0d0*u(i,j,k-1) - 1.0d0*u(i,j,k+1))
-                endif
-            endif
-        end do
+          else ! mid layer/s
+            dudt(i,j,k) = dudt(i,j,k) - &
+                1.0d0*ar*(2.0d0*u(i,j,k) - 1.0d0*u(i,j,k-1) - 1.0d0*u(i,j,k+1))
+          endif
+        endif
       end do
     end do
+  end do
 
-    call wrap_fields_3D(dudt,nx,ny,layers)
+  call wrap_fields_3D(dudt,nx,ny,layers)
 
-    return
-    end subroutine
-!------------------------------------------------------------------------------------
+  return
+end subroutine evaluate_dudt
+
+! -----------------------------------------------------------------------------
 !> Calculate the tendency of meridional velocity for each of the active layers
 
-    subroutine evaluate_dvdt(dvdt, h,u,v,b,zeta,wind_y,fv, &
-        au,ar,slip,dx,dy,hfacW,hfacE,nx,ny,layers,rho0, & 
-        spongeTimeScale,spongeV,RedGrav,botDrag)
-!    dvdt(i,j) is evaluated at the centre of the bottom edge of the grid box,
-!     the same place as v(i,j)
-    integer nx,ny,layers
-    integer i,j,k
-    double precision dvdt(0:nx+1,0:ny+1,layers)
-    double precision h(0:nx+1,0:ny+1,layers)
-    double precision u(0:nx+1,0:ny+1,layers)
-    double precision v(0:nx+1,0:ny+1,layers)
-    double precision fv(0:nx+1,0:ny+1)
-    double precision zeta(0:nx+1,0:ny+1,layers)
-    double precision b(0:nx+1,0:ny+1,layers)
-    double precision spongeTimeScale(0:nx+1,0:ny+1,layers)
-    double precision spongeV(0:nx+1,0:ny+1,layers)
-    double precision wind_y(0:nx+1,0:ny+1)
-    double precision dx, dy
-    double precision au, ar, slip, botDrag
-    double precision rho0
-    double precision hfacW(0:nx+1,0:ny+1)
-    double precision hfacE(0:nx+1,0:ny+1)
-    logical :: RedGrav
+subroutine evaluate_dvdt(dvdt, h,u,v,b,zeta,wind_y,fv, &
+    au,ar,slip,dx,dy,hfacW,hfacE,nx,ny,layers,rho0, &
+    spongeTimeScale,spongeV,RedGrav,botDrag)
+  ! dvdt(i,j) is evaluated at the centre of the bottom edge of the
+  ! grid box, the same place as v(i,j)
+  integer nx,ny,layers
+  integer i,j,k
+  double precision dvdt(0:nx+1,0:ny+1,layers)
+  double precision h(0:nx+1,0:ny+1,layers)
+  double precision u(0:nx+1,0:ny+1,layers)
+  double precision v(0:nx+1,0:ny+1,layers)
+  double precision fv(0:nx+1,0:ny+1)
+  double precision zeta(0:nx+1,0:ny+1,layers)
+  double precision b(0:nx+1,0:ny+1,layers)
+  double precision spongeTimeScale(0:nx+1,0:ny+1,layers)
+  double precision spongeV(0:nx+1,0:ny+1,layers)
+  double precision wind_y(0:nx+1,0:ny+1)
+  double precision dx, dy
+  double precision au, ar, slip, botDrag
+  double precision rho0
+  double precision hfacW(0:nx+1,0:ny+1)
+  double precision hfacE(0:nx+1,0:ny+1)
+  logical :: RedGrav
 
-    dvdt = 0d0
-    
-    do k = 1,layers
-      do j=1,ny
-        do i=1,nx
-            dvdt(i,j,k)=au*(v(i+1,j,k)+v(i-1,j,k)-2.0d0*v(i,j,k) + & 
-            ! boundary conditions
-            (1.0d0 - 2.0d0*slip)*(1.0d0 - hfacW(i,j))*v(i,j,k) + &
-            (1.0d0 - 2.0d0*slip)*(1.0d0 - hfacE(i,j))*v(i,j,k))/ &
-            (dx*dx) + & !x-component
-              au*(v(i,j+1,k) + v(i,j-1,k) - 2.0d0*v(i,j,k))/ &
-            (dy*dy) - & 
-    !    y-component. Together these make the horizontal diffusion term
-            0.25d0*(fv(i,j)+0.5d0*(zeta(i,j,k)+zeta(i+1,j,k)))* &
-            (u(i,j-1,k)+u(i,j,k)+u(i+1,j-1,k)+u(i+1,j,k)) - & !vorticity term
-            (b(i,j,k)-b(i,j-1,k))/dy + & ! Bernoulli Potential term
-            spongeTimeScale(i,j,k)*(spongeV(i,j,k)-v(i,j,k)) ! forced relaxtion to vsponge (in the sponge regions)
-            if (k .eq. 1) then ! only have wind forcing on the top layer
-                !This will need refining in the event of allowing outcropping.
-                dvdt(i,j,k) = dvdt(i,j,k) + wind_y(i,j)/(rho0*h(i,j,k)) !wind forcing
+  dvdt = 0d0
+
+  do k = 1,layers
+    do j=1,ny
+      do i=1,nx
+        dvdt(i,j,k) = &
+            au*(v(i+1,j,k)+v(i-1,j,k)-2.0d0*v(i,j,k) &
+              ! boundary conditions
+              + (1.0d0 - 2.0d0*slip)*(1.0d0 - hfacW(i,j))*v(i,j,k) &
+              + (1.0d0 - 2.0d0*slip)*(1.0d0 - hfacE(i,j))*v(i,j,k))/(dx*dx) & !x-component
+            + au*(v(i,j+1,k) + v(i,j-1,k) - 2.0d0*v(i,j,k))/(dy*dy) & ! y-component.
+            ! Together these make the horizontal diffusion term
+            - 0.25d0*(fv(i,j)+0.5d0*(zeta(i,j,k)+zeta(i+1,j,k))) &
+              *(u(i,j-1,k)+u(i,j,k)+u(i+1,j-1,k)+u(i+1,j,k)) & !vorticity term
+            - (b(i,j,k)-b(i,j-1,k))/dy & ! Bernoulli Potential term
+            + spongeTimeScale(i,j,k)*(spongeV(i,j,k)-v(i,j,k)) ! forced relaxtion to vsponge (in the sponge regions)
+        if (k .eq. 1) then ! only have wind forcing on the top layer
+          ! This will need refining in the event of allowing outcropping.
+          dvdt(i,j,k) = dvdt(i,j,k) + wind_y(i,j)/(rho0*h(i,j,k)) ! wind forcing
+        endif
+        if (layers .gt. 1) then ! only evaluate vertical momentum diffusivity if more than 1 layer
+          if (k .eq. 1) then ! adapt vertical momentum diffusivity for 2+ layer model -> top layer
+            dvdt(i,j,k) = dvdt(i,j,k) - 1.0d0*ar*(v(i,j,k) - 1.0d0*v(i,j,k+1))
+          else if (k .eq. layers) then ! bottom layer
+            dvdt(i,j,k) = dvdt(i,j,k) - 1.0d0*ar*(v(i,j,k) - 1.0d0*v(i,j,k-1))
+            if (.not. RedGrav) then
+              ! add bottom drag here in isopycnal version
+              dvdt(i,j,k) = dvdt(i,j,k) - 1.0d0*botDrag*(v(i,j,k))
             endif
-            if (layers .gt. 1) then ! only evaluate vertical momentum diffusivity if more than 1 layer
-                if (k .eq. 1) then ! adapt vertical momentum diffusivity for 2+ layer model -> top layer
-                    dvdt(i,j,k) = dvdt(i,j,k) - 1.0d0*ar*(v(i,j,k) - 1.0d0*v(i,j,k+1))
-                else if (k .eq. layers) then ! bottom layer
-                    dvdt(i,j,k) = dvdt(i,j,k) - 1.0d0*ar*(v(i,j,k) - 1.0d0*v(i,j,k-1))
-                    if (.not. RedGrav) then
-                        ! add bottom drag here in isopycnal version
-                        dvdt(i,j,k) = dvdt(i,j,k) - 1.0d0*botDrag*(v(i,j,k))
-                    endif                
-                else ! mid layer/s
-                    dvdt(i,j,k) = dvdt(i,j,k) - 1.0d0*ar*(2.0d0*v(i,j,k) - 1.0d0*v(i,j,k-1) - 1.0d0*v(i,j,k+1))
-                endif
-            endif
-        end do 
-      end do 
+          else ! mid layer/s
+            dvdt(i,j,k) = dvdt(i,j,k) - 1.0d0*ar*(2.0d0*v(i,j,k) - 1.0d0*v(i,j,k-1) - 1.0d0*v(i,j,k+1))
+          endif
+        endif
+      end do
     end do
+  end do
 
-    call wrap_fields_3D(dvdt,nx,ny,layers)
+  call wrap_fields_3D(dvdt,nx,ny,layers)
 
-    return
-    end subroutine
-!--------------------------------------------------------------------------------------
+  return
+end subroutine evaluate_dvdt
+
+! -----------------------------------------------------------------------------
 !> Calculate the barotropic u velocity
-    subroutine calc_baro_u(ub,u,h,eta,freesurfFac,nx,ny,layers)
+subroutine calc_baro_u(ub,u,h,eta,freesurfFac,nx,ny,layers)
 
-    integer nx,ny,layers
-    integer i,j,k
-    double precision h(0:nx+1,0:ny+1,layers)
-    double precision h_temp(0:nx+1,0:ny+1,layers)
-    double precision eta(0:nx+1,0:ny+1)
-    double precision freesurfFac
-    double precision u(0:nx+1,0:ny+1,layers)
-    double precision ub(0:nx+1,0:ny+1)
+  integer nx,ny,layers
+  integer i,j,k
+  double precision h(0:nx+1,0:ny+1,layers)
+  double precision h_temp(0:nx+1,0:ny+1,layers)
+  double precision eta(0:nx+1,0:ny+1)
+  double precision freesurfFac
+  double precision u(0:nx+1,0:ny+1,layers)
+  double precision ub(0:nx+1,0:ny+1)
 
-    ub = 0d0
+  ub = 0d0
 
-    h_temp = h
-    ! add free surface elevation to the upper layer
-    h_temp(:,:,1) = h(:,:,1) + eta*freesurfFac
-    
-    do i = 1,nx
-        do j = 1,ny
-            do k = 1,layers
-                ub(i,j) = ub(i,j) + u(i,j,k)*(h_temp(i,j,k)+h_temp(i-1,j,k))/2d0
-            end do
-        end do
+  h_temp = h
+  ! add free surface elevation to the upper layer
+  h_temp(:,:,1) = h(:,:,1) + eta*freesurfFac
+
+  do i = 1,nx
+    do j = 1,ny
+      do k = 1,layers
+        ub(i,j) = ub(i,j) + u(i,j,k)*(h_temp(i,j,k)+h_temp(i-1,j,k))/2d0
+      end do
     end do
+  end do
 
-    call wrap_fields_2D(ub,nx,ny)
+  call wrap_fields_2D(ub,nx,ny)
 
-    return
-    end subroutine
+  return
+end subroutine calc_baro_u
 
-
-! --------------------------------------------------------------
+! -----------------------------------------------------------------------------
 
 !> Calculate the barotropic v velocity
-    subroutine calc_baro_v(vb,v,h,eta,freesurfFac,nx,ny,layers)
+subroutine calc_baro_v(vb,v,h,eta,freesurfFac,nx,ny,layers)
 
-    integer nx,ny,layers
-    integer i,j,k
-    double precision h(0:nx+1,0:ny+1,layers)
-    double precision h_temp(0:nx+1,0:ny+1,layers)
-    double precision eta(0:nx+1,0:ny+1)
-    double precision freesurfFac
-    double precision v(0:nx+1,0:ny+1,layers)
-    double precision vb(0:nx+1,0:ny+1)
+  integer nx,ny,layers
+  integer i,j,k
+  double precision h(0:nx+1,0:ny+1,layers)
+  double precision h_temp(0:nx+1,0:ny+1,layers)
+  double precision eta(0:nx+1,0:ny+1)
+  double precision freesurfFac
+  double precision v(0:nx+1,0:ny+1,layers)
+  double precision vb(0:nx+1,0:ny+1)
 
-    vb = 0d0
+  vb = 0d0
 
-    h_temp = h
-    ! add free surface elevation to the upper layer
-    h_temp(:,:,1) = h(:,:,1) + eta*freesurfFac
-    
-    do i = 1,nx
-        do j = 1,ny
-            do k = 1,layers
-                vb(i,j) = vb(i,j) + v(i,j,k)*(h_temp(i,j,k)+h_temp(i,j-1,k))/2d0
-            end do
-        end do
+  h_temp = h
+  ! add free surface elevation to the upper layer
+  h_temp(:,:,1) = h(:,:,1) + eta*freesurfFac
+
+  do i = 1,nx
+    do j = 1,ny
+      do k = 1,layers
+        vb(i,j) = vb(i,j) + v(i,j,k)*(h_temp(i,j,k)+h_temp(i,j-1,k))/2d0
+      end do
     end do
+  end do
 
-    call wrap_fields_2D(vb,nx,ny)
+  call wrap_fields_2D(vb,nx,ny)
 
-    return
-    end subroutine
+  return
+end subroutine calc_baro_v
 
+! -----------------------------------------------------------------------------
 
-! --------------------------------------------------------------
+!> Calculate the free surface anomaly using the velocities
+!! timestepped with the tendencies excluding the free surface
+!! pressure gradient.
+subroutine calc_eta_star(ub,vb,eta,etastar,freesurfFac,nx,ny,dx,dy,dt)
+  integer nx,ny,layers
+  integer i,j,k
+  double precision eta(0:nx+1,0:ny+1)
+  double precision etastar(0:nx+1,0:ny+1)
+  double precision ub(0:nx+1,0:ny+1)
+  double precision vb(0:nx+1,0:ny+1)
+  double precision freesurfFac, dx,dy,dt
 
-!> calculate the free surface anomaly using the velocities 
-! timestepped with the tendencies excluding the free surface
-! pressure gradient.
-    subroutine calc_eta_star(ub,vb,eta,etastar,freesurfFac,nx,ny,dx,dy,dt)
-    integer nx,ny,layers
-    integer i,j,k
-    double precision eta(0:nx+1,0:ny+1)
-    double precision etastar(0:nx+1,0:ny+1)
-    double precision ub(0:nx+1,0:ny+1)
-    double precision vb(0:nx+1,0:ny+1)
-    double precision freesurfFac, dx,dy,dt
+  etastar = 0d0
 
-    etastar = 0d0
-
-    do i = 1,nx
-        do j = 1,ny
-            etastar(i,j) = freesurfFac*eta(i,j) - &
-                    dt*((ub(i+1,j) - ub(i,j))/dx + (vb(i,j+1) - vb(i,j))/dy)
-        end do
+  do i = 1,nx
+    do j = 1,ny
+      etastar(i,j) = freesurfFac*eta(i,j) - &
+          dt*((ub(i+1,j) - ub(i,j))/dx + (vb(i,j+1) - vb(i,j))/dy)
     end do
+  end do
 
-    call wrap_fields_2D(etastar,nx,ny)
+  call wrap_fields_2D(etastar,nx,ny)
 
-    return
-    end subroutine
+  return
+end subroutine calc_eta_star
 
-! --------------------------------------------------------------
-
-!> Use successive over relaxation algorithm to solve the backwards Euler timestepping for the free surface anomaly, or for the surface pressure required to keep the barotropic flow nondivergent.
+! -----------------------------------------------------------------------------
+!> Use the successive over-relaxation algorithm to solve the backwards
+!! Euler timestepping for the free surface anomaly, or for the surface
+!! pressure required to keep the barotropic flow nondivergent.
 
 subroutine SOR_solver(a,etanew,etastar,freesurfFac,nx,ny,dt,rjac,eps,maxits,n)
-    double precision a(5,nx,ny)
-    double precision etanew(0:nx+1,0:ny+1)
-    double precision etastar(0:nx+1,0:ny+1)
-    double precision freesurfFac
-    integer nx,ny, i,j, maxits, n
-    double precision dt
-    double precision rjac, eps
-    double precision rhs(nx,ny) 
-    double precision res(nx,ny)
-    double precision norm, norm0, norm_old
-    double precision relax_param
-    character(30) Format
+  double precision a(5,nx,ny)
+  double precision etanew(0:nx+1,0:ny+1)
+  double precision etastar(0:nx+1,0:ny+1)
+  double precision freesurfFac
+  integer nx,ny, i,j, maxits, n
+  double precision dt
+  double precision rjac, eps
+  double precision rhs(nx,ny)
+  double precision res(nx,ny)
+  double precision norm, norm0, norm_old
+  double precision relax_param
+  character(30) Format
 
-    rhs = -etastar(1:nx,1:ny)/dt**2
-    ! first guess for etanew
-    etanew = etastar
+  rhs = -etastar(1:nx,1:ny)/dt**2
+  ! first guess for etanew
+  etanew = etastar
 
+  relax_param=1.d0 ! successive over-relaxation parameter
 
-    relax_param=1.d0 ! successive over relaxation parameter
-
-! calculate initial residual, so that we can stop the loop when the current residual = norm0*eps
-    norm0 = 0.d0
-    do i = 1,nx
-        do j = 1,ny
-          res(i,j) = a(1,i,j)*etanew(i+1,j) &
-                   + a(2,i,j)*etanew(i,j+1) &
-                   + a(3,i,j)*etanew(i-1,j) &
-                   + a(4,i,j)*etanew(i,j-1) &
-                   + a(5,i,j)*etanew(i,j)   &
-                   - freesurfFac*etanew(i,j)/dt**2 & 
-                   - rhs(i,j)
-          norm0 = norm0 + abs(res(i,j))
-          etanew(i,j) = etanew(i,j)-relax_param*res(i,j)/a(5,i,j)
-        end do
+  ! Calculate initial residual, so that we can stop the loop when the
+  ! current residual = norm0*eps
+  norm0 = 0.d0
+  do i = 1,nx
+    do j = 1,ny
+      res(i,j) = &
+          a(1,i,j)*etanew(i+1,j) &
+          + a(2,i,j)*etanew(i,j+1) &
+          + a(3,i,j)*etanew(i-1,j) &
+          + a(4,i,j)*etanew(i,j-1) &
+          + a(5,i,j)*etanew(i,j)   &
+          - freesurfFac*etanew(i,j)/dt**2 &
+          - rhs(i,j)
+      norm0 = norm0 + abs(res(i,j))
+      etanew(i,j) = etanew(i,j)-relax_param*res(i,j)/a(5,i,j)
     end do
+  end do
 
-    !norm_old = norm0
+  ! norm_old = norm0
 
-
-    do nit = 1,maxits
-        !norm_old = norm
-        norm=0.d0
-        do i=1,nx
-            do j=1,ny
-              res(i,j) = a(1,i,j)*etanew(i+1,j) &
-                       + a(2,i,j)*etanew(i,j+1) &
-                       + a(3,i,j)*etanew(i-1,j) &
-                       + a(4,i,j)*etanew(i,j-1) &
-                       + a(5,i,j)*etanew(i,j)   &
-                       - freesurfFac*etanew(i,j)/dt**2 & 
-                       - rhs(i,j)
-              norm = norm + abs(res(i,j))
-              etanew(i,j)=etanew(i,j)-relax_param*res(i,j)/(a(5,i,j))
-            end do
-        end do
-        if (nit.eq.1) then 
-            relax_param=1.d0/(1.d0-0.5d0*rjac**2)
-        else
-            relax_param=1.d0/(1.d0-0.25d0*rjac**2*relax_param)
-        endif
-
-        call wrap_fields_2D(etanew,nx,ny)
-      
-        if (nit.gt.1.and.norm.lt.eps*norm0) then
-            ! print 10014,  eps,  nit
-            ! 10014   format('Res less than eps of original. eps, iteration: ', F5.4, I7)
-            return
-        ! elseif (nit.gt.1.and.abs(norm - norm_old).lt.norm_old*eps) then
-        !     print *, 'change in residual less than eps of previous residual. iteration:', eps, nit
-        !     return
-        ! This was not a good way of exiting the solver - it would occasionally leave after 2 or 3 iterations.
-        endif
-    end do
-
-    print *,'warning: maximum iterations exceeded at time step ', n
-
-    return
-    end subroutine
-
-
-!------------------------------------------------------------------------------------
-!> Check to see if there are any NaNs in the data field and stop the calculation
-!! if any are found.
-    subroutine break_if_NaN(data,nx,ny,layers,n)
-
-!     To stop the program if it detects at NaN in the variable being checked
-
-    integer nx, ny,layers,n
-    double precision data(0:nx+1, 0:ny+1,layers)
-
-
-      do k=1,layers
+  do nit = 1,maxits
+    ! norm_old = norm
+    norm=0.d0
+    do i=1,nx
       do j=1,ny
+        res(i,j) = &
+            a(1,i,j)*etanew(i+1,j) &
+            + a(2,i,j)*etanew(i,j+1) &
+            + a(3,i,j)*etanew(i-1,j) &
+            + a(4,i,j)*etanew(i,j-1) &
+            + a(5,i,j)*etanew(i,j)   &
+            - freesurfFac*etanew(i,j)/dt**2 &
+            - rhs(i,j)
+        norm = norm + abs(res(i,j))
+        etanew(i,j)=etanew(i,j)-relax_param*res(i,j)/(a(5,i,j))
+      end do
+    end do
+    if (nit.eq.1) then
+      relax_param=1.d0/(1.d0-0.5d0*rjac**2)
+    else
+      relax_param=1.d0/(1.d0-0.25d0*rjac**2*relax_param)
+    endif
+
+    call wrap_fields_2D(etanew,nx,ny)
+
+    if (nit.gt.1.and.norm.lt.eps*norm0) then
+      ! print 10014,  eps,  nit
+      ! 10014   format('Res less than eps of original. eps, iteration: ', F5.4, I7)
+      return
+      ! elseif (nit.gt.1.and.abs(norm - norm_old).lt.norm_old*eps) then
+      !     print *, 'change in residual less than eps of previous residual. iteration:', eps, nit
+      !     return
+      ! This was not a good way of exiting the solver - it would occasionally leave after 2 or 3 iterations.
+    endif
+  end do
+
+  print *,'warning: maximum iterations exceeded at time step ', n
+
+  return
+end subroutine SOR_solver
+
+! -----------------------------------------------------------------------------
+!> Check to see if there are any NaNs in the data field and stop the
+!! calculation if any are found.
+subroutine break_if_NaN(data,nx,ny,layers,n)
+
+  ! To stop the program if it detects at NaN in the variable being checked
+
+  integer nx, ny,layers,n
+  double precision data(0:nx+1, 0:ny+1,layers)
+
+  do k=1,layers
+    do j=1,ny
       do i=1,nx
         if (data(i,j,k).ne.data(i,j,k))  then
-        ! write a file saying so
-        OPEN(UNIT=10, FILE='NaN detected.txt', ACTION="write", STATUS="replace", &
-        FORM="formatted")
-        write(10,1000) n
-1000         format( "NaN detected at time step ", 1i10.10)  
-        CLOSE(UNIT=10)
-        ! print it on the screen
-        print *, 'NaN detected' 
-        ! Stop the code
-        STOP 'Nan detected'
+          ! write a file saying so
+          OPEN(UNIT=10, FILE='NaN detected.txt', ACTION="write", &
+              STATUS="replace", FORM="formatted")
+          write(10,1000) n
+1000      format( "NaN detected at time step ", 1i10.10)
+          CLOSE(UNIT=10)
+          ! print it on the screen
+          print *, 'NaN detected'
+          ! Stop the code
+          STOP 'Nan detected'
         endif
       end do
-      end do
-      end do
-    
-    return
-    end
+    end do
+  end do
 
-!-----------------------------------------------------------------------------------
-!> Define masks for boundary conditions in u and v
-!! this finds locations where neighbouring grid boxes are not the same (i.e. one is land and one is ocean). 
-!! in the output
+  return
+end subroutine break_if_NaN
+
+!------------------------------------------------------------------------------
+!> Define masks for boundary conditions in u and v.
+!! This finds locations where neighbouring grid boxes are not the same
+!! (i.e. one is land and one is ocean).
+!! In the output,
 !! 0 means barrier
 !! 1 mean open
 
-    subroutine calc_boundary_masks(wetmask,hfacW,hfacE,hfacS,hfacN,nx,ny)
+subroutine calc_boundary_masks(wetmask,hfacW,hfacE,hfacS,hfacN,nx,ny)
 
-    implicit none
-    integer nx !< number of grid points in x direction 
-    integer ny !< number of grid points in y direction
-    double precision wetmask(0:nx+1,0:ny+1)
-    double precision temp(0:nx+1,0:ny+1)
-    double precision hfacW(0:nx+1,0:ny+1)
-    double precision hfacE(0:nx+1,0:ny+1)
-    double precision hfacN(0:nx+1,0:ny+1)
-    double precision hfacS(0:nx+1,0:ny+1)
-    integer i,j
+  implicit none
+  integer nx !< number of grid points in x direction
+  integer ny !< number of grid points in y direction
+  double precision wetmask(0:nx+1,0:ny+1)
+  double precision temp(0:nx+1,0:ny+1)
+  double precision hfacW(0:nx+1,0:ny+1)
+  double precision hfacE(0:nx+1,0:ny+1)
+  double precision hfacN(0:nx+1,0:ny+1)
+  double precision hfacS(0:nx+1,0:ny+1)
+  integer i,j
 
+  hfacW = 1d0
 
-    hfacW = 1d0
-    
-    temp = 0.0
-    do j = 0,ny+1
-      do i = 1,nx+1
-        temp(i,j) = wetmask(i-1,j)- wetmask(i,j)
-      enddo
+  temp = 0.0
+  do j = 0,ny+1
+    do i = 1,nx+1
+      temp(i,j) = wetmask(i-1,j)- wetmask(i,j)
     enddo
+  enddo
 
-    do j = 0,ny+1
-      do i = 1,nx+1
-        if (temp(i,j) .ne. 0.0) then
-          hfacW(i,j) = 0d0
-        endif
-      enddo
+  do j = 0,ny+1
+    do i = 1,nx+1
+      if (temp(i,j) .ne. 0.0) then
+        hfacW(i,j) = 0d0
+      endif
     enddo
-! and now for all  western cells
-    hfacW(0,:) = hfacW(nx,:)
+  enddo
 
+  ! and now for all  western cells
+  hfacW(0,:) = hfacW(nx,:)
 
-    hfacE = 1d0
-    
-    temp = 0.0
-    do j = 0,ny+1
-      do i = 0,nx
-        temp(i,j) = wetmask(i,j)- wetmask(i+1,j)
-      enddo
+  hfacE = 1d0
+
+  temp = 0.0
+  do j = 0,ny+1
+    do i = 0,nx
+      temp(i,j) = wetmask(i,j)- wetmask(i+1,j)
     enddo
-        
-    do j = 0,ny+1
-      do i = 0,nx
-        if (temp(i,j) .ne. 0.0) then
-          hfacE(i,j) = 0d0
-        endif
-      enddo
+  enddo
+
+  do j = 0,ny+1
+    do i = 0,nx
+      if (temp(i,j) .ne. 0.0) then
+        hfacE(i,j) = 0d0
+      endif
     enddo
-! and now for all  eastern cells
-    hfacE(nx+1,:) = hfacE(1,:)
+  enddo
 
+  ! and now for all  eastern cells
+  hfacE(nx+1,:) = hfacE(1,:)
 
-    hfacS = 1
+  hfacS = 1
 
-    temp = 0.0
-    do j = 1,ny+1
-      do i = 0,nx+1
-        temp(i,j) = wetmask(i,j-1)- wetmask(i,j)
-      enddo
+  temp = 0.0
+  do j = 1,ny+1
+    do i = 0,nx+1
+      temp(i,j) = wetmask(i,j-1)- wetmask(i,j)
     enddo
-    
-    do j = 1,ny+1
-      do i = 0,nx+1
-        if (temp(i,j) .ne. 0.0) then
-          hfacS(i,j) = 0d0
-        endif
-      enddo
+  enddo
+
+  do j = 1,ny+1
+    do i = 0,nx+1
+      if (temp(i,j) .ne. 0.0) then
+        hfacS(i,j) = 0d0
+      endif
     enddo
-!   all southern cells
-    hfacS(:,0) = hfacS(:,ny)
+  enddo
 
-    hfacN = 1
-    temp = 0.0
-    do j = 0,ny
-      do i = 0,nx+1
-        temp(i,j) = wetmask(i,j)- wetmask(i,j+1)
-      enddo
+  ! all southern cells
+  hfacS(:,0) = hfacS(:,ny)
+
+  hfacN = 1
+  temp = 0.0
+  do j = 0,ny
+    do i = 0,nx+1
+      temp(i,j) = wetmask(i,j)- wetmask(i,j+1)
     enddo
-    
-    do j = 0,ny
-      do i = 0,nx+1
-        if (temp(i,j) .ne. 0.0) then
-          hfacN(i,j) = 0d0
-        endif
-      enddo
+  enddo
+
+  do j = 0,ny
+    do i = 0,nx+1
+      if (temp(i,j) .ne. 0.0) then
+        hfacN(i,j) = 0d0
+      endif
     enddo
-!   all northern cells
-    hfacN(:,ny+1) = hfacN(:,1)
+  enddo
+  ! all northern cells
+  hfacN(:,ny+1) = hfacN(:,1)
 
-    return
-    end
+  return
+end subroutine calc_boundary_masks
 
-!-----------------------------------------------------------------
+! -----------------------------------------------------------------------------
 
+subroutine read_input_fileH(name,array,default,nx,ny,layers)
 
-    subroutine read_input_fileH(name,array,default,nx,ny,layers)
+  implicit none
+  character(30) name
+  integer nx, ny, layers, k
+  double precision array(0:nx+1,0:ny+1,layers), default(layers)
+  double precision array_small(nx,ny,layers)
 
-    implicit none
-    character(30) name
-    integer nx, ny, layers, k
-    double precision array(0:nx+1,0:ny+1,layers), default(layers)
-    double precision array_small(nx,ny,layers)
+  if (name.ne.'') then
+    open(unit = 10, form='unformatted', file=name)
+    read(10) array_small
+    close(10)
 
-    if (name.ne.'') then
-        open(unit = 10, form='unformatted', file=name)  
-        read(10) array_small
-        close(10) 
-
-        array(1:nx,1:ny,:) = array_small
-        ! wrap array around for periodicity
-        array(0,:,:) = array(nx,:,:)
-        array(nx+1,:,:) = array(1,:,:)
-        array(:,0,:) = array(:,ny,:)
-        array(:,ny+1,:) = array(:,1,:)
-    else
-      do k = 1,layers
-        array(:,:,k) = default(k)
-      enddo
-    endif
-
-    return
-    end
-
-
-    subroutine read_input_fileH_2D(name,array,default,nx,ny)
-
-    implicit none
-    character(30) name
-    integer nx, ny
-    double precision array(0:nx+1,0:ny+1), default
-    double precision array_small(nx,ny)
-
-    if (name.ne.'') then
-        open(unit = 10, form='unformatted', file=name)  
-        read(10) array_small
-        close(10) 
-
-        array(1:nx,1:ny) = array_small
-        ! wrap array around for periodicity
-        array(0,:) = array(nx,:)
-        array(nx+1,:) = array(1,:)
-        array(:,0) = array(:,ny)
-        array(:,ny+1) = array(:,1)
-    else
-        array = default
-    endif
-
-    return
-    end
-
-
-
-    subroutine read_input_fileU(name,array,default,nx,ny,layers)
-
-    implicit none
-    character(30) name
-    integer nx, ny,layers
-    double precision array(0:nx+1,0:ny+1,layers), default
-    double precision array_small(nx+1,ny,layers)
-
-    if (name.ne.'') then
-        open(unit = 10, form='unformatted', file=name)  
-        read(10) array_small
-        close(10)
-
-        array(1:nx+1,1:ny,:) = array_small
-        ! wrap array around for periodicity
-        array(0,:,:) = array(nx,:,:)
-        array(nx+1,:,:) = array(1,:,:)
-        array(:,0,:) = array(:,ny,:)
-        array(:,ny+1,:) = array(:,1,:)
-    else
-        array = default
-    endif
-
-    return
-    end
-
-
-    subroutine read_input_fileV(name,array,default,nx,ny,layers)
-
-    implicit none
-    character(30) name
-    integer nx, ny, layers
-    double precision array(0:nx+1,0:ny+1,layers), default
-    double precision array_small(nx,ny+1,layers)
-
-    if (name.ne.'') then
-        open(unit = 10, form='unformatted', file=name)  
-        read(10) array_small
-        close(10)
-
-        array(1:nx,1:ny+1,:) = array_small
-        ! wrap array around for periodicity
-        array(0,:,:) = array(nx,:,:)
-        array(nx+1,:,:) = array(1,:,:)
-        array(:,0,:) = array(:,ny,:)
-        array(:,ny+1,:) = array(:,1,:)
-    else
-        array = default
-    endif
-
-    return
-    end
-
-
-
-!-----------------------------------------------------------------
-!> wrap 3D fields around for periodic boundary conditions
-
-    subroutine wrap_fields_3D(array,nx,ny,layers)
-    
-    implicit none
-
-    double precision array(0:nx+1,0:ny+1,layers)
-    integer nx,ny,layers
-
+    array(1:nx,1:ny,:) = array_small
     ! wrap array around for periodicity
     array(0,:,:) = array(nx,:,:)
     array(nx+1,:,:) = array(1,:,:)
     array(:,0,:) = array(:,ny,:)
     array(:,ny+1,:) = array(:,1,:)
+  else
+    do k = 1,layers
+      array(:,:,k) = default(k)
+    enddo
+  endif
 
-    return
-    end
+  return
+end subroutine read_input_fileH
 
-!-----------------------------------------------------------------
-!> wrap 2D fields around for periodic boundary conditions
+! -----------------------------------------------------------------------------
 
-    subroutine wrap_fields_2D(array,nx,ny)
-    
-    implicit none
+subroutine read_input_fileH_2D(name,array,default,nx,ny)
 
-    double precision array(0:nx+1,0:ny+1)
-    integer nx,ny
+  implicit none
+  character(30) name
+  integer nx, ny
+  double precision array(0:nx+1,0:ny+1), default
+  double precision array_small(nx,ny)
 
+  if (name.ne.'') then
+    open(unit = 10, form='unformatted', file=name)
+    read(10) array_small
+    close(10)
+
+    array(1:nx,1:ny) = array_small
     ! wrap array around for periodicity
     array(0,:) = array(nx,:)
     array(nx+1,:) = array(1,:)
     array(:,0) = array(:,ny)
     array(:,ny+1) = array(:,1)
+  else
+    array = default
+  endif
 
-    return
-    end
+  return
+end subroutine read_input_fileH_2D
 
+! -----------------------------------------------------------------------------
+
+subroutine read_input_fileU(name,array,default,nx,ny,layers)
+
+  implicit none
+  character(30) name
+  integer nx, ny,layers
+  double precision array(0:nx+1,0:ny+1,layers), default
+  double precision array_small(nx+1,ny,layers)
+
+  if (name.ne.'') then
+    open(unit = 10, form='unformatted', file=name)
+    read(10) array_small
+    close(10)
+
+    array(1:nx+1,1:ny,:) = array_small
+    ! wrap array around for periodicity
+    array(0,:,:) = array(nx,:,:)
+    array(nx+1,:,:) = array(1,:,:)
+    array(:,0,:) = array(:,ny,:)
+    array(:,ny+1,:) = array(:,1,:)
+  else
+    array = default
+  endif
+
+  return
+end subroutine read_input_fileU
+
+! -----------------------------------------------------------------------------
+
+subroutine read_input_fileV(name,array,default,nx,ny,layers)
+
+  implicit none
+  character(30) name
+  integer nx, ny, layers
+  double precision array(0:nx+1,0:ny+1,layers), default
+  double precision array_small(nx,ny+1,layers)
+
+  if (name.ne.'') then
+    open(unit = 10, form='unformatted', file=name)
+    read(10) array_small
+    close(10)
+
+    array(1:nx,1:ny+1,:) = array_small
+    ! wrap array around for periodicity
+    array(0,:,:) = array(nx,:,:)
+    array(nx+1,:,:) = array(1,:,:)
+    array(:,0,:) = array(:,ny,:)
+    array(:,ny+1,:) = array(:,1,:)
+  else
+    array = default
+  endif
+
+  return
+end subroutine read_input_fileV
+
+!-----------------------------------------------------------------
+!> Wrap 3D fields around for periodic boundary conditions
+
+subroutine wrap_fields_3D(array,nx,ny,layers)
+
+  implicit none
+
+  double precision array(0:nx+1,0:ny+1,layers)
+  integer nx,ny,layers
+
+  ! wrap array around for periodicity
+  array(0,:,:) = array(nx,:,:)
+  array(nx+1,:,:) = array(1,:,:)
+  array(:,0,:) = array(:,ny,:)
+  array(:,ny+1,:) = array(:,1,:)
+
+  return
+end subroutine wrap_fields_3D
+
+!-----------------------------------------------------------------
+!> Wrap 2D fields around for periodic boundary conditions
+
+subroutine wrap_fields_2D(array,nx,ny)
+
+  implicit none
+
+  double precision array(0:nx+1,0:ny+1)
+  integer nx,ny
+
+  ! wrap array around for periodicity
+  array(0,:) = array(nx,:)
+  array(nx+1,:) = array(1,:)
+  array(:,0) = array(:,ny)
+  array(:,ny+1) = array(:,1)
+
+  return
+end subroutine wrap_fields_2D
 
 !-----------------------------------------------------------------
 !> Robustly produce a different random seed for each run.
-!! Code adapted from http://web.ph.surrey.ac.uk/fortweb/glossary/random_seed.html
+!! Code adapted from
+!! http://web.ph.surrey.ac.uk/fortweb/glossary/random_seed.html
 
+subroutine ranseed()
 
-    subroutine ranseed()
+  implicit none
 
-    implicit none
+  ! ----- variables for portable seed setting -----
+  INTEGER :: i_seed
+  INTEGER, DIMENSION(:), ALLOCATABLE :: a_seed
+  INTEGER, DIMENSION(1:8) :: dt_seed
+  ! ----- end of variables for seed setting -----
 
-    ! ----- variables for portable seed setting -----
-    INTEGER :: i_seed
-    INTEGER, DIMENSION(:), ALLOCATABLE :: a_seed
-    INTEGER, DIMENSION(1:8) :: dt_seed
-    ! ----- end of variables for seed setting -----
-
-    ! ----- Set up random seed portably -----
-    CALL RANDOM_SEED(size=i_seed)
-    ALLOCATE(a_seed(1:i_seed))
-    CALL RANDOM_SEED(get=a_seed)
-    CALL DATE_AND_TIME(values=dt_seed)
-    a_seed(i_seed)=dt_seed(8); a_seed(1)=dt_seed(8)*dt_seed(7)*dt_seed(6)
-    call random_seed(put=a_seed)
-    return
-    end
-
+  ! ----- Set up random seed portably -----
+  CALL RANDOM_SEED(size=i_seed)
+  ALLOCATE(a_seed(1:i_seed))
+  CALL RANDOM_SEED(get=a_seed)
+  CALL DATE_AND_TIME(values=dt_seed)
+  a_seed(i_seed)=dt_seed(8); a_seed(1)=dt_seed(8)*dt_seed(7)*dt_seed(6)
+  call random_seed(put=a_seed)
+  return
+end subroutine ranseed
