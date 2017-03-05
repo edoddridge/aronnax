@@ -852,7 +852,7 @@ subroutine evaluate_b_iso(b, h, u, v, nx, ny, layers, g_vec, depth)
   integer, intent(in) :: layers !< number of layers
   integer i, j, k
   double precision, intent(in) :: depth(0:nx+1, 0:ny+1) !< total depth of fluid
-  double precision z(0:nx, 0:ny, layers)
+  double precision z(0:nx+1, 0:ny+1, layers)
   double precision, intent(in) :: h(0:nx+1, 0:ny+1, layers) !< layer thicknesses
   double precision, intent(in) :: u(0:nx+1, 0:ny+1, layers) !< zonal velocities
   double precision, intent(in) :: v(0:nx+1, 0:ny+1, layers) !< meridional velocities
