@@ -38,16 +38,19 @@ def compile_mim(nx, ny, layers):
         "| sed 's/^  integer, parameter :: ny =.*$/  integer, parameter :: ny = %d/'" % (ny,) +
         "| sed 's/^  integer, parameter :: layers =.*$/  integer, parameter :: layers = %d/'" % (layers,) +
         "> MIM.f90", shell=True)
-    sub.check_call(["gfortran", "-Ofast", "MIM.f90", "-o", "MIM"])
+    sub.check_call(["gfortran", "-g", "-Og", "MIM.f90", "-o", "MIM"])
 
-def run_experiment(write_input, nx, ny, layers):
+def run_experiment(write_input, nx, ny, layers, valgrind=False):
     sub.check_call(["rm", "-rf", "input/"])
     sub.check_call(["rm", "-rf", "output/"])
     sub.check_call(["mkdir", "-p", "output/"])
     with working_directory("input"):
         write_input(nx, ny, layers)
     compile_mim(nx, ny, layers)
-    sub.check_call(["MIM"])
+    if valgrind:
+        sub.check_call(["valgrind", "MIM"])
+    else:
+        sub.check_call(["MIM"])
 
 ### Input construction helpers
 
@@ -167,7 +170,7 @@ def write_input_beta_plane_gyre_red(nx, ny, layers):
 
 def test_beta_plane_gyre_red():
     with working_directory(p.join(self_path, "beta_plane_gyre_red")):
-        run_experiment(write_input_beta_plane_gyre_red, 10, 10, 1)
+        run_experiment(write_input_beta_plane_gyre_red, 10, 10, 1, valgrind=True)
         sub.check_call(["diff", "-ru", "good-output/", "output/"])
 
 def write_input_beta_plane_gyre(nx, ny, layers):
@@ -193,5 +196,5 @@ def write_input_beta_plane_gyre(nx, ny, layers):
 
 def test_beta_plane_gyre():
     with working_directory(p.join(self_path, "beta_plane_gyre")):
-        run_experiment(write_input_beta_plane_gyre, 10, 10, 2)
+        run_experiment(write_input_beta_plane_gyre, 10, 10, 2, valgrind=True)
         sub.check_call(["diff", "-ru", "good-output/", "output/"])
