@@ -48,9 +48,9 @@ def run_experiment(write_input, nx, ny, layers, valgrind=False):
         write_input(nx, ny, layers)
     compile_mim(nx, ny, layers)
     if valgrind:
-        sub.check_call(["valgrind", "MIM"])
+        sub.check_call(["valgrind", "./MIM"])
     else:
-        sub.check_call(["MIM"])
+        sub.check_call(["./MIM"])
 
 ### Input construction helpers
 
