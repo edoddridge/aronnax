@@ -202,14 +202,13 @@ program MIM
   read(8, nml=GRID)
   read(8, nml=INITIAL_CONDITONS)
   read(8, nml=EXTERNAL_FORCING)
-  close (unit = 8)
-
+  close(unit=8)
 
   nwrite = int(dumpFreq/dt)
   avwrite = int(avFreq/dt)
 
   ! Pi, the constant
-  pi=3.1415926535897932384
+  pi = 3.1415926535897932384
   ! Zero vector - for internal use only
   zeros = 0d0
 
@@ -316,32 +315,32 @@ program MIM
   if (.not. RedGrav) then
     ! Initialise arrays for pressure solver
     ! a = derivatives of the depth field
-    do j=1, ny
-      do i=1, nx
-        a(1,i,j)=g_vec(1)*0.5*(depth(i+1,j)+depth(i,j))/dx**2
-        a(2,i,j)=g_vec(1)*0.5*(depth(i,j+1)+depth(i,j))/dy**2
-        a(3,i,j)=g_vec(1)*0.5*(depth(i,j)+depth(i-1,j))/dx**2
-        a(4,i,j)=g_vec(1)*0.5*(depth(i,j)+depth(i,j-1))/dy**2
+    do j = 1, ny
+      do i = 1, nx
+        a(1,i,j) = g_vec(1)*0.5*(depth(i+1,j)+depth(i,j))/dx**2
+        a(2,i,j) = g_vec(1)*0.5*(depth(i,j+1)+depth(i,j))/dy**2
+        a(3,i,j) = g_vec(1)*0.5*(depth(i,j)+depth(i-1,j))/dx**2
+        a(4,i,j) = g_vec(1)*0.5*(depth(i,j)+depth(i,j-1))/dy**2
       end do
     end do
-    do j=1, ny
-      a(1, nx, j)=0.0
-      a(3, 1, j)=0.0
+    do j = 1, ny
+      a(1, nx, j) = 0.0
+      a(3, 1, j) = 0.0
     end do
-    do i=1, nx
-      a(2, i, ny)=0.0
-      a(4, i, 1)=0.0
+    do i = 1, nx
+      a(2, i, ny) = 0.0
+      a(4, i, 1) = 0.0
     end do
-    do j=1, ny
-      do i=1, nx
-        a(5,i,j)=-a(1,i,j)-a(2,i,j)-a(3,i,j)-a(4,i,j)
+    do j = 1, ny
+      do i = 1, nx
+        a(5,i,j) = -a(1,i,j)-a(2,i,j)-a(3,i,j)-a(4,i,j)
       end do
     end do
 
     ! Calculate the spectral radius of the grid for use by the
     ! successive over-relaxation scheme
-    rjac=(cos(pi/real(nx))*dy**2+cos(pi/real(ny))*dx**2) &
-         /(dx**2+dy**2)
+    rjac = (cos(pi/real(nx))*dy**2+cos(pi/real(ny))*dx**2) &
+           /(dx**2+dy**2)
     ! If peridodic boundary conditions are ever implemented, then pi ->
     ! 2*pi in this calculation
 
@@ -528,7 +527,7 @@ program MIM
   !!! MAIN LOOP OF THE MODEL STARTS HERE                                    !!!
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-  do n=1, nTimeSteps
+  do n = 1, nTimeSteps
 
     ! Time varying winds
     if (UseSinusoidWind .eqv. .true.) then
@@ -574,9 +573,9 @@ program MIM
     ! Use dh/dt, du/dt and dv/dt to step h, u and v forward in time with
     ! the Adams-Bashforth third order linear multistep method
 
-    unew=u+dt*(23d0*dudt - 16d0*dudtold + 5d0*dudtveryold)/12d0
-    vnew=v+dt*(23d0*dvdt - 16d0*dvdtold + 5d0*dvdtveryold)/12d0
-    hnew=h+dt*(23d0*dhdt - 16d0*dhdtold + 5d0*dhdtveryold)/12d0
+    unew = u+dt*(23d0*dudt - 16d0*dudtold + 5d0*dudtveryold)/12d0
+    vnew = v+dt*(23d0*dvdt - 16d0*dvdtold + 5d0*dvdtveryold)/12d0
+    hnew = h+dt*(23d0*dhdt - 16d0*dhdtold + 5d0*dhdtveryold)/12d0
 
     ! Apply the boundary conditions
     ! - Enforce no normal flow boundary condition
@@ -668,8 +667,8 @@ program MIM
     counter = 0
 
     do k = 1, layers
-      do j=1, ny
-        do i=1, nx
+      do j = 1, ny
+        do i = 1, nx
           if (hnew(i, j, k) .lt. hmin) then
             hnew(i, j, k) = hmin
             counter = counter + 1
@@ -678,7 +677,7 @@ program MIM
               ! dropped below hmin and this line has been used.
               open(unit=10, file='layer thickness dropped below hmin.txt', &
                   action="write", status="unknown", &
-                  form="formatted", position = "append")
+                  form="formatted", position="append")
               write(10, 1111) n
 1111          format("layer thickness dropped below hmin at time step ", 1i10.10)
               close(unit=10)
@@ -734,31 +733,31 @@ program MIM
       write(num, '(i10.10)') n
 
       ! Output the data to a file
-      open(unit = 10, status='replace', file='output/snap.h.'//num, &
+      open(unit=10, status='replace', file='output/snap.h.'//num, &
           form='unformatted')
       write(10) h(1:nx, 1:ny, :)
       close(10)
-      open(unit = 10, status='replace', file='output/snap.u.'//num, &
+      open(unit=10, status='replace', file='output/snap.u.'//num, &
           form='unformatted')
       write(10) u(1:nx+1, 1:ny, :)
       close(10)
-      open(unit = 10, status='replace', file='output/snap.v.'//num, &
+      open(unit=10, status='replace', file='output/snap.v.'//num, &
           form='unformatted')
       write(10) v(1:nx, 1:ny+1, :)
       close(10)
       if (.not. RedGrav) then
-        open(unit = 10, status='replace', file='output/snap.eta.'//num, &
+        open(unit=10, status='replace', file='output/snap.eta.'//num, &
             form='unformatted')
         write(10) eta(1:nx, 1:ny)
         close(10)
       end if
 
       if (DumpWind .eqv. .true.) then
-        open(unit = 10, status='replace', file='output/wind_x.'//num, &
+        open(unit=10, status='replace', file='output/wind_x.'//num, &
             form='unformatted')
         write(10) wind_x(1:nx+1, 1:ny)
         close(10)
-        open(unit = 10, status='replace', file='output/wind_y.'//num, &
+        open(unit=10, status='replace', file='output/wind_y.'//num, &
             form='unformatted')
         write(10) wind_y(1:nx, 1:ny+1)
         close(10)
@@ -776,28 +775,28 @@ program MIM
       ! OK
     else if (mod(n-1, avwrite) .eq. 0) then
 
-      hav=hav/real(avwrite)
-      uav=uav/real(avwrite)
-      vav=vav/real(avwrite)
+      hav = hav/real(avwrite)
+      uav = uav/real(avwrite)
+      vav = vav/real(avwrite)
 
       write(num, '(i10.10)') n
 
       ! output the data to a file
 
-      open(unit = 10, status='replace', file='output/av.h.'//num, &
+      open(unit=10, status='replace', file='output/av.h.'//num, &
           form='unformatted')
       write(10) hav(1:nx, 1:ny, :)
       close(10)
-      open(unit = 10, status='replace', file='output/av.u.'//num, &
+      open(unit=10, status='replace', file='output/av.u.'//num, &
           form='unformatted')
       write(10) uav(1:nx+1, 1:ny, :)
       close(10)
-      open(unit = 10, status='replace', file='output/av.v.'//num, &
+      open(unit=10, status='replace', file='output/av.v.'//num, &
           form='unformatted')
       write(10) vav(1:nx, 1:ny+1, :)
       close(10)
       if (.not. RedGrav) then
-        open(unit = 10, status='replace', file='output/av.eta.'//num, &
+        open(unit=10, status='replace', file='output/av.eta.'//num, &
             form='unformatted')
         write(10) etaav(1:nx, 1:ny)
         close(10)
@@ -815,14 +814,14 @@ program MIM
       if (.not. RedGrav) then
         etaav = 0.0
       end if
-      ! h2av=0.0
+      ! h2av = 0.0
 
     end if
 
   end do
 
   open(unit=10, file='run_finished.txt', action="write", status="unknown", &
-      form="formatted", position = "append")
+      form="formatted", position="append")
   write(10, 1112) n
 1112 format( "run finished at time step ", 1i10.10)
   close(unit=10)
@@ -887,9 +886,9 @@ subroutine evaluate_b_iso(b, h, u, v, nx, ny, layers, g_vec, depth)
 
   ! For the rest of the layers we get a baroclinic pressure contribution
   do k = 1, layers ! move through the different layers of the model
-    do j=1, ny ! move through longitude
-      do i=1, nx ! move through latitude
-        b(i,j,k)= M(i,j,k) + (u(i,j,k)**2+u(i+1,j,k)**2+v(i,j,k)**2+v(i,j+1,k)**2)/4.0d0
+    do j = 1, ny ! move through longitude
+      do i = 1, nx ! move through latitude
+        b(i,j,k) = M(i,j,k) + (u(i,j,k)**2+u(i+1,j,k)**2+v(i,j,k)**2+v(i,j+1,k)**2)/4.0d0
         ! Add the (u^2 + v^2)/2 term to the Montgomery Potential
       end do
     end do
@@ -916,8 +915,8 @@ subroutine evaluate_b_RedGrav(b, h, u, v, nx, ny, layers, gr)
   b = 0d0
 
   do k = 1, layers ! move through the different layers of the model
-    do j=1, ny ! move through longitude
-      do i=1, nx ! move through latitude
+    do j = 1, ny ! move through longitude
+      do i = 1, nx ! move through latitude
         ! The following loops are to get the pressure term in the
         ! Bernoulli Potential
         b_proto = 0d0
@@ -933,7 +932,7 @@ subroutine evaluate_b_RedGrav(b, h, u, v, nx, ny, layers, gr)
         end do
         ! Add the (u^2 + v^2)/2 term to the pressure componenet of the
         ! Bernoulli Potential
-        b(i,j,k)= b_proto + (u(i,j,k)**2+u(i+1,j,k)**2+v(i,j,k)**2+v(i,j+1,k)**2)/4.0d0
+        b(i,j,k) = b_proto + (u(i,j,k)**2+u(i+1,j,k)**2+v(i,j,k)**2+v(i,j+1,k)**2)/4.0d0
       end do
     end do
   end do
@@ -958,9 +957,9 @@ subroutine evaluate_zeta(zeta, u, v, nx, ny, layers, dx, dy)
   zeta = 0d0
 
   do k = 1, layers
-    do j=1, ny+1
-      do i=1, nx+1
-        zeta(i,j,k)=(v(i,j,k)-v(i-1,j,k))/dx-(u(i,j,k)-u(i,j-1,k))/dy
+    do j = 1, ny+1
+      do i = 1, nx+1
+        zeta(i,j,k) = (v(i,j,k)-v(i-1,j,k))/dx-(u(i,j,k)-u(i,j-1,k))/dy
       end do
     end do
   end do
@@ -999,8 +998,8 @@ subroutine evaluate_dhdt(dhdt, h, u, v, ah, dx, dy, nx, ny, layers, &
   ! Loop through all layers except lowest and calculate
   ! thickness tendency due to diffusive mass fluxes
   do k = 1, layers-1
-    do j=1, ny
-      do i=1, nx
+    do j = 1, ny
+      do i = 1, nx
         dhdt_GM(i,j,k) = &
             ah(k)*(h(i+1,j,k)*wetmask(i+1,j)    &
               + (1d0 - wetmask(i+1,j))*h(i,j,k) & ! reflect around boundary
@@ -1022,8 +1021,8 @@ subroutine evaluate_dhdt(dhdt, h, u, v, ah, dx, dy, nx, ny, layers, &
   ! using n-layer physics it is constrained to balance the layers
   ! above it.
   if (RedGrav) then
-    do j=1, ny
-      do i=1, nx
+    do j = 1, ny
+      do i = 1, nx
         dhdt_GM(i,j,layers) = &
             ah(layers)*(h(i+1,j,layers)*wetmask(i+1,j)   &
               + (1d0 - wetmask(i+1,j))*h(i,j,layers)     & ! boundary
@@ -1049,8 +1048,8 @@ subroutine evaluate_dhdt(dhdt, h, u, v, ah, dx, dy, nx, ny, layers, &
   dhdt = 0d0
 
   do k = 1, layers
-    do j=1, ny
-      do i=1, nx
+    do j = 1, ny
+      do i = 1, nx
         dhdt(i,j,k) = &
             dhdt_GM(i,j,k) & ! horizontal thickness diffusion
             - ((h(i,j,k)+h(i+1,j,k))*u(i+1,j,k) &
@@ -1103,8 +1102,8 @@ subroutine evaluate_dudt(dudt, h, u, v, b, zeta, wind_x, fu, &
   dudt = 0d0
 
   do k = 1, layers
-    do i=1, nx
-      do j=1, ny
+    do i = 1, nx
+      do j = 1, ny
         dudt(i,j,k) = au*(u(i+1,j,k)+u(i-1,j,k)-2.0d0*u(i,j,k))/(dx*dx) & ! x-component
             + au*(u(i,j+1,k)+u(i,j-1,k)-2.0d0*u(i,j,k) &
               ! boundary conditions
@@ -1174,8 +1173,8 @@ subroutine evaluate_dvdt(dvdt, h, u, v, b, zeta, wind_y, fv, &
   dvdt = 0d0
 
   do k = 1, layers
-    do j=1, ny
-      do i=1, nx
+    do j = 1, ny
+      do i = 1, nx
         dvdt(i,j,k) = &
             au*(v(i+1,j,k)+v(i-1,j,k)-2.0d0*v(i,j,k) &
               ! boundary conditions
@@ -1335,7 +1334,7 @@ subroutine SOR_solver(a, etanew, etastar, freesurfFac, nx, ny, dt, rjac, eps, ma
   ! first guess for etanew
   etanew = etastar
 
-  relax_param=1.d0 ! successive over-relaxation parameter
+  relax_param = 1.d0 ! successive over-relaxation parameter
 
   ! Calculate initial residual, so that we can stop the loop when the
   ! current residual = norm0*eps
@@ -1359,9 +1358,9 @@ subroutine SOR_solver(a, etanew, etastar, freesurfFac, nx, ny, dt, rjac, eps, ma
 
   do nit = 1, maxits
     ! norm_old = norm
-    norm=0.d0
-    do i=1, nx
-      do j=1, ny
+    norm = 0.d0
+    do i = 1, nx
+      do j = 1, ny
         res(i,j) = &
             a(1,i,j)*etanew(i+1,j) &
             + a(2,i,j)*etanew(i,j+1) &
@@ -1371,13 +1370,13 @@ subroutine SOR_solver(a, etanew, etastar, freesurfFac, nx, ny, dt, rjac, eps, ma
             - freesurfFac*etanew(i,j)/dt**2 &
             - rhs(i,j)
         norm = norm + abs(res(i,j))
-        etanew(i,j)=etanew(i,j)-relax_param*res(i,j)/(a(5,i,j))
+        etanew(i,j) = etanew(i,j)-relax_param*res(i,j)/(a(5,i,j))
       end do
     end do
     if (nit.eq.1) then
-      relax_param=1.d0/(1.d0-0.5d0*rjac**2)
+      relax_param = 1.d0/(1.d0-0.5d0*rjac**2)
     else
-      relax_param=1.d0/(1.d0-0.25d0*rjac**2*relax_param)
+      relax_param = 1.d0/(1.d0-0.25d0*rjac**2*relax_param)
     end if
 
     call wrap_fields_2D(etanew, nx, ny)
@@ -1409,9 +1408,9 @@ subroutine break_if_NaN(data, nx, ny, layers, n)
   integer nx, ny, layers, n, i, j, k
   double precision data(0:nx+1, 0:ny+1, layers)
 
-  do k=1, layers
-    do j=1, ny
-      do i=1, nx
+  do k = 1, layers
+    do j = 1, ny
+      do i = 1, nx
         if (data(i,j,k) .ne. data(i,j,k)) then
           ! write a file saying so
           open(unit=10, file='NaN detected.txt', action="write", &
@@ -1544,7 +1543,7 @@ subroutine read_input_fileH(name, array, default, nx, ny, layers)
   double precision array_small(nx, ny, layers)
 
   if (name.ne.'') then
-    open(unit = 10, form='unformatted', file=name)
+    open(unit=10, form='unformatted', file=name)
     read(10) array_small
     close(10)
 
@@ -1574,7 +1573,7 @@ subroutine read_input_fileH_2D(name, array, default, nx, ny)
   double precision array_small(nx, ny)
 
   if (name.ne.'') then
-    open(unit = 10, form='unformatted', file=name)
+    open(unit=10, form='unformatted', file=name)
     read(10) array_small
     close(10)
 
@@ -1602,7 +1601,7 @@ subroutine read_input_fileU(name, array, default, nx, ny, layers)
   double precision array_small(nx+1, ny, layers)
 
   if (name.ne.'') then
-    open(unit = 10, form='unformatted', file=name)
+    open(unit=10, form='unformatted', file=name)
     read(10) array_small
     close(10)
 
@@ -1630,7 +1629,7 @@ subroutine read_input_fileV(name, array, default, nx, ny, layers)
   double precision array_small(nx, ny+1, layers)
 
   if (name.ne.'') then
-    open(unit = 10, form='unformatted', file=name)
+    open(unit=10, form='unformatted', file=name)
     read(10) array_small
     close(10)
 
@@ -1702,7 +1701,7 @@ subroutine ranseed()
   allocate(a_seed(1:i_seed))
   call random_seed(get=a_seed)
   call date_and_time(values=dt_seed)
-  a_seed(i_seed)=dt_seed(8); a_seed(1)=dt_seed(8)*dt_seed(7)*dt_seed(6)
+  a_seed(i_seed) = dt_seed(8); a_seed(1) = dt_seed(8)*dt_seed(7)*dt_seed(6)
   call random_seed(put=a_seed)
   return
 end subroutine ranseed
