@@ -406,8 +406,8 @@ program MIM
 
   ! Now calculate d/dt of u, v, h and store as dhdtveryold, dudtveryold
   ! and dvdtveryold
-  call evaluate_dhdt(dhdtveryold, hhalf, uhalf, vhalf, ah, dx, dy, nx, ny, layers, &
-      spongeHTimeScale, spongeH, wetmask, RedGrav)
+  call evaluate_dhdt(dhdtveryold, hhalf, uhalf, vhalf, ah, dx, dy, &
+      nx, ny, layers, spongeHTimeScale, spongeH, wetmask, RedGrav)
 
   call evaluate_dudt(dudtveryold, hhalf, uhalf, vhalf, b, zeta, &
       wind_x, fu, au, ar, slip, dx, dy, hfacN, hfacS, nx, ny, layers, rho0, &
@@ -483,8 +483,8 @@ program MIM
   call evaluate_zeta(zeta, uhalf, vhalf, nx, ny, layers, dx, dy)
 
   ! Now calculate d/dt of u, v, h and store as dhdtold, dudtold and dvdtold
-  call evaluate_dhdt(dhdtold, hhalf, uhalf, vhalf, ah, dx, dy, nx, ny, layers, &
-      spongeHTimeScale, spongeH, wetmask, RedGrav)
+  call evaluate_dhdt(dhdtold, hhalf, uhalf, vhalf, ah, dx, dy, &
+      nx, ny, layers, spongeHTimeScale, spongeH, wetmask, RedGrav)
   call evaluate_dudt(dudtold, hhalf, uhalf, vhalf, b, zeta, wind_x, &
       fu, au, ar, slip, dx, dy, hfacN, hfacS, nx, ny, layers, rho0, &
       spongeUTimeScale, spongeU, RedGrav, botDrag)
@@ -1200,7 +1200,8 @@ subroutine evaluate_dvdt(dvdt, h, u, v, b, zeta, wind_y, fv, &
               dvdt(i,j,k) = dvdt(i,j,k) - 1.0d0*botDrag*(v(i,j,k))
             end if
           else ! mid layer/s
-            dvdt(i,j,k) = dvdt(i,j,k) - 1.0d0*ar*(2.0d0*v(i,j,k) - 1.0d0*v(i,j,k-1) - 1.0d0*v(i,j,k+1))
+            dvdt(i,j,k) = dvdt(i,j,k) - &
+                1.0d0*ar*(2.0d0*v(i,j,k) - 1.0d0*v(i,j,k-1) - 1.0d0*v(i,j,k+1))
           end if
         end if
       end do
@@ -1314,7 +1315,8 @@ end subroutine calc_eta_star
 !! Euler timestepping for the free surface anomaly, or for the surface
 !! pressure required to keep the barotropic flow nondivergent.
 
-subroutine SOR_solver(a, etanew, etastar, freesurfFac, nx, ny, dt, rjac, eps, maxits, n)
+subroutine SOR_solver(a, etanew, etastar, freesurfFac, nx, ny, dt, &
+    rjac, eps, maxits, n)
   implicit none
 
   double precision a(5, nx, ny)
