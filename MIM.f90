@@ -176,21 +176,21 @@ program MIM
   ! TODO Possibly wait until the model is split into multiple files,
   ! then hide the long unsightly code there.
 
-  NAMELIST /NUMERICS/ au, ah, ar, botDrag, dt, slip, nTimeSteps, &
+  namelist /NUMERICS/ au, ah, ar, botDrag, dt, slip, nTimeSteps, &
       dumpFreq, avFreq, hmin, maxits, freesurfFac, eps
 
-  NAMELIST /MODEL/ hmean, depthFile, H0, RedGrav
+  namelist /MODEL/ hmean, depthFile, H0, RedGrav
 
-  NAMELIST /SPONGE/ spongeHTimeScaleFile, spongeUTimeScaleFile, &
+  namelist /SPONGE/ spongeHTimeScaleFile, spongeUTimeScaleFile, &
       spongeVTimeScaleFile, spongeHfile, spongeUfile, spongeVfile
 
-  NAMELIST /PHYSICS/ g_vec, rho0
+  namelist /PHYSICS/ g_vec, rho0
 
-  NAMELIST /GRID/ dx, dy, fUfile, fVfile, wetMaskFile
+  namelist /GRID/ dx, dy, fUfile, fVfile, wetMaskFile
 
-  NAMELIST /INITIAL_CONDITONS/ initUfile, initVfile, initHfile, initEtaFile
+  namelist /INITIAL_CONDITONS/ initUfile, initVfile, initHfile, initEtaFile
 
-  NAMELIST /EXTERNAL_FORCING/ zonalWindFile, meridionalWindFile, &
+  namelist /EXTERNAL_FORCING/ zonalWindFile, meridionalWindFile, &
       UseSinusoidWind, UseStochWind, wind_alpha, wind_beta, &
       wind_period, wind_t_offset, DumpWind
 
