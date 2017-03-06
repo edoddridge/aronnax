@@ -22,7 +22,3 @@ class Grid():
         # Axes for tracer points.
         self.x = (self.xp1[1:] + self.xp1[:-1])/2.
         self.y = (self.yp1[1:] + self.yp1[:-1])/2.
-
-
-def load_field(filename):
-    """!Load a variable file."""
