@@ -237,7 +237,7 @@ program MIM
   if (.not. RedGrav) then
     call read_input_fileH_2D(depthFile, depth, H0, nx, ny)
     call read_input_fileH_2D(initEtaFile, eta, 0.d0, nx, ny)
-    ! Check that depth is negative - it must be less than zero
+    ! Check that depth is positive - it must be greater than zero
     if (minval(depth) .lt. 0) then
       print *, "depths must be positive - fix this and try again"
       stop
