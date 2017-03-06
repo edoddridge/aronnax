@@ -84,16 +84,16 @@ def write_rectangular_pool(nx, ny):
 
 ### The test cases themselves
 
-def write_input_f_plane_red(nx, ny, layers):
+def write_input_f_plane_red_grav(nx, ny, layers):
     assert layers == 1
     write_f_plane(nx, ny, 10e-4)
     write_rectangular_pool(nx, ny)
     with fortran_file('initH.bin', 'w') as f:
         f.write_record(np.ones((nx, ny), dtype=np.float64) * 400)
 
-def test_f_plane_red():
-    with working_directory(p.join(self_path, "f_plane_red")):
-        run_experiment(write_input_f_plane_red, 10, 10, 1)
+def test_f_plane_red_grav():
+    with working_directory(p.join(self_path, "f_plane_red_grav")):
+        run_experiment(write_input_f_plane_red_grav, 10, 10, 1)
         sub.check_call(["diff", "-ru", "good-output/", "output/"])
 
 def write_input_f_plane(nx, ny, layers):
@@ -111,7 +111,7 @@ def test_f_plane():
         run_experiment(write_input_f_plane, 10, 10, 2)
         sub.check_call(["diff", "-ru", "good-output/", "output/"])
 
-def write_input_beta_plane_bump_red(nx, ny, layers):
+def write_input_beta_plane_bump_red_grav(nx, ny, layers):
     assert layers == 1
     xlen = 1e6
     ylen = 1e6
@@ -125,9 +125,9 @@ def write_input_beta_plane_bump_red(nx, ny, layers):
         initH = 500 + 20*np.exp(-((6e5-X)**2 + (5e5-Y)**2)/(2*1e5**2))
         f.write_record(initH.astype(np.float64))
 
-def test_gaussian_bump_red():
-    with working_directory(p.join(self_path, "beta_plane_bump_red")):
-        run_experiment(write_input_beta_plane_bump_red, 10, 10, 1)
+def test_gaussian_bump_red_grav():
+    with working_directory(p.join(self_path, "beta_plane_bump_red_grav")):
+        run_experiment(write_input_beta_plane_bump_red_grav, 10, 10, 1)
         sub.check_call(["diff", "-ru", "good-output/", "output/"])
 
 def write_input_beta_plane_bump(nx, ny, layers):
@@ -151,7 +151,7 @@ def test_gaussian_bump():
         run_experiment(write_input_beta_plane_bump, 10, 10, 2)
         sub.check_call(["diff", "-ru", "good-output/", "output/"])
 
-def write_input_beta_plane_gyre_red(nx, ny, layers):
+def write_input_beta_plane_gyre_red_grav(nx, ny, layers):
     assert layers == 1
     xlen = 1e6
     ylen = 2e6
@@ -168,9 +168,9 @@ def write_input_beta_plane_gyre_red(nx, ny, layers):
         wind_x = 0.05 * (1 - np.cos(2*np.pi * Y/np.max(grid.y)))
         f.write_record(wind_x.astype(np.float64))
 
-def test_beta_plane_gyre_red():
-    with working_directory(p.join(self_path, "beta_plane_gyre_red")):
-        run_experiment(write_input_beta_plane_gyre_red, 10, 10, 1, valgrind=True)
+def test_beta_plane_gyre_red_grav():
+    with working_directory(p.join(self_path, "beta_plane_gyre_red_grav")):
+        run_experiment(write_input_beta_plane_gyre_red_grav, 10, 10, 1, valgrind=True)
         sub.check_call(["diff", "-ru", "good-output/", "output/"])
 
 def write_input_beta_plane_gyre(nx, ny, layers):
