@@ -9,7 +9,7 @@ This file contains all of the classes for the module.
 
 import numpy as np
 
-class Grid():
+class Grid(object):
     """!Make a grid object containing all of the axes."""
 
     def __init__(self,nx,ny,dx,dy,x0=0,y0=0):
@@ -22,7 +22,3 @@ class Grid():
         # Axes for tracer points.
         self.x = (self.xp1[1:] + self.xp1[:-1])/2.
         self.y = (self.yp1[1:] + self.yp1[:-1])/2.
-
-
-def load_field(filename):
-    """!Load a variable file."""
