@@ -9,7 +9,7 @@ This file contains all of the classes for the module.
 
 import numpy as np
 
-class Grid():
+class Grid(object):
     """!Make a grid object containing all of the axes."""
 
     def __init__(self,nx,ny,dx,dy,x0=0,y0=0):
