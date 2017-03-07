@@ -52,6 +52,70 @@ def run_experiment(write_input, nx, ny, layers, valgrind=False):
     else:
         sub.check_call(["./MIM"])
 
+def interpret_mim_raw_file(name, nx, ny, layers):
+    """Read an output file dumped by the MIM core.
+
+    Each such file contains one array, whose size depends on what,
+    exactly, is in it, and on the resolution of the simulation.
+    Hence, the parameters nx, ny, and layers, as well as the file
+    naming convetion, suffice to interpret the content (assuming it
+    was generated on the same system)."""
+    # Note: This depends on inspection of the output writing code in
+    # the MIM core, to align array sizes and dimensions.  In
+    # particular, Fortran arrays are indexed in decreasing order of
+    # rate of change as one traverses the elements sequentially,
+    # whereas Python (and all other programming languages I am aware
+    # of) indexes in increasing order.
+    file_part = p.basename(name)
+    dx = 0; dy = 0; layered = True
+    if file_part.startswith("snap.h"):
+        pass
+    if file_part.startswith("snap.u"):
+        dx = 1
+    if file_part.startswith("snap.v"):
+        dy = 1
+    if file_part.startswith("snap.eta"):
+        layered = False
+    if file_part.startswith("wind_x"):
+        dx = 1
+        layered = False
+    if file_part.startswith("wind_y"):
+        dy = 1
+        layered = False
+    if file_part.startswith("av.h"):
+        pass
+    if file_part.startswith("av.u"):
+        dx = 1
+    if file_part.startswith("av.v"):
+        dy = 1
+    if file_part.startswith("av.eta"):
+        layered = False
+    with fortran_file(name, 'r') as f:
+        if layered:
+            return f.read_reals(dtype=np.float64) \
+                    .reshape(layers, ny+dy, nx+dx).transpose()
+        else:
+            return f.read_reals(dtype=np.float64) \
+                    .reshape(ny+dy, nx+dx).transpose()
+
+def array_relative_error(a1, a2):
+    """Return the elementwise absolute difference between the inputs,
+scaled by the maximum value that occurs in the input."""
+    denom = max(np.amax(np.absolute(a1)), np.amax(np.absolute(a2)))
+    if denom == 0:
+        # Both input arrays are all zeros, so there is no relative error.
+        return 0
+    else:
+        return np.absolute(a1 - a2) / denom
+
+def assert_outputs_close(nx, ny, layers, rtol):
+    outfiles = sorted(os.listdir("output/"))
+    assert outfiles == sorted(os.listdir("good-output/"))
+    for outfile in outfiles:
+        ans = interpret_mim_raw_file(p.join("output/", outfile), nx, ny, layers)
+        good_ans = interpret_mim_raw_file(p.join("good-output/", outfile), nx, ny, layers)
+        assert np.amax(array_relative_error(ans, good_ans)) < rtol
+
 ### Input construction helpers
 
 def write_f_plane(nx, ny, coeff):
@@ -94,7 +158,7 @@ def write_input_f_plane_red_grav(nx, ny, layers):
 def test_f_plane_red_grav():
     with working_directory(p.join(self_path, "f_plane_red_grav")):
         run_experiment(write_input_f_plane_red_grav, 10, 10, 1)
-        sub.check_call(["diff", "-ru", "good-output/", "output/"])
+        assert_outputs_close(10, 10, 1, 1e-15)
 
 def write_input_f_plane(nx, ny, layers):
     assert layers == 2
@@ -109,7 +173,7 @@ def write_input_f_plane(nx, ny, layers):
 def test_f_plane():
     with working_directory(p.join(self_path, "f_plane")):
         run_experiment(write_input_f_plane, 10, 10, 2)
-        sub.check_call(["diff", "-ru", "good-output/", "output/"])
+        assert_outputs_close(10, 10, 2, 1e-15)
 
 def write_input_beta_plane_bump_red_grav(nx, ny, layers):
     assert layers == 1
@@ -128,7 +192,7 @@ def write_input_beta_plane_bump_red_grav(nx, ny, layers):
 def test_gaussian_bump_red_grav():
     with working_directory(p.join(self_path, "beta_plane_bump_red_grav")):
         run_experiment(write_input_beta_plane_bump_red_grav, 10, 10, 1)
-        sub.check_call(["diff", "-ru", "good-output/", "output/"])
+        assert_outputs_close(10, 10, 1, 1.5e-13)
 
 def write_input_beta_plane_bump(nx, ny, layers):
     assert layers == 2
@@ -149,7 +213,7 @@ def write_input_beta_plane_bump(nx, ny, layers):
 def test_gaussian_bump():
     with working_directory(p.join(self_path, "beta_plane_bump")):
         run_experiment(write_input_beta_plane_bump, 10, 10, 2)
-        sub.check_call(["diff", "-ru", "good-output/", "output/"])
+        assert_outputs_close(10, 10, 2, 2e-13)
 
 def write_input_beta_plane_gyre_red_grav(nx, ny, layers):
     assert layers == 1
@@ -171,7 +235,7 @@ def write_input_beta_plane_gyre_red_grav(nx, ny, layers):
 def test_beta_plane_gyre_red_grav():
     with working_directory(p.join(self_path, "beta_plane_gyre_red_grav")):
         run_experiment(write_input_beta_plane_gyre_red_grav, 10, 10, 1, valgrind=True)
-        sub.check_call(["diff", "-ru", "good-output/", "output/"])
+        assert_outputs_close(10, 10, 1, 2e-13)
 
 def write_input_beta_plane_gyre(nx, ny, layers):
     assert layers == 2
@@ -197,4 +261,4 @@ def write_input_beta_plane_gyre(nx, ny, layers):
 def test_beta_plane_gyre():
     with working_directory(p.join(self_path, "beta_plane_gyre")):
         run_experiment(write_input_beta_plane_gyre, 10, 10, 2, valgrind=True)
-        sub.check_call(["diff", "-ru", "good-output/", "output/"])
+        assert_outputs_close(10, 10, 2, 3e-12)
