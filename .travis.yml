@@ -17,6 +17,7 @@ before_install:
 install: "pip install scipy"
 
 script:
+  - gfortran -Wall -Werror MIM.f90
   - pytest
 
 after_success:
