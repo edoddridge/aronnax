@@ -2,12 +2,12 @@ language: c
 sudo: required
 branches:
   only:
-    - master
+    
 before_install: 
   - sudo apt-get install gfortran
-  - cd $TRAVIS_BUILD_DIR/examples
+  - sudo apt-get install valgrind
 
 script:
-  - ./run_examples.sh
+  - pytest
 
 after_success:
