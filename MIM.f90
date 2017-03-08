@@ -125,6 +125,7 @@ program MIM
   double precision :: eps, rjac
   double precision :: freesurfFac
   double precision :: h_norming(0:nx+1, 0:ny+1)
+  double precision :: thickness_error
 
   ! Model
   double precision :: hmean(layers)
@@ -177,7 +178,8 @@ program MIM
   ! then hide the long unsightly code there.
 
   namelist /NUMERICS/ au, ah, ar, botDrag, dt, slip, nTimeSteps, &
-      dumpFreq, avFreq, hmin, maxits, freesurfFac, eps
+      dumpFreq, avFreq, hmin, maxits, freesurfFac, eps, &
+      thickness_error
 
   namelist /MODEL/ hmean, depthFile, H0, RedGrav
 
@@ -351,7 +353,7 @@ program MIM
       h(:, :, k) = h(:, :, k) * h_norming
     end do
 
-    if (maxval(abs(h_norming - 1d0)).gt. 1e-2) then
+    if (maxval(abs(h_norming - 1d0)).gt. thickness_error) then
       print *, 'inconsistency between h and eta (in %):', &
           maxval(abs(h_norming - 1d0))*100d0
     end if
@@ -645,8 +647,8 @@ program MIM
         hnew(:, :, k) = hnew(:, :, k) * h_norming
       end do
 
-      if (maxval(abs(h_norming - 1d0)) .gt. 1e-2) then
-        print *, 'substantial inconsistency between h and eta (in %).', &
+      if (maxval(abs(h_norming - 1d0)) .gt. thickness_error) then
+        print *, 'inconsistency between h and eta (in %).', &
             maxval(abs(h_norming - 1d0))*100
       end if
 
