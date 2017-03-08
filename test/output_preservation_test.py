@@ -38,7 +38,7 @@ def compile_mim(nx, ny, layers):
         "| sed 's/^  integer, parameter :: ny =.*$/  integer, parameter :: ny = %d/'" % (ny,) +
         "| sed 's/^  integer, parameter :: layers =.*$/  integer, parameter :: layers = %d/'" % (layers,) +
         "> MIM.f90", shell=True)
-    sub.check_call(["gfortran", "-g", "-Og", "MIM.f90", "-o", "MIM"])
+    sub.check_call(["gfortran", "-g", "-O1", "MIM.f90", "-o", "MIM"])
 
 def run_experiment(write_input, nx, ny, layers, valgrind=False):
     sub.check_call(["rm", "-rf", "input/"])

@@ -1,13 +1,22 @@
-language: c
+language: python
+python:
+  - "2.7"
+
 sudo: required
+
 branches:
   only:
-    - master
+
 before_install: 
   - sudo apt-get install gfortran
-  - cd $TRAVIS_BUILD_DIR/examples
+  - sudo apt-get install valgrind
+  - cd $TRAVIS_BUILD_DIR/utils
+  - python setup.py install
+  - cd $TRAVIS_BUILD_DIR
+
+install: "pip install scipy"
 
 script:
-  - ./run_examples.sh
+  - pytest
 
 after_success:
