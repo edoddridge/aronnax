@@ -88,7 +88,6 @@ program MIM
   double precision :: H0 ! default depth in no file specified
   ! Pressure solver variables
   double precision :: a(5, nx, ny)
-  double precision :: phi(0:nx+1, 0:ny+1), phiold(0:nx+1, 0:ny+1)
 
   ! Bernoulli potential and relative vorticity
   double precision :: b(0:nx+1, 0:ny+1, layers)
@@ -97,8 +96,6 @@ program MIM
 
   ! Grid
   double precision :: dx, dy
-  double precision :: x_u(0:nx), y_u(0:ny)
-  double precision :: x_v(0:nx), y_v(0:ny)
   double precision :: wetmask(0:nx+1, 0:ny+1)
   double precision :: hfacW(0:nx+1, 0:ny+1)
   double precision :: hfacE(0:nx+1, 0:ny+1)
@@ -950,7 +947,6 @@ subroutine evaluate_zeta(zeta, u, v, nx, ny, layers, dx, dy)
 
   integer nx, ny, layers
   integer i, j, k
-  double precision h(0:nx, 0:ny, layers)
   double precision u(0:nx+1, 0:ny+1, layers)
   double precision v(0:nx+1, 0:ny+1, layers)
   double precision zeta(0:nx+1, 0:ny+1, layers)
@@ -1290,8 +1286,8 @@ end subroutine calc_baro_v
 subroutine calc_eta_star(ub, vb, eta, etastar, freesurfFac, nx, ny, dx, dy, dt)
   implicit none
 
-  integer nx, ny, layers
-  integer i, j, k
+  integer nx, ny
+  integer i, j
   double precision eta(0:nx+1, 0:ny+1)
   double precision etastar(0:nx+1, 0:ny+1)
   double precision ub(0:nx+1, 0:ny+1)
@@ -1330,9 +1326,8 @@ subroutine SOR_solver(a, etanew, etastar, freesurfFac, nx, ny, dt, &
   double precision rjac, eps
   double precision rhs(nx, ny)
   double precision res(nx, ny)
-  double precision norm, norm0, norm_old
+  double precision norm, norm0
   double precision relax_param
-  character(30) Format
 
   rhs = -etastar(1:nx,1:ny)/dt**2
   ! first guess for etanew
@@ -1358,10 +1353,8 @@ subroutine SOR_solver(a, etanew, etastar, freesurfFac, nx, ny, dt, &
     end do
   end do
 
-  ! norm_old = norm0
 
   do nit = 1, maxits
-    ! norm_old = norm
     norm = 0.d0
     do i = 1, nx
       do j = 1, ny
@@ -1386,13 +1379,9 @@ subroutine SOR_solver(a, etanew, etastar, freesurfFac, nx, ny, dt, &
     call wrap_fields_2D(etanew, nx, ny)
 
     if (nit.gt.1.and.norm.lt.eps*norm0) then
-      ! print 10014,  eps,  nit
-      ! 10014   format('Res less than eps of original. eps, iteration: ', F5.4, I7)
+
       return
-      ! elseif (nit.gt.1.and.abs(norm - norm_old).lt.norm_old*eps) then
-      !     print *, 'change in residual less than eps of previous residual. iteration:', eps, nit
-      !     return
-      ! This was not a good way of exiting the solver - it would occasionally leave after 2 or 3 iterations.
+
     end if
   end do
 
