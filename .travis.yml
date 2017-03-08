@@ -2,10 +2,11 @@ language: c
 sudo: required
 branches:
   only:
-    
+
 before_install: 
   - sudo apt-get install gfortran
   - sudo apt-get install valgrind
+  - sudo apt-get install pytest
 
 script:
   - pytest
