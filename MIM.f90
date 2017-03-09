@@ -255,6 +255,8 @@ program MIM
 
   call read_input_fileU(zonalWindFile, base_wind_x, 0.d0, nx, ny, 1)
   call read_input_fileV(meridionalWindFile, base_wind_y, 0.d0, nx, ny, 1)
+  
+  allocate(wind_mag_time_series(nTimeSteps))
   call read_input_file_time_series(wind_mag_time_series_file, &
    wind_mag_time_series, 1.d0, nTimeSteps)
 
