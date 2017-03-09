@@ -76,6 +76,7 @@
  wind_period = 3e6,
  wind_t_offset = 0d0,
  DumpWind = .FALSE.,
+ wind_mag_time_series_file = '',
  /
 ! input/initH.bin
 ! 
