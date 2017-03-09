@@ -258,6 +258,9 @@ program MIM
   call read_input_file_time_series(wind_mag_time_series_file, &
    wind_mag_time_series, 1.d0, nTimeSteps)
 
+  wind_x = base_wind_x*wind_mag_time_series(1)
+  wind_y = base_wind_y*wind_mag_time_series(1)
+
   call read_input_fileH(spongeHTimeScaleFile, spongeHTimeScale, &
       zeros, nx, ny, layers)
   call read_input_fileH(spongeHfile, spongeH, hmean, nx, ny, layers)
@@ -552,6 +555,9 @@ program MIM
     !         wind_beta*stoch_wind_mag)
     !   end if
     ! end if
+
+    wind_x = base_wind_x*wind_mag_time_series(n)
+    wind_y = base_wind_y*wind_mag_time_series(n)
 
     ! Calculate Bernoulli potential
     if (RedGrav) then
