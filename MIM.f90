@@ -194,7 +194,8 @@ program MIM
 
   namelist /EXTERNAL_FORCING/ zonalWindFile, meridionalWindFile, &
       UseSinusoidWind, UseStochWind, wind_alpha, wind_beta, &
-      wind_period, wind_t_offset, DumpWind
+      wind_period, wind_t_offset, DumpWind, &
+      wind_mag_time_series_file
 
   open(unit=8, file="parameters.in", status='OLD', recl=80)
   read(unit=8, nml=NUMERICS)
@@ -254,6 +255,8 @@ program MIM
 
   call read_input_fileU(zonalWindFile, base_wind_x, 0.d0, nx, ny, 1)
   call read_input_fileV(meridionalWindFile, base_wind_y, 0.d0, nx, ny, 1)
+  call read_input_file_time_series(wind_mag_time_series_file, &
+   wind_mag_time_series, 1.d0, nTimeSteps)
 
   call read_input_fileH(spongeHTimeScaleFile, spongeHTimeScale, &
       zeros, nx, ny, layers)
