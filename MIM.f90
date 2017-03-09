@@ -144,12 +144,12 @@ program MIM
   double precision :: wind_y(0:nx+1, 0:ny+1)
   double precision :: base_wind_x(0:nx+1, 0:ny+1)
   double precision :: base_wind_y(0:nx+1, 0:ny+1)
-  logical :: UseSinusoidWind
-  logical :: UseStochWind
+  ! logical :: UseSinusoidWind
+  ! logical :: UseStochWind
   logical :: DumpWind
-  double precision :: wind_alpha, wind_beta, wind_period, wind_t_offset
-  integer :: n_stoch_wind
-  double precision :: stoch_wind_mag
+  ! double precision :: wind_alpha, wind_beta, wind_period, wind_t_offset
+  ! integer :: n_stoch_wind
+  ! double precision :: stoch_wind_mag
   character(30) :: wind_mag_time_series_file
   double precision, dimension(:), allocatable :: wind_mag_time_series
 
@@ -193,9 +193,9 @@ program MIM
   namelist /INITIAL_CONDITONS/ initUfile, initVfile, initHfile, initEtaFile
 
   namelist /EXTERNAL_FORCING/ zonalWindFile, meridionalWindFile, &
-      UseSinusoidWind, UseStochWind, wind_alpha, wind_beta, &
-      wind_period, wind_t_offset, DumpWind, &
-      wind_mag_time_series_file
+      ! UseSinusoidWind, UseStochWind, wind_alpha, wind_beta, &
+      ! wind_period, wind_t_offset, 
+      DumpWind, wind_mag_time_series_file
 
   open(unit=8, file="parameters.in", status='OLD', recl=80)
   read(unit=8, nml=NUMERICS)
@@ -215,22 +215,22 @@ program MIM
   ! Zero vector - for internal use only
   zeros = 0d0
 
-  ! Check that time-dependent forcing flags have been set correctly
-  if (UseSinusoidWind .and. UseStochWind)  then
-    ! Can't use both sinusiodal and stochastic wind variation.
-    ! Write a file saying so
-    open(unit=99, file='errors.txt', action="write", status="replace", &
-        form="formatted")
-    write(99, *) "Can't have both stochastic and sinusoidally varying &
-        &wind forcings. Choose one."
-    close(unit=99)
+  ! ! Check that time-dependent forcing flags have been set correctly
+  ! if (UseSinusoidWind .and. UseStochWind)  then
+  !   ! Can't use both sinusiodal and stochastic wind variation.
+  !   ! Write a file saying so
+  !   open(unit=99, file='errors.txt', action="write", status="replace", &
+  !       form="formatted")
+  !   write(99, *) "Can't have both stochastic and sinusoidally varying &
+  !       &wind forcings. Choose one."
+  !   close(unit=99)
 
-    ! Print it on the screen
-    print *, "Can't have both stochastic and sinusoidally varying &
-        &wind forcings. Choose one."
-    ! Stop the program
-    stop
-  end if
+  !   ! Print it on the screen
+  !   print *, "Can't have both stochastic and sinusoidally varying &
+  !       &wind forcings. Choose one."
+  !   ! Stop the program
+  !   stop
+  ! end if
 
   ! Read in arrays from the input files
   call read_input_fileU(initUfile, u, 0.d0, nx, ny, layers)
@@ -255,10 +255,10 @@ program MIM
 
   call read_input_fileU(zonalWindFile, base_wind_x, 0.d0, nx, ny, 1)
   call read_input_fileV(meridionalWindFile, base_wind_y, 0.d0, nx, ny, 1)
-  
+
   allocate(wind_mag_time_series(nTimeSteps))
   call read_input_file_time_series(wind_mag_time_series_file, &
-   wind_mag_time_series, 1.d0, nTimeSteps)
+      wind_mag_time_series, 1.d0, nTimeSteps)
 
   wind_x = base_wind_x*wind_mag_time_series(1)
   wind_y = base_wind_y*wind_mag_time_series(1)
