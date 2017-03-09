@@ -150,6 +150,9 @@ program MIM
   double precision :: wind_alpha, wind_beta, wind_period, wind_t_offset
   integer :: n_stoch_wind
   double precision :: stoch_wind_mag
+  character(30) :: wind_mag_time_series_file
+  double precision, dimension(:), allocatable :: wind_mag_time_series
+
 
   ! Sponge
   double precision :: spongeHTimeScale(0:nx+1, 0:ny+1, layers)
