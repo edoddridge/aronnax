@@ -1639,6 +1639,27 @@ subroutine read_input_fileV(name, array, default, nx, ny, layers)
   return
 end subroutine read_input_fileV
 
+! -----------------------------------------------------------------------------
+
+subroutine read_input_file_time_series(name, array, default, nTimeSteps)
+  implicit none
+
+  character(30) name
+  integer nTimeSteps
+  double precision array(nTimeSteps), default
+
+  if (name.ne.'') then
+    open(unit=10, form='unformatted', file=name)
+    read(10) array
+    close(10)
+
+  else
+    array = default
+  end if
+
+  return
+end subroutine read_input_file_time_series
+
 !-----------------------------------------------------------------
 !> Wrap 3D fields around for periodic boundary conditions
 
