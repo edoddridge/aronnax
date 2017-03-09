@@ -302,20 +302,20 @@ program MIM
     v(:, :, k) = v(:, :, k) * hfacS * wetmask(:, :)
   end do
 
-  ! If the winds are static, then set wind_ = base_wind_
-  if (.not. UseSinusoidWind .and. .not. UseStochWind)  then
-    wind_x = base_wind_x
-    wind_y = base_wind_y
-  end if
+  ! ! If the winds are static, then set wind_ = base_wind_
+  ! if (.not. UseSinusoidWind .and. .not. UseStochWind)  then
+  !   wind_x = base_wind_x
+  !   wind_y = base_wind_y
+  ! end if
 
-  ! Initialise random numbers for stochastic winds
-  if (UseStochWind) then
-    ! This ensures a different series of random numbers each time the
-    ! model is run.
-    call ranseed()
-    ! Number of timesteps between updating the perturbed wind field.
-    n_stoch_wind = int(wind_period/dt)
-  end if
+  ! ! Initialise random numbers for stochastic winds
+  ! if (UseStochWind) then
+  !   ! This ensures a different series of random numbers each time the
+  !   ! model is run.
+  !   call ranseed()
+  !   ! Number of timesteps between updating the perturbed wind field.
+  !   n_stoch_wind = int(wind_period/dt)
+  ! end if
 
   if (.not. RedGrav) then
     ! Initialise arrays for pressure solver
@@ -534,24 +534,24 @@ program MIM
 
   do n = 1, nTimeSteps
 
-    ! Time varying winds
-    if (UseSinusoidWind .eqv. .true.) then
-      wind_x = base_wind_x*(wind_alpha +  &
-          wind_beta*sin(((2d0*pi*n*dt)/wind_period) - wind_t_offset))
-      wind_y = base_wind_y*(wind_alpha +  &
-          wind_beta*sin(((2d0*pi*n*dt)/wind_period) - wind_t_offset))
-    else if (UseStochWind .eqv. .true.) then
-      if (mod(n-1, n_stoch_wind).eq.0) then
-        ! Gives a pseudorandom number in range 0 <= x < 1
-        call random_number(stoch_wind_mag)
-        ! Convert to -1 <= x < 1
-        stoch_wind_mag = (stoch_wind_mag - 0.5d0)*2d0
-        wind_x = base_wind_x*(wind_alpha +  &
-            wind_beta*stoch_wind_mag)
-        wind_y = base_wind_y*(wind_alpha +  &
-            wind_beta*stoch_wind_mag)
-      end if
-    end if
+    ! ! Time varying winds
+    ! if (UseSinusoidWind .eqv. .true.) then
+    !   wind_x = base_wind_x*(wind_alpha +  &
+    !       wind_beta*sin(((2d0*pi*n*dt)/wind_period) - wind_t_offset))
+    !   wind_y = base_wind_y*(wind_alpha +  &
+    !       wind_beta*sin(((2d0*pi*n*dt)/wind_period) - wind_t_offset))
+    ! else if (UseStochWind .eqv. .true.) then
+    !   if (mod(n-1, n_stoch_wind).eq.0) then
+    !     ! Gives a pseudorandom number in range 0 <= x < 1
+    !     call random_number(stoch_wind_mag)
+    !     ! Convert to -1 <= x < 1
+    !     stoch_wind_mag = (stoch_wind_mag - 0.5d0)*2d0
+    !     wind_x = base_wind_x*(wind_alpha +  &
+    !         wind_beta*stoch_wind_mag)
+    !     wind_y = base_wind_y*(wind_alpha +  &
+    !         wind_beta*stoch_wind_mag)
+    !   end if
+    ! end if
 
     ! Calculate Bernoulli potential
     if (RedGrav) then
