@@ -144,12 +144,10 @@ program MIM
   double precision :: wind_y(0:nx+1, 0:ny+1)
   double precision :: base_wind_x(0:nx+1, 0:ny+1)
   double precision :: base_wind_y(0:nx+1, 0:ny+1)
-  logical :: UseSinusoidWind
-  logical :: UseStochWind
   logical :: DumpWind
-  double precision :: wind_alpha, wind_beta, wind_period, wind_t_offset
-  integer :: n_stoch_wind
-  double precision :: stoch_wind_mag
+  character(30) :: wind_mag_time_series_file
+  double precision, dimension(:), allocatable :: wind_mag_time_series
+
 
   ! Sponge
   double precision :: spongeHTimeScale(0:nx+1, 0:ny+1, layers)
@@ -190,8 +188,7 @@ program MIM
   namelist /INITIAL_CONDITONS/ initUfile, initVfile, initHfile, initEtaFile
 
   namelist /EXTERNAL_FORCING/ zonalWindFile, meridionalWindFile, &
-      UseSinusoidWind, UseStochWind, wind_alpha, wind_beta, &
-      wind_period, wind_t_offset, DumpWind
+      DumpWind, wind_mag_time_series_file
 
   open(unit=8, file="parameters.in", status='OLD', recl=80)
   read(unit=8, nml=NUMERICS)
@@ -211,22 +208,6 @@ program MIM
   ! Zero vector - for internal use only
   zeros = 0d0
 
-  ! Check that time-dependent forcing flags have been set correctly
-  if (UseSinusoidWind .and. UseStochWind)  then
-    ! Can't use both sinusiodal and stochastic wind variation.
-    ! Write a file saying so
-    open(unit=99, file='errors.txt', action="write", status="replace", &
-        form="formatted")
-    write(99, *) "Can't have both stochastic and sinusoidally varying &
-        &wind forcings. Choose one."
-    close(unit=99)
-
-    ! Print it on the screen
-    print *, "Can't have both stochastic and sinusoidally varying &
-        &wind forcings. Choose one."
-    ! Stop the program
-    stop
-  end if
 
   ! Read in arrays from the input files
   call read_input_fileU(initUfile, u, 0.d0, nx, ny, layers)
@@ -251,6 +232,13 @@ program MIM
 
   call read_input_fileU(zonalWindFile, base_wind_x, 0.d0, nx, ny, 1)
   call read_input_fileV(meridionalWindFile, base_wind_y, 0.d0, nx, ny, 1)
+
+  allocate(wind_mag_time_series(nTimeSteps))
+  call read_input_file_time_series(wind_mag_time_series_file, &
+      wind_mag_time_series, 1.d0, nTimeSteps)
+
+  wind_x = base_wind_x*wind_mag_time_series(1)
+  wind_y = base_wind_y*wind_mag_time_series(1)
 
   call read_input_fileH(spongeHTimeScaleFile, spongeHTimeScale, &
       zeros, nx, ny, layers)
@@ -296,20 +284,6 @@ program MIM
     v(:, :, k) = v(:, :, k) * hfacS * wetmask(:, :)
   end do
 
-  ! If the winds are static, then set wind_ = base_wind_
-  if (.not. UseSinusoidWind .and. .not. UseStochWind)  then
-    wind_x = base_wind_x
-    wind_y = base_wind_y
-  end if
-
-  ! Initialise random numbers for stochastic winds
-  if (UseStochWind) then
-    ! This ensures a different series of random numbers each time the
-    ! model is run.
-    call ranseed()
-    ! Number of timesteps between updating the perturbed wind field.
-    n_stoch_wind = int(wind_period/dt)
-  end if
 
   if (.not. RedGrav) then
     ! Initialise arrays for pressure solver
@@ -528,24 +502,8 @@ program MIM
 
   do n = 1, nTimeSteps
 
-    ! Time varying winds
-    if (UseSinusoidWind .eqv. .true.) then
-      wind_x = base_wind_x*(wind_alpha +  &
-          wind_beta*sin(((2d0*pi*n*dt)/wind_period) - wind_t_offset))
-      wind_y = base_wind_y*(wind_alpha +  &
-          wind_beta*sin(((2d0*pi*n*dt)/wind_period) - wind_t_offset))
-    else if (UseStochWind .eqv. .true.) then
-      if (mod(n-1, n_stoch_wind).eq.0) then
-        ! Gives a pseudorandom number in range 0 <= x < 1
-        call random_number(stoch_wind_mag)
-        ! Convert to -1 <= x < 1
-        stoch_wind_mag = (stoch_wind_mag - 0.5d0)*2d0
-        wind_x = base_wind_x*(wind_alpha +  &
-            wind_beta*stoch_wind_mag)
-        wind_y = base_wind_y*(wind_alpha +  &
-            wind_beta*stoch_wind_mag)
-      end if
-    end if
+    wind_x = base_wind_x*wind_mag_time_series(n)
+    wind_y = base_wind_y*wind_mag_time_series(n)
 
     ! Calculate Bernoulli potential
     if (RedGrav) then
@@ -1639,6 +1597,27 @@ subroutine read_input_fileV(name, array, default, nx, ny, layers)
   return
 end subroutine read_input_fileV
 
+! -----------------------------------------------------------------------------
+
+subroutine read_input_file_time_series(name, array, default, nTimeSteps)
+  implicit none
+
+  character(30) name
+  integer nTimeSteps
+  double precision array(nTimeSteps), default
+
+  if (name.ne.'') then
+    open(unit=10, form='unformatted', file=name)
+    read(10) array
+    close(10)
+
+  else
+    array = default
+  end if
+
+  return
+end subroutine read_input_file_time_series
+
 !-----------------------------------------------------------------
 !> Wrap 3D fields around for periodic boundary conditions
 
@@ -1674,27 +1653,3 @@ subroutine wrap_fields_2D(array, nx, ny)
 
   return
 end subroutine wrap_fields_2D
-
-!-----------------------------------------------------------------
-!> Robustly produce a different random seed for each run.
-!! Code adapted from
-!! http://web.ph.surrey.ac.uk/fortweb/glossary/random_seed.html
-
-subroutine ranseed()
-  implicit none
-
-  ! ----- variables for portable seed setting -----
-  integer :: i_seed
-  integer, dimension(:), allocatable :: a_seed
-  integer, dimension(1:8) :: dt_seed
-  ! ----- end of variables for seed setting -----
-
-  ! ----- Set up random seed portably -----
-  call random_seed(size=i_seed)
-  allocate(a_seed(1:i_seed))
-  call random_seed(get=a_seed)
-  call date_and_time(values=dt_seed)
-  a_seed(i_seed) = dt_seed(8); a_seed(1) = dt_seed(8)*dt_seed(7)*dt_seed(6)
-  call random_seed(put=a_seed)
-  return
-end subroutine ranseed

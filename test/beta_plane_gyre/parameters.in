@@ -70,13 +70,8 @@
  &EXTERNAL_FORCING
  zonalWindFile = 'input/wind_x.bin',
  meridionalWindFile = '', 
- UseSinusoidWind = .FALSE.,
- UseStochWind = .FALSE.,
- wind_alpha = 1d0,
- wind_beta = 0.5d0,
- wind_period = 3e6,
- wind_t_offset = 0d0,
  DumpWind = .TRUE.,
+ wind_mag_time_series_file = '',
  /
 ! input/initH.bin
 ! 
