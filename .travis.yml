@@ -18,6 +18,6 @@ install: "pip install scipy"
 
 script:
   - gfortran -Wall -Werror MIM.f90
-  - pytest
+  - MIM_TEST_VALGRIND_ALL=1 pytest
 
 after_success:

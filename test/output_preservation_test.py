@@ -47,7 +47,7 @@ def run_experiment(write_input, nx, ny, layers, valgrind=False):
     with working_directory("input"):
         write_input(nx, ny, layers)
     compile_mim(nx, ny, layers)
-    if valgrind:
+    if valgrind or 'MIM_TEST_VALGRIND_ALL' in os.environ:
         sub.check_call(["valgrind", "./MIM"])
     else:
         sub.check_call(["./MIM"])
