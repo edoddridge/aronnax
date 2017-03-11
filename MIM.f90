@@ -53,7 +53,7 @@ program MIM
   double precision :: dudtold(0:nx+1, 0:ny+1, layers)
   double precision :: dudtveryold(0:nx+1, 0:ny+1, layers)
   double precision :: unew(0:nx+1, 0:ny+1, layers)
-  double precision :: dudt_bt(0:nx+1, 0:ny+1)
+  double precision :: dudt_bt(nx, 0:ny)
   ! barotropic velocity components (for pressure solver)
   double precision :: ub(0:nx+1, 0:ny+1)
   ! for initialisation
@@ -67,7 +67,7 @@ program MIM
   double precision :: dvdtold(0:nx+1, 0:ny+1, layers)
   double precision :: dvdtveryold(0:nx+1, 0:ny+1, layers)
   double precision :: vnew(0:nx+1, 0:ny+1, layers)
-  double precision :: dvdt_bt(nx+1, ny)
+  double precision :: dvdt_bt(0:nx, ny)
   ! barotropic velocity components (for pressure solver)
   double precision :: vb(nx+1, ny)
   ! for initialisation
