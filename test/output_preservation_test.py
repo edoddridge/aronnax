@@ -2,6 +2,7 @@ from contextlib import contextmanager
 import os
 import os.path as p
 import subprocess as sub
+import time
 
 self_path = p.dirname(p.abspath(__file__))
 
@@ -47,10 +48,12 @@ def run_experiment(write_input, nx, ny, layers, valgrind=False):
     with working_directory("input"):
         write_input(nx, ny, layers)
     compile_mim(nx, ny, layers)
+    then = time.time()
     if valgrind:
         sub.check_call(["valgrind", "./MIM"])
     else:
         sub.check_call(["./MIM"])
+    print "MIM execution took", time.time() - then
 
 def interpret_mim_raw_file(name, nx, ny, layers):
     """Read an output file dumped by the MIM core.
