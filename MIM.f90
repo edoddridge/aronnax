@@ -32,6 +32,7 @@
 program MIM
   implicit none
 
+  integer, parameter :: layerwise_input_length = 10000
   integer, parameter :: nx = 300 !< number of x grid points
   integer, parameter :: ny = 300 !< number of y grid points
   integer, parameter :: layers = 2 !< number of active layers in the model
@@ -111,7 +112,7 @@ program MIM
   ! Numerics
   double precision :: pi, dt
   double precision :: au, ar, botDrag
-  double precision :: ah(layers)
+  double precision :: ah(layerwise_input_length)
   double precision :: slip
   double precision :: hmin
   integer nTimeSteps
@@ -126,7 +127,7 @@ program MIM
   double precision :: thickness_error
 
   ! Model
-  double precision :: hmean(layers)
+  double precision :: hmean(layerwise_input_length)
   ! Switch for using n + 1/2 layer physics, or using n layer physics
   logical :: RedGrav
 
@@ -138,7 +139,7 @@ program MIM
 
 
   ! Physics
-  double precision :: g_vec(layers)
+  double precision :: g_vec(layerwise_input_length)
   double precision :: rho0
 
   ! Wind
