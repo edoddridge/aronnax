@@ -52,7 +52,7 @@ def run_experiment(write_input, nx, ny, layers, valgrind=False):
         write_input(nx, ny, layers)
     tweak_parameters(nx, ny, layers)
     then = time.time()
-    if valgrind:
+    if valgrind or 'MIM_TEST_VALGRIND_ALL' in os.environ:
         sub.check_call(["valgrind", mim_exec])
     else:
         sub.check_call([mim_exec])
