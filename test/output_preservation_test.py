@@ -38,12 +38,22 @@ def compile_mim(nx, ny, layers):
         "> MIM.f90", shell=True)
     sub.check_call(["gfortran", "-g", "-O1", "-fcheck=all", "MIM.f90", "-o", "MIM"])
 
+def tweak_parameters(nx, ny, layers):
+    sub.check_call(
+        "cat parameters.in " +
+        "| sed 's/^ nx =.*,$/ nx = %d,/'" % (nx,) +
+        "| sed 's/^ ny =.*,$/ ny = %d,/'" % (ny,) +
+        "| sed 's/^ layers =.*,$/ layers = %d,/'" % (layers,) +
+        "> parameters.new", shell=True)
+    sub.check_call(["mv", "parameters.new", "parameters.in"])
+
 def run_experiment(write_input, nx, ny, layers, valgrind=False):
     sub.check_call(["rm", "-rf", "input/"])
     sub.check_call(["rm", "-rf", "output/"])
     sub.check_call(["mkdir", "-p", "output/"])
     with working_directory("input"):
         write_input(nx, ny, layers)
+    tweak_parameters(nx, ny, layers)
     compile_mim(nx, ny, layers)
     then = time.time()
     if valgrind:
