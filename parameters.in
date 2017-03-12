@@ -54,6 +54,9 @@
  rho0 = 1026.,
  /
  &GRID
+ nx = 300,
+ ny = 300,
+ layers = 2,
  dx = 2e3,
  dy = 2e3,
  fUfile = 'input/fu.bin',

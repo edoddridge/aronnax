@@ -6,6 +6,10 @@ __pycache__/
 # C extensions
 *.so
 
+# The MIM executable
+/MIM
+/MIM_test
+
 # Distribution / packaging
 .Python
 env/

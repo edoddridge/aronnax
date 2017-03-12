@@ -32,100 +32,102 @@
 program MIM
   implicit none
 
-  integer, parameter :: nx = 300 !< number of x grid points
-  integer, parameter :: ny = 300 !< number of y grid points
-  integer, parameter :: layers = 2 !< number of active layers in the model
+  integer, parameter :: layerwise_input_length = 10000
+  integer :: nx !< number of x grid points
+  integer :: ny !< number of y grid points
+  integer :: layers !< number of active layers in the model
 
   ! Layer thickness (h)
-  double precision :: h(0:nx+1, 0:ny+1, layers)
-  double precision :: dhdt(0:nx+1, 0:ny+1, layers)
-  double precision :: dhdtold(0:nx+1, 0:ny+1, layers)
-  double precision :: dhdtveryold(0:nx+1, 0:ny+1, layers)
-  double precision :: hnew(0:nx+1, 0:ny+1, layers)
+  double precision, dimension(:,:,:), allocatable :: h
+  double precision, dimension(:,:,:), allocatable :: dhdt
+  double precision, dimension(:,:,:), allocatable :: dhdtold
+  double precision, dimension(:,:,:), allocatable :: dhdtveryold
+  double precision, dimension(:,:,:), allocatable :: hnew
   ! for initialisation
-  double precision :: hhalf(0:nx+1, 0:ny+1, layers)
+  double precision, dimension(:,:,:), allocatable :: hhalf
   ! for saving average fields
-  double precision :: hav(0:nx+1, 0:ny+1, layers)
+  double precision, dimension(:,:,:), allocatable :: hav
 
   ! Velocity component u
-  double precision :: u(0:nx+1, 0:ny+1, layers)
-  double precision :: dudt(0:nx+1, 0:ny+1, layers)
-  double precision :: dudtold(0:nx+1, 0:ny+1, layers)
-  double precision :: dudtveryold(0:nx+1, 0:ny+1, layers)
-  double precision :: unew(0:nx+1, 0:ny+1, layers)
-  double precision :: dudt_bt(nx, 0:ny)
+  double precision, dimension(:,:,:), allocatable :: u
+  double precision, dimension(:,:,:), allocatable :: dudt
+  double precision, dimension(:,:,:), allocatable :: dudtold
+  double precision, dimension(:,:,:), allocatable :: dudtveryold
+  double precision, dimension(:,:,:), allocatable :: unew
+  double precision, dimension(:,:), allocatable :: dudt_bt
   ! barotropic velocity components (for pressure solver)
-  double precision :: ub(0:nx+1, 0:ny+1)
+  double precision, dimension(:,:), allocatable :: ub
   ! for initialisation
-  double precision :: uhalf(0:nx+1, 0:ny+1, layers)
+  double precision, dimension(:,:,:), allocatable :: uhalf
   ! for saving average fields
-  double precision :: uav(0:nx+1, 0:ny+1, layers)
+  double precision, dimension(:,:,:), allocatable :: uav
 
   ! Velocity component v
-  double precision :: v(0:nx+1, 0:ny+1, layers)
-  double precision :: dvdt(0:nx+1, 0:ny+1, layers)
-  double precision :: dvdtold(0:nx+1, 0:ny+1, layers)
-  double precision :: dvdtveryold(0:nx+1, 0:ny+1, layers)
-  double precision :: vnew(0:nx+1, 0:ny+1, layers)
-  double precision :: dvdt_bt(0:nx, ny)
+  double precision, dimension(:,:,:), allocatable :: v
+  double precision, dimension(:,:,:), allocatable :: dvdt
+  double precision, dimension(:,:,:), allocatable :: dvdtold
+  double precision, dimension(:,:,:), allocatable :: dvdtveryold
+  double precision, dimension(:,:,:), allocatable :: vnew
+  double precision, dimension(:,:), allocatable :: dvdt_bt
   ! barotropic velocity components (for pressure solver)
-  double precision :: vb(nx+1, ny)
+  double precision, dimension(:,:), allocatable :: vb
   ! for initialisation
-  double precision :: vhalf(0:nx+1, 0:ny+1, layers)
+  double precision, dimension(:,:,:), allocatable :: vhalf
   ! for saving average fields
-  double precision :: vav(0:nx+1, 0:ny+1, layers)
+  double precision, dimension(:,:,:), allocatable :: vav
 
   ! Free surface (eta)
-  double precision :: eta(0:nx+1, 0:ny+1)
-  double precision :: etastar(0:nx+1, 0:ny+1)
-  double precision :: etanew(0:nx+1, 0:ny+1)
+  double precision, dimension(:,:), allocatable :: eta
+  double precision, dimension(:,:), allocatable :: etastar
+  double precision, dimension(:,:), allocatable :: etanew
   ! for saving average fields
-  double precision :: etaav(0:nx+1, 0:ny+1)
+  double precision, dimension(:,:), allocatable :: etaav
 
   ! Bathymetry
   character(30) :: depthFile
-  double precision :: depth(0:nx+1, 0:ny+1)
+  double precision, dimension(:,:), allocatable :: depth
   double precision :: H0 ! default depth in no file specified
   ! Pressure solver variables
-  double precision :: a(5, nx, ny)
+  double precision, dimension(:,:,:), allocatable :: a
 
   ! Bernoulli potential and relative vorticity
-  double precision :: b(0:nx+1, 0:ny+1, layers)
-  double precision :: zeta(0:nx+1, 0:ny+1, layers)
+  double precision, dimension(:,:,:), allocatable :: b
+  double precision, dimension(:,:,:), allocatable :: zeta
 
 
   ! Grid
   double precision :: dx, dy
-  double precision :: wetmask(0:nx+1, 0:ny+1)
-  double precision :: hfacW(0:nx+1, 0:ny+1)
-  double precision :: hfacE(0:nx+1, 0:ny+1)
-  double precision :: hfacN(0:nx+1, 0:ny+1)
-  double precision :: hfacS(0:nx+1, 0:ny+1)
+  double precision, dimension(:,:), allocatable :: wetmask
+  double precision, dimension(:,:), allocatable :: hfacW
+  double precision, dimension(:,:), allocatable :: hfacE
+  double precision, dimension(:,:), allocatable :: hfacN
+  double precision, dimension(:,:), allocatable :: hfacS
   ! Coriolis parameter at u and v grid-points respectively
-  double precision :: fu(0:nx+1, 0:ny+1)
-  double precision :: fv(0:nx+1, 0:ny+1)
+  double precision, dimension(:,:), allocatable :: fu
+  double precision, dimension(:,:), allocatable :: fv
   ! File names to read them from
   character(30) :: fUfile, fVfile
   character(30) :: wetMaskFile
 
   ! Numerics
   double precision :: pi, dt
-  double precision :: au, ah(layers), ar, botDrag
+  double precision :: au, ar, botDrag
+  double precision :: ah(layerwise_input_length)
   double precision :: slip
   double precision :: hmin
   integer nTimeSteps
   double precision :: dumpFreq, avFreq
   integer counter
   integer nwrite, avwrite
-  double precision :: zeros(layers)
+  double precision, dimension(:), allocatable :: zeros
   integer maxits
   double precision :: eps, rjac
   double precision :: freesurfFac
-  double precision :: h_norming(0:nx+1, 0:ny+1)
+  double precision, dimension(:,:), allocatable :: h_norming
   double precision :: thickness_error
 
   ! Model
-  double precision :: hmean(layers)
+  double precision :: hmean(layerwise_input_length)
   ! Switch for using n + 1/2 layer physics, or using n layer physics
   logical :: RedGrav
 
@@ -137,25 +139,26 @@ program MIM
 
 
   ! Physics
-  double precision :: g_vec(layers), rho0
+  double precision :: g_vec(layerwise_input_length)
+  double precision :: rho0
 
   ! Wind
-  double precision :: wind_x(0:nx+1, 0:ny+1)
-  double precision :: wind_y(0:nx+1, 0:ny+1)
-  double precision :: base_wind_x(0:nx+1, 0:ny+1)
-  double precision :: base_wind_y(0:nx+1, 0:ny+1)
+  double precision, dimension(:,:), allocatable :: wind_x
+  double precision, dimension(:,:), allocatable :: wind_y
+  double precision, dimension(:,:), allocatable :: base_wind_x
+  double precision, dimension(:,:), allocatable :: base_wind_y
   logical :: DumpWind
   character(30) :: wind_mag_time_series_file
   double precision, dimension(:), allocatable :: wind_mag_time_series
 
 
   ! Sponge
-  double precision :: spongeHTimeScale(0:nx+1, 0:ny+1, layers)
-  double precision :: spongeUTimeScale(0:nx+1, 0:ny+1, layers)
-  double precision :: spongeVTimeScale(0:nx+1, 0:ny+1, layers)
-  double precision :: spongeH(0:nx+1, 0:ny+1, layers)
-  double precision :: spongeU(0:nx+1, 0:ny+1, layers)
-  double precision :: spongeV(0:nx+1, 0:ny+1, layers)
+  double precision, dimension(:,:,:), allocatable :: spongeHTimeScale
+  double precision, dimension(:,:,:), allocatable :: spongeUTimeScale
+  double precision, dimension(:,:,:), allocatable :: spongeVTimeScale
+  double precision, dimension(:,:,:), allocatable :: spongeH
+  double precision, dimension(:,:,:), allocatable :: spongeU
+  double precision, dimension(:,:,:), allocatable :: spongeV
   character(30) :: spongeHTimeScaleFile
   character(30) :: spongeUTimeScaleFile
   character(30) :: spongeVTimeScaleFile
@@ -183,7 +186,7 @@ program MIM
 
   namelist /PHYSICS/ g_vec, rho0
 
-  namelist /GRID/ dx, dy, fUfile, fVfile, wetMaskFile
+  namelist /GRID/ nx, ny, layers, dx, dy, fUfile, fVfile, wetMaskFile
 
   namelist /INITIAL_CONDITONS/ initUfile, initVfile, initHfile, initEtaFile
 
@@ -205,6 +208,70 @@ program MIM
 
   ! Pi, the constant
   pi = 3.1415926535897932384
+
+  allocate(h(0:nx+1, 0:ny+1, layers))
+  allocate(dhdt(0:nx+1, 0:ny+1, layers))
+  allocate(dhdtold(0:nx+1, 0:ny+1, layers))
+  allocate(dhdtveryold(0:nx+1, 0:ny+1, layers))
+  allocate(hnew(0:nx+1, 0:ny+1, layers))
+  allocate(hhalf(0:nx+1, 0:ny+1, layers))
+  allocate(hav(0:nx+1, 0:ny+1, layers))
+
+  allocate(u(0:nx+1, 0:ny+1, layers))
+  allocate(dudt(0:nx+1, 0:ny+1, layers))
+  allocate(dudtold(0:nx+1, 0:ny+1, layers))
+  allocate(dudtveryold(0:nx+1, 0:ny+1, layers))
+  allocate(unew(0:nx+1, 0:ny+1, layers))
+  allocate(dudt_bt(nx, 0:ny))
+  allocate(ub(nx+1, ny))
+  allocate(uhalf(0:nx+1, 0:ny+1, layers))
+  allocate(uav(0:nx+1, 0:ny+1, layers))
+
+  allocate(v(0:nx+1, 0:ny+1, layers))
+  allocate(dvdt(0:nx+1, 0:ny+1, layers))
+  allocate(dvdtold(0:nx+1, 0:ny+1, layers))
+  allocate(dvdtveryold(0:nx+1, 0:ny+1, layers))
+  allocate(vnew(0:nx+1, 0:ny+1, layers))
+  allocate(dvdt_bt(0:nx, ny))
+  allocate(vb(nx, ny+1))
+  allocate(vhalf(0:nx+1, 0:ny+1, layers))
+  allocate(vav(0:nx+1, 0:ny+1, layers))
+
+  allocate(eta(0:nx+1, 0:ny+1))
+  allocate(etastar(0:nx+1, 0:ny+1))
+  allocate(etanew(0:nx+1, 0:ny+1))
+  allocate(etaav(0:nx+1, 0:ny+1))
+
+  allocate(depth(0:nx+1, 0:ny+1))
+  allocate(a(5, nx, ny))
+
+  allocate(b(0:nx+1, 0:ny+1, layers))
+  allocate(zeta(0:nx+1, 0:ny+1, layers))
+
+  allocate(wetmask(0:nx+1, 0:ny+1))
+  allocate(hfacW(0:nx+1, 0:ny+1))
+  allocate(hfacE(0:nx+1, 0:ny+1))
+  allocate(hfacN(0:nx+1, 0:ny+1))
+  allocate(hfacS(0:nx+1, 0:ny+1))
+  allocate(fu(0:nx+1, 0:ny+1))
+  allocate(fv(0:nx+1, 0:ny+1))
+
+  allocate(zeros(layers))
+  allocate(h_norming(0:nx+1, 0:ny+1))
+
+  allocate(wind_x(0:nx+1, 0:ny+1))
+  allocate(wind_y(0:nx+1, 0:ny+1))
+  allocate(base_wind_x(0:nx+1, 0:ny+1))
+  allocate(base_wind_y(0:nx+1, 0:ny+1))
+  allocate(wind_mag_time_series(nTimeSteps))
+
+  allocate(spongeHTimeScale(0:nx+1, 0:ny+1, layers))
+  allocate(spongeUTimeScale(0:nx+1, 0:ny+1, layers))
+  allocate(spongeVTimeScale(0:nx+1, 0:ny+1, layers))
+  allocate(spongeH(0:nx+1, 0:ny+1, layers))
+  allocate(spongeU(0:nx+1, 0:ny+1, layers))
+  allocate(spongeV(0:nx+1, 0:ny+1, layers))
+
   ! Zero vector - for internal use only
   zeros = 0d0
 
@@ -233,7 +300,6 @@ program MIM
   call read_input_fileU(zonalWindFile, base_wind_x, 0.d0, nx, ny, 1)
   call read_input_fileV(meridionalWindFile, base_wind_y, 0.d0, nx, ny, 1)
 
-  allocate(wind_mag_time_series(nTimeSteps))
   call read_input_file_time_series(wind_mag_time_series_file, &
       wind_mag_time_series, 1.d0, nTimeSteps)
 
@@ -1181,7 +1247,7 @@ subroutine calc_baro_u(ub, u, h, eta, freesurfFac, nx, ny, layers)
   double precision eta(0:nx+1, 0:ny+1)
   double precision freesurfFac
   double precision u(0:nx+1, 0:ny+1, layers)
-  double precision ub(0:nx+1, 0:ny+1)
+  double precision ub(nx+1, ny)
 
   ub = 0d0
 
@@ -1189,15 +1255,13 @@ subroutine calc_baro_u(ub, u, h, eta, freesurfFac, nx, ny, layers)
   ! add free surface elevation to the upper layer
   h_temp(:, :, 1) = h(:, :, 1) + eta*freesurfFac
 
-  do i = 1, nx
+  do i = 1, nx+1
     do j = 1, ny
       do k = 1, layers
         ub(i,j) = ub(i,j) + u(i,j,k)*(h_temp(i,j,k)+h_temp(i-1,j,k))/2d0
       end do
     end do
   end do
-
-  call wrap_fields_2D(ub, nx, ny)
 
   return
 end subroutine calc_baro_u
@@ -1215,7 +1279,7 @@ subroutine calc_baro_v(vb, v, h, eta, freesurfFac, nx, ny, layers)
   double precision eta(0:nx+1, 0:ny+1)
   double precision freesurfFac
   double precision v(0:nx+1, 0:ny+1, layers)
-  double precision vb(0:nx+1, 0:ny+1)
+  double precision vb(nx, ny+1)
 
   vb = 0d0
 
@@ -1224,14 +1288,12 @@ subroutine calc_baro_v(vb, v, h, eta, freesurfFac, nx, ny, layers)
   h_temp(:, :, 1) = h(:, :, 1) + eta*freesurfFac
 
   do i = 1, nx
-    do j = 1, ny
+    do j = 1, ny+1
       do k = 1, layers
         vb(i,j) = vb(i,j) + v(i,j,k)*(h_temp(i,j,k)+h_temp(i,j-1,k))/2d0
       end do
     end do
   end do
-
-  call wrap_fields_2D(vb, nx, ny)
 
   return
 end subroutine calc_baro_v
@@ -1248,8 +1310,8 @@ subroutine calc_eta_star(ub, vb, eta, etastar, freesurfFac, nx, ny, dx, dy, dt)
   integer i, j
   double precision eta(0:nx+1, 0:ny+1)
   double precision etastar(0:nx+1, 0:ny+1)
-  double precision ub(0:nx+1, 0:ny+1)
-  double precision vb(0:nx+1, 0:ny+1)
+  double precision ub(nx+1, ny)
+  double precision vb(nx, ny+1)
   double precision freesurfFac, dx, dy, dt
 
   etastar = 0d0

@@ -2,13 +2,16 @@ from contextlib import contextmanager
 import os
 import os.path as p
 import subprocess as sub
-
-self_path = p.dirname(p.abspath(__file__))
+import time
 
 import numpy as np
 from scipy.io import FortranFile
 
 import MIMutils as mim
+
+self_path = p.dirname(p.abspath(__file__))
+root_path = p.dirname(self_path)
+mim_exec = p.join(root_path, "MIM_test")
 
 ### General helpers
 
@@ -30,27 +33,30 @@ def working_directory(path):
     finally:
         os.chdir(old_path)
 
-def compile_mim(nx, ny, layers):
-    mim_path = p.join(p.dirname(self_path), "MIM.f90")
+def tweak_parameters(nx, ny, layers):
     sub.check_call(
-        "cat %s " % (mim_path,) +
-        "| sed 's/^  integer, parameter :: nx =.*$/  integer, parameter :: nx = %d/'" % (nx,) +
-        "| sed 's/^  integer, parameter :: ny =.*$/  integer, parameter :: ny = %d/'" % (ny,) +
-        "| sed 's/^  integer, parameter :: layers =.*$/  integer, parameter :: layers = %d/'" % (layers,) +
-        "> MIM.f90", shell=True)
-    sub.check_call(["gfortran", "-g", "-O1", "-fcheck=all", "MIM.f90", "-o", "MIM"])
+        "cat parameters.in " +
+        "| sed 's/^ nx =.*,$/ nx = %d,/'" % (nx,) +
+        "| sed 's/^ ny =.*,$/ ny = %d,/'" % (ny,) +
+        "| sed 's/^ layers =.*,$/ layers = %d,/'" % (layers,) +
+        "> parameters.new", shell=True)
+    sub.check_call(["mv", "parameters.new", "parameters.in"])
 
 def run_experiment(write_input, nx, ny, layers, valgrind=False):
     sub.check_call(["rm", "-rf", "input/"])
     sub.check_call(["rm", "-rf", "output/"])
     sub.check_call(["mkdir", "-p", "output/"])
+    with working_directory(root_path):
+        sub.check_call(["make", "MIM_test"])
     with working_directory("input"):
         write_input(nx, ny, layers)
-    compile_mim(nx, ny, layers)
+    tweak_parameters(nx, ny, layers)
+    then = time.time()
     if valgrind or 'MIM_TEST_VALGRIND_ALL' in os.environ:
-        sub.check_call(["valgrind", "./MIM"])
+        sub.check_call(["valgrind", mim_exec])
     else:
-        sub.check_call(["./MIM"])
+        sub.check_call([mim_exec])
+    print "MIM execution took", time.time() - then
 
 def interpret_mim_raw_file(name, nx, ny, layers):
     """Read an output file dumped by the MIM core.
