@@ -33,9 +33,9 @@ program MIM
   implicit none
 
   integer, parameter :: layerwise_input_length = 10000
-  integer, parameter :: nx = 300 !< number of x grid points
-  integer, parameter :: ny = 300 !< number of y grid points
-  integer, parameter :: layers = 2 !< number of active layers in the model
+  integer :: nx !< number of x grid points
+  integer :: ny !< number of y grid points
+  integer :: layers !< number of active layers in the model
 
   ! Layer thickness (h)
   double precision, dimension(:,:,:), allocatable :: h
@@ -186,7 +186,7 @@ program MIM
 
   namelist /PHYSICS/ g_vec, rho0
 
-  namelist /GRID/ dx, dy, fUfile, fVfile, wetMaskFile
+  namelist /GRID/ nx, ny, layers, dx, dy, fUfile, fVfile, wetMaskFile
 
   namelist /INITIAL_CONDITONS/ initUfile, initVfile, initHfile, initEtaFile
 

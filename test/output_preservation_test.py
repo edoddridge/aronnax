@@ -35,9 +35,6 @@ def compile_mim(nx, ny, layers):
     mim_path = p.join(p.dirname(self_path), "MIM.f90")
     sub.check_call(
         "cat %s " % (mim_path,) +
-        "| sed 's/^  integer, parameter :: nx =.*$/  integer, parameter :: nx = %d/'" % (nx,) +
-        "| sed 's/^  integer, parameter :: ny =.*$/  integer, parameter :: ny = %d/'" % (ny,) +
-        "| sed 's/^  integer, parameter :: layers =.*$/  integer, parameter :: layers = %d/'" % (layers,) +
         "> MIM.f90", shell=True)
     sub.check_call(["gfortran", "-g", "-O1", "-fcheck=all", "MIM.f90", "-o", "MIM"])
 
