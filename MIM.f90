@@ -223,7 +223,7 @@ program MIM
   allocate(dudtveryold(0:nx+1, 0:ny+1, layers))
   allocate(unew(0:nx+1, 0:ny+1, layers))
   allocate(dudt_bt(nx, 0:ny))
-  allocate(ub(0:nx+1, 0:ny+1))
+  allocate(ub(nx+1, ny))
   allocate(uhalf(0:nx+1, 0:ny+1, layers))
   allocate(uav(0:nx+1, 0:ny+1, layers))
 
@@ -233,7 +233,7 @@ program MIM
   allocate(dvdtveryold(0:nx+1, 0:ny+1, layers))
   allocate(vnew(0:nx+1, 0:ny+1, layers))
   allocate(dvdt_bt(0:nx, ny))
-  allocate(vb(nx+1, ny))
+  allocate(vb(nx, ny+1))
   allocate(vhalf(0:nx+1, 0:ny+1, layers))
   allocate(vav(0:nx+1, 0:ny+1, layers))
 
@@ -1247,7 +1247,7 @@ subroutine calc_baro_u(ub, u, h, eta, freesurfFac, nx, ny, layers)
   double precision eta(0:nx+1, 0:ny+1)
   double precision freesurfFac
   double precision u(0:nx+1, 0:ny+1, layers)
-  double precision ub(0:nx+1, 0:ny+1)
+  double precision ub(nx+1, ny)
 
   ub = 0d0
 
@@ -1255,15 +1255,13 @@ subroutine calc_baro_u(ub, u, h, eta, freesurfFac, nx, ny, layers)
   ! add free surface elevation to the upper layer
   h_temp(:, :, 1) = h(:, :, 1) + eta*freesurfFac
 
-  do i = 1, nx
+  do i = 1, nx+1
     do j = 1, ny
       do k = 1, layers
         ub(i,j) = ub(i,j) + u(i,j,k)*(h_temp(i,j,k)+h_temp(i-1,j,k))/2d0
       end do
     end do
   end do
-
-  call wrap_fields_2D(ub, nx, ny)
 
   return
 end subroutine calc_baro_u
@@ -1281,7 +1279,7 @@ subroutine calc_baro_v(vb, v, h, eta, freesurfFac, nx, ny, layers)
   double precision eta(0:nx+1, 0:ny+1)
   double precision freesurfFac
   double precision v(0:nx+1, 0:ny+1, layers)
-  double precision vb(0:nx+1, 0:ny+1)
+  double precision vb(nx, ny+1)
 
   vb = 0d0
 
@@ -1290,14 +1288,12 @@ subroutine calc_baro_v(vb, v, h, eta, freesurfFac, nx, ny, layers)
   h_temp(:, :, 1) = h(:, :, 1) + eta*freesurfFac
 
   do i = 1, nx
-    do j = 1, ny
+    do j = 1, ny+1
       do k = 1, layers
         vb(i,j) = vb(i,j) + v(i,j,k)*(h_temp(i,j,k)+h_temp(i,j-1,k))/2d0
       end do
     end do
   end do
-
-  call wrap_fields_2D(vb, nx, ny)
 
   return
 end subroutine calc_baro_v
@@ -1314,8 +1310,8 @@ subroutine calc_eta_star(ub, vb, eta, etastar, freesurfFac, nx, ny, dx, dy, dt)
   integer i, j
   double precision eta(0:nx+1, 0:ny+1)
   double precision etastar(0:nx+1, 0:ny+1)
-  double precision ub(0:nx+1, 0:ny+1)
-  double precision vb(0:nx+1, 0:ny+1)
+  double precision ub(nx+1, ny)
+  double precision vb(nx, ny+1)
   double precision freesurfFac, dx, dy, dt
 
   etastar = 0d0
