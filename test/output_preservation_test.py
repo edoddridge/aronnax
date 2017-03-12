@@ -4,12 +4,14 @@ import os.path as p
 import subprocess as sub
 import time
 
-self_path = p.dirname(p.abspath(__file__))
-
 import numpy as np
 from scipy.io import FortranFile
 
 import MIMutils as mim
+
+self_path = p.dirname(p.abspath(__file__))
+root_path = p.dirname(self_path)
+mim_exec = p.join(root_path, "MIM_test")
 
 ### General helpers
 
@@ -31,13 +33,6 @@ def working_directory(path):
     finally:
         os.chdir(old_path)
 
-def compile_mim(nx, ny, layers):
-    mim_path = p.join(p.dirname(self_path), "MIM.f90")
-    sub.check_call(
-        "cat %s " % (mim_path,) +
-        "> MIM.f90", shell=True)
-    sub.check_call(["gfortran", "-g", "-O1", "-fcheck=all", "MIM.f90", "-o", "MIM"])
-
 def tweak_parameters(nx, ny, layers):
     sub.check_call(
         "cat parameters.in " +
@@ -51,15 +46,16 @@ def run_experiment(write_input, nx, ny, layers, valgrind=False):
     sub.check_call(["rm", "-rf", "input/"])
     sub.check_call(["rm", "-rf", "output/"])
     sub.check_call(["mkdir", "-p", "output/"])
+    with working_directory(root_path):
+        sub.check_call(["make", "MIM_test"])
     with working_directory("input"):
         write_input(nx, ny, layers)
     tweak_parameters(nx, ny, layers)
-    compile_mim(nx, ny, layers)
     then = time.time()
     if valgrind:
-        sub.check_call(["valgrind", "./MIM"])
+        sub.check_call(["valgrind", mim_exec])
     else:
-        sub.check_call(["./MIM"])
+        sub.check_call([mim_exec])
     print "MIM execution took", time.time() - then
 
 def interpret_mim_raw_file(name, nx, ny, layers):
