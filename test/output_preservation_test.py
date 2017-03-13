@@ -57,7 +57,9 @@ def run_experiment(write_input, nx, ny, layers, mim_exec=None, valgrind=False):
         sub.check_call(["valgrind", p.join(root_path, mim_exec)])
     else:
         sub.check_call([p.join(root_path, mim_exec)])
-    print "MIM execution took", time.time() - then
+    run_time = time.time() - then
+    print "MIM execution took", run_time
+    return run_time
 
 def interpret_mim_raw_file(name, nx, ny, layers):
     """Read an output file dumped by the MIM core.
