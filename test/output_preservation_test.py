@@ -11,7 +11,6 @@ import MIMutils as mim
 
 self_path = p.dirname(p.abspath(__file__))
 root_path = p.dirname(self_path)
-mim_exec = p.join(root_path, "MIM_test")
 
 ### General helpers
 
@@ -42,21 +41,25 @@ def tweak_parameters(nx, ny, layers):
         "> parameters.new", shell=True)
     sub.check_call(["mv", "parameters.new", "parameters.in"])
 
-def run_experiment(write_input, nx, ny, layers, valgrind=False):
+def run_experiment(write_input, nx, ny, layers, mim_exec=None, valgrind=False):
+    if mim_exec is None:
+        mim_exec = "MIM_test"
     sub.check_call(["rm", "-rf", "input/"])
     sub.check_call(["rm", "-rf", "output/"])
     sub.check_call(["mkdir", "-p", "output/"])
     with working_directory(root_path):
-        sub.check_call(["make", "MIM_test"])
+        sub.check_call(["make", mim_exec])
     with working_directory("input"):
         write_input(nx, ny, layers)
     tweak_parameters(nx, ny, layers)
     then = time.time()
     if valgrind or 'MIM_TEST_VALGRIND_ALL' in os.environ:
-        sub.check_call(["valgrind", mim_exec])
+        sub.check_call(["valgrind", p.join(root_path, mim_exec)])
     else:
-        sub.check_call([mim_exec])
-    print "MIM execution took", time.time() - then
+        sub.check_call([p.join(root_path, mim_exec)])
+    run_time = time.time() - then
+    print "MIM execution took", run_time
+    return run_time
 
 def interpret_mim_raw_file(name, nx, ny, layers):
     """Read an output file dumped by the MIM core.
