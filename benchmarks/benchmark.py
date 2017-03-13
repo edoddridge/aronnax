@@ -1,15 +1,10 @@
-from contextlib import contextmanager
 import os
 import os.path as p
 import subprocess as sub
 import time
 
 import numpy as np
-from scipy.io import FortranFile
-
 import matplotlib.pyplot as plt
-
-import MIMutils as mim
 
 self_path = p.dirname(p.abspath(__file__))
 root_path = p.dirname(self_path)
@@ -59,7 +54,7 @@ def benchmark_gaussian_bump_red_grav():
             run_time_Ofast[counter] = run_experiment(
                   opt.write_input_beta_plane_bump_red_grav, nx, nx, 1, mim_exec)
         
-        fig = plt.figure()
+        plt.figure()
         plt.plot(grid_points,run_time_O1,'-*',label='MIM run time -O1')
         plt.plot(grid_points,run_time_Ofast,'-*',label='MIM run time -Ofast')
         plt.plot(grid_points,(run_time_O1[-7]/(grid_points[-7]**2))*grid_points**2,'-*',label='O(nx*nx)')
@@ -84,7 +79,7 @@ def benchmark_gaussian_bump():
             run_time_Ofast[counter] = run_experiment(
                   opt.write_input_beta_plane_bump, nx, nx, 2, mim_exec)
         
-        fig = plt.figure()
+        plt.figure()
         plt.plot(grid_points[:7],run_time_O1[:7],'-*',label='MIM run time -O1')
         plt.plot(grid_points[:7],run_time_Ofast[:7],'-*',
             label='MIM run time -Ofast')
