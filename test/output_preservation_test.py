@@ -11,7 +11,7 @@ import MIMutils as mim
 
 self_path = p.dirname(p.abspath(__file__))
 root_path = p.dirname(self_path)
-mim_exec = p.join(root_path, "MIM_test")
+mim_test_exec = p.join(root_path, "MIM_test")
 
 ### General helpers
 
@@ -42,7 +42,9 @@ def tweak_parameters(nx, ny, layers):
         "> parameters.new", shell=True)
     sub.check_call(["mv", "parameters.new", "parameters.in"])
 
-def run_experiment(write_input, nx, ny, layers, valgrind=False):
+def run_experiment(write_input, nx, ny, layers, mim_exec=None, valgrind=False):
+    if mim_exec is None:
+        mim_exec = mim_test_exec
     sub.check_call(["rm", "-rf", "input/"])
     sub.check_call(["rm", "-rf", "output/"])
     sub.check_call(["mkdir", "-p", "output/"])
