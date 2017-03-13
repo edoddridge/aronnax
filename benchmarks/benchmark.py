@@ -11,12 +11,12 @@ import matplotlib.pyplot as plt
 
 import MIMutils as mim
 
-import sys  
-sys.path.append('../test')  
-import output_preservation_test as opt
-
 self_path = p.dirname(p.abspath(__file__))
 root_path = p.dirname(self_path)
+
+import sys
+sys.path.append(p.join(root_path, 'test') )
+import output_preservation_test as opt
 
 
 grid_points = np.array([10,20,40,60,80,100,150,200,300,400,500])
