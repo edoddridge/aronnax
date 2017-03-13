@@ -1,7 +1,5 @@
-import os
 import os.path as p
 import subprocess as sub
-import time
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -20,38 +18,19 @@ with opt.working_directory(root_path):
     sub.check_call(["make", "MIM_test"])
     sub.check_call(["make", "MIM"])
 
-def run_experiment(write_input, nx, ny, layers, mim_exec, valgrind=False):
-    sub.check_call(["rm", "-rf", "input/"])
-    sub.check_call(["rm", "-rf", "output/"])
-    sub.check_call(["mkdir", "-p", "output/"])
-
-    with opt.working_directory("input"):
-        write_input(nx, ny, layers)
-    opt.tweak_parameters(nx, ny, layers)
-    then = time.time()
-    if valgrind or 'MIM_TEST_VALGRIND_ALL' in os.environ:
-        sub.check_call(["valgrind", mim_exec])
-    else:
-        sub.check_call([mim_exec])
-    run_time = time.time() - then
-    print "MIM execution took", run_time
-
-    return run_time
-
-
 def benchmark_gaussian_bump_red_grav():
     run_time_O1 = np.zeros(len(grid_points))
     run_time_Ofast = np.zeros(len(grid_points))
 
     with opt.working_directory(p.join(self_path, "beta_plane_bump_red_grav")):
-        mim_exec = p.join(root_path, "MIM_test")
+        mim_exec = "MIM_test"
         for counter, nx in enumerate(grid_points):
-            run_time_O1[counter] = run_experiment(
+            run_time_O1[counter] = opt.run_experiment(
                 opt.write_input_beta_plane_bump_red_grav, nx, nx, 1, mim_exec)
 
-        mim_exec = p.join(root_path, "MIM")
+        mim_exec = "MIM"
         for counter, nx in enumerate(grid_points):
-            run_time_Ofast[counter] = run_experiment(
+            run_time_Ofast[counter] = opt.run_experiment(
                 opt.write_input_beta_plane_bump_red_grav, nx, nx, 1, mim_exec)
 
         plt.figure()
@@ -72,14 +51,14 @@ def benchmark_gaussian_bump():
     run_time_Ofast = np.zeros(len(grid_points))
 
     with opt.working_directory(p.join(self_path, "beta_plane_bump")):
-        mim_exec = p.join(root_path, "MIM_test")
+        mim_exec = "MIM_test"
         for counter, nx in enumerate(grid_points[:7]):
-            run_time_O1[counter] = run_experiment(
+            run_time_O1[counter] = opt.run_experiment(
                   opt.write_input_beta_plane_bump, nx, nx, 2, mim_exec)
 
-        mim_exec = p.join(root_path, "MIM")
+        mim_exec = "MIM"
         for counter, nx in enumerate(grid_points[:7]):
-            run_time_Ofast[counter] = run_experiment(
+            run_time_Ofast[counter] = opt.run_experiment(
                   opt.write_input_beta_plane_bump, nx, nx, 2, mim_exec)
 
         plt.figure()
