@@ -53,7 +53,7 @@ def benchmark_gaussian_bump_red_grav():
         for counter, nx in enumerate(grid_points):
             run_time_Ofast[counter] = run_experiment(
                   opt.write_input_beta_plane_bump_red_grav, nx, nx, 1, mim_exec)
-        
+
         plt.figure()
         plt.plot(grid_points, run_time_O1, '-*', label='MIM run time -O1')
         plt.plot(grid_points, run_time_Ofast, '-*', label='MIM run time -Ofast')
@@ -73,12 +73,12 @@ def benchmark_gaussian_bump():
         for counter, nx in enumerate(grid_points[:7]):
             run_time_O1[counter] = run_experiment(
                   opt.write_input_beta_plane_bump, nx, nx, 2, mim_exec)
-        
+
         mim_exec = p.join(root_path, "MIM")
         for counter, nx in enumerate(grid_points[:7]):
             run_time_Ofast[counter] = run_experiment(
                   opt.write_input_beta_plane_bump, nx, nx, 2, mim_exec)
-        
+
         plt.figure()
         plt.plot(grid_points[:7], run_time_O1[:7], '-*', label='MIM run time -O1')
         plt.plot(grid_points[:7], run_time_Ofast[:7], '-*',
