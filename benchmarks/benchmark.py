@@ -1,5 +1,4 @@
 import os.path as p
-import subprocess as sub
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -13,10 +12,6 @@ import output_preservation_test as opt
 
 
 grid_points = np.array([10, 20, 40, 60, 80, 100, 150, 200, 300, 400, 500])
-
-with opt.working_directory(root_path):
-    sub.check_call(["make", "MIM_test"])
-    sub.check_call(["make", "MIM"])
 
 def benchmark_gaussian_bump_red_grav():
     run_time_O1 = np.zeros(len(grid_points))
