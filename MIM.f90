@@ -291,9 +291,6 @@ program MIM
     end if
   end if
 
-  ! TODO Should probably check that bathymetry file and layer
-  ! thicknesses are consistent with each other.
-
   call read_input_fileU(fUfile, fu, 0.d0, nx, ny, 1)
   call read_input_fileV(fVfile, fv, 0.d0, nx, ny, 1)
 
