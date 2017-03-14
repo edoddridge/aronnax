@@ -130,9 +130,9 @@ def assert_outputs_close(nx, ny, layers, rtol):
 def write_f_plane(nx, ny, coeff):
     """Write files defining an f-plane approximation to the Coriolis force."""
     with fortran_file('fu.bin', 'w') as f:
-        f.write_record(np.ones((nx, ny+1), dtype=np.float64) * coeff)
-    with fortran_file('fv.bin', 'w') as f:
         f.write_record(np.ones((nx+1, ny), dtype=np.float64) * coeff)
+    with fortran_file('fv.bin', 'w') as f:
+        f.write_record(np.ones((nx, ny+1), dtype=np.float64) * coeff)
 
 def write_beta_plane(grid, f0, beta):
     """Write files defining a beta-plane approximation to the Coriolis force."""
