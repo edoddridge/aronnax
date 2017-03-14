@@ -3,11 +3,8 @@
 ! Each namelist ends with a /
 ! This is important and should not be deleted.
 !
-! au is viscosity
-! ah is thickness diffusivity
-! ar is linear drag between layers
 ! dt is time step
-! slip is free-slip (=0), no-slip (=1), or partial slip (something in between)
+! slip is 
 ! nTimeSteps: number of timesteps before stopping
 ! dumpFreq: frequency of snapshot output
 ! avFreq: frequency of averaged output
@@ -19,20 +16,24 @@
 ! input files are where to look for the various inputs
 !
  &NUMERICS
- au = 200.,
- ah = 0.0,
- ar = 1e-8,
- botDrag = 1e-6,
- dt = 90.,
- slip = 1.0,
- nTimeSteps = 4001,
- dumpFreq = 1800,
- avFreq = 6e6,
- hmin = 100,
- maxits = 1000,
- eps = 1e-2,
- freesurfFac = 0.,
- thickness_error = 1e-2,
+ au = 200., ! lateral friction coefficient in m^2 s^-1 
+ ah = 0.0, !thickness diffusivity in m^2 s^-1 (equiv to kappa_GM)
+ ar = 1e-8, ! inear drag between layers in s^-1
+ botDrag = 1e-6, ! linear drag between ocean floor
+! and lowest layer in s^-1
+ dt = 90., ! time step in s
+ slip = 1.0, ! momentum boundary condition
+! free-slip (=0), no-slip (=1), or partial slip (something in between)
+ nTimeSteps = 4001, ! time steps to do before stopping
+ dumpFreq = 1800, ! time interval between snapshot outputs in s
+ avFreq = 6e6, ! time interval between averaged outputs in z
+ hmin = 100, ! minimum layer thickness allowed in m
+ maxits = 1000, ! maximum number of iterations for matrix solver
+ eps = 1e-2, ! relative error tolerance for matrix solver
+ freesurfFac = 0., ! surface condtion
+! rigid lid (=0.) or free surface (=1.)
+ thickness_error = 1e-2, ! relative discrepancy between sum of
+! layer thicknesses and bathymetry before model prints a warning
  /
  &MODEL
  hmean = 400.,1600.,
