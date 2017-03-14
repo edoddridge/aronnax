@@ -15,8 +15,7 @@ Python and runnable in
 depend on numpy, scipy, and the `MIMutils` package from the `utils`
 directory.
 
-As of this writing, that test suite checks bit-for-bit consistency of
-results across changes to MIM.  Thus, it is only useful for checking
+As of this writing, that test suite checks that current outputs are consistent with previously accepted results.  Thus, it is only useful for checking
 that refactorings that are not expected to affect the numerics indeed
 do not affect the numerics.
 
