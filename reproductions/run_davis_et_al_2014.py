@@ -150,3 +150,7 @@ def write_wind_time_series(nTimeSteps,dt):
         wind_time_series[(np.mod(time,12.*30.*86400.)>8.*30.*86400.)] = 0.0125
         f.write_record(wind_time_series)
 
+
+
+if __name__ == '__main__':
+    run_davis_et_al_2014(100,180,1,1244160,1000)
