@@ -87,9 +87,9 @@ def write_davis_wetmask(grid):
         # start with land everywhere and carve out space for water
         wetmask = np.zeros(X.shape, dtype=np.float64)
         # circular gyre region
-        wetmask[((Y-1950e3)**2 + (X-750e3)**2) < 750e3**2] = 1
+        wetmask[((Y-1965e3)**2 + (X-765e3)**2) < 750e3**2] = 1
         # 150 km wide channel
-        wetmask[(X-750e3)**2 < 75e3**2] = 1
+        wetmask[(X-765e3)**2 < 75e3**2] = 1
         # sponge region
         wetmask[Y<780e3] = 1
         # clean up the edges
@@ -97,7 +97,7 @@ def write_davis_wetmask(grid):
         wetmask[-1, :] = 0
         wetmask[ :, 0] = 0
         wetmask[ :,-1] = 0
-        f.write_record(wetmask)
+        f.write_record(wetmask.astype(np.float64))
 
 def write_davis_wind(grid):
     """produce the wind forcing files for a recreation of Davis et al. (2014)."""
@@ -105,26 +105,27 @@ def write_davis_wind(grid):
     L = 750e3
         
     with opt.fortran_file('tau_x.bin', 'w') as f:
+        L = 750e3
         X,Y = np.meshgrid(grid.xp1,grid.y)
-        r = np.sqrt((Y-1950e3)**2 + (X-750e3)**2)
-        theta = np.arctan2(Y-1950e3,X-750e3)
+        r = np.sqrt((Y-1965e3)**2 + (X-765e3)**2)
+        theta = np.arctan2(Y-1965e3,X-765e3)
 
-        tau_x = np.sin(theta)*(r/4. + 
-            np.sin(np.pi*r/(2.*L))/4. + np.cos(np.pi*r/(2.*L))/(r*8.))
-        tau_x = tau_x/np.max(np.absolute(tau_x[-1,:]))
-        tau_x[Y<1250e3] = tau_x[82,50]*Y[Y<1250e3]/(r[Y<1250e3]-750e3)**2
+        tau_x = np.sin(theta)*(r/4. + np.sin(np.pi*r/(2.*L))/4. + np.cos(np.pi*r/(2.*L))/(r*8.))
+        tau_x[Y<1200e3] = (tau_x[82,50]*(1965e3-Y[Y<1200e3]))/(r[Y<1200e3])**2
+        tau_x = tau_x/np.max(np.absolute(tau_x[:,:]))
+
 
         f.write_record(tau_x.astype(np.float64))
 
     with opt.fortran_file('tau_y.bin', 'w') as f:
         X,Y = np.meshgrid(grid.x,grid.yp1)
-        r = np.sqrt((Y-1950e3)**2 + (X-750e3)**2)
-        theta = np.arctan2(Y-1950e3,X-750e3)
+        r = np.sqrt((Y-1965e3)**2 + (X-765e3)**2)
+        theta = np.arctan2(Y-1965e3,X-765e3)
 
         tau_y = -np.cos(theta)*(np.pi*r/(8.*L) + 
             np.sin(np.pi*r/(2.*L))/4. + np.cos(np.pi*r/(2.*L))/(r*8.))
+        tau_y[Y<1250e3] = -tau_x[82,50]*(765e3 - X[Y<1250e3])/(r[Y<1250e3])**2
         tau_y = tau_y/np.max(np.absolute(tau_y[:,-1]))
-        tau_y[Y<1250e3] = -tau_x[82,50]*X[Y<1250e3]/(r[Y<1250e3] - 750e3)**2
 
         f.write_record(tau_y.astype(np.float64))
 
@@ -153,4 +154,4 @@ def write_wind_time_series(nTimeSteps,dt):
 
 
 if __name__ == '__main__':
-    run_davis_et_al_2014(100,180,1,1244160,1000)
+    run_davis_et_al_2014(102,182,1,1244160,1000)
