@@ -143,3 +143,10 @@ def write_davis_sponge(grid):
         sponge_h = 400.*np.ones(X.shape, dtype=np.float64)
         f.write_record(sponge_h)
 
+def write_wind_time_series(nTimeSteps,dt):
+    with opt.fortran_file('wind_time_series.bin', 'w') as f:
+        wind_time_series = 0.02375*np.ones(nTimeSteps,dtype=np.float64)
+        time = np.arange(nTimeSteps)*dt
+        wind_time_series[(np.mod(time,12.*30.*86400.)>8.*30.*86400.)] = 0.0125
+        f.write_record(wind_time_series)
+
