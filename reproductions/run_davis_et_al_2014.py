@@ -78,3 +78,24 @@ def write_input_davis_et_al_2014(nx, ny, layers, nTimeSteps,dt):
         initH = 400.*np.ones(X.shape)
         f.write_record(initH.astype(np.float64))
 
+
+def write_davis_wetmask(grid):
+    """Write the wet mask file for a recreation of Davis et al. (2014)."""
+
+    with opt.fortran_file('wetmask.bin', 'w') as f:
+        X,Y = np.meshgrid(grid.x,grid.y)
+        # start with land everywhere and carve out space for water
+        wetmask = np.zeros(X.shape, dtype=np.float64)
+        # circular gyre region
+        wetmask[((Y-1950e3)**2 + (X-750e3)**2) < 750e3**2] = 1
+        # 150 km wide channel
+        wetmask[(X-750e3)**2 < 75e3**2] = 1
+        # sponge region
+        wetmask[Y<780e3] = 1
+        # clean up the edges
+        wetmask[ 0, :] = 0
+        wetmask[-1, :] = 0
+        wetmask[ :, 0] = 0
+        wetmask[ :,-1] = 0
+        f.write_record(wetmask)
+
