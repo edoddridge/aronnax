@@ -127,3 +127,19 @@ def write_davis_wind(grid):
         tau_y[Y<1250e3] = -tau_x[82,50]*X[Y<1250e3]/(r[Y<1250e3] - 750e3)**2
 
         f.write_record(tau_y.astype(np.float64))
+
+def write_davis_sponge(grid):
+    """Produce the sponge file used by Davis et al. (2014)."""
+    with opt.fortran_file('sponge_h_timescale.bin', 'w') as f:
+        X,Y = np.meshgrid(grid.x,grid.y)
+        # start with land everywhere and carve out space for water
+        sponge_h = np.zeros(X.shape, dtype=np.float64)
+        sponge_h[Y<300e3] = 1/(6.*30.*86400.) # six month relaxation time
+        f.write_record(sponge_h)
+
+    with opt.fortran_file('sponge_h.bin', 'w') as f:
+        X,Y = np.meshgrid(grid.x,grid.y)
+        # start with land everywhere and carve out space for water
+        sponge_h = 400.*np.ones(X.shape, dtype=np.float64)
+        f.write_record(sponge_h)
+
