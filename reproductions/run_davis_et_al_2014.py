@@ -58,3 +58,23 @@ def tweak_parameters(nx, ny, layers, nTimeSteps,dt):
     sub.check_call(["mv", "parameters.new", "parameters.in"])
 
 
+# Creat the inputs
+def write_input_davis_et_al_2014(nx, ny, layers, nTimeSteps,dt):
+    assert layers == 1
+    xlen = 1.5e6
+    ylen = 2.7e6
+    grid = mim.Grid(nx, ny, xlen / nx, ylen / ny)
+
+    opt.write_f_plane(nx,ny, 14.5842318e-5) # Coriolis at North Pole
+    
+    write_davis_wetmask(grid)
+    write_davis_wind(grid)
+    write_davis_sponge(grid)
+    write_wind_time_series(nTimeSteps,dt)
+
+
+    with opt.fortran_file('initH.bin', 'w') as f:
+        X,Y = np.meshgrid(grid.x,grid.y)
+        initH = 400.*np.ones(X.shape)
+        f.write_record(initH.astype(np.float64))
+
