@@ -26,4 +26,20 @@ def run_davis_et_al_2014(nx,ny,layers,nTimeSteps,dt):
         run_experiment(write_input_davis_et_al_2014, nx, ny, layers, nTimeSteps, dt)
 
 
-        
+# Generic function to run an experiment
+def run_experiment(write_input, nx, ny, layers, nTimeSteps,dt):
+    """ Run MIM"""
+    sub.check_call(["rm", "-rf", "input/"])
+    sub.check_call(["rm", "-rf", "output/"])
+    sub.check_call(["mkdir", "-p", "output/"])
+    sub.check_call(["rm", "-rf", "run_finished.txt"])
+
+    with opt.working_directory(root_path):
+        sub.check_call(["make", "MIM"])
+    with opt.working_directory("input"):
+        write_input(nx, ny, layers,nTimeSteps,dt)
+    tweak_parameters(nx, ny, layers,nTimeSteps, dt)
+
+    then = time.time()
+    sub.check_call([mim_exec])
+    print "MIM execution took", time.time() - then
