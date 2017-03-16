@@ -17,3 +17,5 @@ import subprocess as sub
 import MIMutils as mim
 
 import time
+
+mim_exec = p.join(root_path, "MIM")
