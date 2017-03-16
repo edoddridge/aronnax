@@ -19,3 +19,11 @@ import MIMutils as mim
 import time
 
 mim_exec = p.join(root_path, "MIM")
+
+
+def run_davis_et_al_2014(nx,ny,layers,nTimeSteps,dt):
+    with opt.working_directory(p.join(self_path, "Davis_et_al_2014")):
+        run_experiment(write_input_davis_et_al_2014, nx, ny, layers, nTimeSteps, dt)
+
+
+        
