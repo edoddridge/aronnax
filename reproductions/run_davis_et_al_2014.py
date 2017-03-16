@@ -99,3 +99,31 @@ def write_davis_wetmask(grid):
         wetmask[ :,-1] = 0
         f.write_record(wetmask)
 
+def write_davis_wind(grid):
+    """produce the wind forcing files for a recreation of Davis et al. (2014)."""
+    
+    L = 750e3
+        
+    with opt.fortran_file('tau_x.bin', 'w') as f:
+        X,Y = np.meshgrid(grid.xp1,grid.y)
+        r = np.sqrt((Y-1950e3)**2 + (X-750e3)**2)
+        theta = np.arctan2(Y-1950e3,X-750e3)
+
+        tau_x = np.sin(theta)*(r/4. + 
+            np.sin(np.pi*r/(2.*L))/4. + np.cos(np.pi*r/(2.*L))/(r*8.))
+        tau_x = tau_x/np.max(np.absolute(tau_x[-1,:]))
+        tau_x[Y<1250e3] = tau_x[82,50]*Y[Y<1250e3]/(r[Y<1250e3]-750e3)**2
+
+        f.write_record(tau_x.astype(np.float64))
+
+    with opt.fortran_file('tau_y.bin', 'w') as f:
+        X,Y = np.meshgrid(grid.x,grid.yp1)
+        r = np.sqrt((Y-1950e3)**2 + (X-750e3)**2)
+        theta = np.arctan2(Y-1950e3,X-750e3)
+
+        tau_y = -np.cos(theta)*(np.pi*r/(8.*L) + 
+            np.sin(np.pi*r/(2.*L))/4. + np.cos(np.pi*r/(2.*L))/(r*8.))
+        tau_y = tau_y/np.max(np.absolute(tau_y[:,-1]))
+        tau_y[Y<1250e3] = -tau_x[82,50]*X[Y<1250e3]/(r[Y<1250e3] - 750e3)**2
+
+        f.write_record(tau_y.astype(np.float64))
