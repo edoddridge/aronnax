@@ -43,3 +43,18 @@ def run_experiment(write_input, nx, ny, layers, nTimeSteps,dt):
     then = time.time()
     sub.check_call([mim_exec])
     print "MIM execution took", time.time() - then
+
+
+def tweak_parameters(nx, ny, layers, nTimeSteps,dt):
+    """Alter the parameters.in file"""
+    sub.check_call(
+        "cat parameters.in " +
+        "| sed 's/^ nx =.*,$/ nx = %d,/'" % (nx,) +
+        "| sed 's/^ ny =.*,$/ ny = %d,/'" % (ny,) +
+        "| sed 's/^ layers =.*,$/ layers = %d,/'" % (layers,) +
+        "| sed 's/^ nTimeSteps =.*,$/ nTimeSteps = %d,/'" % (nTimeSteps,) +
+        "| sed 's/^ dt =.*,$/ dt = %d,/'" % (dt,) +
+        "> parameters.new", shell=True)
+    sub.check_call(["mv", "parameters.new", "parameters.in"])
+
+
