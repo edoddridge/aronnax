@@ -53,8 +53,8 @@
  rho0 = 1026.,
  /
  &GRID
- nx = 100,
- ny = 180,
+ nx = 102,
+ ny = 182,
  layers = 1,
  dx = 15e3,
  dy = 15e3,
