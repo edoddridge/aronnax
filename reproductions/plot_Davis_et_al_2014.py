@@ -53,7 +53,8 @@ def plt_state():
         plt.clabel(CS, inline=1, fontsize=10)
         X,Y = np.meshgrid(grid.xp1,grid.y)
 
-        plt.pcolormesh(X,Y,np.transpose(u[:,:,0]),cmap='RdBu_r')
+        plt.pcolormesh(X,Y,np.transpose(u[:,:,0]),cmap='RdBu_r',
+            vmin = -0.012, vmax = 0.012)
         plt.colorbar()
 
         plt.savefig('figures/state_{0}.png'.format(u_files[i][-10:]),dpi=150)
