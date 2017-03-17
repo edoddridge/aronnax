@@ -61,8 +61,8 @@ def tweak_parameters(nx, ny, layers, nTimeSteps,dt):
 # Creat the inputs
 def write_input_davis_et_al_2014(nx, ny, layers, nTimeSteps,dt):
     assert layers == 1
-    xlen = 1.5e6
-    ylen = 2.7e6
+    xlen = 1530e3
+    ylen = 2730e3
     grid = mim.Grid(nx, ny, xlen / nx, ylen / ny)
 
     opt.write_f_plane(nx,ny, 14.5842318e-5) # Coriolis at North Pole
@@ -92,9 +92,9 @@ def write_davis_wetmask(grid):
         # start with land everywhere and carve out space for water
         wetmask = np.zeros(X.shape, dtype=np.float64)
         # circular gyre region
-        wetmask[((Y-1950e3)**2 + (X-750e3)**2) < 750e3**2] = 1
+        wetmask[((Y-1965e3)**2 + (X-765e3)**2) < 750e3**2] = 1
         # 150 km wide channel
-        wetmask[(X-750e3)**2 < 75e3**2] = 1
+        wetmask[(X-765e3)**2 < 75e3**2] = 1
         # sponge region
         wetmask[Y<780e3] = 1
         # clean up the edges
@@ -116,8 +116,8 @@ def write_davis_wind(grid):
         
     with opt.fortran_file('tau_x.bin', 'w') as f:
         X,Y = np.meshgrid(grid.xp1,grid.y)
-        r = np.sqrt((Y-1950e3)**2 + (X-750e3)**2)
-        theta = np.arctan2(Y-1950e3,X-750e3)
+        r = np.sqrt((Y-1965e3)**2 + (X-765e3)**2)
+        theta = np.arctan2(Y-1965e3,X-765e3)
 
         norm = (L*(2+np.pi)/2.)/(4*np.pi);
         
@@ -132,7 +132,7 @@ def write_davis_wind(grid):
         #tau_x = tau_x/np.max(np.absolute(tau_x[:,:]))
         f.write_record(tau_x.astype(np.float64))
 
-        plt.pcolormesh(X,Y,tau_x,cmap='RdBu')
+        plt.pcolormesh(X,Y,tau_x,cmap='RdBu_r')
         plt.colorbar()
         plt.savefig('tau_x.png',bbox_inches='tight')
         plt.close()
@@ -140,8 +140,8 @@ def write_davis_wind(grid):
 
     with opt.fortran_file('tau_y.bin', 'w') as f:
         X,Y = np.meshgrid(grid.x,grid.yp1)
-        r = np.sqrt((Y-1950e3)**2 + (X-750e3)**2)
-        theta = np.arctan2(Y-1950e3,X-750e3)
+        r = np.sqrt((Y-1965e3)**2 + (X-765e3)**2)
+        theta = np.arctan2(Y-1965e3,X-765e3)
 
         norm = (L*(2+np.pi)/2.)/(4*np.pi);
         
@@ -156,7 +156,7 @@ def write_davis_wind(grid):
         # tau_y = tau_y/np.max(np.absolute(tau_y[:,-1]))
         f.write_record(tau_y.astype(np.float64))
 
-        plt.pcolormesh(X,Y,tau_y,cmap='RdBu')
+        plt.pcolormesh(X,Y,tau_y,cmap='RdBu_r')
         plt.colorbar()
         plt.savefig('tau_y.png',bbox_inches='tight')
         plt.close()
