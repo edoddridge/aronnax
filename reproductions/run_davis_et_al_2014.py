@@ -122,7 +122,7 @@ def write_davis_wind(grid):
         norm = (L*(2+np.pi)/2.)/(4*np.pi);
         
         tau_x = (L/(2*np.pi))*np.sin(np.pi*r/L)+(r/4)+(L/(4*np.pi))*(np.cos(np.pi*r/L)-1);
-        tau_x = -tau_x*np.sin(theta)/norm;
+        tau_x = tau_x*np.sin(theta)/norm;
 
         tau_x[Y<1000e3] = 0
         #-2*L*((np.pi-2)/(np.pi+2))*(-Y[Y<1200e3]/r[Y<1200e3]**2)
@@ -146,7 +146,7 @@ def write_davis_wind(grid):
         norm = (L*(2+np.pi)/2.)/(4*np.pi);
         
         tau_y = (L/(2*np.pi))*np.sin(np.pi*r/L)+(r/4)+(L/(4*np.pi))*(np.cos(np.pi*r/L)-1);
-        tau_y = tau_y*np.cos(theta)/norm;
+        tau_y = -tau_y*np.cos(theta)/norm;
 
         tau_y[Y<1000e3] = 0
 
