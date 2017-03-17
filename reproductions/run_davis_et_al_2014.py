@@ -92,9 +92,9 @@ def write_davis_wetmask(grid):
         # start with land everywhere and carve out space for water
         wetmask = np.zeros(X.shape, dtype=np.float64)
         # circular gyre region
-        wetmask[((Y-1965e3)**2 + (X-765e3)**2) < 750e3**2] = 1
+        wetmask[((Y-1950e3)**2 + (X-750e3)**2) < 750e3**2] = 1
         # 150 km wide channel
-        wetmask[(X-765e3)**2 < 75e3**2] = 1
+        wetmask[(X-750e3)**2 < 75e3**2] = 1
         # sponge region
         wetmask[Y<780e3] = 1
         # clean up the edges
