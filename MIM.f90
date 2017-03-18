@@ -1121,8 +1121,8 @@ subroutine evaluate_dudt(dudt, h, u, v, b, zeta, wind_x, fu, &
   dudt = 0d0
 
   do k = 1, layers
-    do i = 1, nx
-      do j = 1, ny
+    do j = 1, ny
+      do i = 1, nx
         dudt(i,j,k) = au*(u(i+1,j,k)+u(i-1,j,k)-2.0d0*u(i,j,k))/(dx*dx) & ! x-component
             + au*(u(i,j+1,k)+u(i,j-1,k)-2.0d0*u(i,j,k) &
               ! boundary conditions
