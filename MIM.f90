@@ -867,16 +867,17 @@ subroutine evaluate_b_iso(b, h, u, v, nx, ny, layers, g_vec, depth)
   ! of grid box
 
   double precision, intent(out) :: b(0:nx+1, 0:ny+1, layers) !< Bernoulli Potential
+  double precision, intent(in)  :: h(0:nx+1, 0:ny+1, layers) !< layer thicknesses
+  double precision, intent(in)  :: u(0:nx+1, 0:ny+1, layers) !< zonal velocities
+  double precision, intent(in)  :: v(0:nx+1, 0:ny+1, layers) !< meridional velocities
   integer, intent(in) :: nx !< number of x grid points
   integer, intent(in) :: ny !< number of y grid points
   integer, intent(in) :: layers !< number of layers
+  double precision, intent(in)  :: g_vec(layers) !< reduced gravity at each interface
+  double precision, intent(in)  :: depth(0:nx+1, 0:ny+1) !< total depth of fluid
+
   integer i, j, k
-  double precision, intent(in) :: depth(0:nx+1, 0:ny+1) !< total depth of fluid
   double precision z(0:nx+1, 0:ny+1, layers)
-  double precision, intent(in) :: h(0:nx+1, 0:ny+1, layers) !< layer thicknesses
-  double precision, intent(in) :: u(0:nx+1, 0:ny+1, layers) !< zonal velocities
-  double precision, intent(in) :: v(0:nx+1, 0:ny+1, layers) !< meridional velocities
-  double precision, intent(in) :: g_vec(layers) !< reduced gravity at each interface
   double precision M(0:nx+1, 0:ny+1, layers)
 
   ! Calculate layer interface locations
@@ -923,13 +924,14 @@ subroutine evaluate_b_RedGrav(b, h, u, v, nx, ny, layers, gr)
   implicit none
 
   ! Evaluate Bernoulli Potential at centre of grid box
-  integer nx, ny, layers
+  double precision, intent(out) :: b(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: h(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: u(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: v(0:nx+1, 0:ny+1, layers)
+  integer, intent(in) :: nx, ny, layers
+  double precision, intent(in)  :: gr(layers)
+
   integer i, j, k, l, m
-  double precision h(0:nx+1, 0:ny+1, layers)
-  double precision u(0:nx+1, 0:ny+1, layers)
-  double precision v(0:nx+1, 0:ny+1, layers)
-  double precision b(0:nx+1, 0:ny+1, layers)
-  double precision gr(layers)
   double precision h_temp, b_proto
 
   b = 0d0
@@ -966,12 +968,13 @@ end subroutine evaluate_b_RedGrav
 subroutine evaluate_zeta(zeta, u, v, nx, ny, layers, dx, dy)
   implicit none
 
-  integer nx, ny, layers
+  double precision, intent(out) :: zeta(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: u(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: v(0:nx+1, 0:ny+1, layers)
+  integer, intent(in) :: nx, ny, layers
+  double precision, intent(in)  :: dx, dy
+
   integer i, j, k
-  double precision u(0:nx+1, 0:ny+1, layers)
-  double precision v(0:nx+1, 0:ny+1, layers)
-  double precision zeta(0:nx+1, 0:ny+1, layers)
-  double precision dx, dy
 
   zeta = 0d0
 
