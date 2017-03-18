@@ -1334,13 +1334,14 @@ subroutine SOR_solver(a, etanew, etastar, freesurfFac, nx, ny, dt, &
     rjac, eps, maxits, n)
   implicit none
 
-  double precision a(5, nx, ny)
-  double precision etanew(0:nx+1, 0:ny+1)
-  double precision etastar(0:nx+1, 0:ny+1)
-  double precision freesurfFac
-  integer nx, ny, i, j, maxits, n, nit
-  double precision dt
-  double precision rjac, eps
+  double precision, intent(in)  :: a(5, nx, ny)
+  double precision, intent(out) :: etanew(0:nx+1, 0:ny+1)
+  double precision, intent(in)  :: etastar(0:nx+1, 0:ny+1)
+  double precision, intent(in)  :: freesurfFac
+  integer, intent(in) :: nx, ny, maxits, n
+  double precision, intent(in) :: dt
+  double precision, intent(in) :: rjac, eps
+  integer i, j, nit
   double precision rhs(nx, ny)
   double precision res(nx, ny)
   double precision norm, norm0
