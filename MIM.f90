@@ -1606,9 +1606,11 @@ end subroutine read_input_fileH_2D
 subroutine read_input_fileU(name, array, default, nx, ny, layers)
   implicit none
 
-  character(30) name
-  integer nx, ny, layers
-  double precision array(0:nx+1, 0:ny+1, layers), default
+  character(30), intent(in) :: name
+  double precision, intent(out) :: array(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in) :: default
+  integer, intent(in) :: nx, ny, layers
+
   double precision array_small(nx+1, ny, layers)
 
   if (name.ne.'') then
@@ -1634,9 +1636,11 @@ end subroutine read_input_fileU
 subroutine read_input_fileV(name, array, default, nx, ny, layers)
   implicit none
 
-  character(30) name
-  integer nx, ny, layers
-  double precision array(0:nx+1, 0:ny+1, layers), default
+  character(30), intent(in) :: name
+  double precision, intent(out) :: array(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in) :: default
+  integer, intent(in) :: nx, ny, layers
+
   double precision array_small(nx, ny+1, layers)
 
   if (name.ne.'') then
@@ -1662,9 +1666,10 @@ end subroutine read_input_fileV
 subroutine read_input_file_time_series(name, array, default, nTimeSteps)
   implicit none
 
-  character(30) name
-  integer nTimeSteps
-  double precision array(nTimeSteps), default
+  character(30), intent(in) :: name
+  double precision, intent(out) :: array(nTimeSteps)
+  double precision, intent(in) :: default
+  integer, intent(in) :: nTimeSteps
 
   if (name.ne.'') then
     open(unit=10, form='unformatted', file=name)
@@ -1684,8 +1689,8 @@ end subroutine read_input_file_time_series
 subroutine wrap_fields_3D(array, nx, ny, layers)
   implicit none
 
-  double precision array(0:nx+1, 0:ny+1, layers)
-  integer nx, ny, layers
+  double precision, intent(inout) :: array(0:nx+1, 0:ny+1, layers)
+  integer, intent(in) :: nx, ny, layers
 
   ! wrap array around for periodicity
   array(0, :, :) = array(nx, :, :)
@@ -1702,8 +1707,8 @@ end subroutine wrap_fields_3D
 subroutine wrap_fields_2D(array, nx, ny)
   implicit none
 
-  double precision array(0:nx+1, 0:ny+1)
-  integer nx, ny
+  double precision, intent(inout) :: array(0:nx+1, 0:ny+1)
+  integer, intent(in) :: nx, ny
 
   ! wrap array around for periodicity
   array(0, :) = array(nx, :)
