@@ -9,6 +9,10 @@ __pycache__/
 # The MIM executable
 /MIM
 /MIM_test
+/MIM_prof
+
+# Profiling
+gmon.out
 
 # Distribution / packaging
 .Python
