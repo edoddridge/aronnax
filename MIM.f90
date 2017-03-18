@@ -1414,10 +1414,12 @@ end subroutine SOR_solver
 subroutine break_if_NaN(data, nx, ny, layers, n)
   implicit none
 
-  ! To stop the program if it detects at NaN in the variable being checked
+  ! To stop the program if it detects a NaN in the variable being checked
 
-  integer nx, ny, layers, n, i, j, k
-  double precision data(0:nx+1, 0:ny+1, layers)
+  integer, intent(in) :: nx, ny, layers, n
+  double precision, intent(in) :: data(0:nx+1, 0:ny+1, layers)
+
+  integer :: i, j, k
 
   do k = 1, layers
     do j = 1, ny
@@ -1452,14 +1454,15 @@ end subroutine break_if_NaN
 subroutine calc_boundary_masks(wetmask, hfacW, hfacE, hfacS, hfacN, nx, ny)
   implicit none
 
-  integer nx !< number of grid points in x direction
-  integer ny !< number of grid points in y direction
-  double precision wetmask(0:nx+1, 0:ny+1)
+  double precision, intent(in)  :: wetmask(0:nx+1, 0:ny+1)
+  double precision, intent(out) :: hfacW(0:nx+1, 0:ny+1)
+  double precision, intent(out) :: hfacE(0:nx+1, 0:ny+1)
+  double precision, intent(out) :: hfacN(0:nx+1, 0:ny+1)
+  double precision, intent(out) :: hfacS(0:nx+1, 0:ny+1)
+  integer, intent(in) :: nx !< number of grid points in x direction
+  integer, intent(in) :: ny !< number of grid points in y direction
+
   double precision temp(0:nx+1, 0:ny+1)
-  double precision hfacW(0:nx+1, 0:ny+1)
-  double precision hfacE(0:nx+1, 0:ny+1)
-  double precision hfacN(0:nx+1, 0:ny+1)
-  double precision hfacS(0:nx+1, 0:ny+1)
   integer i, j
 
   hfacW = 1d0
@@ -1548,10 +1551,13 @@ end subroutine calc_boundary_masks
 subroutine read_input_fileH(name, array, default, nx, ny, layers)
   implicit none
 
-  character(30) name
-  integer nx, ny, layers, k
-  double precision array(0:nx+1, 0:ny+1, layers), default(layers)
+  character(30), intent(in) :: name
+  double precision, intent(out) :: array(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in) :: default(layers)
+  integer, intent(in) :: nx, ny, layers
+
   double precision array_small(nx, ny, layers)
+  integer k
 
   if (name.ne.'') then
     open(unit=10, form='unformatted', file=name)
@@ -1578,9 +1584,11 @@ end subroutine read_input_fileH
 subroutine read_input_fileH_2D(name, array, default, nx, ny)
   implicit none
 
-  character(30) name
-  integer nx, ny
-  double precision array(0:nx+1, 0:ny+1), default
+  character(30), intent(in) :: name
+  double precision, intent(out) :: array(0:nx+1, 0:ny+1)
+  double precision, intent(in) :: default
+  integer, intent(in) :: nx, ny
+
   double precision array_small(nx, ny)
 
   if (name.ne.'') then
