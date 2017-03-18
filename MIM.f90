@@ -1237,14 +1237,15 @@ end subroutine evaluate_dvdt
 subroutine calc_baro_u(ub, u, h, eta, freesurfFac, nx, ny, layers)
   implicit none
 
-  integer nx, ny, layers
+  double precision, intent(out) :: ub(nx+1, ny)
+  double precision, intent(in)  :: u(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: h(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: eta(0:nx+1, 0:ny+1)
+  double precision, intent(in)  :: freesurfFac
+  integer, intent(in) :: nx, ny, layers
+
   integer i, j, k
-  double precision h(0:nx+1, 0:ny+1, layers)
   double precision h_temp(0:nx+1, 0:ny+1, layers)
-  double precision eta(0:nx+1, 0:ny+1)
-  double precision freesurfFac
-  double precision u(0:nx+1, 0:ny+1, layers)
-  double precision ub(nx+1, ny)
 
   ub = 0d0
 
@@ -1269,14 +1270,15 @@ end subroutine calc_baro_u
 subroutine calc_baro_v(vb, v, h, eta, freesurfFac, nx, ny, layers)
   implicit none
 
-  integer nx, ny, layers
+  double precision, intent(out) :: vb(nx, ny+1)
+  double precision, intent(in)  :: v(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: h(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: eta(0:nx+1, 0:ny+1)
+  double precision, intent(in)  :: freesurfFac
+  integer, intent(in) :: nx, ny, layers
+
   integer i, j, k
-  double precision h(0:nx+1, 0:ny+1, layers)
   double precision h_temp(0:nx+1, 0:ny+1, layers)
-  double precision eta(0:nx+1, 0:ny+1)
-  double precision freesurfFac
-  double precision v(0:nx+1, 0:ny+1, layers)
-  double precision vb(nx, ny+1)
 
   vb = 0d0
 
@@ -1303,13 +1305,15 @@ end subroutine calc_baro_v
 subroutine calc_eta_star(ub, vb, eta, etastar, freesurfFac, nx, ny, dx, dy, dt)
   implicit none
 
-  integer nx, ny
+  double precision, intent(in)  :: ub(nx+1, ny)
+  double precision, intent(in)  :: vb(nx, ny+1)
+  double precision, intent(in)  :: eta(0:nx+1, 0:ny+1)
+  double precision, intent(out) :: etastar(0:nx+1, 0:ny+1)
+  double precision, intent(in)  :: freesurfFac
+  integer, intent(in) :: nx, ny
+  double precision, intent(in) :: dx, dy, dt
+
   integer i, j
-  double precision eta(0:nx+1, 0:ny+1)
-  double precision etastar(0:nx+1, 0:ny+1)
-  double precision ub(nx+1, ny)
-  double precision vb(nx, ny+1)
-  double precision freesurfFac, dx, dy, dt
 
   etastar = 0d0
 
@@ -1338,9 +1342,11 @@ subroutine SOR_solver(a, etanew, etastar, freesurfFac, nx, ny, dt, &
   double precision, intent(out) :: etanew(0:nx+1, 0:ny+1)
   double precision, intent(in)  :: etastar(0:nx+1, 0:ny+1)
   double precision, intent(in)  :: freesurfFac
-  integer, intent(in) :: nx, ny, maxits, n
+  integer, intent(in) :: nx, ny
   double precision, intent(in) :: dt
   double precision, intent(in) :: rjac, eps
+  integer, intent(in) :: maxits, n
+
   integer i, j, nit
   double precision rhs(nx, ny)
   double precision res(nx, ny)
