@@ -117,7 +117,6 @@ program MIM
   double precision :: hmin
   integer nTimeSteps
   double precision :: dumpFreq, avFreq
-  integer counter
   integer nwrite, avwrite
   double precision, dimension(:), allocatable :: zeros
   integer maxits
@@ -683,29 +682,8 @@ program MIM
       end do
     end if
 
-    ! Code to stop layers from getting too thin
-    counter = 0
-
-    do k = 1, layers
-      do j = 1, ny
-        do i = 1, nx
-          if (hnew(i, j, k) .lt. hmin) then
-            hnew(i, j, k) = hmin
-            counter = counter + 1
-            if (counter .eq. 1) then
-              ! Write a file saying that the layer thickness value
-              ! dropped below hmin and this line has been used.
-              open(unit=10, file='layer thickness dropped below hmin.txt', &
-                  action="write", status="unknown", &
-                  form="formatted", position="append")
-              write(10, 1111) n
-1111          format("layer thickness dropped below hmin at time step ", 1i10.10)
-              close(unit=10)
-            end if
-          end if
-        end do
-      end do
-    end do
+    ! Stop layers from getting too thin
+    call enforce_minimum_layer_thickness(hnew, hmin, nx, ny, layers, n)
 
     ! Wrap fields around for periodic simulations
     call wrap_fields_3D(unew, nx, ny, layers)
@@ -1421,6 +1399,43 @@ subroutine SOR_solver(a, etanew, etastar, freesurfFac, nx, ny, dt, &
 
   return
 end subroutine SOR_solver
+
+! -----------------------------------------------------------------------------
+!> Ensure that layer heights do not fall below the prescribed minimum
+
+subroutine enforce_minimum_layer_thickness(hnew, hmin, nx, ny, layers, n)
+  implicit none
+
+  double precision, intent(inout) :: hnew(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in) :: hmin
+  integer, intent(in) :: nx, ny, layers, n
+
+  integer counter, i, j, k
+
+  counter = 0
+
+  do k = 1, layers
+    do j = 1, ny
+      do i = 1, nx
+        if (hnew(i, j, k) .lt. hmin) then
+          hnew(i, j, k) = hmin
+          counter = counter + 1
+          if (counter .eq. 1) then
+            ! Write a file saying that the layer thickness value
+            ! dropped below hmin and this line has been used.
+            open(unit=10, file='layer thickness dropped below hmin.txt', &
+                action="write", status="unknown", &
+                form="formatted", position="append")
+            write(10, 1111) n
+1111          format("layer thickness dropped below hmin at time step ", 1i10.10)
+            close(unit=10)
+          end if
+        end if
+      end do
+    end do
+  end do
+  return
+end subroutine enforce_minimum_layer_thickness
 
 ! -----------------------------------------------------------------------------
 !> Check to see if there are any NaNs in the data field and stop the
