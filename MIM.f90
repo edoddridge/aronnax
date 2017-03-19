@@ -330,18 +330,8 @@ program MIM
 
   call calc_boundary_masks(wetmask, hfacW, hfacE, hfacS, hfacN, nx, ny)
 
-  ! Apply the boundary conditions
-  ! - Enforce no normal flow boundary condition
-  !   and no flow in dry cells.
-  ! - no/free-slip is done inside the dudt and dvdt subroutines.
-  ! - hfacW and hfacS are zero where the transition between
-  !   wet and dry cells occurs.
-  ! - wetmask is 1 in wet cells, and zero in dry cells.
-  do k = 1, layers
-    ! h(:, :, k) = h(:, :, k)*wetmask(:, :)
-    u(:, :, k) = u(:, :, k) * hfacW * wetmask(:, :)
-    v(:, :, k) = v(:, :, k) * hfacS * wetmask(:, :)
-  end do
+  call apply_boundary_conditions(u, hfacW, wetmask, nx, ny, layers)
+  call apply_boundary_conditions(v, hfacS, wetmask, nx, ny, layers)
 
 
   if (.not. RedGrav) then
@@ -1517,6 +1507,33 @@ subroutine calc_boundary_masks(wetmask, hfacW, hfacE, hfacS, hfacN, nx, ny)
 
   return
 end subroutine calc_boundary_masks
+
+! -----------------------------------------------------------------------------
+!> Apply the boundary conditions
+
+subroutine apply_boundary_conditions(array, hfac, wetmask, nx, ny, layers)
+  implicit none
+
+  double precision, intent(inout) :: array(0:nx+1,0:ny+1,layers)
+  double precision, intent(in) :: hfac(0:nx+1,0:ny+1)
+  double precision, intent(in) :: wetmask(0:nx+1,0:ny+1)
+  integer, intent(in) :: nx, ny, layers
+
+  integer k
+
+  ! - Enforce no normal flow boundary condition
+  !   and no flow in dry cells.
+  ! - no/free-slip is done inside the dudt and dvdt subroutines.
+  ! - hfacW and hfacS are zero where the transition between
+  !   wet and dry cells occurs.
+  ! - wetmask is 1 in wet cells, and zero in dry cells.
+
+  do k = 1, layers
+    array(:, :, k) = array(:, :, k) * hfac * wetmask(:, :)
+  end do
+
+  return
+end subroutine apply_boundary_conditions
 
 ! -----------------------------------------------------------------------------
 
