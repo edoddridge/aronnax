@@ -33,27 +33,22 @@ program MIM
   implicit none
 
   integer, parameter :: layerwise_input_length = 10000
+  ! Resolution
   integer :: nx !< number of x grid points
   integer :: ny !< number of y grid points
   integer :: layers !< number of active layers in the model
-
   ! Layer thickness (h)
   double precision, dimension(:,:,:), allocatable :: h
-
-  ! Velocity component u
+  ! Velocity component (u)
   double precision, dimension(:,:,:), allocatable :: u
-
-  ! Velocity component v
+  ! Velocity component (v)
   double precision, dimension(:,:,:), allocatable :: v
-
   ! Free surface (eta)
   double precision, dimension(:,:), allocatable :: eta
-
   ! Bathymetry
   character(30) :: depthFile
   double precision, dimension(:,:), allocatable :: depth
   double precision :: H0 ! default depth in no file specified
-
   ! Grid
   double precision :: dx, dy
   double precision, dimension(:,:), allocatable :: wetmask
@@ -63,40 +58,30 @@ program MIM
   ! File names to read them from
   character(30) :: fUfile, fVfile
   character(30) :: wetMaskFile
-
   ! Numerics
   double precision :: dt
   double precision :: au, ar, botDrag
   double precision :: ah(layerwise_input_length)
-  double precision :: slip
-  double precision :: hmin
+  double precision :: slip, hmin
   integer nTimeSteps
   double precision :: dumpFreq, avFreq
   double precision, dimension(:), allocatable :: zeros
   integer maxits
-  double precision :: eps
-  double precision :: freesurfFac
-  double precision :: thickness_error
-
+  double precision :: eps, freesurfFac, thickness_error
   ! Model
   double precision :: hmean(layerwise_input_length)
   ! Switch for using n + 1/2 layer physics, or using n layer physics
   logical :: RedGrav
-
-
   ! Physics
   double precision :: g_vec(layerwise_input_length)
   double precision :: rho0
-
   ! Wind
   double precision, dimension(:,:), allocatable :: base_wind_x
   double precision, dimension(:,:), allocatable :: base_wind_y
   logical :: DumpWind
   character(30) :: wind_mag_time_series_file
   double precision, dimension(:), allocatable :: wind_mag_time_series
-
-
-  ! Sponge
+  ! Sponge regions
   double precision, dimension(:,:,:), allocatable :: spongeHTimeScale
   double precision, dimension(:,:,:), allocatable :: spongeUTimeScale
   double precision, dimension(:,:,:), allocatable :: spongeVTimeScale
@@ -109,8 +94,7 @@ program MIM
   character(30) :: spongeHfile
   character(30) :: spongeUfile
   character(30) :: spongeVfile
-
-  ! Input files
+  ! Main input files
   character(30) :: initUfile, initVfile, initHfile, initEtaFile
   character(30) :: zonalWindFile, meridionalWindFile
 
@@ -240,15 +224,23 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
     nx, ny, layers, RedGrav, DumpWind)
   implicit none
 
+  ! Layer thickness (h)
   double precision, intent(inout) :: h(0:nx+1, 0:ny+1, layers)
+  ! Velocity component (u)
   double precision, intent(inout) :: u(0:nx+1, 0:ny+1, layers)
+  ! Velocity component (v)
   double precision, intent(inout) :: v(0:nx+1, 0:ny+1, layers)
+  ! Free surface (eta)
   double precision, intent(inout) :: eta(0:nx+1, 0:ny+1)
+  ! Bathymetry
   double precision, intent(in) :: depth(0:nx+1, 0:ny+1)
+  ! Grid
   double precision, intent(in) :: dx, dy
   double precision, intent(in) :: wetmask(0:nx+1, 0:ny+1)
+  ! Coriolis parameter at u and v grid-points respectively
   double precision, intent(in) :: fu(0:nx+1, 0:ny+1)
   double precision, intent(in) :: fv(0:nx+1, 0:ny+1)
+  ! Numerics
   double precision, intent(in) :: dt, au, ar, botDrag
   double precision, intent(in) :: ah(layers)
   double precision, intent(in) :: slip, hmin
@@ -256,19 +248,26 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   double precision, intent(in) :: dumpFreq, avFreq
   integer,          intent(in) :: maxits
   double precision, intent(in) :: eps, freesurfFac, thickness_error
+  ! Physics
   double precision, intent(in) :: g_vec(layers)
   double precision, intent(in) :: rho0
+  ! Wind
   double precision, intent(in) :: base_wind_x(0:nx+1, 0:ny+1)
   double precision, intent(in) :: base_wind_y(0:nx+1, 0:ny+1)
   double precision, intent(in) :: wind_mag_time_series(nTimeSteps)
+  ! Sponge regions
   double precision, intent(in) :: spongeHTimeScale(0:nx+1, 0:ny+1, layers)
   double precision, intent(in) :: spongeUTimeScale(0:nx+1, 0:ny+1, layers)
   double precision, intent(in) :: spongeVTimeScale(0:nx+1, 0:ny+1, layers)
   double precision, intent(in) :: spongeH(0:nx+1, 0:ny+1, layers)
   double precision, intent(in) :: spongeU(0:nx+1, 0:ny+1, layers)
   double precision, intent(in) :: spongeV(0:nx+1, 0:ny+1, layers)
+  ! Resolution
   integer,          intent(in) :: nx, ny, layers
-  logical,          intent(in) :: RedGrav, DumpWind
+  ! Reduced gravity vs n-layer physics
+  logical,          intent(in) :: RedGrav
+  ! Whether to write computed wind in the output
+  logical,          intent(in) :: DumpWind
 
   double precision :: dhdt(0:nx+1, 0:ny+1, layers)
   double precision :: dhdtold(0:nx+1, 0:ny+1, layers)
