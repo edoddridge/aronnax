@@ -54,7 +54,6 @@ program MIM
   double precision, dimension(:,:,:), allocatable :: dudtold
   double precision, dimension(:,:,:), allocatable :: dudtveryold
   double precision, dimension(:,:,:), allocatable :: unew
-  double precision, dimension(:,:), allocatable :: dudt_bt
   ! barotropic velocity components (for pressure solver)
   double precision, dimension(:,:), allocatable :: ub
   ! for initialisation
@@ -68,7 +67,6 @@ program MIM
   double precision, dimension(:,:,:), allocatable :: dvdtold
   double precision, dimension(:,:,:), allocatable :: dvdtveryold
   double precision, dimension(:,:,:), allocatable :: vnew
-  double precision, dimension(:,:), allocatable :: dvdt_bt
   ! barotropic velocity components (for pressure solver)
   double precision, dimension(:,:), allocatable :: vb
   ! for initialisation
@@ -218,7 +216,6 @@ program MIM
   allocate(dudtold(0:nx+1, 0:ny+1, layers))
   allocate(dudtveryold(0:nx+1, 0:ny+1, layers))
   allocate(unew(0:nx+1, 0:ny+1, layers))
-  allocate(dudt_bt(nx, 0:ny))
   allocate(ub(nx+1, ny))
   allocate(uhalf(0:nx+1, 0:ny+1, layers))
   allocate(uav(0:nx+1, 0:ny+1, layers))
@@ -228,7 +225,6 @@ program MIM
   allocate(dvdtold(0:nx+1, 0:ny+1, layers))
   allocate(dvdtveryold(0:nx+1, 0:ny+1, layers))
   allocate(vnew(0:nx+1, 0:ny+1, layers))
-  allocate(dvdt_bt(0:nx, ny))
   allocate(vb(nx, ny+1))
   allocate(vhalf(0:nx+1, 0:ny+1, layers))
   allocate(vav(0:nx+1, 0:ny+1, layers))
@@ -595,26 +591,8 @@ program MIM
 
       ! Now update the velocities using the barotropic tendency due to
       ! the pressure gradient.
-      dudt_bt = 0d0
-      dvdt_bt = 0d0
-
-      do i = 1, nx
-        do j = 0, ny
-          do k = 1, layers
-            dudt_bt(i,j) = -g_vec(1)*(etanew(i,j) - etanew(i-1,j))/(dx)
-            unew(i,j,k) = unew(i,j,k) + dt*dudt_bt(i,j) ! 23d0*dt*dudt_bt(i,j)/12d0
-          end do
-        end do
-      end do
-
-      do i = 0, nx
-        do j = 1, ny
-          do k = 1, layers
-            dvdt_bt(i,j) = -g_vec(1)*(etanew(i,j) - etanew(i,j-1))/(dy)
-            vnew(i,j,k) = vnew(i,j,k) + dt*dvdt_bt(i,j)! 23d0*dt*dvdt_bt(i,j)/12d0
-          end do
-        end do
-      end do
+      call update_velocities_for_barotropic_tendency(unew, etanew, g_vec, 1, 0, dx, dt, nx, ny, layers)
+      call update_velocities_for_barotropic_tendency(vnew, etanew, g_vec, 0, 1, dy, dt, nx, ny, layers)
 
       ! We now have correct velocities at the next time step, but the
       ! layer thicknesses were updated using the velocities without
@@ -1300,6 +1278,38 @@ subroutine SOR_solver(a, etanew, etastar, freesurfFac, nx, ny, dt, &
 
   return
 end subroutine SOR_solver
+
+! -----------------------------------------------------------------------------
+!> Update velocities using the barotropic tendency due to the pressure
+!> gradient.
+
+subroutine update_velocities_for_barotropic_tendency(array, etanew, g_vec, xstep, ystep, dspace, dt, nx, ny, layers)
+  implicit none
+
+  double precision, intent(inout) :: array(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in) :: etanew(0:nx+1, 0:ny+1)
+  double precision, intent(in) :: g_vec(layers)
+  integer, intent(in) :: xstep, ystep
+  double precision, intent(in) :: dspace, dt
+  integer, intent(in) :: nx, ny, layers
+
+  integer i, j, k
+  double precision baro_contrib
+
+  ! TODO Assert that xstep and ystep are either 1, 0 or 0, 1.
+
+  do i = xstep, nx
+    do j = ystep, ny
+      do k = 1, layers
+        baro_contrib = -g_vec(1)*(etanew(i,j) - etanew(i-xstep,j-ystep))/(dspace)
+        array(i,j,k) = array(i,j,k) + dt*baro_contrib
+      end do
+    end do
+  end do
+
+
+  return
+end subroutine update_velocities_for_barotropic_tendency
 
 ! -----------------------------------------------------------------------------
 !> Ensure that layer heights do not fall below the prescribed minimum
