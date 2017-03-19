@@ -1577,13 +1577,8 @@ subroutine read_input_fileH(name, array, default, nx, ny, layers)
     open(unit=10, form='unformatted', file=name)
     read(10) array_small
     close(10)
-
     array(1:nx, 1:ny, :) = array_small
-    ! wrap array around for periodicity
-    array(0, :, :) = array(nx, :, :)
-    array(nx+1, :, :) = array(1, :, :)
-    array(:, 0, :) = array(:, ny, :)
-    array(:, ny+1, :) = array(:, 1, :)
+    call wrap_fields_3D(array, nx, ny, layers)
   else
     do k = 1, layers
       array(:, :, k) = default(k)
@@ -1609,13 +1604,8 @@ subroutine read_input_fileH_2D(name, array, default, nx, ny)
     open(unit=10, form='unformatted', file=name)
     read(10) array_small
     close(10)
-
     array(1:nx, 1:ny) = array_small
-    ! wrap array around for periodicity
-    array(0, :) = array(nx, :)
-    array(nx+1, :) = array(1, :)
-    array(:, 0) = array(:, ny)
-    array(:, ny+1) = array(:, 1)
+    call wrap_fields_2D(array, nx, ny)
   else
     array = default
   end if
@@ -1639,13 +1629,8 @@ subroutine read_input_fileU(name, array, default, nx, ny, layers)
     open(unit=10, form='unformatted', file=name)
     read(10) array_small
     close(10)
-
     array(1:nx+1, 1:ny, :) = array_small
-    ! wrap array around for periodicity
-    array(0, :, :) = array(nx, :, :)
-    array(nx+1, :, :) = array(1, :, :)
-    array(:, 0, :) = array(:, ny, :)
-    array(:, ny+1, :) = array(:, 1, :)
+    call wrap_fields_3D(array, nx, ny, layers)
   else
     array = default
   end if
@@ -1669,13 +1654,8 @@ subroutine read_input_fileV(name, array, default, nx, ny, layers)
     open(unit=10, form='unformatted', file=name)
     read(10) array_small
     close(10)
-
     array(1:nx, 1:ny+1, :) = array_small
-    ! wrap array around for periodicity
-    array(0, :, :) = array(nx, :, :)
-    array(nx+1, :, :) = array(1, :, :)
-    array(:, 0, :) = array(:, ny, :)
-    array(:, ny+1, :) = array(:, 1, :)
+    call wrap_fields_3D(array, nx, ny, layers)
   else
     array = default
   end if
@@ -1697,7 +1677,6 @@ subroutine read_input_file_time_series(name, array, default, nTimeSteps)
     open(unit=10, form='unformatted', file=name)
     read(10) array
     close(10)
-
   else
     array = default
   end if
