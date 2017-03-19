@@ -331,27 +331,7 @@ program MIM
   if (.not. RedGrav) then
     ! Initialise arrays for pressure solver
     ! a = derivatives of the depth field
-    do j = 1, ny
-      do i = 1, nx
-        a(1,i,j) = g_vec(1)*0.5*(depth(i+1,j)+depth(i,j))/dx**2
-        a(2,i,j) = g_vec(1)*0.5*(depth(i,j+1)+depth(i,j))/dy**2
-        a(3,i,j) = g_vec(1)*0.5*(depth(i,j)+depth(i-1,j))/dx**2
-        a(4,i,j) = g_vec(1)*0.5*(depth(i,j)+depth(i,j-1))/dy**2
-      end do
-    end do
-    do j = 1, ny
-      a(1, nx, j) = 0.0
-      a(3, 1, j) = 0.0
-    end do
-    do i = 1, nx
-      a(2, i, ny) = 0.0
-      a(4, i, 1) = 0.0
-    end do
-    do j = 1, ny
-      do i = 1, nx
-        a(5,i,j) = -a(1,i,j)-a(2,i,j)-a(3,i,j)-a(4,i,j)
-      end do
-    end do
+    call derivatives_of_the_depth_field(a, depth, g_vec(1), dx, dy, nx, ny)
 
     ! Calculate the spectral radius of the grid for use by the
     ! successive over-relaxation scheme
@@ -1522,6 +1502,44 @@ subroutine apply_boundary_conditions(array, hfac, wetmask, nx, ny, layers)
 
   return
 end subroutine apply_boundary_conditions
+
+! -----------------------------------------------------------------------------
+!> Compute derivatives of the depth field for the pressure solver
+
+subroutine derivatives_of_the_depth_field(a, depth, g, dx, dy, nx, ny)
+  implicit none
+
+  double precision, intent(out) :: a(5, nx, ny)
+  double precision, intent(in)  :: depth(0:nx+1, 0:ny+1)
+  double precision, intent(in)  :: g, dx, dy
+  integer, intent(in) :: nx, ny
+
+  integer i, j
+
+  do j = 1, ny
+    do i = 1, nx
+      a(1,i,j) = g*0.5*(depth(i+1,j)+depth(i,j))/dx**2
+      a(2,i,j) = g*0.5*(depth(i,j+1)+depth(i,j))/dy**2
+      a(3,i,j) = g*0.5*(depth(i,j)+depth(i-1,j))/dx**2
+      a(4,i,j) = g*0.5*(depth(i,j)+depth(i,j-1))/dy**2
+    end do
+  end do
+  do j = 1, ny
+    a(1, nx, j) = 0.0
+    a(3, 1, j) = 0.0
+  end do
+  do i = 1, nx
+    a(2, i, ny) = 0.0
+    a(4, i, 1) = 0.0
+  end do
+  do j = 1, ny
+    do i = 1, nx
+      a(5,i,j) = -a(1,i,j)-a(2,i,j)-a(3,i,j)-a(4,i,j)
+    end do
+  end do
+
+  return
+end subroutine derivatives_of_the_depth_field
 
 ! -----------------------------------------------------------------------------
 
