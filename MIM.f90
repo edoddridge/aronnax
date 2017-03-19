@@ -54,8 +54,6 @@ program MIM
   double precision, dimension(:,:,:), allocatable :: dudtold
   double precision, dimension(:,:,:), allocatable :: dudtveryold
   double precision, dimension(:,:,:), allocatable :: unew
-  ! barotropic velocity components (for pressure solver)
-  double precision, dimension(:,:), allocatable :: ub
   ! for initialisation
   double precision, dimension(:,:,:), allocatable :: uhalf
   ! for saving average fields
@@ -67,8 +65,6 @@ program MIM
   double precision, dimension(:,:,:), allocatable :: dvdtold
   double precision, dimension(:,:,:), allocatable :: dvdtveryold
   double precision, dimension(:,:,:), allocatable :: vnew
-  ! barotropic velocity components (for pressure solver)
-  double precision, dimension(:,:), allocatable :: vb
   ! for initialisation
   double precision, dimension(:,:,:), allocatable :: vhalf
   ! for saving average fields
@@ -76,7 +72,6 @@ program MIM
 
   ! Free surface (eta)
   double precision, dimension(:,:), allocatable :: eta
-  double precision, dimension(:,:), allocatable :: etastar
   double precision, dimension(:,:), allocatable :: etanew
   ! for saving average fields
   double precision, dimension(:,:), allocatable :: etaav
@@ -211,7 +206,6 @@ program MIM
   allocate(dudtold(0:nx+1, 0:ny+1, layers))
   allocate(dudtveryold(0:nx+1, 0:ny+1, layers))
   allocate(unew(0:nx+1, 0:ny+1, layers))
-  allocate(ub(nx+1, ny))
   allocate(uhalf(0:nx+1, 0:ny+1, layers))
   allocate(uav(0:nx+1, 0:ny+1, layers))
 
@@ -220,12 +214,10 @@ program MIM
   allocate(dvdtold(0:nx+1, 0:ny+1, layers))
   allocate(dvdtveryold(0:nx+1, 0:ny+1, layers))
   allocate(vnew(0:nx+1, 0:ny+1, layers))
-  allocate(vb(nx, ny+1))
   allocate(vhalf(0:nx+1, 0:ny+1, layers))
   allocate(vav(0:nx+1, 0:ny+1, layers))
 
   allocate(eta(0:nx+1, 0:ny+1))
-  allocate(etastar(0:nx+1, 0:ny+1))
   allocate(etanew(0:nx+1, 0:ny+1))
   allocate(etaav(0:nx+1, 0:ny+1))
 
@@ -679,6 +671,7 @@ subroutine isopycnal_correction(hnew, unew, vnew, eta, etanew, depth, a, &
   double precision, intent(in)    :: g_vec(layers)
   integer,          intent(in)    :: nx, ny, layers, n
 
+  ! barotropic velocity components (for pressure solver)
   double precision :: ub(nx+1, ny)
   double precision :: vb(nx, ny+1)
   double precision :: etastar(0:nx+1, 0:ny+1)
