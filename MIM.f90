@@ -474,44 +474,10 @@ program MIM
 
     ! Do the isopycnal layer physics
     if (.not. RedGrav) then
-      ! Calculate the barotropic velocities
-      call calc_baro_u(ub, unew, hnew, eta, freesurfFac, nx, ny, layers)
-      call calc_baro_v(vb, vnew, hnew, eta, freesurfFac, nx, ny, layers)
-
-      ! Calculate divergence of ub and vb, and solve for the pressure
-      ! field that removes it
-      call calc_eta_star(ub, vb, eta, etastar, freesurfFac, nx, ny, dx, dy, dt)
-      ! print *, maxval(abs(etastar))
-
-      ! Prevent barotropic signals from bouncing around outside the
-      ! wet region of the model.
-      ! etastar = etastar*wetmask
-
-      call SOR_solver(a, etanew, etastar, freesurfFac, nx, ny, &
-          dt, rjac, eps, maxits, n)
-      ! print *, maxval(abs(etanew))
-
-      etanew = etanew*wetmask
-      call wrap_fields_2D(etanew, nx, ny)
-
-      ! Now update the velocities using the barotropic tendency due to
-      ! the pressure gradient.
-      call update_velocities_for_barotropic_tendency(unew, etanew, g_vec, &
-          1, 0, dx, dt, nx, ny, layers)
-      call update_velocities_for_barotropic_tendency(vnew, etanew, g_vec, &
-          0, 1, dy, dt, nx, ny, layers)
-
-      ! We now have correct velocities at the next time step, but the
-      ! layer thicknesses were updated using the velocities without
-      ! the barotropic pressure contribution. Force consistency
-      ! between layer thicknesses and ocean depth by scaling
-      ! thicknesses to agree with free surface.
-      call enforce_moderate_free_surface(hnew, etanew, depth, &
-          freesurfFac, thickness_error, nx, ny, layers)
-
-      ! Apply the boundary conditions
-      call apply_boundary_conditions(unew, hfacW, wetmask, nx, ny, layers)
-      call apply_boundary_conditions(vnew, hfacS, wetmask, nx, ny, layers)
+      call isopycnal_correction(hnew, unew, vnew, eta, etanew, depth, a, &
+          dx, dy, wetmask, hfacW, hfacS, dt, &
+          maxits, eps, rjac, freesurfFac, thickness_error, &
+          g_vec, nx, ny, layers, n)
     end if
 
     ! Stop layers from getting too thin
@@ -686,6 +652,78 @@ subroutine state_derivative(dhdt, dudt, dvdt, h, u, v, depth, &
 
   return
 end subroutine state_derivative
+
+! ---------------------------------------------------------------------------
+!> Do the isopycnal layer physics
+
+subroutine isopycnal_correction(hnew, unew, vnew, eta, etanew, depth, a, &
+    dx, dy, wetmask, hfacW, hfacS, dt, &
+    maxits, eps, rjac, freesurfFac, thickness_error, &
+    g_vec, nx, ny, layers, n)
+  implicit none
+
+  double precision, intent(inout) :: hnew(0:nx+1, 0:ny+1, layers)
+  double precision, intent(inout) :: unew(0:nx+1, 0:ny+1, layers)
+  double precision, intent(inout) :: vnew(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)    :: eta(0:nx+1, 0:ny+1)
+  double precision, intent(out)   :: etanew(0:nx+1, 0:ny+1)
+  double precision, intent(in)    :: depth(0:nx+1, 0:ny+1)
+  double precision, intent(in)    :: a(5, nx, ny)
+  double precision, intent(in)    :: dx, dy
+  double precision, intent(in)    :: wetmask(0:nx+1, 0:ny+1)
+  double precision, intent(in)    :: hfacW(0:nx+1, 0:ny+1)
+  double precision, intent(in)    :: hfacS(0:nx+1, 0:ny+1)
+  double precision, intent(in)    :: dt
+  integer,          intent(in)    :: maxits
+  double precision, intent(in)    :: eps, rjac, freesurfFac, thickness_error
+  double precision, intent(in)    :: g_vec(layers)
+  integer,          intent(in)    :: nx, ny, layers, n
+
+  double precision :: ub(nx+1, ny)
+  double precision :: vb(nx, ny+1)
+  double precision :: etastar(0:nx+1, 0:ny+1)
+
+  ! Calculate the barotropic velocities
+  call calc_baro_u(ub, unew, hnew, eta, freesurfFac, nx, ny, layers)
+  call calc_baro_v(vb, vnew, hnew, eta, freesurfFac, nx, ny, layers)
+
+  ! Calculate divergence of ub and vb, and solve for the pressure
+  ! field that removes it
+  call calc_eta_star(ub, vb, eta, etastar, freesurfFac, nx, ny, dx, dy, dt)
+  ! print *, maxval(abs(etastar))
+
+  ! Prevent barotropic signals from bouncing around outside the
+  ! wet region of the model.
+  ! etastar = etastar*wetmask
+
+  call SOR_solver(a, etanew, etastar, freesurfFac, nx, ny, &
+      dt, rjac, eps, maxits, n)
+  ! print *, maxval(abs(etanew))
+
+  etanew = etanew*wetmask
+  call wrap_fields_2D(etanew, nx, ny)
+
+  ! Now update the velocities using the barotropic tendency due to
+  ! the pressure gradient.
+  call update_velocities_for_barotropic_tendency(unew, etanew, g_vec, &
+      1, 0, dx, dt, nx, ny, layers)
+  call update_velocities_for_barotropic_tendency(vnew, etanew, g_vec, &
+      0, 1, dy, dt, nx, ny, layers)
+
+  ! We now have correct velocities at the next time step, but the
+  ! layer thicknesses were updated using the velocities without
+  ! the barotropic pressure contribution. Force consistency
+  ! between layer thicknesses and ocean depth by scaling
+  ! thicknesses to agree with free surface.
+  call enforce_moderate_free_surface(hnew, etanew, depth, &
+      freesurfFac, thickness_error, nx, ny, layers)
+
+  ! Apply the boundary conditions
+  call apply_boundary_conditions(unew, hfacW, wetmask, nx, ny, layers)
+  call apply_boundary_conditions(vnew, hfacS, wetmask, nx, ny, layers)
+
+  return
+end subroutine isopycnal_correction
 
 ! ---------------------------------------------------------------------------
 
