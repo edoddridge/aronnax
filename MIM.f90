@@ -39,58 +39,24 @@ program MIM
 
   ! Layer thickness (h)
   double precision, dimension(:,:,:), allocatable :: h
-  double precision, dimension(:,:,:), allocatable :: dhdt
-  double precision, dimension(:,:,:), allocatable :: dhdtold
-  double precision, dimension(:,:,:), allocatable :: dhdtveryold
-  double precision, dimension(:,:,:), allocatable :: hnew
-  ! for initialisation
-  double precision, dimension(:,:,:), allocatable :: hhalf
-  ! for saving average fields
-  double precision, dimension(:,:,:), allocatable :: hav
 
   ! Velocity component u
   double precision, dimension(:,:,:), allocatable :: u
-  double precision, dimension(:,:,:), allocatable :: dudt
-  double precision, dimension(:,:,:), allocatable :: dudtold
-  double precision, dimension(:,:,:), allocatable :: dudtveryold
-  double precision, dimension(:,:,:), allocatable :: unew
-  ! for initialisation
-  double precision, dimension(:,:,:), allocatable :: uhalf
-  ! for saving average fields
-  double precision, dimension(:,:,:), allocatable :: uav
 
   ! Velocity component v
   double precision, dimension(:,:,:), allocatable :: v
-  double precision, dimension(:,:,:), allocatable :: dvdt
-  double precision, dimension(:,:,:), allocatable :: dvdtold
-  double precision, dimension(:,:,:), allocatable :: dvdtveryold
-  double precision, dimension(:,:,:), allocatable :: vnew
-  ! for initialisation
-  double precision, dimension(:,:,:), allocatable :: vhalf
-  ! for saving average fields
-  double precision, dimension(:,:,:), allocatable :: vav
 
   ! Free surface (eta)
   double precision, dimension(:,:), allocatable :: eta
-  double precision, dimension(:,:), allocatable :: etanew
-  ! for saving average fields
-  double precision, dimension(:,:), allocatable :: etaav
 
   ! Bathymetry
   character(30) :: depthFile
   double precision, dimension(:,:), allocatable :: depth
   double precision :: H0 ! default depth in no file specified
-  ! Pressure solver variables
-  double precision, dimension(:,:,:), allocatable :: a
-
 
   ! Grid
   double precision :: dx, dy
   double precision, dimension(:,:), allocatable :: wetmask
-  double precision, dimension(:,:), allocatable :: hfacW
-  double precision, dimension(:,:), allocatable :: hfacE
-  double precision, dimension(:,:), allocatable :: hfacN
-  double precision, dimension(:,:), allocatable :: hfacS
   ! Coriolis parameter at u and v grid-points respectively
   double precision, dimension(:,:), allocatable :: fu
   double precision, dimension(:,:), allocatable :: fv
@@ -99,17 +65,16 @@ program MIM
   character(30) :: wetMaskFile
 
   ! Numerics
-  double precision :: pi, dt
+  double precision :: dt
   double precision :: au, ar, botDrag
   double precision :: ah(layerwise_input_length)
   double precision :: slip
   double precision :: hmin
   integer nTimeSteps
   double precision :: dumpFreq, avFreq
-  integer nwrite, avwrite
   double precision, dimension(:), allocatable :: zeros
   integer maxits
-  double precision :: eps, rjac
+  double precision :: eps
   double precision :: freesurfFac
   double precision :: thickness_error
 
@@ -118,17 +83,12 @@ program MIM
   ! Switch for using n + 1/2 layer physics, or using n layer physics
   logical :: RedGrav
 
-  ! Time step loop variable
-  integer :: n
-
 
   ! Physics
   double precision :: g_vec(layerwise_input_length)
   double precision :: rho0
 
   ! Wind
-  double precision, dimension(:,:), allocatable :: wind_x
-  double precision, dimension(:,:), allocatable :: wind_y
   double precision, dimension(:,:), allocatable :: base_wind_x
   double precision, dimension(:,:), allocatable :: base_wind_y
   logical :: DumpWind
@@ -187,55 +147,18 @@ program MIM
   read(unit=8, nml=EXTERNAL_FORCING)
   close(unit=8)
 
-  nwrite = int(dumpFreq/dt)
-  avwrite = int(avFreq/dt)
-
-  ! Pi, the constant
-  pi = 3.1415926535897932384
-
   allocate(h(0:nx+1, 0:ny+1, layers))
-  allocate(dhdt(0:nx+1, 0:ny+1, layers))
-  allocate(dhdtold(0:nx+1, 0:ny+1, layers))
-  allocate(dhdtveryold(0:nx+1, 0:ny+1, layers))
-  allocate(hnew(0:nx+1, 0:ny+1, layers))
-  allocate(hhalf(0:nx+1, 0:ny+1, layers))
-  allocate(hav(0:nx+1, 0:ny+1, layers))
-
   allocate(u(0:nx+1, 0:ny+1, layers))
-  allocate(dudt(0:nx+1, 0:ny+1, layers))
-  allocate(dudtold(0:nx+1, 0:ny+1, layers))
-  allocate(dudtveryold(0:nx+1, 0:ny+1, layers))
-  allocate(unew(0:nx+1, 0:ny+1, layers))
-  allocate(uhalf(0:nx+1, 0:ny+1, layers))
-  allocate(uav(0:nx+1, 0:ny+1, layers))
-
   allocate(v(0:nx+1, 0:ny+1, layers))
-  allocate(dvdt(0:nx+1, 0:ny+1, layers))
-  allocate(dvdtold(0:nx+1, 0:ny+1, layers))
-  allocate(dvdtveryold(0:nx+1, 0:ny+1, layers))
-  allocate(vnew(0:nx+1, 0:ny+1, layers))
-  allocate(vhalf(0:nx+1, 0:ny+1, layers))
-  allocate(vav(0:nx+1, 0:ny+1, layers))
-
   allocate(eta(0:nx+1, 0:ny+1))
-  allocate(etanew(0:nx+1, 0:ny+1))
-  allocate(etaav(0:nx+1, 0:ny+1))
-
   allocate(depth(0:nx+1, 0:ny+1))
-  allocate(a(5, nx, ny))
 
   allocate(wetmask(0:nx+1, 0:ny+1))
-  allocate(hfacW(0:nx+1, 0:ny+1))
-  allocate(hfacE(0:nx+1, 0:ny+1))
-  allocate(hfacN(0:nx+1, 0:ny+1))
-  allocate(hfacS(0:nx+1, 0:ny+1))
   allocate(fu(0:nx+1, 0:ny+1))
   allocate(fv(0:nx+1, 0:ny+1))
 
   allocate(zeros(layers))
 
-  allocate(wind_x(0:nx+1, 0:ny+1))
-  allocate(wind_y(0:nx+1, 0:ny+1))
   allocate(base_wind_x(0:nx+1, 0:ny+1))
   allocate(base_wind_y(0:nx+1, 0:ny+1))
   allocate(wind_mag_time_series(nTimeSteps))
@@ -275,9 +198,6 @@ program MIM
   call read_input_file_time_series(wind_mag_time_series_file, &
       wind_mag_time_series, 1.d0, nTimeSteps)
 
-  wind_x = base_wind_x*wind_mag_time_series(1)
-  wind_y = base_wind_y*wind_mag_time_series(1)
-
   call read_input_fileH(spongeHTimeScaleFile, spongeHTimeScale, &
       zeros, nx, ny, layers)
   call read_input_fileH(spongeHfile, spongeH, hmean, nx, ny, layers)
@@ -289,6 +209,129 @@ program MIM
   call read_input_fileV(spongeVfile, spongeV, 0.d0, nx, ny, layers)
   call read_input_fileH_2D(wetMaskFile, wetmask, 1.d0, nx, ny)
 
+  ! For now enforce wetmask to have zeros around the edge.
+  wetmask(0, :) = 0d0
+  wetmask(nx+1, :) = 0d0
+  wetmask(:, 0) = 0d0
+  wetmask(:, ny+1) = 0d0
+  ! TODO, this will change one day when the model can do periodic
+  ! boundary conditions.
+
+  call model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
+      dt, au, ar, botDrag, ah, slip, hmin, nTimeSteps, dumpFreq, avFreq, &
+      maxits, eps, freesurfFac, thickness_error, g_vec, rho0, &
+      base_wind_x, base_wind_y, wind_mag_time_series, &
+      spongeHTimeScale, spongeUTimeScale, spongeVTimeScale, &
+      spongeH, spongeU, spongeV, &
+      nx, ny, layers, RedGrav, DumpWind)
+  print *, 'Execution ended normally'
+  stop 0
+end program MIM
+
+! ------------------------------ Primary routine ----------------------------
+!> Run the model
+
+subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
+    dt, au, ar, botDrag, ah, slip, hmin, nTimeSteps, dumpFreq, avFreq, &
+    maxits, eps, freesurfFac, thickness_error, g_vec, rho0, &
+    base_wind_x, base_wind_y, wind_mag_time_series, &
+    spongeHTimeScale, spongeUTimeScale, spongeVTimeScale, &
+    spongeH, spongeU, spongeV, &
+    nx, ny, layers, RedGrav, DumpWind)
+  implicit none
+
+  double precision, intent(inout) :: h(0:nx+1, 0:ny+1, layers)
+  double precision, intent(inout) :: u(0:nx+1, 0:ny+1, layers)
+  double precision, intent(inout) :: v(0:nx+1, 0:ny+1, layers)
+  double precision, intent(inout) :: eta(0:nx+1, 0:ny+1)
+  double precision, intent(in) :: depth(0:nx+1, 0:ny+1)
+  double precision, intent(in) :: dx, dy
+  double precision, intent(in) :: wetmask(0:nx+1, 0:ny+1)
+  double precision, intent(in) :: fu(0:nx+1, 0:ny+1)
+  double precision, intent(in) :: fv(0:nx+1, 0:ny+1)
+  double precision, intent(in) :: dt, au, ar, botDrag
+  double precision, intent(in) :: ah(layers)
+  double precision, intent(in) :: slip, hmin
+  integer,          intent(in) :: nTimeSteps
+  double precision, intent(in) :: dumpFreq, avFreq
+  integer,          intent(in) :: maxits
+  double precision, intent(in) :: eps, freesurfFac, thickness_error
+  double precision, intent(in) :: g_vec(layers)
+  double precision, intent(in) :: rho0
+  double precision, intent(in) :: base_wind_x(0:nx+1, 0:ny+1)
+  double precision, intent(in) :: base_wind_y(0:nx+1, 0:ny+1)
+  double precision, intent(in) :: wind_mag_time_series(nTimeSteps)
+  double precision, intent(in) :: spongeHTimeScale(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in) :: spongeUTimeScale(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in) :: spongeVTimeScale(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in) :: spongeH(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in) :: spongeU(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in) :: spongeV(0:nx+1, 0:ny+1, layers)
+  integer,          intent(in) :: nx, ny, layers
+  logical,          intent(in) :: RedGrav, DumpWind
+
+  double precision :: dhdt(0:nx+1, 0:ny+1, layers)
+  double precision :: dhdtold(0:nx+1, 0:ny+1, layers)
+  double precision :: dhdtveryold(0:nx+1, 0:ny+1, layers)
+  double precision :: hnew(0:nx+1, 0:ny+1, layers)
+  ! for initialisation
+  double precision :: hhalf(0:nx+1, 0:ny+1, layers)
+  ! for saving average fields
+  double precision :: hav(0:nx+1, 0:ny+1, layers)
+
+  double precision :: dudt(0:nx+1, 0:ny+1, layers)
+  double precision :: dudtold(0:nx+1, 0:ny+1, layers)
+  double precision :: dudtveryold(0:nx+1, 0:ny+1, layers)
+  double precision :: unew(0:nx+1, 0:ny+1, layers)
+  ! for initialisation
+  double precision :: uhalf(0:nx+1, 0:ny+1, layers)
+  ! for saving average fields
+  double precision :: uav(0:nx+1, 0:ny+1, layers)
+
+  double precision :: dvdt(0:nx+1, 0:ny+1, layers)
+  double precision :: dvdtold(0:nx+1, 0:ny+1, layers)
+  double precision :: dvdtveryold(0:nx+1, 0:ny+1, layers)
+  double precision :: vnew(0:nx+1, 0:ny+1, layers)
+  ! for initialisation
+  double precision :: vhalf(0:nx+1, 0:ny+1, layers)
+  ! for saving average fields
+  double precision :: vav(0:nx+1, 0:ny+1, layers)
+
+  double precision :: etanew(0:nx+1, 0:ny+1)
+  ! for saving average fields
+  double precision :: etaav(0:nx+1, 0:ny+1)
+
+  ! Pressure solver variables
+  double precision :: a(5, nx, ny)
+
+  ! Geometry
+  double precision :: hfacW(0:nx+1, 0:ny+1)
+  double precision :: hfacE(0:nx+1, 0:ny+1)
+  double precision :: hfacN(0:nx+1, 0:ny+1)
+  double precision :: hfacS(0:nx+1, 0:ny+1)
+
+  ! Numerics
+  double precision :: pi
+  integer :: nwrite, avwrite
+  double precision :: rjac
+
+  ! Time step loop variable
+  integer :: n
+
+  ! Wind
+  double precision :: wind_x(0:nx+1, 0:ny+1)
+  double precision :: wind_y(0:nx+1, 0:ny+1)
+
+  nwrite = int(dumpFreq/dt)
+  avwrite = int(avFreq/dt)
+
+  ! Pi, the constant
+  pi = 3.1415926535897932384
+
+  ! Initialize wind fields
+  wind_x = base_wind_x*wind_mag_time_series(1)
+  wind_y = base_wind_y*wind_mag_time_series(1)
+
   ! Initialise the average fields
   if (avwrite .ne. 0) then
     hav = 0.0
@@ -298,14 +341,6 @@ program MIM
       etaav = 0.0
     end if
   end if
-
-  ! For now enforce wetmask to have zeros around the edge.
-  wetmask(0, :) = 0d0
-  wetmask(nx+1, :) = 0d0
-  wetmask(:, 0) = 0d0
-  wetmask(:, ny+1) = 0d0
-  ! TODO, this will change one day when the model can do periodic
-  ! boundary conditions.
 
   call calc_boundary_masks(wetmask, hfacW, hfacE, hfacS, hfacN, nx, ny)
 
@@ -523,17 +558,10 @@ program MIM
   write(10, 1112) n
 1112 format( "run finished at time step ", 1i10.10)
   close(unit=10)
+  return
+end subroutine model_run
 
-  print *, 'Execution ended normally'
-
-  stop 0
-
-end program MIM
-
-
-! ------------------------ Beginning of the subroutines ---------------------
-!
-! ---------------------------------------------------------------------------
+! ----------------------------- Auxiliary routines --------------------------
 !> Compute the forward state derivative
 
 subroutine state_derivative(dhdt, dudt, dvdt, h, u, v, depth, &
