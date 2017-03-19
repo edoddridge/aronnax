@@ -402,54 +402,31 @@ program MIM
   ! ------------------------- negative 1 time step --------------------------
   ! Code to work out dhdtold, dudtold and dvdtold
 
-  ! Calculate Bernoulli potential
-  if (RedGrav) then
-    call evaluate_b_RedGrav(b, h, u, v, nx, ny, layers, g_vec)
-  else
-    call evaluate_b_iso(b, h, u, v, nx, ny, layers, g_vec, depth)
-  end if
-
-  ! Calculate relative vorticity
-  call evaluate_zeta(zeta, u, v, nx, ny, layers, dx, dy)
-
-  ! Calculate dhdt, dudt, dvdt at current time step
-  call evaluate_dhdt(dhdtold, h, u, v, ah, dx, dy, nx, ny, layers, &
-      spongeHTimeScale, spongeH, wetmask, RedGrav)
-
-  call evaluate_dudt(dudtold, h, u, v, b, zeta, wind_x, fu, &
-      au, ar, slip, dx, dy, hfacN, hfacS, nx, ny, layers, rho0, &
-      spongeUTimeScale, spongeU, RedGrav, botDrag)
-
-  ! If the wind is changed to be meridional this code will need changing
-  call evaluate_dvdt(dvdtold, h, u, v, b, zeta, wind_y, fv, &
-      au, ar, slip, dx, dy, hfacW, hfacE, nx, ny, layers, rho0, &
-      spongeVTimeScale, spongeV, RedGrav, botDrag)
+  call state_derivative(dhdtold, dudtold, dvdtold, &
+      h, u, v, depth, &
+      dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
+      au, ar, botDrag, ah, slip, &
+      RedGrav, g_vec, rho0, wind_x, wind_y, &
+      spongeHTimeScale, spongeH, &
+      spongeUTimeScale, spongeU, &
+      spongeVTimeScale, spongeV, &
+      nx, ny, layers)
 
   ! Calculate the values at half the time interval with Forward Euler
   hhalf = h+0.5d0*dt*dhdtold
   uhalf = u+0.5d0*dt*dudtold
   vhalf = v+0.5d0*dt*dvdtold
 
-  ! Calculate Bernoulli potential
-  if (RedGrav) then
-    call evaluate_b_RedGrav(b, hhalf, uhalf, vhalf, nx, ny, layers, g_vec)
-  else
-    call evaluate_b_iso(b, hhalf, uhalf, vhalf, nx, ny, layers, g_vec, depth)
-  end if
+  call state_derivative(dhdtold, dudtold, dvdtold, &
+      hhalf, uhalf, vhalf, depth, &
+      dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
+      au, ar, botDrag, ah, slip, &
+      RedGrav, g_vec, rho0, wind_x, wind_y, &
+      spongeHTimeScale, spongeH, &
+      spongeUTimeScale, spongeU, &
+      spongeVTimeScale, spongeV, &
+      nx, ny, layers)
 
-  ! Calculate relative vorticity
-  call evaluate_zeta(zeta, uhalf, vhalf, nx, ny, layers, dx, dy)
-
-  ! Now calculate d/dt of u, v, h and store as dhdtold, dudtold and dvdtold
-  call evaluate_dhdt(dhdtold, hhalf, uhalf, vhalf, ah, dx, dy, &
-      nx, ny, layers, spongeHTimeScale, spongeH, wetmask, RedGrav)
-  call evaluate_dudt(dudtold, hhalf, uhalf, vhalf, b, zeta, wind_x, &
-      fu, au, ar, slip, dx, dy, hfacN, hfacS, nx, ny, layers, rho0, &
-      spongeUTimeScale, spongeU, RedGrav, botDrag)
-  ! If the wind is changed to be meridional this code will need changing
-  call evaluate_dvdt(dvdtold, hhalf, uhalf, vhalf, b, zeta, wind_y, &
-      fv, au, ar, slip, dx, dy, hfacW, hfacE, nx, ny, layers, rho0, &
-      spongeVTimeScale, spongeV, RedGrav, botDrag)
   ! These are the values to be stored in the 'old' variables ready to start
   ! the proper model run.
 
