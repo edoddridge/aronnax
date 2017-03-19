@@ -512,47 +512,9 @@ program MIM
 
     ! Now have new fields in main arrays and old fields in very old arrays
 
-    ! ----------------------- Code for generating output --------------------
-    ! Write data to file?
-    if (mod(n-1, nwrite) .eq. 0) then
-
-      call write_output(h, u, v, eta, wind_x, wind_y, &
-          nx, ny, layers, n, RedGrav, DumpWind, 'snap')
-
-      ! Check if there are NaNs in the data
-      call break_if_NaN(h, nx, ny, layers, n)
-      ! call break_if_NaN(u, nx, ny, layers, n)
-      ! call break_if_NaN(v, nx, ny, layers, n)
-
-    end if
-
-    ! ----------------------- Average Output -----------------
-    if (avwrite .eq. 0) then
-      ! OK
-    else if (mod(n-1, avwrite) .eq. 0) then
-
-      hav = hav/real(avwrite)
-      uav = uav/real(avwrite)
-      vav = vav/real(avwrite)
-
-      call write_output(hav, uav, vav, etaav, wind_x, wind_y, &
-          nx, ny, layers, n, RedGrav, .false., 'av')
-
-      ! Check if there are NaNs in the data
-      call break_if_NaN(h, nx, ny, layers, n)
-      ! call break_if_NaN(u, nx, ny, layers, n)
-      ! call break_if_NaN(v, nx, ny, layers, n)
-
-      ! Reset average quantities
-      hav = 0.0
-      uav = 0.0
-      vav = 0.0
-      if (.not. RedGrav) then
-        etaav = 0.0
-      end if
-      ! h2av = 0.0
-
-    end if
+    call maybe_dump_output(h, hav, u, uav, v, vav, eta, etaav, &
+        wind_x, wind_y, nx, ny, layers, &
+        n, nwrite, avwrite, RedGrav, DumpWind)
 
   end do
 
@@ -717,6 +679,71 @@ subroutine isopycnal_correction(hnew, unew, vnew, eta, etanew, depth, a, &
 
   return
 end subroutine isopycnal_correction
+
+! ---------------------------------------------------------------------------
+!> Write output if it's time
+
+subroutine maybe_dump_output(h, hav, u, uav, v, vav, eta, etaav, &
+    wind_x, wind_y, nx, ny, layers, &
+    n, nwrite, avwrite, RedGrav, DumpWind)
+  implicit none
+
+  double precision, intent(in)    :: h(0:nx+1, 0:ny+1, layers)
+  double precision, intent(inout) :: hav(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)    :: u(0:nx+1, 0:ny+1, layers)
+  double precision, intent(inout) :: uav(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)    :: v(0:nx+1, 0:ny+1, layers)
+  double precision, intent(inout) :: vav(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)    :: eta(0:nx+1, 0:ny+1)
+  double precision, intent(inout) :: etaav(0:nx+1, 0:ny+1)
+  double precision, intent(in)    :: wind_x(0:nx+1, 0:ny+1)
+  double precision, intent(in)    :: wind_y(0:nx+1, 0:ny+1)
+  integer,          intent(in)    :: nx, ny, layers, n, nwrite, avwrite
+  logical,          intent(in)    :: RedGrav, DumpWind
+
+  ! Write snapshot to file?
+  if (mod(n-1, nwrite) .eq. 0) then
+
+    call write_output(h, u, v, eta, wind_x, wind_y, &
+        nx, ny, layers, n, RedGrav, DumpWind, 'snap')
+
+    ! Check if there are NaNs in the data
+    call break_if_NaN(h, nx, ny, layers, n)
+    ! call break_if_NaN(u, nx, ny, layers, n)
+    ! call break_if_NaN(v, nx, ny, layers, n)
+
+  end if
+
+  ! Write accumulated averages to file?
+  if (avwrite .eq. 0) then
+    ! OK
+  else if (mod(n-1, avwrite) .eq. 0) then
+
+    hav = hav/real(avwrite)
+    uav = uav/real(avwrite)
+    vav = vav/real(avwrite)
+
+    call write_output(hav, uav, vav, etaav, wind_x, wind_y, &
+        nx, ny, layers, n, RedGrav, .false., 'av')
+
+    ! Check if there are NaNs in the data
+    call break_if_NaN(h, nx, ny, layers, n)
+    ! call break_if_NaN(u, nx, ny, layers, n)
+    ! call break_if_NaN(v, nx, ny, layers, n)
+
+    ! Reset average quantities
+    hav = 0.0
+    uav = 0.0
+    vav = 0.0
+    if (.not. RedGrav) then
+      etaav = 0.0
+    end if
+    ! h2av = 0.0
+
+  end if
+
+  return
+end subroutine maybe_dump_output
 
 ! ---------------------------------------------------------------------------
 
