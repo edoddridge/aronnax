@@ -133,9 +133,6 @@ program MIM
   ! Loop variables
   integer :: i, j, k, n
 
-  ! Character variable for numbering the outputs
-  character(10) :: num
-
 
   ! Physics
   double precision :: g_vec(layerwise_input_length)
@@ -744,28 +741,7 @@ program MIM
       uav = uav/real(avwrite)
       vav = vav/real(avwrite)
 
-      write(num, '(i10.10)') n
-
-      ! output the data to a file
-
-      open(unit=10, status='replace', file='output/av.h.'//num, &
-          form='unformatted')
-      write(10) hav(1:nx, 1:ny, :)
-      close(10)
-      open(unit=10, status='replace', file='output/av.u.'//num, &
-          form='unformatted')
-      write(10) uav(1:nx+1, 1:ny, :)
-      close(10)
-      open(unit=10, status='replace', file='output/av.v.'//num, &
-          form='unformatted')
-      write(10) vav(1:nx, 1:ny+1, :)
-      close(10)
-      if (.not. RedGrav) then
-        open(unit=10, status='replace', file='output/av.eta.'//num, &
-            form='unformatted')
-        write(10) etaav(1:nx, 1:ny)
-        close(10)
-      end if
+      call write_output(hav, uav, vav, etaav, wind_x, wind_y, nx, ny, layers, n, RedGrav, .false., 'av')
 
       ! Check if there are NaNs in the data
       call break_if_NaN(h, nx, ny, layers, n)
