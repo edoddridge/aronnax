@@ -997,21 +997,22 @@ subroutine evaluate_dhdt(dhdt, h, u, v, ah, dx, dy, nx, ny, layers, &
   implicit none
 
   ! dhdt is evaluated at the centre of the grid box
-  integer nx, ny, layers
+  double precision, intent(out) :: dhdt(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: h(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: u(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: v(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: ah(layers)
+  double precision, intent(in)  :: dx, dy
+  integer, intent(in) :: nx, ny, layers
+  double precision, intent(in)  :: spongeTimeScale(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: spongeH(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: wetmask(0:nx+1, 0:ny+1)
+  logical, intent(in) :: RedGrav
+
   integer i, j, k
-  double precision dhdt(0:nx+1, 0:ny+1, layers)
-  double precision h(0:nx+1, 0:ny+1, layers)
-  double precision u(0:nx+1, 0:ny+1, layers)
-  double precision v(0:nx+1, 0:ny+1, layers)
   ! Thickness tendency due to thickness diffusion (equivalent to Gent
   ! McWilliams in a z coordinate model)
   double precision dhdt_GM(0:nx+1, 0:ny+1, layers)
-  double precision spongeTimeScale(0:nx+1, 0:ny+1, layers)
-  double precision spongeH(0:nx+1, 0:ny+1, layers)
-  double precision wetmask(0:nx+1, 0:ny+1)
-  double precision dx, dy
-  double precision ah(layers)
-  logical :: RedGrav
 
   ! Calculate tendency due to thickness diffusion (equivalent
   ! to GM in z coordinate model with the same diffusivity).
@@ -1103,23 +1104,25 @@ subroutine evaluate_dudt(dudt, h, u, v, b, zeta, wind_x, fu, &
 
   ! dudt(i, j) is evaluated at the centre of the left edge of the grid
   ! box, the same place as u(i, j).
-  integer nx, ny, layers
+  double precision, intent(out) :: dudt(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: h(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: u(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: v(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: b(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: zeta(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: wind_x(0:nx+1, 0:ny+1)
+  double precision, intent(in)  :: fu(0:nx+1, 0:ny+1)
+  double precision, intent(in)  :: au, ar, slip, dx, dy
+  double precision, intent(in)  :: hfacN(0:nx+1, 0:ny+1)
+  double precision, intent(in)  :: hfacS(0:nx+1, 0:ny+1)
+  integer, intent(in) :: nx, ny, layers
+  double precision, intent(in)  :: rho0
+  double precision, intent(in)  :: spongeTimeScale(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: spongeU(0:nx+1, 0:ny+1, layers)
+  logical, intent(in) :: RedGrav
+  double precision, intent(in)  :: botDrag
+
   integer i, j, k
-  double precision dudt(0:nx+1, 0:ny+1, layers)
-  double precision h(0:nx+1, 0:ny+1, layers)
-  double precision u(0:nx+1, 0:ny+1, layers)
-  double precision v(0:nx+1, 0:ny+1, layers)
-  double precision fu(0:nx+1, 0:ny+1)
-  double precision zeta(0:nx+1, 0:ny+1, layers)
-  double precision b(0:nx+1, 0:ny+1, layers)
-  double precision spongeTimeScale(0:nx+1, 0:ny+1, layers)
-  double precision spongeU(0:nx+1, 0:ny+1, layers)
-  double precision wind_x(0:nx+1, 0:ny+1)
-  double precision dx, dy
-  double precision au, ar, rho0, slip, botDrag
-  double precision hfacN(0:nx+1, 0:ny+1)
-  double precision hfacS(0:nx+1, 0:ny+1)
-  logical :: RedGrav
 
   dudt = 0d0
 
@@ -1173,24 +1176,26 @@ subroutine evaluate_dvdt(dvdt, h, u, v, b, zeta, wind_y, fv, &
 
   ! dvdt(i, j) is evaluated at the centre of the bottom edge of the
   ! grid box, the same place as v(i, j)
-  integer nx, ny, layers
+  double precision, intent(out) :: dvdt(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: h(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: u(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: v(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: b(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: zeta(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: wind_y(0:nx+1, 0:ny+1)
+  double precision, intent(in)  :: fv(0:nx+1, 0:ny+1)
+  double precision, intent(in)  :: au, ar, slip
+  double precision, intent(in)  :: dx, dy
+  double precision, intent(in)  :: hfacW(0:nx+1, 0:ny+1)
+  double precision, intent(in)  :: hfacE(0:nx+1, 0:ny+1)
+  integer, intent(in) :: nx, ny, layers
+  double precision, intent(in)  :: rho0
+  double precision, intent(in)  :: spongeTimeScale(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: spongeV(0:nx+1, 0:ny+1, layers)
+  logical, intent(in) :: RedGrav
+  double precision, intent(in)  :: botDrag
+
   integer i, j, k
-  double precision dvdt(0:nx+1, 0:ny+1, layers)
-  double precision h(0:nx+1, 0:ny+1, layers)
-  double precision u(0:nx+1, 0:ny+1, layers)
-  double precision v(0:nx+1, 0:ny+1, layers)
-  double precision fv(0:nx+1, 0:ny+1)
-  double precision zeta(0:nx+1, 0:ny+1, layers)
-  double precision b(0:nx+1, 0:ny+1, layers)
-  double precision spongeTimeScale(0:nx+1, 0:ny+1, layers)
-  double precision spongeV(0:nx+1, 0:ny+1, layers)
-  double precision wind_y(0:nx+1, 0:ny+1)
-  double precision dx, dy
-  double precision au, ar, slip, botDrag
-  double precision rho0
-  double precision hfacW(0:nx+1, 0:ny+1)
-  double precision hfacE(0:nx+1, 0:ny+1)
-  logical :: RedGrav
 
   dvdt = 0d0
 
