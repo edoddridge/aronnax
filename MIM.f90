@@ -506,27 +506,14 @@ program MIM
     wind_x = base_wind_x*wind_mag_time_series(n)
     wind_y = base_wind_y*wind_mag_time_series(n)
 
-    ! Calculate Bernoulli potential
-    if (RedGrav) then
-      call evaluate_b_RedGrav(b, h, u, v, nx, ny, layers, g_vec)
-    else
-      call evaluate_b_iso(b, h, u, v, nx, ny, layers, g_vec, depth)
-    end if
-
-    ! Calculate relative vorticity
-    call evaluate_zeta(zeta, u, v, nx, ny, layers, dx, dy)
-
-    ! Calculate dhdt, dudt, dvdt at current time step
-    call evaluate_dhdt(dhdt, h, u, v, ah, dx, dy, nx, ny, layers, &
-        spongeHTimeScale, spongeH, wetmask, RedGrav)
-
-    call evaluate_dudt(dudt, h, u, v, b, zeta, wind_x, fu, au, ar, slip, &
-        dx, dy, hfacN, hfacS, nx, ny, layers, rho0, &
-        spongeUTimeScale, spongeU, RedGrav, botDrag)
-
-    call evaluate_dvdt(dvdt, h, u, v, b, zeta, wind_y, fv, au, ar, slip, &
-        dx, dy, hfacW, hfacE, nx, ny, layers, rho0, &
-        spongeVTimeScale, spongeV, RedGrav, botDrag)
+    call state_derivative(dhdt, dudt, dvdt, h, u, v, depth, &
+        dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
+        au, ar, botDrag, ah, slip, &
+        RedGrav, g_vec, rho0, wind_x, wind_y, &
+        spongeHTimeScale, spongeH, &
+        spongeUTimeScale, spongeU, &
+        spongeVTimeScale, spongeV, &
+        nx, ny, layers)
 
     ! Use dh/dt, du/dt and dv/dt to step h, u and v forward in time with
     ! the Adams-Bashforth third order linear multistep method
@@ -680,6 +667,80 @@ end program MIM
 
 ! ------------------------ Beginning of the subroutines ---------------------
 !
+! ---------------------------------------------------------------------------
+!> Compute the forward state derivative
+
+subroutine state_derivative(dhdt, dudt, dvdt, h, u, v, depth, &
+    dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
+    au, ar, botDrag, ah, slip, &
+    RedGrav, g_vec, rho0, wind_x, wind_y, &
+    spongeHTimeScale, spongeH, &
+    spongeUTimeScale, spongeU, &
+    spongeVTimeScale, spongeV, &
+    nx, ny, layers)
+  implicit none
+
+  double precision, intent(out) :: dhdt(0:nx+1, 0:ny+1, layers)
+  double precision, intent(out) :: dudt(0:nx+1, 0:ny+1, layers)
+  double precision, intent(out) :: dvdt(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in) :: h(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in) :: u(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in) :: v(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in) :: depth(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in) :: dx, dy
+  double precision, intent(in) :: wetmask(0:nx+1, 0:ny+1)
+  double precision, intent(in) :: hfacW(0:nx+1, 0:ny+1)
+  double precision, intent(in) :: hfacE(0:nx+1, 0:ny+1)
+  double precision, intent(in) :: hfacN(0:nx+1, 0:ny+1)
+  double precision, intent(in) :: hfacS(0:nx+1, 0:ny+1)
+  double precision, intent(in) :: fu(0:nx+1, 0:ny+1)
+  double precision, intent(in) :: fv(0:nx+1, 0:ny+1)
+  double precision, intent(in) :: au, ar, botDrag
+  double precision, intent(in) :: ah(layers)
+  double precision, intent(in) :: slip
+  logical, intent(in) :: RedGrav
+  double precision, intent(in) :: g_vec(layers)
+  double precision, intent(in) :: rho0
+  double precision, intent(in) :: wind_x(0:nx+1, 0:ny+1)
+  double precision, intent(in) :: wind_y(0:nx+1, 0:ny+1)
+  double precision, intent(in) :: spongeHTimeScale(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in) :: spongeH(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in) :: spongeUTimeScale(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in) :: spongeU(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in) :: spongeVTimeScale(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in) :: spongeV(0:nx+1, 0:ny+1, layers)
+  integer, intent(in) :: nx, ny, layers
+
+  ! Bernoulli potential
+  double precision :: b(0:nx+1, 0:ny+1, layers)
+  ! Relative vorticity
+  double precision :: zeta(0:nx+1, 0:ny+1, layers)
+
+  ! Calculate Bernoulli potential
+  if (RedGrav) then
+    call evaluate_b_RedGrav(b, h, u, v, nx, ny, layers, g_vec)
+  else
+    call evaluate_b_iso(b, h, u, v, nx, ny, layers, g_vec, depth)
+  end if
+
+  ! Calculate relative vorticity
+  call evaluate_zeta(zeta, u, v, nx, ny, layers, dx, dy)
+
+  ! Calculate dhdt, dudt, dvdt at current time step
+  call evaluate_dhdt(dhdt, h, u, v, ah, dx, dy, nx, ny, layers, &
+      spongeHTimeScale, spongeH, wetmask, RedGrav)
+
+  call evaluate_dudt(dudt, h, u, v, b, zeta, wind_x, fu, au, ar, slip, &
+      dx, dy, hfacN, hfacS, nx, ny, layers, rho0, &
+      spongeUTimeScale, spongeU, RedGrav, botDrag)
+
+  call evaluate_dvdt(dvdt, h, u, v, b, zeta, wind_y, fv, au, ar, slip, &
+      dx, dy, hfacW, hfacE, nx, ny, layers, rho0, &
+      spongeVTimeScale, spongeV, RedGrav, botDrag)
+
+  return
+end subroutine state_derivative
+
 ! ---------------------------------------------------------------------------
 
 !> Evaluate the Bornoulli Potential for n-layer physics.
