@@ -1,0 +1,80 @@
+! Parameter file. Change the values, but not the names.
+! 
+! Each namelist ends with a /
+! This is important and should not be deleted.
+!
+! au is viscosity
+! ah is thickness diffusivity
+! ar is linear drag between layers
+! dt is time step
+! slip is free-slip (=0), no-slip (=1), or partial slip (something in between)
+! nTimeSteps: number of timesteps before stopping
+! dumpFreq: frequency of snapshot output
+! avFreq: frequency of averaged output
+! hmin: minimum layer thickness allowed by model (for stability)
+! maxits: maximum iterations for the successive over relaxation algorithm. Should be at least max(nx,ny), and probably nx*ny
+! eps: convergence tolerance for SOR solver
+! freesurfFac: 1. = linear implicit free surface, 0. = rigid lid. So far all tests using freesurfFac = 1. have failed 
+! g is the gravity at interfaces (including surface). must have as many entries as there are layers
+! input files are where to look for the various inputs
+!
+ &NUMERICS
+ au = 150.,
+ ah = 1300.,
+ ar = 0.0,
+ botDrag = 1e-6,
+ dt = 1000,
+ slip = 0.0,
+ nTimeSteps = 1244160, ! 40 years
+ dumpFreq = 31104000,  ! 1 year
+ avFreq = 155520000,   ! 5 years
+ hmin = 100,
+ maxits = 1000,
+ eps = 1e-2,
+ freesurfFac = 0.,
+ thickness_error = 1e-2,
+ /
+ &MODEL
+ hmean = 400.,
+ depthFile = '',
+ H0 = 2000.,
+ RedGrav = .TRUE.,
+ /
+ &SPONGE
+ spongeHTimeScaleFile = 'input/sponge_h_timescale.bin',
+ spongeUTimeScaleFile = '',
+ spongeVTimeScaleFile = '',
+ spongeHFile = 'input/sponge_h.bin',
+ spongeUfile = '',
+ spongeVfile = '',
+ /
+ &PHYSICS
+ g_vec = 0.02,
+ rho0 = 1026.,
+ /
+ &GRID
+ nx = 102,
+ ny = 182,
+ layers = 1,
+ dx = 15e3,
+ dy = 15e3,
+ fUfile = 'input/fu.bin',
+ fVfile = 'input/fv.bin',
+ wetMaskFile = 'input/wetmask.bin',
+ /
+! Inital conditions for u, v, and h
+ &INITIAL_CONDITONS
+ initUfile = '',
+ initVfile = '',
+ initHfile = 'input/initH.bin',
+ initEtaFile = '',
+ /
+ &EXTERNAL_FORCING
+ zonalWindFile = 'input/tau_x.bin',
+ meridionalWindFile = 'input/tau_y.bin', 
+ DumpWind = .FALSE.,
+ wind_mag_time_series_file = 'input/wind_time_series.bin',
+ /
+! input/initH.bin
+! 
+ &
