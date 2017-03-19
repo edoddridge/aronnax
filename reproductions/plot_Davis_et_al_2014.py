@@ -26,18 +26,18 @@ nx = 102
 ny = 182
 grid = mim.Grid(nx, ny, xlen / nx, ylen / ny)
 
-def plt_h_cross_section():
-    h_files = sorted(glob.glob("output/snap.h.*"))
+def plt_h_cross_section(simulation=None):
+    h_files = sorted(glob.glob("{0}output/snap.h.*".format(simulation)))
     h_final = opt.interpret_mim_raw_file(h_files[-1],102,182,1,)
 
     plt.figure()
     for i in xrange(100,160):
         plt.plot(h_final[:,i,0])
-    plt.savefig('figures/h_final.png')
+    plt.savefig('{0}figures/h_final.png'.format(simulation))
 
-def plt_state():
-    h_files = sorted(glob.glob("output/snap.h.*"))
-    u_files = sorted(glob.glob("output/snap.u.*"))
+def plt_state(simulation=None):
+    h_files = sorted(glob.glob("{0}output/snap.h.*".format(simulation)))
+    u_files = sorted(glob.glob("{0}output/snap.u.*".format(simulation)))
 
     h_max = np.zeros(len(h_files))
 
@@ -54,22 +54,22 @@ def plt_state():
         X,Y = np.meshgrid(grid.xp1,grid.y)
 
         plt.pcolormesh(X,Y,np.transpose(u[:,:,0]),cmap='RdBu_r',
-            vmin = -0.012, vmax = 0.012)
+            vmin = -0.02, vmax = 0.02)
         plt.colorbar()
 
-        plt.savefig('figures/state_{0}.png'.format(u_files[i][-10:]),dpi=150)
+        plt.savefig('{0}figures/state_{1}.png'.format(simulation,u_files[i][-10:]),dpi=150)
         plt.close()
 
     plt.plot(h_max)
-    plt.savefig('figures/h_max.png',dpi=150)
+    plt.savefig('{0}figures/h_max.png'.format(simulation),dpi=150)
     plt.close()
 
 
 
 if __name__ == '__main__':
     os.chdir('Davis_et_al_2014')
-    sub.check_call(["rm", "-rf", "figures/"])
-    sub.check_call(["mkdir", "-p", "figures/"])
+    sub.check_call(["rm", "-rf", "control/figures/"])
+    sub.check_call(["mkdir", "-p", "control/figures/"])
 
-    plt_h_cross_section()
-    plt_state()
+    plt_h_cross_section('control/')
+    plt_state('control/')
