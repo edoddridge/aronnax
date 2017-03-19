@@ -44,17 +44,17 @@ program MIM
   ! Velocity component (v)
   double precision, dimension(:,:,:), allocatable :: v
   ! Free surface (eta)
-  double precision, dimension(:,:), allocatable :: eta
+  double precision, dimension(:,:),   allocatable :: eta
   ! Bathymetry
   character(30) :: depthFile
-  double precision, dimension(:,:), allocatable :: depth
+  double precision, dimension(:,:),   allocatable :: depth
   double precision :: H0 ! default depth in no file specified
   ! Grid
   double precision :: dx, dy
-  double precision, dimension(:,:), allocatable :: wetmask
+  double precision, dimension(:,:),   allocatable :: wetmask
   ! Coriolis parameter at u and v grid-points respectively
-  double precision, dimension(:,:), allocatable :: fu
-  double precision, dimension(:,:), allocatable :: fv
+  double precision, dimension(:,:),   allocatable :: fu
+  double precision, dimension(:,:),   allocatable :: fv
   ! File names to read them from
   character(30) :: fUfile, fVfile
   character(30) :: wetMaskFile
@@ -65,7 +65,7 @@ program MIM
   double precision :: slip, hmin
   integer nTimeSteps
   double precision :: dumpFreq, avFreq
-  double precision, dimension(:), allocatable :: zeros
+  double precision, dimension(:),     allocatable :: zeros
   integer maxits
   double precision :: eps, freesurfFac, thickness_error
   ! Model
@@ -76,11 +76,11 @@ program MIM
   double precision :: g_vec(layerwise_input_length)
   double precision :: rho0
   ! Wind
-  double precision, dimension(:,:), allocatable :: base_wind_x
-  double precision, dimension(:,:), allocatable :: base_wind_y
+  double precision, dimension(:,:),   allocatable :: base_wind_x
+  double precision, dimension(:,:),   allocatable :: base_wind_y
   logical :: DumpWind
   character(30) :: wind_mag_time_series_file
-  double precision, dimension(:), allocatable :: wind_mag_time_series
+  double precision, dimension(:),     allocatable :: wind_mag_time_series
   ! Sponge regions
   double precision, dimension(:,:,:), allocatable :: spongeHTimeScale
   double precision, dimension(:,:,:), allocatable :: spongeUTimeScale
