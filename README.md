@@ -30,6 +30,7 @@ Summary of Fortran code style enforced:
 * Lines should be < 80 characters wide, but I was not successful in breaking all over-long lines. The remainder are predominantly line comments that I did not wish to move off their line, not knowing what exactly they referred to.
 * Spell language keywords in lower case.
 * All subroutines should declare implicit none
+* All subroutines should declare all their arguments, in order of receipt, with intents.  Any local variables are declared in a separate block.  (Note: "no intent" is actually different from any of the declarable intents, including `intent (inout)`, but so far, MIM contains no subroutines that take any arguments that exhibit that i/o behavior.)
 * Spell block terminators end do, end if, and end subroutine `<name>`, not enddo or endif.
 * Commas should be followed by whitespace, as in written natural languages. 
  * (Exception: array subscripts in dense algebraic expressions, as they should be compact enough that the eye groups the array element as one thing.)
