@@ -447,16 +447,8 @@ program MIM
   v = v + dt*dvdtveryold
 
   ! Apply the boundary conditions
-  ! - Enforce no normal flow boundary condition
-  !   and no flow in dry cells.
-  ! - no/free-slip is done inside the dudt and dvdt subroutines.
-  ! - hfacW and hfacS are zero where the transition between
-  !   wet and dry cells occurs.
-  ! - wetmask is 1 in wet cells, and zero in dry cells.
-  do k = 1, layers
-    u(:, :, k) = u(:, :, k) * hfacW * wetmask(:, :)
-    v(:, :, k) = v(:, :, k) * hfacS * wetmask(:, :)
-  end do
+  call apply_boundary_conditions(u, hfacW, wetmask, nx, ny, layers)
+  call apply_boundary_conditions(v, hfacS, wetmask, nx, ny, layers)
 
   ! Wrap fields around for periodic simulations
   call wrap_fields_3D(u, nx, ny, layers)
@@ -523,16 +515,8 @@ program MIM
   v = v + dt*dvdtold
 
   ! Apply the boundary conditions
-  ! - Enforce no normal flow boundary condition
-  !   and no flow in dry cells.
-  ! - no/free-slip is done inside the dudt and dvdt subroutines.
-  ! - hfacW and hfacS are zero where the transition between
-  !   wet and dry cells occurs.
-  ! - wetmask is 1 in wet cells, and zero in dry cells.
-  do k = 1, layers
-    u(:, :, k) = u(:, :, k) * hfacW * wetmask(:, :)
-    v(:, :, k) = v(:, :, k) * hfacS * wetmask(:, :)
-  end do
+  call apply_boundary_conditions(u, hfacW, wetmask, nx, ny, layers)
+  call apply_boundary_conditions(v, hfacS, wetmask, nx, ny, layers)
 
   ! Wrap fields around for periodic simulations
   call wrap_fields_3D(u, nx, ny, layers)
@@ -584,16 +568,8 @@ program MIM
     hnew = h+dt*(23d0*dhdt - 16d0*dhdtold + 5d0*dhdtveryold)/12d0
 
     ! Apply the boundary conditions
-    ! - Enforce no normal flow boundary condition
-    !   and no flow in dry cells.
-    ! - no/free-slip is done inside the dudt and dvdt subroutines.
-    ! - hfacW and hfacS are zero where the transition between
-    !   wet and dry cells occurs.
-    ! - wetmask is 1 in wet cells, and zero in dry cells.
-    do k = 1, layers
-      unew(:, :, k) = unew(:, :, k) * hfacW * wetmask(:, :)
-      vnew(:, :, k) = vnew(:, :, k) * hfacS * wetmask(:, :)
-    end do
+    call apply_boundary_conditions(unew, hfacW, wetmask, nx, ny, layers)
+    call apply_boundary_conditions(vnew, hfacS, wetmask, nx, ny, layers)
 
     ! Do the isopycnal layer physics
     if (.not. RedGrav) then
@@ -657,16 +633,8 @@ program MIM
       end if
 
       ! Apply the boundary conditions
-      ! - Enforce no normal flow boundary condition
-      !   and no flow in dry cells.
-      ! - no/free-slip is done inside the dudt and dvdt subroutines.
-      ! - hfacW and hfacS are zero where the transition between
-      !   wet and dry cells occurs.
-      ! - wetmask is 1 in wet cells, and zero in dry cells.
-      do k = 1, layers
-        unew(:, :, k) = unew(:, :, k) * hfacW * wetmask(:, :)
-        vnew(:, :, k) = vnew(:, :, k) * hfacS * wetmask(:, :)
-      end do
+      call apply_boundary_conditions(unew, hfacW, wetmask, nx, ny, layers)
+      call apply_boundary_conditions(vnew, hfacS, wetmask, nx, ny, layers)
     end if
 
     ! Stop layers from getting too thin
