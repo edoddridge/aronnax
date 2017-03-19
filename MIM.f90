@@ -120,7 +120,6 @@ program MIM
   integer maxits
   double precision :: eps, rjac
   double precision :: freesurfFac
-  double precision, dimension(:,:), allocatable :: h_norming
   double precision :: thickness_error
 
   ! Model
@@ -249,7 +248,6 @@ program MIM
   allocate(fv(0:nx+1, 0:ny+1))
 
   allocate(zeros(layers))
-  allocate(h_norming(0:nx+1, 0:ny+1))
 
   allocate(wind_x(0:nx+1, 0:ny+1))
   allocate(wind_y(0:nx+1, 0:ny+1))
@@ -592,16 +590,7 @@ program MIM
       ! the barotropic pressure contribution. Force consistency
       ! between layer thicknesses and ocean depth by scaling
       ! thicknesses to agree with free surface.
-
-      h_norming = (freesurfFac*etanew + depth) / sum(hnew, 3)
-      do k = 1, layers
-        hnew(:, :, k) = hnew(:, :, k) * h_norming
-      end do
-
-      if (maxval(abs(h_norming - 1d0)) .gt. thickness_error) then
-        print *, 'inconsistency between h and eta (in %).', &
-            maxval(abs(h_norming - 1d0))*100
-      end if
+      call enforce_moderate_free_surface(hnew, etanew, depth, freesurfFac, thickness_error, nx, ny, layers)
 
       ! Apply the boundary conditions
       call apply_boundary_conditions(unew, hfacW, wetmask, nx, ny, layers)
