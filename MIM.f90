@@ -726,7 +726,7 @@ program MIM
     ! Write data to file?
     if (mod(n-1, nwrite) .eq. 0) then
 
-      call write_output(h, u, v, eta, wind_x, wind_y, nx, ny, layers, n, RedGrav, DumpWind)
+      call write_output(h, u, v, eta, wind_x, wind_y, nx, ny, layers, n, RedGrav, DumpWind, 'snap')
 
       ! Check if there are NaNs in the data
       call break_if_NaN(h, nx, ny, layers, n)
@@ -1705,7 +1705,7 @@ end subroutine wrap_fields_2D
 !-----------------------------------------------------------------
 !> Write snapshot output
 
-subroutine write_output(h, u, v, eta, wind_x, wind_y, nx, ny, layers, n, RedGrav, DumpWind)
+subroutine write_output(h, u, v, eta, wind_x, wind_y, nx, ny, layers, n, RedGrav, DumpWind, name)
   implicit none
 
   double precision, intent(in) :: h(0:nx+1, 0:ny+1, layers)
@@ -1716,26 +1716,27 @@ subroutine write_output(h, u, v, eta, wind_x, wind_y, nx, ny, layers, n, RedGrav
   double precision, intent(in) :: wind_y(0:nx+1, 0:ny+1)
   integer, intent(in) :: nx, ny, layers, n
   logical, intent(in) :: RedGrav, DumpWind
+  character(*), intent(in) :: name
 
   character(10) :: num
 
   write(num, '(i10.10)') n
 
   ! Output the data to a file
-  open(unit=10, status='replace', file='output/snap.h.'//num, &
+  open(unit=10, status='replace', file='output/'//name//'.h.'//num, &
       form='unformatted')
   write(10) h(1:nx, 1:ny, :)
   close(10)
-  open(unit=10, status='replace', file='output/snap.u.'//num, &
+  open(unit=10, status='replace', file='output/'//name//'.u.'//num, &
       form='unformatted')
   write(10) u(1:nx+1, 1:ny, :)
   close(10)
-  open(unit=10, status='replace', file='output/snap.v.'//num, &
+  open(unit=10, status='replace', file='output/'//name//'.v.'//num, &
       form='unformatted')
   write(10) v(1:nx, 1:ny+1, :)
   close(10)
   if (.not. RedGrav) then
-    open(unit=10, status='replace', file='output/snap.eta.'//num, &
+    open(unit=10, status='replace', file='output/'//name//'.eta.'//num, &
         form='unformatted')
     write(10) eta(1:nx, 1:ny)
     close(10)
