@@ -342,18 +342,19 @@ program MIM
 
     ! Check that the supplied free surface anomaly and layer
     ! thicknesses are consistent
-    call enforce_moderate_free_surface(h, eta, depth, freesurfFac, thickness_error, nx, ny, layers)
+    call enforce_moderate_free_surface(h, eta, depth, &
+        freesurfFac, thickness_error, nx, ny, layers)
 
   end if
 
-  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  !!!  Initialisation of the model STARTS HERE                              !!!
-  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  !!!  Initialisation of the model STARTS HERE                            !!!
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !
   ! Do two initial time steps with Runge-Kutta second-order.
   ! These initialisation steps do NOT use or update the free surface.
   !
-  ! -------------------------- negative 2 time step ---------------------------
+  ! ------------------------- negative 2 time step --------------------------
   ! Code to work out dhdtveryold, dudtveryold and dvdtveryold
 
   ! Calculate baroclinic Bernoulli potential
@@ -422,7 +423,7 @@ program MIM
   call wrap_fields_3D(v, nx, ny, layers)
   call wrap_fields_3D(h, nx, ny, layers)
 
-  ! -------------------------- negative 1 time step ---------------------------
+  ! ------------------------- negative 1 time step --------------------------
   ! Code to work out dhdtold, dudtold and dvdtold
 
   ! Calculate Bernoulli potential
@@ -496,9 +497,9 @@ program MIM
   ! - The model then solves for the tendencies at the current step
   !   before solving for the fields at the next time step.
 
-  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  !!! MAIN LOOP OF THE MODEL STARTS HERE                                    !!!
-  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  !!! MAIN LOOP OF THE MODEL STARTS HERE                                  !!!
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
   do n = 1, nTimeSteps
 
@@ -562,15 +563,18 @@ program MIM
 
       ! Now update the velocities using the barotropic tendency due to
       ! the pressure gradient.
-      call update_velocities_for_barotropic_tendency(unew, etanew, g_vec, 1, 0, dx, dt, nx, ny, layers)
-      call update_velocities_for_barotropic_tendency(vnew, etanew, g_vec, 0, 1, dy, dt, nx, ny, layers)
+      call update_velocities_for_barotropic_tendency(unew, etanew, g_vec, &
+          1, 0, dx, dt, nx, ny, layers)
+      call update_velocities_for_barotropic_tendency(vnew, etanew, g_vec, &
+          0, 1, dy, dt, nx, ny, layers)
 
       ! We now have correct velocities at the next time step, but the
       ! layer thicknesses were updated using the velocities without
       ! the barotropic pressure contribution. Force consistency
       ! between layer thicknesses and ocean depth by scaling
       ! thicknesses to agree with free surface.
-      call enforce_moderate_free_surface(hnew, etanew, depth, freesurfFac, thickness_error, nx, ny, layers)
+      call enforce_moderate_free_surface(hnew, etanew, depth, &
+          freesurfFac, thickness_error, nx, ny, layers)
 
       ! Apply the boundary conditions
       call apply_boundary_conditions(unew, hfacW, wetmask, nx, ny, layers)
@@ -617,11 +621,12 @@ program MIM
 
     ! Now have new fields in main arrays and old fields in very old arrays
 
-    ! ------------------------ Code for generating output ---------------------
+    ! ----------------------- Code for generating output --------------------
     ! Write data to file?
     if (mod(n-1, nwrite) .eq. 0) then
 
-      call write_output(h, u, v, eta, wind_x, wind_y, nx, ny, layers, n, RedGrav, DumpWind, 'snap')
+      call write_output(h, u, v, eta, wind_x, wind_y, &
+          nx, ny, layers, n, RedGrav, DumpWind, 'snap')
 
       ! Check if there are NaNs in the data
       call break_if_NaN(h, nx, ny, layers, n)
@@ -639,7 +644,8 @@ program MIM
       uav = uav/real(avwrite)
       vav = vav/real(avwrite)
 
-      call write_output(hav, uav, vav, etaav, wind_x, wind_y, nx, ny, layers, n, RedGrav, .false., 'av')
+      call write_output(hav, uav, vav, etaav, wind_x, wind_y, &
+          nx, ny, layers, n, RedGrav, .false., 'av')
 
       ! Check if there are NaNs in the data
       call break_if_NaN(h, nx, ny, layers, n)
@@ -672,9 +678,9 @@ program MIM
 end program MIM
 
 
-! ------------------------- Beginning of the subroutines ----------------------
+! ------------------------ Beginning of the subroutines ---------------------
 !
-! -----------------------------------------------------------------------------
+! ---------------------------------------------------------------------------
 
 !> Evaluate the Bornoulli Potential for n-layer physics.
 !! B is evaluated at the tracer point, for each grid box.
@@ -716,8 +722,9 @@ subroutine evaluate_b_iso(b, h, u, v, nx, ny, layers, g_vec, depth)
   end do
 
   b = 0d0
-  ! No baroclinic pressure contribution to the first layer Bernoulli potential
-  ! (the barotropic pressure contributes, but that's not done here).
+  ! No baroclinic pressure contribution to the first layer Bernoulli
+  ! potential (the barotropic pressure contributes, but that's not
+  ! done here).
   ! do j = 1, ny-1
   !     do i = 1, nx-1
   !         b(i,j,1) = (u(i,j,1)**2+u(i+1,j,1)**2+v(i,j,1)**2+v(i,j+1,1)**2)/4.0d0
@@ -728,7 +735,8 @@ subroutine evaluate_b_iso(b, h, u, v, nx, ny, layers, g_vec, depth)
   do k = 1, layers ! move through the different layers of the model
     do j = 1, ny ! move through longitude
       do i = 1, nx ! move through latitude
-        b(i,j,k) = M(i,j,k) + (u(i,j,k)**2+u(i+1,j,k)**2+v(i,j,k)**2+v(i,j+1,k)**2)/4.0d0
+        b(i,j,k) = M(i,j,k) &
+            + (u(i,j,k)**2+u(i+1,j,k)**2+v(i,j,k)**2+v(i,j+1,k)**2)/4.0d0
         ! Add the (u^2 + v^2)/2 term to the Montgomery Potential
       end do
     end do
@@ -737,7 +745,7 @@ subroutine evaluate_b_iso(b, h, u, v, nx, ny, layers, g_vec, depth)
   return
 end subroutine evaluate_b_iso
 
-! -----------------------------------------------------------------------------
+! ---------------------------------------------------------------------------
 
 subroutine evaluate_b_RedGrav(b, h, u, v, nx, ny, layers, gr)
   implicit none
@@ -773,7 +781,8 @@ subroutine evaluate_b_RedGrav(b, h, u, v, nx, ny, layers, gr)
         end do
         ! Add the (u^2 + v^2)/2 term to the pressure componenet of the
         ! Bernoulli Potential
-        b(i,j,k) = b_proto + (u(i,j,k)**2+u(i+1,j,k)**2+v(i,j,k)**2+v(i,j+1,k)**2)/4.0d0
+        b(i,j,k) = b_proto &
+            + (u(i,j,k)**2+u(i+1,j,k)**2+v(i,j,k)**2+v(i,j+1,k)**2)/4.0d0
       end do
     end do
   end do
@@ -781,7 +790,7 @@ subroutine evaluate_b_RedGrav(b, h, u, v, nx, ny, layers, gr)
   return
 end subroutine evaluate_b_RedGrav
 
-! -----------------------------------------------------------------------------
+! ---------------------------------------------------------------------------
 !> Evaluate relative vorticity at lower left grid boundary (du/dy
 !! and dv/dx are at lower left corner as well)
 subroutine evaluate_zeta(zeta, u, v, nx, ny, layers, dx, dy)
@@ -808,7 +817,7 @@ subroutine evaluate_zeta(zeta, u, v, nx, ny, layers, dx, dy)
   return
 end subroutine evaluate_zeta
 
-! -----------------------------------------------------------------------------
+! ---------------------------------------------------------------------------
 !> Calculate the tendency of layer thickness for each of the active layers
 !! dh/dt is in the centre of each grid point.
 subroutine evaluate_dhdt(dhdt, h, u, v, ah, dx, dy, nx, ny, layers, &
@@ -913,7 +922,7 @@ subroutine evaluate_dhdt(dhdt, h, u, v, ah, dx, dy, nx, ny, layers, &
   return
 end subroutine evaluate_dhdt
 
-! -----------------------------------------------------------------------------
+! ---------------------------------------------------------------------------
 !> Calculate the tendency of zonal velocity for each of the active layers
 
 subroutine evaluate_dudt(dudt, h, u, v, b, zeta, wind_x, fu, &
@@ -985,8 +994,9 @@ subroutine evaluate_dudt(dudt, h, u, v, b, zeta, wind_x, fu, &
   return
 end subroutine evaluate_dudt
 
-! -----------------------------------------------------------------------------
-!> Calculate the tendency of meridional velocity for each of the active layers
+! ---------------------------------------------------------------------------
+!> Calculate the tendency of meridional velocity for each of the
+!> active layers
 
 subroutine evaluate_dvdt(dvdt, h, u, v, b, zeta, wind_y, fv, &
     au, ar, slip, dx, dy, hfacW, hfacE, nx, ny, layers, rho0, &
@@ -1059,8 +1069,9 @@ subroutine evaluate_dvdt(dvdt, h, u, v, b, zeta, wind_y, fv, &
   return
 end subroutine evaluate_dvdt
 
-! -----------------------------------------------------------------------------
+! ---------------------------------------------------------------------------
 !> Calculate the barotropic u velocity
+
 subroutine calc_baro_u(ub, u, h, eta, freesurfFac, nx, ny, layers)
   implicit none
 
@@ -1091,9 +1102,9 @@ subroutine calc_baro_u(ub, u, h, eta, freesurfFac, nx, ny, layers)
   return
 end subroutine calc_baro_u
 
-! -----------------------------------------------------------------------------
-
+! ---------------------------------------------------------------------------
 !> Calculate the barotropic v velocity
+
 subroutine calc_baro_v(vb, v, h, eta, freesurfFac, nx, ny, layers)
   implicit none
 
@@ -1124,12 +1135,13 @@ subroutine calc_baro_v(vb, v, h, eta, freesurfFac, nx, ny, layers)
   return
 end subroutine calc_baro_v
 
-! -----------------------------------------------------------------------------
-
+! ---------------------------------------------------------------------------
 !> Calculate the free surface anomaly using the velocities
 !! timestepped with the tendencies excluding the free surface
 !! pressure gradient.
-subroutine calc_eta_star(ub, vb, eta, etastar, freesurfFac, nx, ny, dx, dy, dt)
+
+subroutine calc_eta_star(ub, vb, eta, etastar, &
+    freesurfFac, nx, ny, dx, dy, dt)
   implicit none
 
   double precision, intent(in)  :: ub(nx+1, ny)
@@ -1156,7 +1168,7 @@ subroutine calc_eta_star(ub, vb, eta, etastar, freesurfFac, nx, ny, dx, dy, dt)
   return
 end subroutine calc_eta_star
 
-! -----------------------------------------------------------------------------
+! ---------------------------------------------------------------------------
 !> Use the successive over-relaxation algorithm to solve the backwards
 !! Euler timestepping for the free surface anomaly, or for the surface
 !! pressure required to keep the barotropic flow nondivergent.
@@ -1241,11 +1253,12 @@ subroutine SOR_solver(a, etanew, etastar, freesurfFac, nx, ny, dt, &
   return
 end subroutine SOR_solver
 
-! -----------------------------------------------------------------------------
+! ---------------------------------------------------------------------------
 !> Update velocities using the barotropic tendency due to the pressure
 !> gradient.
 
-subroutine update_velocities_for_barotropic_tendency(array, etanew, g_vec, xstep, ystep, dspace, dt, nx, ny, layers)
+subroutine update_velocities_for_barotropic_tendency(array, etanew, g_vec, &
+    xstep, ystep, dspace, dt, nx, ny, layers)
   implicit none
 
   double precision, intent(inout) :: array(0:nx+1, 0:ny+1, layers)
@@ -1263,7 +1276,8 @@ subroutine update_velocities_for_barotropic_tendency(array, etanew, g_vec, xstep
   do i = xstep, nx
     do j = ystep, ny
       do k = 1, layers
-        baro_contrib = -g_vec(1)*(etanew(i,j) - etanew(i-xstep,j-ystep))/(dspace)
+        baro_contrib = &
+            -g_vec(1)*(etanew(i,j) - etanew(i-xstep,j-ystep))/(dspace)
         array(i,j,k) = array(i,j,k) + dt*baro_contrib
       end do
     end do
@@ -1273,10 +1287,11 @@ subroutine update_velocities_for_barotropic_tendency(array, etanew, g_vec, xstep
   return
 end subroutine update_velocities_for_barotropic_tendency
 
-! -----------------------------------------------------------------------------
+! ---------------------------------------------------------------------------
 !> Check that the free surface anomaly and layer thicknesses are consistent
 
-subroutine enforce_moderate_free_surface(h, eta, depth, freesurfFac, thickness_error, nx, ny, layers)
+subroutine enforce_moderate_free_surface(h, eta, depth, &
+    freesurfFac, thickness_error, nx, ny, layers)
   implicit none
 
   double precision, intent(inout) :: h(0:nx+1, 0:ny+1, layers)
@@ -1301,7 +1316,7 @@ subroutine enforce_moderate_free_surface(h, eta, depth, freesurfFac, thickness_e
   return
 end subroutine enforce_moderate_free_surface
 
-! -----------------------------------------------------------------------------
+! ---------------------------------------------------------------------------
 !> Ensure that layer heights do not fall below the prescribed minimum
 
 subroutine enforce_minimum_layer_thickness(hnew, hmin, nx, ny, layers, n)
@@ -1338,9 +1353,10 @@ subroutine enforce_minimum_layer_thickness(hnew, hmin, nx, ny, layers, n)
   return
 end subroutine enforce_minimum_layer_thickness
 
-! -----------------------------------------------------------------------------
+! ---------------------------------------------------------------------------
 !> Check to see if there are any NaNs in the data field and stop the
 !! calculation if any are found.
+
 subroutine break_if_NaN(data, nx, ny, layers, n)
   implicit none
 
@@ -1373,7 +1389,7 @@ subroutine break_if_NaN(data, nx, ny, layers, n)
   return
 end subroutine break_if_NaN
 
-!------------------------------------------------------------------------------
+!----------------------------------------------------------------------------
 !> Define masks for boundary conditions in u and v.
 !! This finds locations where neighbouring grid boxes are not the same
 !! (i.e. one is land and one is ocean).
@@ -1476,7 +1492,7 @@ subroutine calc_boundary_masks(wetmask, hfacW, hfacE, hfacS, hfacN, nx, ny)
   return
 end subroutine calc_boundary_masks
 
-! -----------------------------------------------------------------------------
+! ---------------------------------------------------------------------------
 !> Apply the boundary conditions
 
 subroutine apply_boundary_conditions(array, hfac, wetmask, nx, ny, layers)
@@ -1503,7 +1519,7 @@ subroutine apply_boundary_conditions(array, hfac, wetmask, nx, ny, layers)
   return
 end subroutine apply_boundary_conditions
 
-! -----------------------------------------------------------------------------
+! ---------------------------------------------------------------------------
 !> Compute derivatives of the depth field for the pressure solver
 
 subroutine derivatives_of_the_depth_field(a, depth, g, dx, dy, nx, ny)
@@ -1541,7 +1557,7 @@ subroutine derivatives_of_the_depth_field(a, depth, g, dx, dy, nx, ny)
   return
 end subroutine derivatives_of_the_depth_field
 
-! -----------------------------------------------------------------------------
+! ---------------------------------------------------------------------------
 
 subroutine read_input_fileH(name, array, default, nx, ny, layers)
   implicit none
@@ -1569,7 +1585,7 @@ subroutine read_input_fileH(name, array, default, nx, ny, layers)
   return
 end subroutine read_input_fileH
 
-! -----------------------------------------------------------------------------
+! ---------------------------------------------------------------------------
 
 subroutine read_input_fileH_2D(name, array, default, nx, ny)
   implicit none
@@ -1594,7 +1610,7 @@ subroutine read_input_fileH_2D(name, array, default, nx, ny)
   return
 end subroutine read_input_fileH_2D
 
-! -----------------------------------------------------------------------------
+! ---------------------------------------------------------------------------
 
 subroutine read_input_fileU(name, array, default, nx, ny, layers)
   implicit none
@@ -1619,7 +1635,7 @@ subroutine read_input_fileU(name, array, default, nx, ny, layers)
   return
 end subroutine read_input_fileU
 
-! -----------------------------------------------------------------------------
+! ---------------------------------------------------------------------------
 
 subroutine read_input_fileV(name, array, default, nx, ny, layers)
   implicit none
@@ -1644,7 +1660,7 @@ subroutine read_input_fileV(name, array, default, nx, ny, layers)
   return
 end subroutine read_input_fileV
 
-! -----------------------------------------------------------------------------
+! ---------------------------------------------------------------------------
 
 subroutine read_input_file_time_series(name, array, default, nTimeSteps)
   implicit none
@@ -1704,7 +1720,8 @@ end subroutine wrap_fields_2D
 !-----------------------------------------------------------------
 !> Write snapshot output
 
-subroutine write_output(h, u, v, eta, wind_x, wind_y, nx, ny, layers, n, RedGrav, DumpWind, name)
+subroutine write_output(h, u, v, eta, wind_x, wind_y, &
+    nx, ny, layers, n, RedGrav, DumpWind, name)
   implicit none
 
   double precision, intent(in) :: h(0:nx+1, 0:ny+1, layers)
