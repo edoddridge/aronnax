@@ -127,8 +127,8 @@ program MIM
   ! Switch for using n + 1/2 layer physics, or using n layer physics
   logical :: RedGrav
 
-  ! Loop variables
-  integer :: i, j, k, n
+  ! Time step loop variable
+  integer :: n
 
 
   ! Physics
