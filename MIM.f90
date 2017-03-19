@@ -88,10 +88,6 @@ program MIM
   ! Pressure solver variables
   double precision, dimension(:,:,:), allocatable :: a
 
-  ! Bernoulli potential and relative vorticity
-  double precision, dimension(:,:,:), allocatable :: b
-  double precision, dimension(:,:,:), allocatable :: zeta
-
 
   ! Grid
   double precision :: dx, dy
@@ -235,9 +231,6 @@ program MIM
 
   allocate(depth(0:nx+1, 0:ny+1))
   allocate(a(5, nx, ny))
-
-  allocate(b(0:nx+1, 0:ny+1, layers))
-  allocate(zeta(0:nx+1, 0:ny+1, layers))
 
   allocate(wetmask(0:nx+1, 0:ny+1))
   allocate(hfacW(0:nx+1, 0:ny+1))
