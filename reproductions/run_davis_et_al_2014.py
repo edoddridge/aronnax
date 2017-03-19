@@ -21,8 +21,9 @@ import time
 mim_exec = p.join(root_path, "MIM")
 
 
-def run_davis_et_al_2014(nx,ny,layers,nTimeSteps,dt):
-    with opt.working_directory(p.join(self_path, "Davis_et_al_2014")):
+def run_davis_et_al_2014(nx,ny,layers,nTimeSteps,dt,simulation=None):
+    with opt.working_directory(p.join(self_path, 
+        "Davis_et_al_2014/{0}".format(simulation))):
         run_experiment(write_input_davis_et_al_2014, nx, ny, layers, nTimeSteps, dt)
 
 
@@ -200,4 +201,5 @@ def write_wind_time_series(nTimeSteps,dt):
 
 
 if __name__ == '__main__':
-    run_davis_et_al_2014(102,182,1,1244160,1000)
+    run_davis_et_al_2014(102, 182, 1, 1244160, 1000, 'control')
+    run_davis_et_al_2014(102, 182, 1, 155520, 1000, 'control_final_five') # need to copy final outputs from the previous run
