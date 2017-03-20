@@ -867,16 +867,17 @@ subroutine evaluate_b_iso(b, h, u, v, nx, ny, layers, g_vec, depth)
   ! of grid box
 
   double precision, intent(out) :: b(0:nx+1, 0:ny+1, layers) !< Bernoulli Potential
+  double precision, intent(in)  :: h(0:nx+1, 0:ny+1, layers) !< layer thicknesses
+  double precision, intent(in)  :: u(0:nx+1, 0:ny+1, layers) !< zonal velocities
+  double precision, intent(in)  :: v(0:nx+1, 0:ny+1, layers) !< meridional velocities
   integer, intent(in) :: nx !< number of x grid points
   integer, intent(in) :: ny !< number of y grid points
   integer, intent(in) :: layers !< number of layers
+  double precision, intent(in)  :: g_vec(layers) !< reduced gravity at each interface
+  double precision, intent(in)  :: depth(0:nx+1, 0:ny+1) !< total depth of fluid
+
   integer i, j, k
-  double precision, intent(in) :: depth(0:nx+1, 0:ny+1) !< total depth of fluid
   double precision z(0:nx+1, 0:ny+1, layers)
-  double precision, intent(in) :: h(0:nx+1, 0:ny+1, layers) !< layer thicknesses
-  double precision, intent(in) :: u(0:nx+1, 0:ny+1, layers) !< zonal velocities
-  double precision, intent(in) :: v(0:nx+1, 0:ny+1, layers) !< meridional velocities
-  double precision, intent(in) :: g_vec(layers) !< reduced gravity at each interface
   double precision M(0:nx+1, 0:ny+1, layers)
 
   ! Calculate layer interface locations
@@ -923,13 +924,14 @@ subroutine evaluate_b_RedGrav(b, h, u, v, nx, ny, layers, gr)
   implicit none
 
   ! Evaluate Bernoulli Potential at centre of grid box
-  integer nx, ny, layers
+  double precision, intent(out) :: b(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: h(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: u(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: v(0:nx+1, 0:ny+1, layers)
+  integer, intent(in) :: nx, ny, layers
+  double precision, intent(in)  :: gr(layers)
+
   integer i, j, k, l, m
-  double precision h(0:nx+1, 0:ny+1, layers)
-  double precision u(0:nx+1, 0:ny+1, layers)
-  double precision v(0:nx+1, 0:ny+1, layers)
-  double precision b(0:nx+1, 0:ny+1, layers)
-  double precision gr(layers)
   double precision h_temp, b_proto
 
   b = 0d0
@@ -966,12 +968,13 @@ end subroutine evaluate_b_RedGrav
 subroutine evaluate_zeta(zeta, u, v, nx, ny, layers, dx, dy)
   implicit none
 
-  integer nx, ny, layers
+  double precision, intent(out) :: zeta(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: u(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: v(0:nx+1, 0:ny+1, layers)
+  integer, intent(in) :: nx, ny, layers
+  double precision, intent(in)  :: dx, dy
+
   integer i, j, k
-  double precision u(0:nx+1, 0:ny+1, layers)
-  double precision v(0:nx+1, 0:ny+1, layers)
-  double precision zeta(0:nx+1, 0:ny+1, layers)
-  double precision dx, dy
 
   zeta = 0d0
 
@@ -994,21 +997,22 @@ subroutine evaluate_dhdt(dhdt, h, u, v, ah, dx, dy, nx, ny, layers, &
   implicit none
 
   ! dhdt is evaluated at the centre of the grid box
-  integer nx, ny, layers
+  double precision, intent(out) :: dhdt(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: h(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: u(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: v(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: ah(layers)
+  double precision, intent(in)  :: dx, dy
+  integer, intent(in) :: nx, ny, layers
+  double precision, intent(in)  :: spongeTimeScale(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: spongeH(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: wetmask(0:nx+1, 0:ny+1)
+  logical, intent(in) :: RedGrav
+
   integer i, j, k
-  double precision dhdt(0:nx+1, 0:ny+1, layers)
-  double precision h(0:nx+1, 0:ny+1, layers)
-  double precision u(0:nx+1, 0:ny+1, layers)
-  double precision v(0:nx+1, 0:ny+1, layers)
   ! Thickness tendency due to thickness diffusion (equivalent to Gent
   ! McWilliams in a z coordinate model)
   double precision dhdt_GM(0:nx+1, 0:ny+1, layers)
-  double precision spongeTimeScale(0:nx+1, 0:ny+1, layers)
-  double precision spongeH(0:nx+1, 0:ny+1, layers)
-  double precision wetmask(0:nx+1, 0:ny+1)
-  double precision dx, dy
-  double precision ah(layers)
-  logical :: RedGrav
 
   ! Calculate tendency due to thickness diffusion (equivalent
   ! to GM in z coordinate model with the same diffusivity).
@@ -1100,23 +1104,25 @@ subroutine evaluate_dudt(dudt, h, u, v, b, zeta, wind_x, fu, &
 
   ! dudt(i, j) is evaluated at the centre of the left edge of the grid
   ! box, the same place as u(i, j).
-  integer nx, ny, layers
+  double precision, intent(out) :: dudt(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: h(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: u(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: v(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: b(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: zeta(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: wind_x(0:nx+1, 0:ny+1)
+  double precision, intent(in)  :: fu(0:nx+1, 0:ny+1)
+  double precision, intent(in)  :: au, ar, slip, dx, dy
+  double precision, intent(in)  :: hfacN(0:nx+1, 0:ny+1)
+  double precision, intent(in)  :: hfacS(0:nx+1, 0:ny+1)
+  integer, intent(in) :: nx, ny, layers
+  double precision, intent(in)  :: rho0
+  double precision, intent(in)  :: spongeTimeScale(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: spongeU(0:nx+1, 0:ny+1, layers)
+  logical, intent(in) :: RedGrav
+  double precision, intent(in)  :: botDrag
+
   integer i, j, k
-  double precision dudt(0:nx+1, 0:ny+1, layers)
-  double precision h(0:nx+1, 0:ny+1, layers)
-  double precision u(0:nx+1, 0:ny+1, layers)
-  double precision v(0:nx+1, 0:ny+1, layers)
-  double precision fu(0:nx+1, 0:ny+1)
-  double precision zeta(0:nx+1, 0:ny+1, layers)
-  double precision b(0:nx+1, 0:ny+1, layers)
-  double precision spongeTimeScale(0:nx+1, 0:ny+1, layers)
-  double precision spongeU(0:nx+1, 0:ny+1, layers)
-  double precision wind_x(0:nx+1, 0:ny+1)
-  double precision dx, dy
-  double precision au, ar, rho0, slip, botDrag
-  double precision hfacN(0:nx+1, 0:ny+1)
-  double precision hfacS(0:nx+1, 0:ny+1)
-  logical :: RedGrav
 
   dudt = 0d0
 
@@ -1170,24 +1176,26 @@ subroutine evaluate_dvdt(dvdt, h, u, v, b, zeta, wind_y, fv, &
 
   ! dvdt(i, j) is evaluated at the centre of the bottom edge of the
   ! grid box, the same place as v(i, j)
-  integer nx, ny, layers
+  double precision, intent(out) :: dvdt(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: h(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: u(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: v(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: b(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: zeta(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: wind_y(0:nx+1, 0:ny+1)
+  double precision, intent(in)  :: fv(0:nx+1, 0:ny+1)
+  double precision, intent(in)  :: au, ar, slip
+  double precision, intent(in)  :: dx, dy
+  double precision, intent(in)  :: hfacW(0:nx+1, 0:ny+1)
+  double precision, intent(in)  :: hfacE(0:nx+1, 0:ny+1)
+  integer, intent(in) :: nx, ny, layers
+  double precision, intent(in)  :: rho0
+  double precision, intent(in)  :: spongeTimeScale(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: spongeV(0:nx+1, 0:ny+1, layers)
+  logical, intent(in) :: RedGrav
+  double precision, intent(in)  :: botDrag
+
   integer i, j, k
-  double precision dvdt(0:nx+1, 0:ny+1, layers)
-  double precision h(0:nx+1, 0:ny+1, layers)
-  double precision u(0:nx+1, 0:ny+1, layers)
-  double precision v(0:nx+1, 0:ny+1, layers)
-  double precision fv(0:nx+1, 0:ny+1)
-  double precision zeta(0:nx+1, 0:ny+1, layers)
-  double precision b(0:nx+1, 0:ny+1, layers)
-  double precision spongeTimeScale(0:nx+1, 0:ny+1, layers)
-  double precision spongeV(0:nx+1, 0:ny+1, layers)
-  double precision wind_y(0:nx+1, 0:ny+1)
-  double precision dx, dy
-  double precision au, ar, slip, botDrag
-  double precision rho0
-  double precision hfacW(0:nx+1, 0:ny+1)
-  double precision hfacE(0:nx+1, 0:ny+1)
-  logical :: RedGrav
 
   dvdt = 0d0
 
@@ -1237,14 +1245,15 @@ end subroutine evaluate_dvdt
 subroutine calc_baro_u(ub, u, h, eta, freesurfFac, nx, ny, layers)
   implicit none
 
-  integer nx, ny, layers
+  double precision, intent(out) :: ub(nx+1, ny)
+  double precision, intent(in)  :: u(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: h(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: eta(0:nx+1, 0:ny+1)
+  double precision, intent(in)  :: freesurfFac
+  integer, intent(in) :: nx, ny, layers
+
   integer i, j, k
-  double precision h(0:nx+1, 0:ny+1, layers)
   double precision h_temp(0:nx+1, 0:ny+1, layers)
-  double precision eta(0:nx+1, 0:ny+1)
-  double precision freesurfFac
-  double precision u(0:nx+1, 0:ny+1, layers)
-  double precision ub(nx+1, ny)
 
   ub = 0d0
 
@@ -1269,14 +1278,15 @@ end subroutine calc_baro_u
 subroutine calc_baro_v(vb, v, h, eta, freesurfFac, nx, ny, layers)
   implicit none
 
-  integer nx, ny, layers
+  double precision, intent(out) :: vb(nx, ny+1)
+  double precision, intent(in)  :: v(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: h(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: eta(0:nx+1, 0:ny+1)
+  double precision, intent(in)  :: freesurfFac
+  integer, intent(in) :: nx, ny, layers
+
   integer i, j, k
-  double precision h(0:nx+1, 0:ny+1, layers)
   double precision h_temp(0:nx+1, 0:ny+1, layers)
-  double precision eta(0:nx+1, 0:ny+1)
-  double precision freesurfFac
-  double precision v(0:nx+1, 0:ny+1, layers)
-  double precision vb(nx, ny+1)
 
   vb = 0d0
 
@@ -1303,13 +1313,15 @@ end subroutine calc_baro_v
 subroutine calc_eta_star(ub, vb, eta, etastar, freesurfFac, nx, ny, dx, dy, dt)
   implicit none
 
-  integer nx, ny
+  double precision, intent(in)  :: ub(nx+1, ny)
+  double precision, intent(in)  :: vb(nx, ny+1)
+  double precision, intent(in)  :: eta(0:nx+1, 0:ny+1)
+  double precision, intent(out) :: etastar(0:nx+1, 0:ny+1)
+  double precision, intent(in)  :: freesurfFac
+  integer, intent(in) :: nx, ny
+  double precision, intent(in) :: dx, dy, dt
+
   integer i, j
-  double precision eta(0:nx+1, 0:ny+1)
-  double precision etastar(0:nx+1, 0:ny+1)
-  double precision ub(nx+1, ny)
-  double precision vb(nx, ny+1)
-  double precision freesurfFac, dx, dy, dt
 
   etastar = 0d0
 
@@ -1338,9 +1350,11 @@ subroutine SOR_solver(a, etanew, etastar, freesurfFac, nx, ny, dt, &
   double precision, intent(out) :: etanew(0:nx+1, 0:ny+1)
   double precision, intent(in)  :: etastar(0:nx+1, 0:ny+1)
   double precision, intent(in)  :: freesurfFac
-  integer, intent(in) :: nx, ny, maxits, n
+  integer, intent(in) :: nx, ny
   double precision, intent(in) :: dt
   double precision, intent(in) :: rjac, eps
+  integer, intent(in) :: maxits, n
+
   integer i, j, nit
   double precision rhs(nx, ny)
   double precision res(nx, ny)
@@ -1414,10 +1428,12 @@ end subroutine SOR_solver
 subroutine break_if_NaN(data, nx, ny, layers, n)
   implicit none
 
-  ! To stop the program if it detects at NaN in the variable being checked
+  ! To stop the program if it detects a NaN in the variable being checked
 
-  integer nx, ny, layers, n, i, j, k
-  double precision data(0:nx+1, 0:ny+1, layers)
+  integer, intent(in) :: nx, ny, layers, n
+  double precision, intent(in) :: data(0:nx+1, 0:ny+1, layers)
+
+  integer :: i, j, k
 
   do k = 1, layers
     do j = 1, ny
@@ -1452,14 +1468,15 @@ end subroutine break_if_NaN
 subroutine calc_boundary_masks(wetmask, hfacW, hfacE, hfacS, hfacN, nx, ny)
   implicit none
 
-  integer nx !< number of grid points in x direction
-  integer ny !< number of grid points in y direction
-  double precision wetmask(0:nx+1, 0:ny+1)
+  double precision, intent(in)  :: wetmask(0:nx+1, 0:ny+1)
+  double precision, intent(out) :: hfacW(0:nx+1, 0:ny+1)
+  double precision, intent(out) :: hfacE(0:nx+1, 0:ny+1)
+  double precision, intent(out) :: hfacN(0:nx+1, 0:ny+1)
+  double precision, intent(out) :: hfacS(0:nx+1, 0:ny+1)
+  integer, intent(in) :: nx !< number of grid points in x direction
+  integer, intent(in) :: ny !< number of grid points in y direction
+
   double precision temp(0:nx+1, 0:ny+1)
-  double precision hfacW(0:nx+1, 0:ny+1)
-  double precision hfacE(0:nx+1, 0:ny+1)
-  double precision hfacN(0:nx+1, 0:ny+1)
-  double precision hfacS(0:nx+1, 0:ny+1)
   integer i, j
 
   hfacW = 1d0
@@ -1548,10 +1565,13 @@ end subroutine calc_boundary_masks
 subroutine read_input_fileH(name, array, default, nx, ny, layers)
   implicit none
 
-  character(30) name
-  integer nx, ny, layers, k
-  double precision array(0:nx+1, 0:ny+1, layers), default(layers)
+  character(30), intent(in) :: name
+  double precision, intent(out) :: array(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in) :: default(layers)
+  integer, intent(in) :: nx, ny, layers
+
   double precision array_small(nx, ny, layers)
+  integer k
 
   if (name.ne.'') then
     open(unit=10, form='unformatted', file=name)
@@ -1578,9 +1598,11 @@ end subroutine read_input_fileH
 subroutine read_input_fileH_2D(name, array, default, nx, ny)
   implicit none
 
-  character(30) name
-  integer nx, ny
-  double precision array(0:nx+1, 0:ny+1), default
+  character(30), intent(in) :: name
+  double precision, intent(out) :: array(0:nx+1, 0:ny+1)
+  double precision, intent(in) :: default
+  integer, intent(in) :: nx, ny
+
   double precision array_small(nx, ny)
 
   if (name.ne.'') then
@@ -1606,9 +1628,11 @@ end subroutine read_input_fileH_2D
 subroutine read_input_fileU(name, array, default, nx, ny, layers)
   implicit none
 
-  character(30) name
-  integer nx, ny, layers
-  double precision array(0:nx+1, 0:ny+1, layers), default
+  character(30), intent(in) :: name
+  double precision, intent(out) :: array(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in) :: default
+  integer, intent(in) :: nx, ny, layers
+
   double precision array_small(nx+1, ny, layers)
 
   if (name.ne.'') then
@@ -1634,9 +1658,11 @@ end subroutine read_input_fileU
 subroutine read_input_fileV(name, array, default, nx, ny, layers)
   implicit none
 
-  character(30) name
-  integer nx, ny, layers
-  double precision array(0:nx+1, 0:ny+1, layers), default
+  character(30), intent(in) :: name
+  double precision, intent(out) :: array(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in) :: default
+  integer, intent(in) :: nx, ny, layers
+
   double precision array_small(nx, ny+1, layers)
 
   if (name.ne.'') then
@@ -1662,9 +1688,10 @@ end subroutine read_input_fileV
 subroutine read_input_file_time_series(name, array, default, nTimeSteps)
   implicit none
 
-  character(30) name
-  integer nTimeSteps
-  double precision array(nTimeSteps), default
+  character(30), intent(in) :: name
+  double precision, intent(out) :: array(nTimeSteps)
+  double precision, intent(in) :: default
+  integer, intent(in) :: nTimeSteps
 
   if (name.ne.'') then
     open(unit=10, form='unformatted', file=name)
@@ -1684,8 +1711,8 @@ end subroutine read_input_file_time_series
 subroutine wrap_fields_3D(array, nx, ny, layers)
   implicit none
 
-  double precision array(0:nx+1, 0:ny+1, layers)
-  integer nx, ny, layers
+  double precision, intent(inout) :: array(0:nx+1, 0:ny+1, layers)
+  integer, intent(in) :: nx, ny, layers
 
   ! wrap array around for periodicity
   array(0, :, :) = array(nx, :, :)
@@ -1702,8 +1729,8 @@ end subroutine wrap_fields_3D
 subroutine wrap_fields_2D(array, nx, ny)
   implicit none
 
-  double precision array(0:nx+1, 0:ny+1)
-  integer nx, ny
+  double precision, intent(inout) :: array(0:nx+1, 0:ny+1)
+  integer, intent(in) :: nx, ny
 
   ! wrap array around for periodicity
   array(0, :) = array(nx, :)
