@@ -394,7 +394,9 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
     ! 2*pi in this calculation
 
     ! Check that the supplied free surface anomaly and layer
-    ! thicknesses are consistent
+    ! thicknesses are consistent with the supplied depth field.
+    ! If they are not, then scale the layer thicknesses to make 
+    ! them consistent.
     call enforce_depth_thickness_consistency(h, eta, depth, &
         freesurfFac, thickness_error, nx, ny, layers)
 
