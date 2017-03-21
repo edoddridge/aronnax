@@ -534,7 +534,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
 
     ! Do the isopycnal layer physics
     if (.not. RedGrav) then
-      call isopycnal_correction(hnew, unew, vnew, eta, etanew, depth, a, &
+      call barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
           dx, dy, wetmask, hfacW, hfacS, dt, &
           maxits, eps, rjac, freesurfFac, thickness_error, &
           g_vec, nx, ny, layers, n)
@@ -671,7 +671,7 @@ end subroutine state_derivative
 ! ---------------------------------------------------------------------------
 !> Do the isopycnal layer physics
 
-subroutine isopycnal_correction(hnew, unew, vnew, eta, etanew, depth, a, &
+subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
     dx, dy, wetmask, hfacW, hfacS, dt, &
     maxits, eps, rjac, freesurfFac, thickness_error, &
     g_vec, nx, ny, layers, n)
@@ -739,7 +739,7 @@ subroutine isopycnal_correction(hnew, unew, vnew, eta, etanew, depth, a, &
   call apply_boundary_conditions(vnew, hfacS, wetmask, nx, ny, layers)
 
   return
-end subroutine isopycnal_correction
+end subroutine barotropic_correction
 
 ! ---------------------------------------------------------------------------
 !> Write output if it's time
