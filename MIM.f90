@@ -785,7 +785,9 @@ subroutine maybe_dump_output(h, hav, u, uav, v, vav, eta, etaav, &
     hav = hav/real(avwrite)
     uav = uav/real(avwrite)
     vav = vav/real(avwrite)
-    etaav = etaav/real(avwrite)
+    if (.not. RedGrav) then
+      etaav = etaav/real(avwrite)
+    end if
 
     call write_output(hav, uav, vav, etaav, wind_x, wind_y, &
         nx, ny, layers, n, RedGrav, .false., 'av')
