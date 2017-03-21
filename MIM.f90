@@ -269,45 +269,45 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   ! Whether to write computed wind in the output
   logical,          intent(in) :: DumpWind
 
-  double precision :: dhdt(0:nx+1, 0:ny+1, layers)
-  double precision :: dhdtold(0:nx+1, 0:ny+1, layers)
-  double precision :: dhdtveryold(0:nx+1, 0:ny+1, layers)
-  double precision :: hnew(0:nx+1, 0:ny+1, layers)
+  double precision, dimension(:,:,:), allocatable :: dhdt
+  double precision, dimension(:,:,:), allocatable :: dhdtold
+  double precision, dimension(:,:,:), allocatable :: dhdtveryold
+  double precision, dimension(:,:,:), allocatable :: hnew
   ! for initialisation
-  double precision :: hhalf(0:nx+1, 0:ny+1, layers)
+  double precision, dimension(:,:,:), allocatable :: hhalf
   ! for saving average fields
-  double precision :: hav(0:nx+1, 0:ny+1, layers)
+  double precision, dimension(:,:,:), allocatable :: hav
 
-  double precision :: dudt(0:nx+1, 0:ny+1, layers)
-  double precision :: dudtold(0:nx+1, 0:ny+1, layers)
-  double precision :: dudtveryold(0:nx+1, 0:ny+1, layers)
-  double precision :: unew(0:nx+1, 0:ny+1, layers)
+  double precision, dimension(:,:,:), allocatable :: dudt
+  double precision, dimension(:,:,:), allocatable :: dudtold
+  double precision, dimension(:,:,:), allocatable :: dudtveryold
+  double precision, dimension(:,:,:), allocatable :: unew
   ! for initialisation
-  double precision :: uhalf(0:nx+1, 0:ny+1, layers)
+  double precision, dimension(:,:,:), allocatable :: uhalf
   ! for saving average fields
-  double precision :: uav(0:nx+1, 0:ny+1, layers)
+  double precision, dimension(:,:,:), allocatable :: uav
 
-  double precision :: dvdt(0:nx+1, 0:ny+1, layers)
-  double precision :: dvdtold(0:nx+1, 0:ny+1, layers)
-  double precision :: dvdtveryold(0:nx+1, 0:ny+1, layers)
-  double precision :: vnew(0:nx+1, 0:ny+1, layers)
+  double precision, dimension(:,:,:), allocatable :: dvdt
+  double precision, dimension(:,:,:), allocatable :: dvdtold
+  double precision, dimension(:,:,:), allocatable :: dvdtveryold
+  double precision, dimension(:,:,:), allocatable :: vnew
   ! for initialisation
-  double precision :: vhalf(0:nx+1, 0:ny+1, layers)
+  double precision, dimension(:,:,:), allocatable :: vhalf
   ! for saving average fields
-  double precision :: vav(0:nx+1, 0:ny+1, layers)
+  double precision, dimension(:,:,:), allocatable :: vav
 
-  double precision :: etanew(0:nx+1, 0:ny+1)
+  double precision, dimension(:,:),   allocatable :: etanew
   ! for saving average fields
-  double precision :: etaav(0:nx+1, 0:ny+1)
+  double precision, dimension(:,:),   allocatable :: etaav
 
   ! Pressure solver variables
-  double precision :: a(5, nx, ny)
+  double precision, dimension(:,:,:), allocatable :: a
 
   ! Geometry
-  double precision :: hfacW(0:nx+1, 0:ny+1)
-  double precision :: hfacE(0:nx+1, 0:ny+1)
-  double precision :: hfacN(0:nx+1, 0:ny+1)
-  double precision :: hfacS(0:nx+1, 0:ny+1)
+  double precision, dimension(:,:),   allocatable :: hfacW
+  double precision, dimension(:,:),   allocatable :: hfacE
+  double precision, dimension(:,:),   allocatable :: hfacN
+  double precision, dimension(:,:),   allocatable :: hfacS
 
   ! Numerics
   double precision :: pi
@@ -318,8 +318,42 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   integer :: n
 
   ! Wind
-  double precision :: wind_x(0:nx+1, 0:ny+1)
-  double precision :: wind_y(0:nx+1, 0:ny+1)
+  double precision, dimension(:,:),   allocatable :: wind_x
+  double precision, dimension(:,:),   allocatable :: wind_y
+
+  allocate(dhdt(0:nx+1, 0:ny+1, layers))
+  allocate(dhdtold(0:nx+1, 0:ny+1, layers))
+  allocate(dhdtveryold(0:nx+1, 0:ny+1, layers))
+  allocate(hnew(0:nx+1, 0:ny+1, layers))
+  allocate(hhalf(0:nx+1, 0:ny+1, layers))
+  allocate(hav(0:nx+1, 0:ny+1, layers))
+
+  allocate(dudt(0:nx+1, 0:ny+1, layers))
+  allocate(dudtold(0:nx+1, 0:ny+1, layers))
+  allocate(dudtveryold(0:nx+1, 0:ny+1, layers))
+  allocate(unew(0:nx+1, 0:ny+1, layers))
+  allocate(uhalf(0:nx+1, 0:ny+1, layers))
+  allocate(uav(0:nx+1, 0:ny+1, layers))
+
+  allocate(dvdt(0:nx+1, 0:ny+1, layers))
+  allocate(dvdtold(0:nx+1, 0:ny+1, layers))
+  allocate(dvdtveryold(0:nx+1, 0:ny+1, layers))
+  allocate(vnew(0:nx+1, 0:ny+1, layers))
+  allocate(vhalf(0:nx+1, 0:ny+1, layers))
+  allocate(vav(0:nx+1, 0:ny+1, layers))
+
+  allocate(etanew(0:nx+1, 0:ny+1))
+  allocate(etaav(0:nx+1, 0:ny+1))
+
+  allocate(a(5, nx, ny))
+
+  allocate(hfacW(0:nx+1, 0:ny+1))
+  allocate(hfacE(0:nx+1, 0:ny+1))
+  allocate(hfacN(0:nx+1, 0:ny+1))
+  allocate(hfacS(0:nx+1, 0:ny+1))
+
+  allocate(wind_x(0:nx+1, 0:ny+1))
+  allocate(wind_y(0:nx+1, 0:ny+1))
 
   nwrite = int(dumpFreq/dt)
   avwrite = int(avFreq/dt)
