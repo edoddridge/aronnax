@@ -33,126 +33,55 @@ program MIM
   implicit none
 
   integer, parameter :: layerwise_input_length = 10000
+  ! Resolution
   integer :: nx !< number of x grid points
   integer :: ny !< number of y grid points
   integer :: layers !< number of active layers in the model
-
   ! Layer thickness (h)
   double precision, dimension(:,:,:), allocatable :: h
-  double precision, dimension(:,:,:), allocatable :: dhdt
-  double precision, dimension(:,:,:), allocatable :: dhdtold
-  double precision, dimension(:,:,:), allocatable :: dhdtveryold
-  double precision, dimension(:,:,:), allocatable :: hnew
-  ! for initialisation
-  double precision, dimension(:,:,:), allocatable :: hhalf
-  ! for saving average fields
-  double precision, dimension(:,:,:), allocatable :: hav
-
-  ! Velocity component u
+  ! Velocity component (u)
   double precision, dimension(:,:,:), allocatable :: u
-  double precision, dimension(:,:,:), allocatable :: dudt
-  double precision, dimension(:,:,:), allocatable :: dudtold
-  double precision, dimension(:,:,:), allocatable :: dudtveryold
-  double precision, dimension(:,:,:), allocatable :: unew
-  double precision, dimension(:,:), allocatable :: dudt_bt
-  ! barotropic velocity components (for pressure solver)
-  double precision, dimension(:,:), allocatable :: ub
-  ! for initialisation
-  double precision, dimension(:,:,:), allocatable :: uhalf
-  ! for saving average fields
-  double precision, dimension(:,:,:), allocatable :: uav
-
-  ! Velocity component v
+  ! Velocity component (v)
   double precision, dimension(:,:,:), allocatable :: v
-  double precision, dimension(:,:,:), allocatable :: dvdt
-  double precision, dimension(:,:,:), allocatable :: dvdtold
-  double precision, dimension(:,:,:), allocatable :: dvdtveryold
-  double precision, dimension(:,:,:), allocatable :: vnew
-  double precision, dimension(:,:), allocatable :: dvdt_bt
-  ! barotropic velocity components (for pressure solver)
-  double precision, dimension(:,:), allocatable :: vb
-  ! for initialisation
-  double precision, dimension(:,:,:), allocatable :: vhalf
-  ! for saving average fields
-  double precision, dimension(:,:,:), allocatable :: vav
-
   ! Free surface (eta)
-  double precision, dimension(:,:), allocatable :: eta
-  double precision, dimension(:,:), allocatable :: etastar
-  double precision, dimension(:,:), allocatable :: etanew
-  ! for saving average fields
-  double precision, dimension(:,:), allocatable :: etaav
-
+  double precision, dimension(:,:),   allocatable :: eta
   ! Bathymetry
   character(30) :: depthFile
-  double precision, dimension(:,:), allocatable :: depth
+  double precision, dimension(:,:),   allocatable :: depth
   double precision :: H0 ! default depth in no file specified
-  ! Pressure solver variables
-  double precision, dimension(:,:,:), allocatable :: a
-
-  ! Bernoulli potential and relative vorticity
-  double precision, dimension(:,:,:), allocatable :: b
-  double precision, dimension(:,:,:), allocatable :: zeta
-
-
   ! Grid
   double precision :: dx, dy
-  double precision, dimension(:,:), allocatable :: wetmask
-  double precision, dimension(:,:), allocatable :: hfacW
-  double precision, dimension(:,:), allocatable :: hfacE
-  double precision, dimension(:,:), allocatable :: hfacN
-  double precision, dimension(:,:), allocatable :: hfacS
+  double precision, dimension(:,:),   allocatable :: wetmask
   ! Coriolis parameter at u and v grid-points respectively
-  double precision, dimension(:,:), allocatable :: fu
-  double precision, dimension(:,:), allocatable :: fv
+  double precision, dimension(:,:),   allocatable :: fu
+  double precision, dimension(:,:),   allocatable :: fv
   ! File names to read them from
   character(30) :: fUfile, fVfile
   character(30) :: wetMaskFile
-
   ! Numerics
-  double precision :: pi, dt
+  double precision :: dt
   double precision :: au, ar, botDrag
   double precision :: ah(layerwise_input_length)
-  double precision :: slip
-  double precision :: hmin
+  double precision :: slip, hmin
   integer nTimeSteps
   double precision :: dumpFreq, avFreq
-  integer counter
-  integer nwrite, avwrite
-  double precision, dimension(:), allocatable :: zeros
+  double precision, dimension(:),     allocatable :: zeros
   integer maxits
-  double precision :: eps, rjac
-  double precision :: freesurfFac
-  double precision, dimension(:,:), allocatable :: h_norming
-  double precision :: thickness_error
-
+  double precision :: eps, freesurfFac, thickness_error
   ! Model
   double precision :: hmean(layerwise_input_length)
   ! Switch for using n + 1/2 layer physics, or using n layer physics
   logical :: RedGrav
-
-  ! Loop variables
-  integer :: i, j, k, n
-
-  ! Character variable for numbering the outputs
-  character(10) :: num
-
-
   ! Physics
   double precision :: g_vec(layerwise_input_length)
   double precision :: rho0
-
   ! Wind
-  double precision, dimension(:,:), allocatable :: wind_x
-  double precision, dimension(:,:), allocatable :: wind_y
-  double precision, dimension(:,:), allocatable :: base_wind_x
-  double precision, dimension(:,:), allocatable :: base_wind_y
+  double precision, dimension(:,:),   allocatable :: base_wind_x
+  double precision, dimension(:,:),   allocatable :: base_wind_y
   logical :: DumpWind
   character(30) :: wind_mag_time_series_file
-  double precision, dimension(:), allocatable :: wind_mag_time_series
-
-
-  ! Sponge
+  double precision, dimension(:),     allocatable :: wind_mag_time_series
+  ! Sponge regions
   double precision, dimension(:,:,:), allocatable :: spongeHTimeScale
   double precision, dimension(:,:,:), allocatable :: spongeUTimeScale
   double precision, dimension(:,:,:), allocatable :: spongeVTimeScale
@@ -165,8 +94,7 @@ program MIM
   character(30) :: spongeHfile
   character(30) :: spongeUfile
   character(30) :: spongeVfile
-
-  ! Input files
+  ! Main input files
   character(30) :: initUfile, initVfile, initHfile, initEtaFile
   character(30) :: zonalWindFile, meridionalWindFile
 
@@ -197,70 +125,24 @@ program MIM
   read(unit=8, nml=NUMERICS)
   read(unit=8, nml=MODEL)
   read(unit=8, nml=SPONGE)
-  read(8, nml=PHYSICS)
-  read(8, nml=GRID)
-  read(8, nml=INITIAL_CONDITONS)
-  read(8, nml=EXTERNAL_FORCING)
+  read(unit=8, nml=PHYSICS)
+  read(unit=8, nml=GRID)
+  read(unit=8, nml=INITIAL_CONDITONS)
+  read(unit=8, nml=EXTERNAL_FORCING)
   close(unit=8)
 
-  nwrite = int(dumpFreq/dt)
-  avwrite = int(avFreq/dt)
-
-  ! Pi, the constant
-  pi = 3.1415926535897932384
-
   allocate(h(0:nx+1, 0:ny+1, layers))
-  allocate(dhdt(0:nx+1, 0:ny+1, layers))
-  allocate(dhdtold(0:nx+1, 0:ny+1, layers))
-  allocate(dhdtveryold(0:nx+1, 0:ny+1, layers))
-  allocate(hnew(0:nx+1, 0:ny+1, layers))
-  allocate(hhalf(0:nx+1, 0:ny+1, layers))
-  allocate(hav(0:nx+1, 0:ny+1, layers))
-
   allocate(u(0:nx+1, 0:ny+1, layers))
-  allocate(dudt(0:nx+1, 0:ny+1, layers))
-  allocate(dudtold(0:nx+1, 0:ny+1, layers))
-  allocate(dudtveryold(0:nx+1, 0:ny+1, layers))
-  allocate(unew(0:nx+1, 0:ny+1, layers))
-  allocate(dudt_bt(nx, 0:ny))
-  allocate(ub(nx+1, ny))
-  allocate(uhalf(0:nx+1, 0:ny+1, layers))
-  allocate(uav(0:nx+1, 0:ny+1, layers))
-
   allocate(v(0:nx+1, 0:ny+1, layers))
-  allocate(dvdt(0:nx+1, 0:ny+1, layers))
-  allocate(dvdtold(0:nx+1, 0:ny+1, layers))
-  allocate(dvdtveryold(0:nx+1, 0:ny+1, layers))
-  allocate(vnew(0:nx+1, 0:ny+1, layers))
-  allocate(dvdt_bt(0:nx, ny))
-  allocate(vb(nx, ny+1))
-  allocate(vhalf(0:nx+1, 0:ny+1, layers))
-  allocate(vav(0:nx+1, 0:ny+1, layers))
-
   allocate(eta(0:nx+1, 0:ny+1))
-  allocate(etastar(0:nx+1, 0:ny+1))
-  allocate(etanew(0:nx+1, 0:ny+1))
-  allocate(etaav(0:nx+1, 0:ny+1))
-
   allocate(depth(0:nx+1, 0:ny+1))
-  allocate(a(5, nx, ny))
-
-  allocate(b(0:nx+1, 0:ny+1, layers))
-  allocate(zeta(0:nx+1, 0:ny+1, layers))
 
   allocate(wetmask(0:nx+1, 0:ny+1))
-  allocate(hfacW(0:nx+1, 0:ny+1))
-  allocate(hfacE(0:nx+1, 0:ny+1))
-  allocate(hfacN(0:nx+1, 0:ny+1))
-  allocate(hfacS(0:nx+1, 0:ny+1))
   allocate(fu(0:nx+1, 0:ny+1))
   allocate(fv(0:nx+1, 0:ny+1))
 
   allocate(zeros(layers))
-  allocate(h_norming(0:nx+1, 0:ny+1))
 
-  allocate(wind_x(0:nx+1, 0:ny+1))
-  allocate(wind_y(0:nx+1, 0:ny+1))
   allocate(base_wind_x(0:nx+1, 0:ny+1))
   allocate(base_wind_y(0:nx+1, 0:ny+1))
   allocate(wind_mag_time_series(nTimeSteps))
@@ -300,9 +182,6 @@ program MIM
   call read_input_file_time_series(wind_mag_time_series_file, &
       wind_mag_time_series, 1.d0, nTimeSteps)
 
-  wind_x = base_wind_x*wind_mag_time_series(1)
-  wind_y = base_wind_y*wind_mag_time_series(1)
-
   call read_input_fileH(spongeHTimeScaleFile, spongeHTimeScale, &
       zeros, nx, ny, layers)
   call read_input_fileH(spongeHfile, spongeH, hmean, nx, ny, layers)
@@ -314,6 +193,178 @@ program MIM
   call read_input_fileV(spongeVfile, spongeV, 0.d0, nx, ny, layers)
   call read_input_fileH_2D(wetMaskFile, wetmask, 1.d0, nx, ny)
 
+  ! For now enforce wetmask to have zeros around the edge.
+  wetmask(0, :) = 0d0
+  wetmask(nx+1, :) = 0d0
+  wetmask(:, 0) = 0d0
+  wetmask(:, ny+1) = 0d0
+  ! TODO, this will change one day when the model can do periodic
+  ! boundary conditions.
+
+  call model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
+      dt, au, ar, botDrag, ah, slip, hmin, nTimeSteps, dumpFreq, avFreq, &
+      maxits, eps, freesurfFac, thickness_error, g_vec, rho0, &
+      base_wind_x, base_wind_y, wind_mag_time_series, &
+      spongeHTimeScale, spongeUTimeScale, spongeVTimeScale, &
+      spongeH, spongeU, spongeV, &
+      nx, ny, layers, RedGrav, DumpWind)
+  print *, 'Execution ended normally'
+  stop 0
+end program MIM
+
+! ------------------------------ Primary routine ----------------------------
+!> Run the model
+
+subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
+    dt, au, ar, botDrag, ah, slip, hmin, nTimeSteps, dumpFreq, avFreq, &
+    maxits, eps, freesurfFac, thickness_error, g_vec, rho0, &
+    base_wind_x, base_wind_y, wind_mag_time_series, &
+    spongeHTimeScale, spongeUTimeScale, spongeVTimeScale, &
+    spongeH, spongeU, spongeV, &
+    nx, ny, layers, RedGrav, DumpWind)
+  implicit none
+
+  ! Layer thickness (h)
+  double precision, intent(inout) :: h(0:nx+1, 0:ny+1, layers)
+  ! Velocity component (u)
+  double precision, intent(inout) :: u(0:nx+1, 0:ny+1, layers)
+  ! Velocity component (v)
+  double precision, intent(inout) :: v(0:nx+1, 0:ny+1, layers)
+  ! Free surface (eta)
+  double precision, intent(inout) :: eta(0:nx+1, 0:ny+1)
+  ! Bathymetry
+  double precision, intent(in) :: depth(0:nx+1, 0:ny+1)
+  ! Grid
+  double precision, intent(in) :: dx, dy
+  double precision, intent(in) :: wetmask(0:nx+1, 0:ny+1)
+  ! Coriolis parameter at u and v grid-points respectively
+  double precision, intent(in) :: fu(0:nx+1, 0:ny+1)
+  double precision, intent(in) :: fv(0:nx+1, 0:ny+1)
+  ! Numerics
+  double precision, intent(in) :: dt, au, ar, botDrag
+  double precision, intent(in) :: ah(layers)
+  double precision, intent(in) :: slip, hmin
+  integer,          intent(in) :: nTimeSteps
+  double precision, intent(in) :: dumpFreq, avFreq
+  integer,          intent(in) :: maxits
+  double precision, intent(in) :: eps, freesurfFac, thickness_error
+  ! Physics
+  double precision, intent(in) :: g_vec(layers)
+  double precision, intent(in) :: rho0
+  ! Wind
+  double precision, intent(in) :: base_wind_x(0:nx+1, 0:ny+1)
+  double precision, intent(in) :: base_wind_y(0:nx+1, 0:ny+1)
+  double precision, intent(in) :: wind_mag_time_series(nTimeSteps)
+  ! Sponge regions
+  double precision, intent(in) :: spongeHTimeScale(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in) :: spongeUTimeScale(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in) :: spongeVTimeScale(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in) :: spongeH(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in) :: spongeU(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in) :: spongeV(0:nx+1, 0:ny+1, layers)
+  ! Resolution
+  integer,          intent(in) :: nx, ny, layers
+  ! Reduced gravity vs n-layer physics
+  logical,          intent(in) :: RedGrav
+  ! Whether to write computed wind in the output
+  logical,          intent(in) :: DumpWind
+
+  double precision, dimension(:,:,:), allocatable :: dhdt
+  double precision, dimension(:,:,:), allocatable :: dhdtold
+  double precision, dimension(:,:,:), allocatable :: dhdtveryold
+  double precision, dimension(:,:,:), allocatable :: hnew
+  ! for initialisation
+  double precision, dimension(:,:,:), allocatable :: hhalf
+  ! for saving average fields
+  double precision, dimension(:,:,:), allocatable :: hav
+
+  double precision, dimension(:,:,:), allocatable :: dudt
+  double precision, dimension(:,:,:), allocatable :: dudtold
+  double precision, dimension(:,:,:), allocatable :: dudtveryold
+  double precision, dimension(:,:,:), allocatable :: unew
+  ! for initialisation
+  double precision, dimension(:,:,:), allocatable :: uhalf
+  ! for saving average fields
+  double precision, dimension(:,:,:), allocatable :: uav
+
+  double precision, dimension(:,:,:), allocatable :: dvdt
+  double precision, dimension(:,:,:), allocatable :: dvdtold
+  double precision, dimension(:,:,:), allocatable :: dvdtveryold
+  double precision, dimension(:,:,:), allocatable :: vnew
+  ! for initialisation
+  double precision, dimension(:,:,:), allocatable :: vhalf
+  ! for saving average fields
+  double precision, dimension(:,:,:), allocatable :: vav
+
+  double precision, dimension(:,:),   allocatable :: etanew
+  ! for saving average fields
+  double precision, dimension(:,:),   allocatable :: etaav
+
+  ! Pressure solver variables
+  double precision, dimension(:,:,:), allocatable :: a
+
+  ! Geometry
+  double precision, dimension(:,:),   allocatable :: hfacW
+  double precision, dimension(:,:),   allocatable :: hfacE
+  double precision, dimension(:,:),   allocatable :: hfacN
+  double precision, dimension(:,:),   allocatable :: hfacS
+
+  ! Numerics
+  double precision :: pi
+  integer :: nwrite, avwrite
+  double precision :: rjac
+
+  ! Time step loop variable
+  integer :: n
+
+  ! Wind
+  double precision, dimension(:,:),   allocatable :: wind_x
+  double precision, dimension(:,:),   allocatable :: wind_y
+
+  allocate(dhdt(0:nx+1, 0:ny+1, layers))
+  allocate(dhdtold(0:nx+1, 0:ny+1, layers))
+  allocate(dhdtveryold(0:nx+1, 0:ny+1, layers))
+  allocate(hnew(0:nx+1, 0:ny+1, layers))
+  allocate(hhalf(0:nx+1, 0:ny+1, layers))
+  allocate(hav(0:nx+1, 0:ny+1, layers))
+
+  allocate(dudt(0:nx+1, 0:ny+1, layers))
+  allocate(dudtold(0:nx+1, 0:ny+1, layers))
+  allocate(dudtveryold(0:nx+1, 0:ny+1, layers))
+  allocate(unew(0:nx+1, 0:ny+1, layers))
+  allocate(uhalf(0:nx+1, 0:ny+1, layers))
+  allocate(uav(0:nx+1, 0:ny+1, layers))
+
+  allocate(dvdt(0:nx+1, 0:ny+1, layers))
+  allocate(dvdtold(0:nx+1, 0:ny+1, layers))
+  allocate(dvdtveryold(0:nx+1, 0:ny+1, layers))
+  allocate(vnew(0:nx+1, 0:ny+1, layers))
+  allocate(vhalf(0:nx+1, 0:ny+1, layers))
+  allocate(vav(0:nx+1, 0:ny+1, layers))
+
+  allocate(etanew(0:nx+1, 0:ny+1))
+  allocate(etaav(0:nx+1, 0:ny+1))
+
+  allocate(a(5, nx, ny))
+
+  allocate(hfacW(0:nx+1, 0:ny+1))
+  allocate(hfacE(0:nx+1, 0:ny+1))
+  allocate(hfacN(0:nx+1, 0:ny+1))
+  allocate(hfacS(0:nx+1, 0:ny+1))
+
+  allocate(wind_x(0:nx+1, 0:ny+1))
+  allocate(wind_y(0:nx+1, 0:ny+1))
+
+  nwrite = int(dumpFreq/dt)
+  avwrite = int(avFreq/dt)
+
+  ! Pi, the constant
+  pi = 3.1415926535897932384
+
+  ! Initialize wind fields
+  wind_x = base_wind_x*wind_mag_time_series(1)
+  wind_y = base_wind_y*wind_mag_time_series(1)
+
   ! Initialise the average fields
   if (avwrite .ne. 0) then
     hav = 0.0
@@ -324,54 +375,16 @@ program MIM
     end if
   end if
 
-  ! For now enforce wetmask to have zeros around the edge.
-  wetmask(0, :) = 0d0
-  wetmask(nx+1, :) = 0d0
-  wetmask(:, 0) = 0d0
-  wetmask(:, ny+1) = 0d0
-  ! TODO, this will change one day when the model can do periodic
-  ! boundary conditions.
-
   call calc_boundary_masks(wetmask, hfacW, hfacE, hfacS, hfacN, nx, ny)
 
-  ! Apply the boundary conditions
-  ! - Enforce no normal flow boundary condition
-  !   and no flow in dry cells.
-  ! - no/free-slip is done inside the dudt and dvdt subroutines.
-  ! - hfacW and hfacS are zero where the transition between
-  !   wet and dry cells occurs.
-  ! - wetmask is 1 in wet cells, and zero in dry cells.
-  do k = 1, layers
-    ! h(:, :, k) = h(:, :, k)*wetmask(:, :)
-    u(:, :, k) = u(:, :, k) * hfacW * wetmask(:, :)
-    v(:, :, k) = v(:, :, k) * hfacS * wetmask(:, :)
-  end do
+  call apply_boundary_conditions(u, hfacW, wetmask, nx, ny, layers)
+  call apply_boundary_conditions(v, hfacS, wetmask, nx, ny, layers)
 
 
   if (.not. RedGrav) then
     ! Initialise arrays for pressure solver
     ! a = derivatives of the depth field
-    do j = 1, ny
-      do i = 1, nx
-        a(1,i,j) = g_vec(1)*0.5*(depth(i+1,j)+depth(i,j))/dx**2
-        a(2,i,j) = g_vec(1)*0.5*(depth(i,j+1)+depth(i,j))/dy**2
-        a(3,i,j) = g_vec(1)*0.5*(depth(i,j)+depth(i-1,j))/dx**2
-        a(4,i,j) = g_vec(1)*0.5*(depth(i,j)+depth(i,j-1))/dy**2
-      end do
-    end do
-    do j = 1, ny
-      a(1, nx, j) = 0.0
-      a(3, 1, j) = 0.0
-    end do
-    do i = 1, nx
-      a(2, i, ny) = 0.0
-      a(4, i, 1) = 0.0
-    end do
-    do j = 1, ny
-      do i = 1, nx
-        a(5,i,j) = -a(1,i,j)-a(2,i,j)-a(3,i,j)-a(4,i,j)
-      end do
-    end do
+    call derivatives_of_the_depth_field(a, depth, g_vec(1), dx, dy, nx, ny)
 
     ! Calculate the spectral radius of the grid for use by the
     ! successive over-relaxation scheme
@@ -381,77 +394,49 @@ program MIM
     ! 2*pi in this calculation
 
     ! Check that the supplied free surface anomaly and layer
-    ! thicknesses are consistent
-    h_norming = (freesurfFac*eta+depth)/sum(h,3)
-    do k = 1, layers
-      h(:, :, k) = h(:, :, k) * h_norming
-    end do
+    ! thicknesses are consistent with the supplied depth field.
+    ! If they are not, then scale the layer thicknesses to make 
+    ! them consistent.
+    call enforce_depth_thickness_consistency(h, eta, depth, &
+        freesurfFac, thickness_error, nx, ny, layers)
 
-    if (maxval(abs(h_norming - 1d0)).gt. thickness_error) then
-      print *, 'inconsistency between h and eta (in %):', &
-          maxval(abs(h_norming - 1d0))*100d0
-    end if
   end if
 
-  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  !!!  Initialisation of the model STARTS HERE                              !!!
-  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  !!!  Initialisation of the model STARTS HERE                            !!!
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !
   ! Do two initial time steps with Runge-Kutta second-order.
   ! These initialisation steps do NOT use or update the free surface.
   !
-  ! -------------------------- negative 2 time step ---------------------------
+  ! ------------------------- negative 2 time step --------------------------
   ! Code to work out dhdtveryold, dudtveryold and dvdtveryold
 
-  ! Calculate baroclinic Bernoulli potential
-  if (RedGrav) then
-    call evaluate_b_RedGrav(b, h, u, v, nx, ny, layers, g_vec)
-  else
-    call evaluate_b_iso(b, h, u, v, nx, ny, layers, g_vec, depth)
-  end if
-
-  ! Calculate relative vorticity
-  call evaluate_zeta(zeta, u, v, nx, ny, layers, dx, dy)
-
-  ! Calculate dhdt, dudt, dvdt at current time step
-  call evaluate_dhdt(dhdtveryold, h, u, v, ah, dx, dy, nx, ny, layers, &
-      spongeHTimeScale, spongeH, wetmask, RedGrav)
-
-  call evaluate_dudt(dudtveryold,  h, u, v, b, zeta, wind_x, fu, au, ar, &
-      slip, dx, dy, hfacN, hfacS, nx, ny, layers, rho0, &
-      spongeUTimeScale, spongeU, RedGrav, botDrag)
-
-  call evaluate_dvdt(dvdtveryold,  h, u, v, b, zeta, wind_y, fv, &
-      au, ar, slip, dx, dy, hfacW, hfacE, nx, ny, layers, rho0, &
-      spongeVTimeScale, spongeV, RedGrav, botDrag)
+  call state_derivative(dhdtveryold, dudtveryold, dvdtveryold, &
+      h, u, v, depth, &
+      dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
+      au, ar, botDrag, ah, slip, &
+      RedGrav, g_vec, rho0, wind_x, wind_y, &
+      spongeHTimeScale, spongeH, &
+      spongeUTimeScale, spongeU, &
+      spongeVTimeScale, spongeV, &
+      nx, ny, layers)
 
   ! Calculate the values at half the time interval with Forward Euler
   hhalf = h+0.5d0*dt*dhdtveryold
   uhalf = u+0.5d0*dt*dudtveryold
   vhalf = v+0.5d0*dt*dvdtveryold
 
-  ! Calculate Bernoulli potential
-  if (RedGrav) then
-    call evaluate_b_RedGrav(b, hhalf, uhalf, vhalf, nx, ny, layers, g_vec)
-  else
-    call evaluate_b_iso(b, hhalf, uhalf, vhalf, nx, ny, layers, g_vec, depth)
-  end if
+  call state_derivative(dhdtveryold, dudtveryold, dvdtveryold, &
+      hhalf, uhalf, vhalf, depth, &
+      dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
+      au, ar, botDrag, ah, slip, &
+      RedGrav, g_vec, rho0, wind_x, wind_y, &
+      spongeHTimeScale, spongeH, &
+      spongeUTimeScale, spongeU, &
+      spongeVTimeScale, spongeV, &
+      nx, ny, layers)
 
-  ! Calculate relative vorticity
-  call evaluate_zeta(zeta, uhalf, vhalf, nx, ny, layers, dx, dy)
-
-  ! Now calculate d/dt of u, v, h and store as dhdtveryold, dudtveryold
-  ! and dvdtveryold
-  call evaluate_dhdt(dhdtveryold, hhalf, uhalf, vhalf, ah, dx, dy, &
-      nx, ny, layers, spongeHTimeScale, spongeH, wetmask, RedGrav)
-
-  call evaluate_dudt(dudtveryold, hhalf, uhalf, vhalf, b, zeta, &
-      wind_x, fu, au, ar, slip, dx, dy, hfacN, hfacS, nx, ny, layers, rho0, &
-      spongeUTimeScale, spongeU, RedGrav, botDrag)
-
-  call evaluate_dvdt(dvdtveryold, hhalf, uhalf, vhalf, b, zeta, &
-      wind_y, fv, au, ar, slip, dx, dy, hfacW, hfacE, nx, ny, layers, rho0, &
-      spongeVTimeScale, spongeV, RedGrav, botDrag)
   ! These are the values to be stored in the 'veryold' variables ready
   ! to start the proper model run.
 
@@ -461,73 +446,42 @@ program MIM
   v = v + dt*dvdtveryold
 
   ! Apply the boundary conditions
-  ! - Enforce no normal flow boundary condition
-  !   and no flow in dry cells.
-  ! - no/free-slip is done inside the dudt and dvdt subroutines.
-  ! - hfacW and hfacS are zero where the transition between
-  !   wet and dry cells occurs.
-  ! - wetmask is 1 in wet cells, and zero in dry cells.
-  do k = 1, layers
-    u(:, :, k) = u(:, :, k) * hfacW * wetmask(:, :)
-    v(:, :, k) = v(:, :, k) * hfacS * wetmask(:, :)
-  end do
+  call apply_boundary_conditions(u, hfacW, wetmask, nx, ny, layers)
+  call apply_boundary_conditions(v, hfacS, wetmask, nx, ny, layers)
 
   ! Wrap fields around for periodic simulations
   call wrap_fields_3D(u, nx, ny, layers)
   call wrap_fields_3D(v, nx, ny, layers)
   call wrap_fields_3D(h, nx, ny, layers)
 
-  ! -------------------------- negative 1 time step ---------------------------
+  ! ------------------------- negative 1 time step --------------------------
   ! Code to work out dhdtold, dudtold and dvdtold
 
-  ! Calculate Bernoulli potential
-  if (RedGrav) then
-    call evaluate_b_RedGrav(b, h, u, v, nx, ny, layers, g_vec)
-  else
-    call evaluate_b_iso(b, h, u, v, nx, ny, layers, g_vec, depth)
-  end if
-
-  ! Calculate relative vorticity
-  call evaluate_zeta(zeta, u, v, nx, ny, layers, dx, dy)
-
-  ! Calculate dhdt, dudt, dvdt at current time step
-  call evaluate_dhdt(dhdtold, h, u, v, ah, dx, dy, nx, ny, layers, &
-      spongeHTimeScale, spongeH, wetmask, RedGrav)
-
-  call evaluate_dudt(dudtold, h, u, v, b, zeta, wind_x, fu, &
-      au, ar, slip, dx, dy, hfacN, hfacS, nx, ny, layers, rho0, &
-      spongeUTimeScale, spongeU, RedGrav, botDrag)
-
-  ! If the wind is changed to be meridional this code will need changing
-  call evaluate_dvdt(dvdtold, h, u, v, b, zeta, wind_y, fv, &
-      au, ar, slip, dx, dy, hfacW, hfacE, nx, ny, layers, rho0, &
-      spongeVTimeScale, spongeV, RedGrav, botDrag)
+  call state_derivative(dhdtold, dudtold, dvdtold, &
+      h, u, v, depth, &
+      dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
+      au, ar, botDrag, ah, slip, &
+      RedGrav, g_vec, rho0, wind_x, wind_y, &
+      spongeHTimeScale, spongeH, &
+      spongeUTimeScale, spongeU, &
+      spongeVTimeScale, spongeV, &
+      nx, ny, layers)
 
   ! Calculate the values at half the time interval with Forward Euler
   hhalf = h+0.5d0*dt*dhdtold
   uhalf = u+0.5d0*dt*dudtold
   vhalf = v+0.5d0*dt*dvdtold
 
-  ! Calculate Bernoulli potential
-  if (RedGrav) then
-    call evaluate_b_RedGrav(b, hhalf, uhalf, vhalf, nx, ny, layers, g_vec)
-  else
-    call evaluate_b_iso(b, hhalf, uhalf, vhalf, nx, ny, layers, g_vec, depth)
-  end if
+  call state_derivative(dhdtold, dudtold, dvdtold, &
+      hhalf, uhalf, vhalf, depth, &
+      dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
+      au, ar, botDrag, ah, slip, &
+      RedGrav, g_vec, rho0, wind_x, wind_y, &
+      spongeHTimeScale, spongeH, &
+      spongeUTimeScale, spongeU, &
+      spongeVTimeScale, spongeV, &
+      nx, ny, layers)
 
-  ! Calculate relative vorticity
-  call evaluate_zeta(zeta, uhalf, vhalf, nx, ny, layers, dx, dy)
-
-  ! Now calculate d/dt of u, v, h and store as dhdtold, dudtold and dvdtold
-  call evaluate_dhdt(dhdtold, hhalf, uhalf, vhalf, ah, dx, dy, &
-      nx, ny, layers, spongeHTimeScale, spongeH, wetmask, RedGrav)
-  call evaluate_dudt(dudtold, hhalf, uhalf, vhalf, b, zeta, wind_x, &
-      fu, au, ar, slip, dx, dy, hfacN, hfacS, nx, ny, layers, rho0, &
-      spongeUTimeScale, spongeU, RedGrav, botDrag)
-  ! If the wind is changed to be meridional this code will need changing
-  call evaluate_dvdt(dvdtold, hhalf, uhalf, vhalf, b, zeta, wind_y, &
-      fv, au, ar, slip, dx, dy, hfacW, hfacE, nx, ny, layers, rho0, &
-      spongeVTimeScale, spongeV, RedGrav, botDrag)
   ! These are the values to be stored in the 'old' variables ready to start
   ! the proper model run.
 
@@ -537,16 +491,8 @@ program MIM
   v = v + dt*dvdtold
 
   ! Apply the boundary conditions
-  ! - Enforce no normal flow boundary condition
-  !   and no flow in dry cells.
-  ! - no/free-slip is done inside the dudt and dvdt subroutines.
-  ! - hfacW and hfacS are zero where the transition between
-  !   wet and dry cells occurs.
-  ! - wetmask is 1 in wet cells, and zero in dry cells.
-  do k = 1, layers
-    u(:, :, k) = u(:, :, k) * hfacW * wetmask(:, :)
-    v(:, :, k) = v(:, :, k) * hfacS * wetmask(:, :)
-  end do
+  call apply_boundary_conditions(u, hfacW, wetmask, nx, ny, layers)
+  call apply_boundary_conditions(v, hfacS, wetmask, nx, ny, layers)
 
   ! Wrap fields around for periodic simulations
   call wrap_fields_3D(u, nx, ny, layers)
@@ -559,36 +505,23 @@ program MIM
   ! - The model then solves for the tendencies at the current step
   !   before solving for the fields at the next time step.
 
-  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  !!! MAIN LOOP OF THE MODEL STARTS HERE                                    !!!
-  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  !!! MAIN LOOP OF THE MODEL STARTS HERE                                  !!!
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
   do n = 1, nTimeSteps
 
     wind_x = base_wind_x*wind_mag_time_series(n)
     wind_y = base_wind_y*wind_mag_time_series(n)
 
-    ! Calculate Bernoulli potential
-    if (RedGrav) then
-      call evaluate_b_RedGrav(b, h, u, v, nx, ny, layers, g_vec)
-    else
-      call evaluate_b_iso(b, h, u, v, nx, ny, layers, g_vec, depth)
-    end if
-
-    ! Calculate relative vorticity
-    call evaluate_zeta(zeta, u, v, nx, ny, layers, dx, dy)
-
-    ! Calculate dhdt, dudt, dvdt at current time step
-    call evaluate_dhdt(dhdt, h, u, v, ah, dx, dy, nx, ny, layers, &
-        spongeHTimeScale, spongeH, wetmask, RedGrav)
-
-    call evaluate_dudt(dudt, h, u, v, b, zeta, wind_x, fu, au, ar, slip, &
-        dx, dy, hfacN, hfacS, nx, ny, layers, rho0, &
-        spongeUTimeScale, spongeU, RedGrav, botDrag)
-
-    call evaluate_dvdt(dvdt, h, u, v, b, zeta, wind_y, fv, au, ar, slip, &
-        dx, dy, hfacW, hfacE, nx, ny, layers, rho0, &
-        spongeVTimeScale, spongeV, RedGrav, botDrag)
+    call state_derivative(dhdt, dudt, dvdt, h, u, v, depth, &
+        dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
+        au, ar, botDrag, ah, slip, &
+        RedGrav, g_vec, rho0, wind_x, wind_y, &
+        spongeHTimeScale, spongeH, &
+        spongeUTimeScale, spongeU, &
+        spongeVTimeScale, spongeV, &
+        nx, ny, layers)
 
     ! Use dh/dt, du/dt and dv/dt to step h, u and v forward in time with
     ! the Adams-Bashforth third order linear multistep method
@@ -598,114 +531,19 @@ program MIM
     hnew = h+dt*(23d0*dhdt - 16d0*dhdtold + 5d0*dhdtveryold)/12d0
 
     ! Apply the boundary conditions
-    ! - Enforce no normal flow boundary condition
-    !   and no flow in dry cells.
-    ! - no/free-slip is done inside the dudt and dvdt subroutines.
-    ! - hfacW and hfacS are zero where the transition between
-    !   wet and dry cells occurs.
-    ! - wetmask is 1 in wet cells, and zero in dry cells.
-    do k = 1, layers
-      unew(:, :, k) = unew(:, :, k) * hfacW * wetmask(:, :)
-      vnew(:, :, k) = vnew(:, :, k) * hfacS * wetmask(:, :)
-    end do
+    call apply_boundary_conditions(unew, hfacW, wetmask, nx, ny, layers)
+    call apply_boundary_conditions(vnew, hfacS, wetmask, nx, ny, layers)
 
     ! Do the isopycnal layer physics
     if (.not. RedGrav) then
-      ! Calculate the barotropic velocities
-      call calc_baro_u(ub, unew, hnew, eta, freesurfFac, nx, ny, layers)
-      call calc_baro_v(vb, vnew, hnew, eta, freesurfFac, nx, ny, layers)
-
-      ! Calculate divergence of ub and vb, and solve for the pressure
-      ! field that removes it
-      call calc_eta_star(ub, vb, eta, etastar, freesurfFac, nx, ny, dx, dy, dt)
-      ! print *, maxval(abs(etastar))
-
-      ! Prevent barotropic signals from bouncing around outside the
-      ! wet region of the model.
-      ! etastar = etastar*wetmask
-
-      call SOR_solver(a, etanew, etastar, freesurfFac, nx, ny, &
-          dt, rjac, eps, maxits, n)
-      ! print *, maxval(abs(etanew))
-
-      etanew = etanew*wetmask
-      call wrap_fields_2D(etanew, nx, ny)
-
-      ! Now update the velocities using the barotropic tendency due to
-      ! the pressure gradient.
-      dudt_bt = 0d0
-      dvdt_bt = 0d0
-
-      do i = 1, nx
-        do j = 0, ny
-          do k = 1, layers
-            dudt_bt(i,j) = -g_vec(1)*(etanew(i,j) - etanew(i-1,j))/(dx)
-            unew(i,j,k) = unew(i,j,k) + dt*dudt_bt(i,j) ! 23d0*dt*dudt_bt(i,j)/12d0
-          end do
-        end do
-      end do
-
-      do i = 0, nx
-        do j = 1, ny
-          do k = 1, layers
-            dvdt_bt(i,j) = -g_vec(1)*(etanew(i,j) - etanew(i,j-1))/(dy)
-            vnew(i,j,k) = vnew(i,j,k) + dt*dvdt_bt(i,j)! 23d0*dt*dvdt_bt(i,j)/12d0
-          end do
-        end do
-      end do
-
-      ! We now have correct velocities at the next time step, but the
-      ! layer thicknesses were updated using the velocities without
-      ! the barotropic pressure contribution. Force consistency
-      ! between layer thicknesses and ocean depth by scaling
-      ! thicknesses to agree with free surface.
-
-      h_norming = (freesurfFac*etanew + depth) / sum(hnew, 3)
-      do k = 1, layers
-        hnew(:, :, k) = hnew(:, :, k) * h_norming
-      end do
-
-      if (maxval(abs(h_norming - 1d0)) .gt. thickness_error) then
-        print *, 'inconsistency between h and eta (in %).', &
-            maxval(abs(h_norming - 1d0))*100
-      end if
-
-      ! Apply the boundary conditions
-      ! - Enforce no normal flow boundary condition
-      !   and no flow in dry cells.
-      ! - no/free-slip is done inside the dudt and dvdt subroutines.
-      ! - hfacW and hfacS are zero where the transition between
-      !   wet and dry cells occurs.
-      ! - wetmask is 1 in wet cells, and zero in dry cells.
-      do k = 1, layers
-        unew(:, :, k) = unew(:, :, k) * hfacW * wetmask(:, :)
-        vnew(:, :, k) = vnew(:, :, k) * hfacS * wetmask(:, :)
-      end do
+      call barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
+          dx, dy, wetmask, hfacW, hfacS, dt, &
+          maxits, eps, rjac, freesurfFac, thickness_error, &
+          g_vec, nx, ny, layers, n)
     end if
 
-    ! Code to stop layers from getting too thin
-    counter = 0
-
-    do k = 1, layers
-      do j = 1, ny
-        do i = 1, nx
-          if (hnew(i, j, k) .lt. hmin) then
-            hnew(i, j, k) = hmin
-            counter = counter + 1
-            if (counter .eq. 1) then
-              ! Write a file saying that the layer thickness value
-              ! dropped below hmin and this line has been used.
-              open(unit=10, file='layer thickness dropped below hmin.txt', &
-                  action="write", status="unknown", &
-                  form="formatted", position="append")
-              write(10, 1111) n
-1111          format("layer thickness dropped below hmin at time step ", 1i10.10)
-              close(unit=10)
-            end if
-          end if
-        end do
-      end do
-    end do
+    ! Stop layers from getting too thin
+    call enforce_minimum_layer_thickness(hnew, hmin, nx, ny, layers, n)
 
     ! Wrap fields around for periodic simulations
     call wrap_fields_3D(unew, nx, ny, layers)
@@ -744,99 +582,9 @@ program MIM
 
     ! Now have new fields in main arrays and old fields in very old arrays
 
-    ! ------------------------ Code for generating output ---------------------
-    ! Write data to file?
-    if (mod(n-1, nwrite) .eq. 0) then
-
-      !
-      ! ----------------------- Snapshot Output --------------------
-      write(num, '(i10.10)') n
-
-      ! Output the data to a file
-      open(unit=10, status='replace', file='output/snap.h.'//num, &
-          form='unformatted')
-      write(10) h(1:nx, 1:ny, :)
-      close(10)
-      open(unit=10, status='replace', file='output/snap.u.'//num, &
-          form='unformatted')
-      write(10) u(1:nx+1, 1:ny, :)
-      close(10)
-      open(unit=10, status='replace', file='output/snap.v.'//num, &
-          form='unformatted')
-      write(10) v(1:nx, 1:ny+1, :)
-      close(10)
-      if (.not. RedGrav) then
-        open(unit=10, status='replace', file='output/snap.eta.'//num, &
-            form='unformatted')
-        write(10) eta(1:nx, 1:ny)
-        close(10)
-      end if
-
-      if (DumpWind .eqv. .true.) then
-        open(unit=10, status='replace', file='output/wind_x.'//num, &
-            form='unformatted')
-        write(10) wind_x(1:nx+1, 1:ny)
-        close(10)
-        open(unit=10, status='replace', file='output/wind_y.'//num, &
-            form='unformatted')
-        write(10) wind_y(1:nx, 1:ny+1)
-        close(10)
-      end if
-
-      ! Check if there are NaNs in the data
-      call break_if_NaN(h, nx, ny, layers, n)
-      ! call break_if_NaN(u, nx, ny, layers, n)
-      ! call break_if_NaN(v, nx, ny, layers, n)
-
-    end if
-
-    ! ----------------------- Average Output -----------------
-    if (avwrite .eq. 0) then
-      ! OK
-    else if (mod(n-1, avwrite) .eq. 0) then
-
-      hav = hav/real(avwrite)
-      uav = uav/real(avwrite)
-      vav = vav/real(avwrite)
-
-      write(num, '(i10.10)') n
-
-      ! output the data to a file
-
-      open(unit=10, status='replace', file='output/av.h.'//num, &
-          form='unformatted')
-      write(10) hav(1:nx, 1:ny, :)
-      close(10)
-      open(unit=10, status='replace', file='output/av.u.'//num, &
-          form='unformatted')
-      write(10) uav(1:nx+1, 1:ny, :)
-      close(10)
-      open(unit=10, status='replace', file='output/av.v.'//num, &
-          form='unformatted')
-      write(10) vav(1:nx, 1:ny+1, :)
-      close(10)
-      if (.not. RedGrav) then
-        open(unit=10, status='replace', file='output/av.eta.'//num, &
-            form='unformatted')
-        write(10) etaav(1:nx, 1:ny)
-        close(10)
-      end if
-
-      ! Check if there are NaNs in the data
-      call break_if_NaN(h, nx, ny, layers, n)
-      ! call break_if_NaN(u, nx, ny, layers, n)
-      ! call break_if_NaN(v, nx, ny, layers, n)
-
-      ! Reset average quantities
-      hav = 0.0
-      uav = 0.0
-      vav = 0.0
-      if (.not. RedGrav) then
-        etaav = 0.0
-      end if
-      ! h2av = 0.0
-
-    end if
+    call maybe_dump_output(h, hav, u, uav, v, vav, eta, etaav, &
+        wind_x, wind_y, nx, ny, layers, &
+        n, nwrite, avwrite, RedGrav, DumpWind)
 
   end do
 
@@ -845,17 +593,222 @@ program MIM
   write(10, 1112) n
 1112 format( "run finished at time step ", 1i10.10)
   close(unit=10)
+  return
+end subroutine model_run
 
-  print *, 'Execution ended normally'
+! ----------------------------- Auxiliary routines --------------------------
+!> Compute the forward state derivative
 
-  stop 0
+subroutine state_derivative(dhdt, dudt, dvdt, h, u, v, depth, &
+    dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
+    au, ar, botDrag, ah, slip, &
+    RedGrav, g_vec, rho0, wind_x, wind_y, &
+    spongeHTimeScale, spongeH, &
+    spongeUTimeScale, spongeU, &
+    spongeVTimeScale, spongeV, &
+    nx, ny, layers)
+  implicit none
 
-end program MIM
+  double precision, intent(out) :: dhdt(0:nx+1, 0:ny+1, layers)
+  double precision, intent(out) :: dudt(0:nx+1, 0:ny+1, layers)
+  double precision, intent(out) :: dvdt(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in) :: h(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in) :: u(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in) :: v(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in) :: depth(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in) :: dx, dy
+  double precision, intent(in) :: wetmask(0:nx+1, 0:ny+1)
+  double precision, intent(in) :: hfacW(0:nx+1, 0:ny+1)
+  double precision, intent(in) :: hfacE(0:nx+1, 0:ny+1)
+  double precision, intent(in) :: hfacN(0:nx+1, 0:ny+1)
+  double precision, intent(in) :: hfacS(0:nx+1, 0:ny+1)
+  double precision, intent(in) :: fu(0:nx+1, 0:ny+1)
+  double precision, intent(in) :: fv(0:nx+1, 0:ny+1)
+  double precision, intent(in) :: au, ar, botDrag
+  double precision, intent(in) :: ah(layers)
+  double precision, intent(in) :: slip
+  logical, intent(in) :: RedGrav
+  double precision, intent(in) :: g_vec(layers)
+  double precision, intent(in) :: rho0
+  double precision, intent(in) :: wind_x(0:nx+1, 0:ny+1)
+  double precision, intent(in) :: wind_y(0:nx+1, 0:ny+1)
+  double precision, intent(in) :: spongeHTimeScale(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in) :: spongeH(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in) :: spongeUTimeScale(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in) :: spongeU(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in) :: spongeVTimeScale(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in) :: spongeV(0:nx+1, 0:ny+1, layers)
+  integer, intent(in) :: nx, ny, layers
 
+  ! Bernoulli potential
+  double precision :: b(0:nx+1, 0:ny+1, layers)
+  ! Relative vorticity
+  double precision :: zeta(0:nx+1, 0:ny+1, layers)
 
-! ------------------------- Beginning of the subroutines ----------------------
-!
-! -----------------------------------------------------------------------------
+  ! Calculate Bernoulli potential
+  if (RedGrav) then
+    call evaluate_b_RedGrav(b, h, u, v, nx, ny, layers, g_vec)
+  else
+    call evaluate_b_iso(b, h, u, v, nx, ny, layers, g_vec, depth)
+  end if
+
+  ! Calculate relative vorticity
+  call evaluate_zeta(zeta, u, v, nx, ny, layers, dx, dy)
+
+  ! Calculate dhdt, dudt, dvdt at current time step
+  call evaluate_dhdt(dhdt, h, u, v, ah, dx, dy, nx, ny, layers, &
+      spongeHTimeScale, spongeH, wetmask, RedGrav)
+
+  call evaluate_dudt(dudt, h, u, v, b, zeta, wind_x, fu, au, ar, slip, &
+      dx, dy, hfacN, hfacS, nx, ny, layers, rho0, &
+      spongeUTimeScale, spongeU, RedGrav, botDrag)
+
+  call evaluate_dvdt(dvdt, h, u, v, b, zeta, wind_y, fv, au, ar, slip, &
+      dx, dy, hfacW, hfacE, nx, ny, layers, rho0, &
+      spongeVTimeScale, spongeV, RedGrav, botDrag)
+
+  return
+end subroutine state_derivative
+
+! ---------------------------------------------------------------------------
+!> Do the isopycnal layer physics
+
+subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
+    dx, dy, wetmask, hfacW, hfacS, dt, &
+    maxits, eps, rjac, freesurfFac, thickness_error, &
+    g_vec, nx, ny, layers, n)
+  implicit none
+
+  double precision, intent(inout) :: hnew(0:nx+1, 0:ny+1, layers)
+  double precision, intent(inout) :: unew(0:nx+1, 0:ny+1, layers)
+  double precision, intent(inout) :: vnew(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)    :: eta(0:nx+1, 0:ny+1)
+  double precision, intent(out)   :: etanew(0:nx+1, 0:ny+1)
+  double precision, intent(in)    :: depth(0:nx+1, 0:ny+1)
+  double precision, intent(in)    :: a(5, nx, ny)
+  double precision, intent(in)    :: dx, dy
+  double precision, intent(in)    :: wetmask(0:nx+1, 0:ny+1)
+  double precision, intent(in)    :: hfacW(0:nx+1, 0:ny+1)
+  double precision, intent(in)    :: hfacS(0:nx+1, 0:ny+1)
+  double precision, intent(in)    :: dt
+  integer,          intent(in)    :: maxits
+  double precision, intent(in)    :: eps, rjac, freesurfFac, thickness_error
+  double precision, intent(in)    :: g_vec(layers)
+  integer,          intent(in)    :: nx, ny, layers, n
+
+  ! barotropic velocity components (for pressure solver)
+  double precision :: ub(nx+1, ny)
+  double precision :: vb(nx, ny+1)
+  double precision :: etastar(0:nx+1, 0:ny+1)
+
+  ! Calculate the barotropic velocities
+  call calc_baro_u(ub, unew, hnew, eta, freesurfFac, nx, ny, layers)
+  call calc_baro_v(vb, vnew, hnew, eta, freesurfFac, nx, ny, layers)
+
+  ! Calculate divergence of ub and vb, and solve for the pressure
+  ! field that removes it
+  call calc_eta_star(ub, vb, eta, etastar, freesurfFac, nx, ny, dx, dy, dt)
+  ! print *, maxval(abs(etastar))
+
+  ! Prevent barotropic signals from bouncing around outside the
+  ! wet region of the model.
+  ! etastar = etastar*wetmask
+
+  call SOR_solver(a, etanew, etastar, freesurfFac, nx, ny, &
+      dt, rjac, eps, maxits, n)
+  ! print *, maxval(abs(etanew))
+
+  etanew = etanew*wetmask
+  call wrap_fields_2D(etanew, nx, ny)
+
+  ! Now update the velocities using the barotropic tendency due to
+  ! the pressure gradient.
+  call update_velocities_for_barotropic_tendency(unew, etanew, g_vec, &
+      1, 0, dx, dt, nx, ny, layers)
+  call update_velocities_for_barotropic_tendency(vnew, etanew, g_vec, &
+      0, 1, dy, dt, nx, ny, layers)
+
+  ! We now have correct velocities at the next time step, but the
+  ! layer thicknesses were updated using the velocities without
+  ! the barotropic pressure contribution. Force consistency
+  ! between layer thicknesses and ocean depth by scaling
+  ! thicknesses to agree with free surface.
+  call enforce_depth_thickness_consistency(hnew, etanew, depth, &
+      freesurfFac, thickness_error, nx, ny, layers)
+
+  ! Apply the boundary conditions
+  call apply_boundary_conditions(unew, hfacW, wetmask, nx, ny, layers)
+  call apply_boundary_conditions(vnew, hfacS, wetmask, nx, ny, layers)
+
+  return
+end subroutine barotropic_correction
+
+! ---------------------------------------------------------------------------
+!> Write output if it's time
+
+subroutine maybe_dump_output(h, hav, u, uav, v, vav, eta, etaav, &
+    wind_x, wind_y, nx, ny, layers, &
+    n, nwrite, avwrite, RedGrav, DumpWind)
+  implicit none
+
+  double precision, intent(in)    :: h(0:nx+1, 0:ny+1, layers)
+  double precision, intent(inout) :: hav(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)    :: u(0:nx+1, 0:ny+1, layers)
+  double precision, intent(inout) :: uav(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)    :: v(0:nx+1, 0:ny+1, layers)
+  double precision, intent(inout) :: vav(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)    :: eta(0:nx+1, 0:ny+1)
+  double precision, intent(inout) :: etaav(0:nx+1, 0:ny+1)
+  double precision, intent(in)    :: wind_x(0:nx+1, 0:ny+1)
+  double precision, intent(in)    :: wind_y(0:nx+1, 0:ny+1)
+  integer,          intent(in)    :: nx, ny, layers, n, nwrite, avwrite
+  logical,          intent(in)    :: RedGrav, DumpWind
+
+  ! Write snapshot to file?
+  if (mod(n-1, nwrite) .eq. 0) then
+
+    call write_output(h, u, v, eta, wind_x, wind_y, &
+        nx, ny, layers, n, RedGrav, DumpWind, 'snap')
+
+    ! Check if there are NaNs in the data
+    call break_if_NaN(h, nx, ny, layers, n)
+    ! call break_if_NaN(u, nx, ny, layers, n)
+    ! call break_if_NaN(v, nx, ny, layers, n)
+
+  end if
+
+  ! Write accumulated averages to file?
+  if (avwrite .eq. 0) then
+    ! OK
+  else if (mod(n-1, avwrite) .eq. 0) then
+
+    hav = hav/real(avwrite)
+    uav = uav/real(avwrite)
+    vav = vav/real(avwrite)
+
+    call write_output(hav, uav, vav, etaav, wind_x, wind_y, &
+        nx, ny, layers, n, RedGrav, .false., 'av')
+
+    ! Check if there are NaNs in the data
+    call break_if_NaN(h, nx, ny, layers, n)
+    ! call break_if_NaN(u, nx, ny, layers, n)
+    ! call break_if_NaN(v, nx, ny, layers, n)
+
+    ! Reset average quantities
+    hav = 0.0
+    uav = 0.0
+    vav = 0.0
+    if (.not. RedGrav) then
+      etaav = 0.0
+    end if
+    ! h2av = 0.0
+
+  end if
+
+  return
+end subroutine maybe_dump_output
+
+! ---------------------------------------------------------------------------
 
 !> Evaluate the Bornoulli Potential for n-layer physics.
 !! B is evaluated at the tracer point, for each grid box.
@@ -897,8 +850,9 @@ subroutine evaluate_b_iso(b, h, u, v, nx, ny, layers, g_vec, depth)
   end do
 
   b = 0d0
-  ! No baroclinic pressure contribution to the first layer Bernoulli potential
-  ! (the barotropic pressure contributes, but that's not done here).
+  ! No baroclinic pressure contribution to the first layer Bernoulli
+  ! potential (the barotropic pressure contributes, but that's not
+  ! done here).
   ! do j = 1, ny-1
   !     do i = 1, nx-1
   !         b(i,j,1) = (u(i,j,1)**2+u(i+1,j,1)**2+v(i,j,1)**2+v(i,j+1,1)**2)/4.0d0
@@ -909,7 +863,8 @@ subroutine evaluate_b_iso(b, h, u, v, nx, ny, layers, g_vec, depth)
   do k = 1, layers ! move through the different layers of the model
     do j = 1, ny ! move through longitude
       do i = 1, nx ! move through latitude
-        b(i,j,k) = M(i,j,k) + (u(i,j,k)**2+u(i+1,j,k)**2+v(i,j,k)**2+v(i,j+1,k)**2)/4.0d0
+        b(i,j,k) = M(i,j,k) &
+            + (u(i,j,k)**2+u(i+1,j,k)**2+v(i,j,k)**2+v(i,j+1,k)**2)/4.0d0
         ! Add the (u^2 + v^2)/2 term to the Montgomery Potential
       end do
     end do
@@ -918,7 +873,7 @@ subroutine evaluate_b_iso(b, h, u, v, nx, ny, layers, g_vec, depth)
   return
 end subroutine evaluate_b_iso
 
-! -----------------------------------------------------------------------------
+! ---------------------------------------------------------------------------
 
 subroutine evaluate_b_RedGrav(b, h, u, v, nx, ny, layers, gr)
   implicit none
@@ -954,7 +909,8 @@ subroutine evaluate_b_RedGrav(b, h, u, v, nx, ny, layers, gr)
         end do
         ! Add the (u^2 + v^2)/2 term to the pressure componenet of the
         ! Bernoulli Potential
-        b(i,j,k) = b_proto + (u(i,j,k)**2+u(i+1,j,k)**2+v(i,j,k)**2+v(i,j+1,k)**2)/4.0d0
+        b(i,j,k) = b_proto &
+            + (u(i,j,k)**2+u(i+1,j,k)**2+v(i,j,k)**2+v(i,j+1,k)**2)/4.0d0
       end do
     end do
   end do
@@ -962,7 +918,7 @@ subroutine evaluate_b_RedGrav(b, h, u, v, nx, ny, layers, gr)
   return
 end subroutine evaluate_b_RedGrav
 
-! -----------------------------------------------------------------------------
+! ---------------------------------------------------------------------------
 !> Evaluate relative vorticity at lower left grid boundary (du/dy
 !! and dv/dx are at lower left corner as well)
 subroutine evaluate_zeta(zeta, u, v, nx, ny, layers, dx, dy)
@@ -989,7 +945,7 @@ subroutine evaluate_zeta(zeta, u, v, nx, ny, layers, dx, dy)
   return
 end subroutine evaluate_zeta
 
-! -----------------------------------------------------------------------------
+! ---------------------------------------------------------------------------
 !> Calculate the tendency of layer thickness for each of the active layers
 !! dh/dt is in the centre of each grid point.
 subroutine evaluate_dhdt(dhdt, h, u, v, ah, dx, dy, nx, ny, layers, &
@@ -1094,7 +1050,7 @@ subroutine evaluate_dhdt(dhdt, h, u, v, ah, dx, dy, nx, ny, layers, &
   return
 end subroutine evaluate_dhdt
 
-! -----------------------------------------------------------------------------
+! ---------------------------------------------------------------------------
 !> Calculate the tendency of zonal velocity for each of the active layers
 
 subroutine evaluate_dudt(dudt, h, u, v, b, zeta, wind_x, fu, &
@@ -1166,8 +1122,9 @@ subroutine evaluate_dudt(dudt, h, u, v, b, zeta, wind_x, fu, &
   return
 end subroutine evaluate_dudt
 
-! -----------------------------------------------------------------------------
-!> Calculate the tendency of meridional velocity for each of the active layers
+! ---------------------------------------------------------------------------
+!> Calculate the tendency of meridional velocity for each of the
+!> active layers
 
 subroutine evaluate_dvdt(dvdt, h, u, v, b, zeta, wind_y, fv, &
     au, ar, slip, dx, dy, hfacW, hfacE, nx, ny, layers, rho0, &
@@ -1240,8 +1197,9 @@ subroutine evaluate_dvdt(dvdt, h, u, v, b, zeta, wind_y, fv, &
   return
 end subroutine evaluate_dvdt
 
-! -----------------------------------------------------------------------------
+! ---------------------------------------------------------------------------
 !> Calculate the barotropic u velocity
+
 subroutine calc_baro_u(ub, u, h, eta, freesurfFac, nx, ny, layers)
   implicit none
 
@@ -1272,9 +1230,9 @@ subroutine calc_baro_u(ub, u, h, eta, freesurfFac, nx, ny, layers)
   return
 end subroutine calc_baro_u
 
-! -----------------------------------------------------------------------------
-
+! ---------------------------------------------------------------------------
 !> Calculate the barotropic v velocity
+
 subroutine calc_baro_v(vb, v, h, eta, freesurfFac, nx, ny, layers)
   implicit none
 
@@ -1305,12 +1263,13 @@ subroutine calc_baro_v(vb, v, h, eta, freesurfFac, nx, ny, layers)
   return
 end subroutine calc_baro_v
 
-! -----------------------------------------------------------------------------
-
+! ---------------------------------------------------------------------------
 !> Calculate the free surface anomaly using the velocities
 !! timestepped with the tendencies excluding the free surface
 !! pressure gradient.
-subroutine calc_eta_star(ub, vb, eta, etastar, freesurfFac, nx, ny, dx, dy, dt)
+
+subroutine calc_eta_star(ub, vb, eta, etastar, &
+    freesurfFac, nx, ny, dx, dy, dt)
   implicit none
 
   double precision, intent(in)  :: ub(nx+1, ny)
@@ -1337,7 +1296,7 @@ subroutine calc_eta_star(ub, vb, eta, etastar, freesurfFac, nx, ny, dx, dy, dt)
   return
 end subroutine calc_eta_star
 
-! -----------------------------------------------------------------------------
+! ---------------------------------------------------------------------------
 !> Use the successive over-relaxation algorithm to solve the backwards
 !! Euler timestepping for the free surface anomaly, or for the surface
 !! pressure required to keep the barotropic flow nondivergent.
@@ -1422,9 +1381,110 @@ subroutine SOR_solver(a, etanew, etastar, freesurfFac, nx, ny, dt, &
   return
 end subroutine SOR_solver
 
-! -----------------------------------------------------------------------------
+! ---------------------------------------------------------------------------
+!> Update velocities using the barotropic tendency due to the pressure
+!> gradient.
+
+subroutine update_velocities_for_barotropic_tendency(array, etanew, g_vec, &
+    xstep, ystep, dspace, dt, nx, ny, layers)
+  implicit none
+
+  double precision, intent(inout) :: array(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in) :: etanew(0:nx+1, 0:ny+1)
+  double precision, intent(in) :: g_vec(layers)
+  integer, intent(in) :: xstep, ystep
+  double precision, intent(in) :: dspace, dt
+  integer, intent(in) :: nx, ny, layers
+
+  integer i, j, k
+  double precision baro_contrib
+
+  ! TODO Assert that xstep and ystep are either 1, 0 or 0, 1.
+
+  do i = xstep, nx
+    do j = ystep, ny
+      do k = 1, layers
+        baro_contrib = &
+            -g_vec(1)*(etanew(i,j) - etanew(i-xstep,j-ystep))/(dspace)
+        array(i,j,k) = array(i,j,k) + dt*baro_contrib
+      end do
+    end do
+  end do
+
+
+  return
+end subroutine update_velocities_for_barotropic_tendency
+
+! ---------------------------------------------------------------------------
+!> Check that the free surface anomaly and layer thicknesses are consistent with the depth field. If they're not, then scale the layer thicnkesses to make them fit.
+
+subroutine enforce_depth_thickness_consistency(h, eta, depth, &
+    freesurfFac, thickness_error, nx, ny, layers)
+  implicit none
+
+  double precision, intent(inout) :: h(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in) :: eta(0:nx+1, 0:ny+1)
+  double precision, intent(in) :: depth(0:nx+1, 0:ny+1)
+  double precision, intent(in) :: freesurfFac, thickness_error
+  integer, intent(in) :: nx, ny, layers
+
+  integer k
+  double precision h_norming(0:nx+1, 0:ny+1)
+
+  h_norming = (freesurfFac*eta + depth) / sum(h,3)
+  do k = 1, layers
+    h(:, :, k) = h(:, :, k) * h_norming
+  end do
+
+  if (maxval(abs(h_norming - 1d0)) .gt. thickness_error) then
+    print *, 'inconsistency between h and eta (in %):', &
+        maxval(abs(h_norming - 1d0))*100d0
+  end if
+
+  return
+end subroutine enforce_depth_thickness_consistency
+
+! ---------------------------------------------------------------------------
+!> Ensure that layer heights do not fall below the prescribed minimum
+
+subroutine enforce_minimum_layer_thickness(hnew, hmin, nx, ny, layers, n)
+  implicit none
+
+  double precision, intent(inout) :: hnew(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in) :: hmin
+  integer, intent(in) :: nx, ny, layers, n
+
+  integer counter, i, j, k
+
+  counter = 0
+
+  do k = 1, layers
+    do j = 1, ny
+      do i = 1, nx
+        if (hnew(i, j, k) .lt. hmin) then
+          hnew(i, j, k) = hmin
+          counter = counter + 1
+          if (counter .eq. 1) then
+            ! Write a file saying that the layer thickness value
+            ! dropped below hmin and this line has been used.
+            open(unit=10, file='layer thickness dropped below hmin.txt', &
+                action="write", status="unknown", &
+                form="formatted", position="append")
+            write(10, 1111) n
+1111          format("layer thickness dropped below hmin at time step ", 1i10.10)
+            close(unit=10)
+          end if
+        end if
+      end do
+    end do
+  end do
+  return
+end subroutine enforce_minimum_layer_thickness
+
+! ---------------------------------------------------------------------------
 !> Check to see if there are any NaNs in the data field and stop the
 !! calculation if any are found.
+
 subroutine break_if_NaN(data, nx, ny, layers, n)
   implicit none
 
@@ -1457,7 +1517,7 @@ subroutine break_if_NaN(data, nx, ny, layers, n)
   return
 end subroutine break_if_NaN
 
-!------------------------------------------------------------------------------
+!----------------------------------------------------------------------------
 !> Define masks for boundary conditions in u and v.
 !! This finds locations where neighbouring grid boxes are not the same
 !! (i.e. one is land and one is ocean).
@@ -1560,7 +1620,72 @@ subroutine calc_boundary_masks(wetmask, hfacW, hfacE, hfacS, hfacN, nx, ny)
   return
 end subroutine calc_boundary_masks
 
-! -----------------------------------------------------------------------------
+! ---------------------------------------------------------------------------
+!> Apply the boundary conditions
+
+subroutine apply_boundary_conditions(array, hfac, wetmask, nx, ny, layers)
+  implicit none
+
+  double precision, intent(inout) :: array(0:nx+1,0:ny+1,layers)
+  double precision, intent(in) :: hfac(0:nx+1,0:ny+1)
+  double precision, intent(in) :: wetmask(0:nx+1,0:ny+1)
+  integer, intent(in) :: nx, ny, layers
+
+  integer k
+
+  ! - Enforce no normal flow boundary condition
+  !   and no flow in dry cells.
+  ! - no/free-slip is done inside the dudt and dvdt subroutines.
+  ! - hfacW and hfacS are zero where the transition between
+  !   wet and dry cells occurs.
+  ! - wetmask is 1 in wet cells, and zero in dry cells.
+
+  do k = 1, layers
+    array(:, :, k) = array(:, :, k) * hfac * wetmask(:, :)
+  end do
+
+  return
+end subroutine apply_boundary_conditions
+
+! ---------------------------------------------------------------------------
+!> Compute derivatives of the depth field for the pressure solver
+
+subroutine derivatives_of_the_depth_field(a, depth, g, dx, dy, nx, ny)
+  implicit none
+
+  double precision, intent(out) :: a(5, nx, ny)
+  double precision, intent(in)  :: depth(0:nx+1, 0:ny+1)
+  double precision, intent(in)  :: g, dx, dy
+  integer, intent(in) :: nx, ny
+
+  integer i, j
+
+  do j = 1, ny
+    do i = 1, nx
+      a(1,i,j) = g*0.5*(depth(i+1,j)+depth(i,j))/dx**2
+      a(2,i,j) = g*0.5*(depth(i,j+1)+depth(i,j))/dy**2
+      a(3,i,j) = g*0.5*(depth(i,j)+depth(i-1,j))/dx**2
+      a(4,i,j) = g*0.5*(depth(i,j)+depth(i,j-1))/dy**2
+    end do
+  end do
+  do j = 1, ny
+    a(1, nx, j) = 0.0
+    a(3, 1, j) = 0.0
+  end do
+  do i = 1, nx
+    a(2, i, ny) = 0.0
+    a(4, i, 1) = 0.0
+  end do
+  do j = 1, ny
+    do i = 1, nx
+      a(5,i,j) = -a(1,i,j)-a(2,i,j)-a(3,i,j)-a(4,i,j)
+    end do
+  end do
+
+  return
+end subroutine derivatives_of_the_depth_field
+
+! ---------------------------------------------------------------------------
 
 subroutine read_input_fileH(name, array, default, nx, ny, layers)
   implicit none
@@ -1577,13 +1702,8 @@ subroutine read_input_fileH(name, array, default, nx, ny, layers)
     open(unit=10, form='unformatted', file=name)
     read(10) array_small
     close(10)
-
     array(1:nx, 1:ny, :) = array_small
-    ! wrap array around for periodicity
-    array(0, :, :) = array(nx, :, :)
-    array(nx+1, :, :) = array(1, :, :)
-    array(:, 0, :) = array(:, ny, :)
-    array(:, ny+1, :) = array(:, 1, :)
+    call wrap_fields_3D(array, nx, ny, layers)
   else
     do k = 1, layers
       array(:, :, k) = default(k)
@@ -1593,7 +1713,7 @@ subroutine read_input_fileH(name, array, default, nx, ny, layers)
   return
 end subroutine read_input_fileH
 
-! -----------------------------------------------------------------------------
+! ---------------------------------------------------------------------------
 
 subroutine read_input_fileH_2D(name, array, default, nx, ny)
   implicit none
@@ -1609,13 +1729,8 @@ subroutine read_input_fileH_2D(name, array, default, nx, ny)
     open(unit=10, form='unformatted', file=name)
     read(10) array_small
     close(10)
-
     array(1:nx, 1:ny) = array_small
-    ! wrap array around for periodicity
-    array(0, :) = array(nx, :)
-    array(nx+1, :) = array(1, :)
-    array(:, 0) = array(:, ny)
-    array(:, ny+1) = array(:, 1)
+    call wrap_fields_2D(array, nx, ny)
   else
     array = default
   end if
@@ -1623,7 +1738,7 @@ subroutine read_input_fileH_2D(name, array, default, nx, ny)
   return
 end subroutine read_input_fileH_2D
 
-! -----------------------------------------------------------------------------
+! ---------------------------------------------------------------------------
 
 subroutine read_input_fileU(name, array, default, nx, ny, layers)
   implicit none
@@ -1639,13 +1754,8 @@ subroutine read_input_fileU(name, array, default, nx, ny, layers)
     open(unit=10, form='unformatted', file=name)
     read(10) array_small
     close(10)
-
     array(1:nx+1, 1:ny, :) = array_small
-    ! wrap array around for periodicity
-    array(0, :, :) = array(nx, :, :)
-    array(nx+1, :, :) = array(1, :, :)
-    array(:, 0, :) = array(:, ny, :)
-    array(:, ny+1, :) = array(:, 1, :)
+    call wrap_fields_3D(array, nx, ny, layers)
   else
     array = default
   end if
@@ -1653,7 +1763,7 @@ subroutine read_input_fileU(name, array, default, nx, ny, layers)
   return
 end subroutine read_input_fileU
 
-! -----------------------------------------------------------------------------
+! ---------------------------------------------------------------------------
 
 subroutine read_input_fileV(name, array, default, nx, ny, layers)
   implicit none
@@ -1669,13 +1779,8 @@ subroutine read_input_fileV(name, array, default, nx, ny, layers)
     open(unit=10, form='unformatted', file=name)
     read(10) array_small
     close(10)
-
     array(1:nx, 1:ny+1, :) = array_small
-    ! wrap array around for periodicity
-    array(0, :, :) = array(nx, :, :)
-    array(nx+1, :, :) = array(1, :, :)
-    array(:, 0, :) = array(:, ny, :)
-    array(:, ny+1, :) = array(:, 1, :)
+    call wrap_fields_3D(array, nx, ny, layers)
   else
     array = default
   end if
@@ -1683,7 +1788,7 @@ subroutine read_input_fileV(name, array, default, nx, ny, layers)
   return
 end subroutine read_input_fileV
 
-! -----------------------------------------------------------------------------
+! ---------------------------------------------------------------------------
 
 subroutine read_input_file_time_series(name, array, default, nTimeSteps)
   implicit none
@@ -1697,7 +1802,6 @@ subroutine read_input_file_time_series(name, array, default, nTimeSteps)
     open(unit=10, form='unformatted', file=name)
     read(10) array
     close(10)
-
   else
     array = default
   end if
@@ -1740,3 +1844,57 @@ subroutine wrap_fields_2D(array, nx, ny)
 
   return
 end subroutine wrap_fields_2D
+
+!-----------------------------------------------------------------
+!> Write snapshot output
+
+subroutine write_output(h, u, v, eta, wind_x, wind_y, &
+    nx, ny, layers, n, RedGrav, DumpWind, name)
+  implicit none
+
+  double precision, intent(in) :: h(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in) :: u(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in) :: v(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in) :: eta(0:nx+1, 0:ny+1)
+  double precision, intent(in) :: wind_x(0:nx+1, 0:ny+1)
+  double precision, intent(in) :: wind_y(0:nx+1, 0:ny+1)
+  integer, intent(in) :: nx, ny, layers, n
+  logical, intent(in) :: RedGrav, DumpWind
+  character(*), intent(in) :: name
+
+  character(10) :: num
+
+  write(num, '(i10.10)') n
+
+  ! Output the data to a file
+  open(unit=10, status='replace', file='output/'//name//'.h.'//num, &
+      form='unformatted')
+  write(10) h(1:nx, 1:ny, :)
+  close(10)
+  open(unit=10, status='replace', file='output/'//name//'.u.'//num, &
+      form='unformatted')
+  write(10) u(1:nx+1, 1:ny, :)
+  close(10)
+  open(unit=10, status='replace', file='output/'//name//'.v.'//num, &
+      form='unformatted')
+  write(10) v(1:nx, 1:ny+1, :)
+  close(10)
+  if (.not. RedGrav) then
+    open(unit=10, status='replace', file='output/'//name//'.eta.'//num, &
+        form='unformatted')
+    write(10) eta(1:nx, 1:ny)
+    close(10)
+  end if
+
+  if (DumpWind .eqv. .true.) then
+    open(unit=10, status='replace', file='output/wind_x.'//num, &
+        form='unformatted')
+    write(10) wind_x(1:nx+1, 1:ny)
+    close(10)
+    open(unit=10, status='replace', file='output/wind_y.'//num, &
+        form='unformatted')
+    write(10) wind_y(1:nx, 1:ny+1)
+    close(10)
+  end if
+  return
+end subroutine write_output
