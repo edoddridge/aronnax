@@ -395,7 +395,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
 
     ! Check that the supplied free surface anomaly and layer
     ! thicknesses are consistent
-    call enforce_moderate_free_surface(h, eta, depth, &
+    call enforce_depth_thickness_consistency(h, eta, depth, &
         freesurfFac, thickness_error, nx, ny, layers)
 
   end if
@@ -731,7 +731,7 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
   ! the barotropic pressure contribution. Force consistency
   ! between layer thicknesses and ocean depth by scaling
   ! thicknesses to agree with free surface.
-  call enforce_moderate_free_surface(hnew, etanew, depth, &
+  call enforce_depth_thickness_consistency(hnew, etanew, depth, &
       freesurfFac, thickness_error, nx, ny, layers)
 
   ! Apply the boundary conditions
@@ -1416,7 +1416,7 @@ end subroutine update_velocities_for_barotropic_tendency
 ! ---------------------------------------------------------------------------
 !> Check that the free surface anomaly and layer thicknesses are consistent
 
-subroutine enforce_moderate_free_surface(h, eta, depth, &
+subroutine enforce_depth_thickness_consistency(h, eta, depth, &
     freesurfFac, thickness_error, nx, ny, layers)
   implicit none
 
@@ -1440,7 +1440,7 @@ subroutine enforce_moderate_free_surface(h, eta, depth, &
   end if
 
   return
-end subroutine enforce_moderate_free_surface
+end subroutine enforce_depth_thickness_consistency
 
 ! ---------------------------------------------------------------------------
 !> Ensure that layer heights do not fall below the prescribed minimum
