@@ -1414,7 +1414,7 @@ subroutine update_velocities_for_barotropic_tendency(array, etanew, g_vec, &
 end subroutine update_velocities_for_barotropic_tendency
 
 ! ---------------------------------------------------------------------------
-!> Check that the free surface anomaly and layer thicknesses are consistent
+!> Check that the free surface anomaly and layer thicknesses are consistent with the depth field. If they're not, then scale the layer thicnkesses to make them fit.
 
 subroutine enforce_depth_thickness_consistency(h, eta, depth, &
     freesurfFac, thickness_error, nx, ny, layers)
