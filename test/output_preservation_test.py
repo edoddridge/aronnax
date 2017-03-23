@@ -186,6 +186,7 @@ def test_f_plane_red_grav():
     with working_directory(p.join(self_path, "f_plane_red_grav")):
         run_experiment(write_input_f_plane_red_grav, 10, 10, 1)
         assert_outputs_close(10, 10, 1, 1e-15)
+        assert_volume_conservation(10, 10, 1, 1e-5)
 
 def write_input_f_plane(nx, ny, layers):
     assert layers == 2
@@ -201,6 +202,7 @@ def test_f_plane():
     with working_directory(p.join(self_path, "f_plane")):
         run_experiment(write_input_f_plane, 10, 10, 2)
         assert_outputs_close(10, 10, 2, 1e-15)
+        assert_volume_conservation(10, 10, 2, 1e-5)
 
 def write_input_beta_plane_bump_red_grav(nx, ny, layers):
     assert layers == 1
@@ -220,6 +222,7 @@ def test_gaussian_bump_red_grav():
     with working_directory(p.join(self_path, "beta_plane_bump_red_grav")):
         run_experiment(write_input_beta_plane_bump_red_grav, 10, 10, 1)
         assert_outputs_close(10, 10, 1, 1.5e-13)
+        assert_volume_conservation(10, 10, 1, 1e-5)
 
 def write_input_beta_plane_bump(nx, ny, layers):
     assert layers == 2
@@ -241,6 +244,7 @@ def test_gaussian_bump():
     with working_directory(p.join(self_path, "beta_plane_bump")):
         run_experiment(write_input_beta_plane_bump, 10, 10, 2)
         assert_outputs_close(10, 10, 2, 2e-13)
+        assert_volume_conservation(10, 10, 2, 1e-5)
 
 def write_input_beta_plane_gyre_red_grav(nx, ny, layers):
     assert layers == 1
@@ -263,6 +267,7 @@ def test_beta_plane_gyre_red_grav():
     with working_directory(p.join(self_path, "beta_plane_gyre_red_grav")):
         run_experiment(write_input_beta_plane_gyre_red_grav, 10, 10, 1, valgrind=True)
         assert_outputs_close(10, 10, 1, 2e-13)
+        assert_volume_conservation(10, 10, 1, 1e-5)
 
 def write_input_beta_plane_gyre(nx, ny, layers):
     assert layers == 2
@@ -289,3 +294,4 @@ def test_beta_plane_gyre():
     with working_directory(p.join(self_path, "beta_plane_gyre")):
         run_experiment(write_input_beta_plane_gyre, 10, 10, 2, valgrind=True)
         assert_outputs_close(10, 10, 2, 3e-12)
+        assert_volume_conservation(10, 10, 2, 1e-5)
