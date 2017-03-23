@@ -4,6 +4,8 @@ import os.path as p
 import subprocess as sub
 import time
 
+import glob
+
 import numpy as np
 from scipy.io import FortranFile
 
@@ -124,6 +126,22 @@ def assert_outputs_close(nx, ny, layers, rtol):
         ans = interpret_mim_raw_file(p.join("output/", outfile), nx, ny, layers)
         good_ans = interpret_mim_raw_file(p.join("good-output/", outfile), nx, ny, layers)
         assert np.amax(array_relative_error(ans, good_ans)) < rtol
+
+def assert_volume_conservation(nx,ny,layers,rtol):
+    hfiles = sorted(glob.glob("output/snap.h.*"))
+
+    h_0 = interpret_mim_raw_file(hfiles[0], nx, ny, layers)
+    h_final = interpret_mim_raw_file(hfiles[-1], nx, ny, layers)
+
+    volume_0 = np.zeros((layers))
+    volume_final = np.zeros((layers))
+
+    for k in xrange(layers):
+        volume_0[k] = np.sum(h_0[:,:,k])
+        volume_final[k] = np.sum(h_final[:,:,k])
+
+        assert np.abs((volume_0[k] - volume_final[k])/volume_0[k]) < rtol
+
 
 ### Input construction helpers
 
