@@ -153,7 +153,9 @@ program MIM
   open(unit=8, file="parameters.in", status='OLD', recl=80)
   read(unit=8, nml=NUMERICS)
   read(unit=8, nml=MODEL)
+#ifdef useExtSolver
   read(unit=8, nml=PRESSURE_SOLVER)
+#endif
   read(unit=8, nml=SPONGE)
   read(unit=8, nml=PHYSICS)
   read(unit=8, nml=GRID)
