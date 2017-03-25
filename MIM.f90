@@ -33,7 +33,7 @@ program MIM
 
   implicit none
 
-#ifdef useMPI
+#ifdef useExtSolver
   include 'mpif.h'
 #endif
 
@@ -133,7 +133,9 @@ program MIM
 
   namelist /MODEL/ hmean, depthFile, H0, RedGrav
 
+#ifdef useExtSolver
   namelist /PRESSURE_SOLVER/ useExternalSolver, nProcX, nProcY
+#endif
 
   namelist /SPONGE/ spongeHTimeScaleFile, spongeUTimeScaleFile, &
       spongeVTimeScaleFile, spongeHfile, spongeUfile, spongeVfile
@@ -161,14 +163,12 @@ program MIM
 
   ! optionally include the MPI code for parallel runs with external 
   ! pressure solver
-#ifdef useMPI
-  if (useExternalSolver) then
-    num_procs = nProcX * nProcY
-    call MPI_INIT(ierr)
-    call MPI_COMM_RANK(MPI_COMM_WORLD, myid, ierr)
-    call MPI_COMM_SIZE(MPI_COMM_WORLD, num_procs, ierr)
-    mpi_comm = MPI_COMM_WORLD
-  end if
+#ifdef useExtSolver
+  num_procs = nProcX * nProcY
+  call MPI_INIT(ierr)
+  call MPI_COMM_RANK(MPI_COMM_WORLD, myid, ierr)
+  call MPI_COMM_SIZE(MPI_COMM_WORLD, num_procs, ierr)
+  mpi_comm = MPI_COMM_WORLD
 #endif
 
   allocate(h(0:nx+1, 0:ny+1, layers))
