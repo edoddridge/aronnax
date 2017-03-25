@@ -113,6 +113,10 @@ program MIM
   integer :: ierr
   integer :: num_procs, myid
 
+  integer, dimension(:), allocatable :: ilower, iupper
+  integer, dimension(:), allocatable :: jlower, jupper
+  integer :: n
+
   integer*8 :: parcsr_A
   integer*8 :: A
   integer*8 :: b
@@ -166,11 +170,36 @@ program MIM
   ! optionally include the MPI code for parallel runs with external 
   ! pressure solver
 #ifdef useExtSolver
-  num_procs = nProcX * nProcY
   call MPI_INIT(ierr)
   call MPI_COMM_RANK(MPI_COMM_WORLD, myid, ierr)
   call MPI_COMM_SIZE(MPI_COMM_WORLD, num_procs, ierr)
   mpi_comm = MPI_COMM_WORLD
+  if (num_procs .ne. nProcX * nProcY) then
+    print *, "number of processors must equal nProcX * nProcY - fix this and try again"
+    stop
+  end if
+
+  allocate(ilower(num_procs))
+  allocate(iupper(num_procs))
+  allocate(jlower(num_procs))
+  allocate(jupper(num_procs))
+
+  do n = 1, nProcX
+    ilower(n) = (n - 1) * nx / nProcX
+    iupper(n) = (n * nx / nProcX) - 1
+  end do
+  ! correct final iupper value to include the global halo
+  iupper(nProcX) = nx + 1
+
+  do n = 1, nProcX
+    jlower(n) = (n - 1) * ny / nProcY
+    jupper(n) = (n * ny / nProcY) - 1
+  end do
+  ! correct final iupper value to include the global halo
+  jupper(nProcY) = ny + 1
+
+  call HYPRE_IJMatrixCreate(mpi_comm, ilower, & 
+          iupper, jlower, jupper, A, ierr)
 #endif
 
   allocate(h(0:nx+1, 0:ny+1, layers))
