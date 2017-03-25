@@ -110,6 +110,8 @@ program MIM
   integer :: nProcX, nProcY
 
   integer :: mpi_comm
+  integer :: ierr
+  integer :: num_procs, myid
 
   integer*8 :: parcsr_A
   integer*8 :: A
