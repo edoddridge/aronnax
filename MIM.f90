@@ -32,7 +32,7 @@
 program MIM
 
   implicit none
-  
+
 #ifdef useMPI
   include 'mpif.h'
 #endif
@@ -158,7 +158,8 @@ program MIM
   read(unit=8, nml=PRESSURE_SOLVER)
   close(unit=8)
 
-
+  ! optionally include the MPI code for parallel runs with external 
+  ! pressure solver
 #ifdef useMPI
   if (useExternalSolver) then
     num_procs = nProcX * nProcY
