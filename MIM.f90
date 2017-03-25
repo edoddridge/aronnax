@@ -97,6 +97,23 @@ program MIM
   ! Main input files
   character(30) :: initUfile, initVfile, initHfile, initEtaFile
   character(30) :: zonalWindFile, meridionalWindFile
+  
+  ! External pressure solver variables
+  ! except for the logical switch, none of these are used
+  ! unless the external solver is used.
+  logical :: useExternalSolver
+  integer :: nProcX, nProcY
+
+  integer :: mpi_comm
+
+  integer*8 :: parcsr_A
+  integer*8 :: A
+  integer*8 :: b
+  integer*8 :: x
+  integer*8 :: par_b
+  integer*8 :: par_x
+  integer*8 :: solver
+  integer*8 :: precond
 
   ! Set default values here
 
@@ -121,6 +138,8 @@ program MIM
   namelist /EXTERNAL_FORCING/ zonalWindFile, meridionalWindFile, &
       DumpWind, wind_mag_time_series_file
 
+  namelist /PRESSURE_SOLVER/ useExternalSolver, nProcX, nProcY
+
   open(unit=8, file="parameters.in", status='OLD', recl=80)
   read(unit=8, nml=NUMERICS)
   read(unit=8, nml=MODEL)
@@ -129,7 +148,11 @@ program MIM
   read(unit=8, nml=GRID)
   read(unit=8, nml=INITIAL_CONDITONS)
   read(unit=8, nml=EXTERNAL_FORCING)
+  read(unit=8, nml=PRESSURE_SOLVER)
   close(unit=8)
+
+
+
 
   allocate(h(0:nx+1, 0:ny+1, layers))
   allocate(u(0:nx+1, 0:ny+1, layers))
