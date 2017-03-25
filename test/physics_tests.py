@@ -12,6 +12,7 @@ root_path = p.dirname(self_path)
 
 import sys
 sys.path.append(p.join(root_path, 'test'))
+<<<<<<< HEAD
 import output_preservation_test as opt
 
 
@@ -147,3 +148,6 @@ def write_f_plane_red_grav_init_u_input(nx,ny,layers):
         plt.pcolormesh(init_u)
         plt.colorbar()
         plt.savefig('init_u.png')
+=======
+import output_preservation_test as opt
+>>>>>>> parent of 03580ac... functions to write inputs
