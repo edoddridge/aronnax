@@ -30,7 +30,12 @@
 !>
 
 program MIM
+
   implicit none
+  
+#ifdef useMPI
+  include 'mpif.h'
+#endif
 
   integer, parameter :: layerwise_input_length = 10000
   ! Resolution
@@ -152,7 +157,15 @@ program MIM
   close(unit=8)
 
 
-
+#ifdef useMPI
+  if (useExternalSolver) then
+    num_procs = nProcX * nProcY
+    call MPI_INIT(ierr)
+    call MPI_COMM_RANK(MPI_COMM_WORLD, myid, ierr)
+    call MPI_COMM_SIZE(MPI_COMM_WORLD, num_procs, ierr)
+    mpi_comm = MPI_COMM_WORLD
+  end if
+#endif
 
   allocate(h(0:nx+1, 0:ny+1, layers))
   allocate(u(0:nx+1, 0:ny+1, layers))
