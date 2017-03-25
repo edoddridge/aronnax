@@ -133,6 +133,8 @@ program MIM
 
   namelist /MODEL/ hmean, depthFile, H0, RedGrav
 
+  namelist /PRESSURE_SOLVER/ useExternalSolver, nProcX, nProcY
+
   namelist /SPONGE/ spongeHTimeScaleFile, spongeUTimeScaleFile, &
       spongeVTimeScaleFile, spongeHfile, spongeUfile, spongeVfile
 
@@ -145,17 +147,16 @@ program MIM
   namelist /EXTERNAL_FORCING/ zonalWindFile, meridionalWindFile, &
       DumpWind, wind_mag_time_series_file
 
-  namelist /PRESSURE_SOLVER/ useExternalSolver, nProcX, nProcY
 
   open(unit=8, file="parameters.in", status='OLD', recl=80)
   read(unit=8, nml=NUMERICS)
   read(unit=8, nml=MODEL)
+  read(unit=8, nml=PRESSURE_SOLVER)
   read(unit=8, nml=SPONGE)
   read(unit=8, nml=PHYSICS)
   read(unit=8, nml=GRID)
   read(unit=8, nml=INITIAL_CONDITONS)
   read(unit=8, nml=EXTERNAL_FORCING)
-  read(unit=8, nml=PRESSURE_SOLVER)
   close(unit=8)
 
   ! optionally include the MPI code for parallel runs with external 
