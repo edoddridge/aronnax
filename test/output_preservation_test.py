@@ -4,6 +4,8 @@ import os.path as p
 import subprocess as sub
 import time
 
+import glob
+
 import numpy as np
 from scipy.io import FortranFile
 
@@ -125,6 +127,22 @@ def assert_outputs_close(nx, ny, layers, rtol):
         good_ans = interpret_mim_raw_file(p.join("good-output/", outfile), nx, ny, layers)
         assert np.amax(array_relative_error(ans, good_ans)) < rtol
 
+def assert_volume_conservation(nx,ny,layers,rtol):
+    hfiles = sorted(glob.glob("output/snap.h.*"))
+
+    h_0 = interpret_mim_raw_file(hfiles[0], nx, ny, layers)
+    h_final = interpret_mim_raw_file(hfiles[-1], nx, ny, layers)
+
+    volume_0 = np.zeros((layers))
+    volume_final = np.zeros((layers))
+
+    for k in xrange(layers):
+        volume_0[k] = np.sum(h_0[:,:,k])
+        volume_final[k] = np.sum(h_final[:,:,k])
+
+        assert np.abs((volume_0[k] - volume_final[k])/volume_0[k]) < rtol
+
+
 ### Input construction helpers
 
 def write_f_plane(nx, ny, coeff):
@@ -168,6 +186,7 @@ def test_f_plane_red_grav():
     with working_directory(p.join(self_path, "f_plane_red_grav")):
         run_experiment(write_input_f_plane_red_grav, 10, 10, 1)
         assert_outputs_close(10, 10, 1, 1e-15)
+        assert_volume_conservation(10, 10, 1, 1e-5)
 
 def write_input_f_plane(nx, ny, layers):
     assert layers == 2
@@ -183,6 +202,7 @@ def test_f_plane():
     with working_directory(p.join(self_path, "f_plane")):
         run_experiment(write_input_f_plane, 10, 10, 2)
         assert_outputs_close(10, 10, 2, 1e-15)
+        assert_volume_conservation(10, 10, 2, 1e-5)
 
 def write_input_beta_plane_bump_red_grav(nx, ny, layers):
     assert layers == 1
@@ -202,6 +222,7 @@ def test_gaussian_bump_red_grav():
     with working_directory(p.join(self_path, "beta_plane_bump_red_grav")):
         run_experiment(write_input_beta_plane_bump_red_grav, 10, 10, 1)
         assert_outputs_close(10, 10, 1, 1.5e-13)
+        assert_volume_conservation(10, 10, 1, 1e-5)
 
 def write_input_beta_plane_bump(nx, ny, layers):
     assert layers == 2
@@ -223,6 +244,7 @@ def test_gaussian_bump():
     with working_directory(p.join(self_path, "beta_plane_bump")):
         run_experiment(write_input_beta_plane_bump, 10, 10, 2)
         assert_outputs_close(10, 10, 2, 2e-13)
+        assert_volume_conservation(10, 10, 2, 1e-5)
 
 def write_input_beta_plane_gyre_red_grav(nx, ny, layers):
     assert layers == 1
@@ -245,6 +267,7 @@ def test_beta_plane_gyre_red_grav():
     with working_directory(p.join(self_path, "beta_plane_gyre_red_grav")):
         run_experiment(write_input_beta_plane_gyre_red_grav, 10, 10, 1, valgrind=True)
         assert_outputs_close(10, 10, 1, 2e-13)
+        assert_volume_conservation(10, 10, 1, 1e-5)
 
 def write_input_beta_plane_gyre(nx, ny, layers):
     assert layers == 2
@@ -271,3 +294,4 @@ def test_beta_plane_gyre():
     with working_directory(p.join(self_path, "beta_plane_gyre")):
         run_experiment(write_input_beta_plane_gyre, 10, 10, 2, valgrind=True)
         assert_outputs_close(10, 10, 2, 3e-12)
+        assert_volume_conservation(10, 10, 2, 1e-5)
