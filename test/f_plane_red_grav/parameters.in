@@ -40,7 +40,6 @@
  RedGrav = .TRUE.,
  /
  &PRESSURE_SOLVER
- useExternalSolver = .FALSE.,
  nProcX = 1,
  nProcY = 1,
  /
