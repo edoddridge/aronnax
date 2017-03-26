@@ -902,7 +902,7 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
   integer*8 :: hypre_b
   integer*8 :: hypre_x
   integer   ::  nentries, nvalues, stencil_indices(5)
-  double precision, dimension(:), allocatable :: values
+  double precision :: values(nx * ny)
 
   integer :: MPI_COMM_WORLD
   integer :: num_procs
@@ -928,6 +928,7 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
   call HYPRE_StructVectorCreate(MPI_COMM_WORLD, hypre_grid, hypre_b, ierr)
   call HYPRE_StructVectorInitialize(hypre_b, ierr)
 
+  ! set rhs values (vector b)
   do i = 1, nx ! loop over every grid point
     do j = 1, ny
   ! the 2D array is being laid out like
@@ -935,6 +936,13 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
     values( ((i-1)*ny + j) )    = etastar(i,j)
     end do
   end do
+
+  do i = 0, num_procs-1
+    call HYPRE_StructVectorSetBoxValues(hypre_b, & 
+      ilower(i,:), iupper(i,:), values, ierr)
+  end do
+
+  call HYPRE_StructVectorAssemble(hypre_b, ierr)
 
 #endif
 
