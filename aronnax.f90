@@ -423,6 +423,8 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   integer*8 :: hypre_A
   integer*8 :: hypre_b
   integer*8 :: hypre_x
+  integer   ::  nentries, nvalues, stencil_indices(5)
+  double precision, dimension(:), allocatable :: values
 
   integer :: MPI_COMM_WORLD
 
@@ -526,6 +528,10 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
     offsets(1,5) =  0
     offsets(2,5) =  1
 
+    do i = 1, 5
+      stencil_indices(i) = i-1
+    end do
+
     call HYPRE_StructStencilCreate(2, 5, stencil, ierr)
     ! this gives a 5 point stencil centred around the grid point of interest.   
     do i = 1, 5
@@ -535,6 +541,15 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
     call HYPRE_StructMatrixCreate(MPI_COMM_WORLD, hypre_grid, stencil, hypre_A, ierr)
     call HYPRE_StructMatrixInitialize(hypre_A, ierr)
 
+    nentries = 5 ! a five point stncil means five entries for each grid point
+    nvalues = nx * ny ! total number of grid points to simulate
+    allocate(values(nvalues))
+
+    do i = 1, nvalues, nentries ! loop over every grid point, skipping by the number of points in the stencil
+    ! the 2D array is being laid out like
+    ! [x1y1, x1y2, x1y3, x2y1, x2y2, x2y3, x3y1, x3y2, x3y3]
+      values(i) = 1
+    end do
 
 #endif
 
