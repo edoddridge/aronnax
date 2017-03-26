@@ -480,12 +480,58 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
     ! a = derivatives of the depth field
     call derivatives_of_the_depth_field(a, depth, g_vec(1), dx, dy, nx, ny)
 
+
+#ifndef useExtSolver
     ! Calculate the spectral radius of the grid for use by the
     ! successive over-relaxation scheme
     rjac = (cos(pi/real(nx))*dy**2+cos(pi/real(ny))*dx**2) &
            /(dx**2+dy**2)
     ! If peridodic boundary conditions are ever implemented, then pi ->
     ! 2*pi in this calculation
+#else
+    ! use the external pressure solver
+! ilower(myid,1), & 
+!            iupper(myid,1), ilower(myid,2), iupper(myid,2)
+
+! do i = ilower(myid,1), iupper(myid,1)
+!          nnz = 1
+         
+
+! c        The left identity block:position i-n
+!          if ( (i-n) .ge. 0 ) then
+!       cols(nnz) = i-n
+!       values(nnz) = -1.0d0
+!       nnz = nnz + 1
+!          endif
+
+! c         The left -1: position i-1
+!          if ( mod(i,n).ne.0 ) then
+!             cols(nnz) = i-1
+!             values(nnz) = -1.0d0
+!             nnz = nnz + 1
+!          endif
+
+! c        Set the diagonal: position i
+!          cols(nnz) = i
+!          values(nnz) = 4.0d0
+!          nnz = nnz + 1
+
+! c        The right -1: position i+1
+!          if ( mod((i+1),n) .ne. 0 ) then
+!             cols(nnz) = i+1
+!             values(nnz) = -1.0d0
+!             nnz = nnz + 1
+!          endif
+
+! c        The right identity block:position i+n
+!          if ( (i+n) .lt. ng ) then
+!             cols(nnz) = i+n
+!             values(nnz) = -1.0d0
+!             nnz = nnz + 1
+!          endif
+
+    ! call HYPRE_IJMatrixSetValues(A, 1, nnz - 1, i, cols, values, ierr)
+#endif
 
     ! Check that the supplied free surface anomaly and layer
     ! thicknesses are consistent with the supplied depth field.
