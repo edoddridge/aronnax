@@ -97,42 +97,12 @@ def assert_volume_conservation(nx,ny,layers,rtol):
         assert np.abs((volume_0[k] - volume_final[k])/volume_0[k]) < rtol
 
 
-### Input construction helpers
-
-def write_f_plane(nx, ny, coeff):
-    """Write files defining an f-plane approximation to the Coriolis force."""
-    with fortran_file('fu.bin', 'w') as f:
-        f.write_record(np.ones((nx+1, ny), dtype=np.float64) * coeff)
-    with fortran_file('fv.bin', 'w') as f:
-        f.write_record(np.ones((nx, ny+1), dtype=np.float64) * coeff)
-
-def write_beta_plane(grid, f0, beta):
-    """Write files defining a beta-plane approximation to the Coriolis force."""
-    with fortran_file('fu.bin', 'w') as f:
-        _, Y = np.meshgrid(grid.xp1, grid.y)
-        fu = f0 + Y*beta
-        f.write_record(fu.astype(np.float64))
-    with fortran_file('fv.bin', 'w') as f:
-        _, Y = np.meshgrid(grid.x, grid.yp1)
-        fv = f0 + Y*beta
-        f.write_record(fv.astype(np.float64))
-
-def write_rectangular_pool(nx, ny):
-    """Write the wet mask file for a maximal rectangular pool."""
-    with fortran_file('wetmask.bin', 'w') as f:
-        wetmask = np.ones((nx, ny), dtype=np.float64)
-        wetmask[ 0, :] = 0
-        wetmask[-1, :] = 0
-        wetmask[ :, 0] = 0
-        wetmask[ :,-1] = 0
-        f.write_record(wetmask)
-
 ### The test cases themselves
 
 def write_input_f_plane_red_grav(nx, ny, layers):
     assert layers == 1
-    write_f_plane(nx, ny, 10e-4)
-    write_rectangular_pool(nx, ny)
+    aro.write_f_plane(nx, ny, 10e-4)
+    aro.write_rectangular_pool(nx, ny)
     with fortran_file('initH.bin', 'w') as f:
         f.write_record(np.ones((nx, ny), dtype=np.float64) * 400)
 
@@ -144,8 +114,8 @@ def test_f_plane_red_grav():
 
 def write_input_f_plane(nx, ny, layers):
     assert layers == 2
-    write_f_plane(nx, ny, 10e-4)
-    write_rectangular_pool(nx, ny)
+    aro.write_f_plane(nx, ny, 10e-4)
+    aro.write_rectangular_pool(nx, ny)
     with fortran_file('initH.bin', 'w') as f:
         initH = np.ones((2,nx,ny), dtype=np.float64)
         initH[0,:,:] = 400
@@ -164,8 +134,8 @@ def write_input_beta_plane_bump_red_grav(nx, ny, layers):
     ylen = 1e6
     grid = aro.Grid(nx, ny, xlen / nx, ylen / ny)
 
-    write_beta_plane(grid, 1e-5, 2e-11)
-    write_rectangular_pool(nx, ny)
+    aro.write_beta_plane(grid, 1e-5, 2e-11)
+    aro.write_rectangular_pool(nx, ny)
 
     with fortran_file('initH.bin', 'w') as f:
         X,Y = np.meshgrid(grid.x,grid.y)
@@ -184,8 +154,8 @@ def write_input_beta_plane_bump(nx, ny, layers):
     ylen = 1e6
     grid = aro.Grid(nx, ny, xlen / nx, ylen / ny)
 
-    write_beta_plane(grid, 1e-5, 2e-11)
-    write_rectangular_pool(nx, ny)
+    aro.write_beta_plane(grid, 1e-5, 2e-11)
+    aro.write_rectangular_pool(nx, ny)
 
     with fortran_file('initH.bin', 'w') as f:
         X,Y = np.meshgrid(grid.x,grid.y)
@@ -206,8 +176,8 @@ def write_input_beta_plane_gyre_red_grav(nx, ny, layers):
     ylen = 2e6
     grid = aro.Grid(nx, ny, xlen / nx, ylen / ny)
 
-    write_beta_plane(grid, 1e-5, 2e-11)
-    write_rectangular_pool(nx, ny)
+    aro.write_beta_plane(grid, 1e-5, 2e-11)
+    aro.write_rectangular_pool(nx, ny)
 
     with fortran_file('initH.bin', 'w') as f:
         f.write_record(np.ones((nx, ny), dtype=np.float64) * 400)
@@ -229,8 +199,8 @@ def write_input_beta_plane_gyre(nx, ny, layers):
     ylen = 2e6
     grid = aro.Grid(nx, ny, xlen / nx, ylen / ny)
 
-    write_beta_plane(grid, 1e-5, 2e-11)
-    write_rectangular_pool(nx, ny)
+    aro.write_beta_plane(grid, 1e-5, 2e-11)
+    aro.write_rectangular_pool(nx, ny)
 
     with fortran_file('initH.bin', 'w') as f:
         _, Y = np.meshgrid(grid.x, grid.y)
