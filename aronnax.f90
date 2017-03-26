@@ -556,11 +556,11 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
 
     ! the 2D array is being laid out like
     ! [x1y1, x1y2, x1y3, x2y1, x2y2, x2y3, x3y1, x3y2, x3y3]
-      values( ((i-1)*nx + j)*5 )    = a(5,i,j)
-      values( ((i-1)*nx + j)*5 + 1) = a(3,i,j)
-      values( ((i-1)*nx + j)*5 + 2) = a(1,i,j)
-      values( ((i-1)*nx + j)*5 + 3) = a(4,i,j)
-      values( ((i-1)*nx + j)*5 + 4) = a(2,i,j)
+      values( ((i-1)*ny + j)*5 )    = a(5,i,j)
+      values( ((i-1)*ny + j)*5 + 1) = a(3,i,j)
+      values( ((i-1)*ny + j)*5 + 2) = a(1,i,j)
+      values( ((i-1)*ny + j)*5 + 3) = a(4,i,j)
+      values( ((i-1)*ny + j)*5 + 4) = a(2,i,j)
 
       end do
     end do
@@ -926,6 +926,16 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
   ! print *, maxval(abs(etanew))
 #elseifdef useExtSolver
   call HYPRE_StructVectorCreate(MPI_COMM_WORLD, hypre_grid, hypre_b, ierr)
+  call HYPRE_StructVectorInitialize(hypre_b, ierr)
+
+  do i = 1, nx ! loop over every grid point
+    do j = 1, ny
+  ! the 2D array is being laid out like
+  ! [x1y1, x1y2, x1y3, x2y1, x2y2, x2y3, x3y1, x3y2, x3y3]
+    values( ((i-1)*ny + j) )    = etastar(i,j)
+    end do
+  end do
+
 #endif
 
   etanew = etanew*wetmask
