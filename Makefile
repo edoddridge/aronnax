@@ -1,8 +1,14 @@
+# External dependencies
+HYPRE_DIR = lib/hypre/src
+
+LIBS      = -L$(HYPRE_DIR)/lib -lHYPRE -lm
+
+
 MIM: MIM.f90 Makefile
 	gfortran -g -Ofast $< -o $@ -cpp
 
 MIM_external_solver: MIM.f90 Makefile
-	mpifort -g -Ofast $< -o $@ -cpp -DuseExtSolver
+	mpifort -g $< -o $@ -cpp -DuseExtSolver $(LIBS)
 
 MIM_test: MIM.f90 Makefile
 	gfortran -g -O1 -fcheck=all $< -o $@ -cpp
