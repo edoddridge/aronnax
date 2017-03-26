@@ -18,15 +18,15 @@ def benchmark_gaussian_bump_red_grav():
     run_time_Ofast = np.zeros(len(grid_points))
 
     with opt.working_directory(p.join(self_path, "beta_plane_bump_red_grav")):
-        mim_exec = "aronnax_test"
+        aro_exec = "aronnax_test"
         for counter, nx in enumerate(grid_points):
             run_time_O1[counter] = opt.run_experiment(
-                opt.write_input_beta_plane_bump_red_grav, nx, nx, 1, mim_exec)
+                opt.write_input_beta_plane_bump_red_grav, nx, nx, 1, aro_exec)
 
-        mim_exec = "aronnax_core"
+        aro_exec = "aronnax_core"
         for counter, nx in enumerate(grid_points):
             run_time_Ofast[counter] = opt.run_experiment(
-                opt.write_input_beta_plane_bump_red_grav, nx, nx, 1, mim_exec)
+                opt.write_input_beta_plane_bump_red_grav, nx, nx, 1, aro_exec)
 
         plt.figure()
         plt.plot(grid_points, run_time_O1, '-*', label='Aronnax run time -O1')
@@ -46,15 +46,15 @@ def benchmark_gaussian_bump():
     run_time_Ofast = np.zeros(len(grid_points))
 
     with opt.working_directory(p.join(self_path, "beta_plane_bump")):
-        mim_exec = "aronnax_test"
+        aro_exec = "aronnax_test"
         for counter, nx in enumerate(grid_points[:7]):
             run_time_O1[counter] = opt.run_experiment(
-                  opt.write_input_beta_plane_bump, nx, nx, 2, mim_exec)
+                  opt.write_input_beta_plane_bump, nx, nx, 2, aro_exec)
 
-        mim_exec = "aronnax_core"
+        aro_exec = "aronnax_core"
         for counter, nx in enumerate(grid_points[:7]):
             run_time_Ofast[counter] = opt.run_experiment(
-                  opt.write_input_beta_plane_bump, nx, nx, 2, mim_exec)
+                  opt.write_input_beta_plane_bump, nx, nx, 2, aro_exec)
 
         plt.figure()
         plt.plot(grid_points[:7], run_time_O1[:7],
