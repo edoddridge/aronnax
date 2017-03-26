@@ -140,7 +140,7 @@ program MIM
   namelist /MODEL/ hmean, depthFile, H0, RedGrav
 
 #ifdef useExtSolver
-  namelist /PRESSURE_SOLVER/ useExternalSolver, nProcX, nProcY
+  namelist /PRESSURE_SOLVER/ nProcX, nProcY
 #endif
 
   namelist /SPONGE/ spongeHTimeScaleFile, spongeUTimeScaleFile, &
