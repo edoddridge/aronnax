@@ -307,7 +307,8 @@ end if
       spongeHTimeScale, spongeUTimeScale, spongeVTimeScale, &
       spongeH, spongeU, spongeV, &
       nx, ny, layers, RedGrav, DumpWind, &
-      MPI_COMM_WORLD, hypre_grid)
+      MPI_COMM_WORLD, num_procs, ilower, iupper, &
+      hypre_grid)
   print *, 'Execution ended normally'
   stop 0
 end program aronnax
@@ -322,7 +323,8 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
     spongeHTimeScale, spongeUTimeScale, spongeVTimeScale, &
     spongeH, spongeU, spongeV, &
     nx, ny, layers, RedGrav, DumpWind, &
-    MPI_COMM_WORLD, hypre_grid)
+    MPI_COMM_WORLD, num_procs, ilower, iupper, &
+    hypre_grid)
   implicit none
 
   ! Layer thickness (h)
@@ -418,7 +420,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   integer   :: offsets(2,5)
   integer*8 :: stencil
   integer :: ierr
-  integer :: i ! loop variable
+  integer :: i, j ! loop variables
   integer*8 :: hypre_grid
   integer*8 :: hypre_A
   integer*8 :: hypre_b
@@ -427,6 +429,8 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   double precision, dimension(:), allocatable :: values
 
   integer :: MPI_COMM_WORLD
+  integer :: num_procs
+  integer :: ilower(0:num_procs-1,2), iupper(0:num_procs-1,2)
 
   ! Time step loop variable
   integer :: n
@@ -542,17 +546,32 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
     call HYPRE_StructMatrixInitialize(hypre_A, ierr)
 
     nentries = 5 ! a five point stncil means five entries for each grid point
-    nvalues = nx * ny ! total number of grid points to simulate
+    nvalues = nx * ny * 5 ! total number of grid points to simulate * five stencil entries per grid point
     allocate(values(nvalues))
 
-    do i = 1, nvalues, nentries ! loop over every grid point, skipping by the number of points in the stencil. This 
+    do i = 1, nx !values, nentries ! loop over every grid point, skipping by the number of points in the stencil. This 
     ! selects only the central points of the stencil
-    
+      do j = 1, ny
+
+
     ! the 2D array is being laid out like
     ! [x1y1, x1y2, x1y3, x2y1, x2y2, x2y3, x3y1, x3y2, x3y3]
-      values(i) = 1
+      values( ((i-1)*nx + j)*5 )    = a(5,i,j)
+      values( ((i-1)*nx + j)*5 + 1) = a(3,i,j)
+      values( ((i-1)*nx + j)*5 + 2) = a(1,i,j)
+      values( ((i-1)*nx + j)*5 + 3) = a(4,i,j)
+      values( ((i-1)*nx + j)*5 + 4) = a(2,i,j)
+
+      end do
     end do
 
+    do i = 0, num_procs-1
+      call HYPRE_StructMatrixSetBoxValues(hypre_A, & 
+        ilower(i,:), iupper(i,:), 5, stencil_indices, & 
+        values, ierr)
+    end do
+
+    call HYPRE_StructMatrixAssemble(hypre_A, ierr)
 #endif
 
     ! Check that the supplied free surface anomaly and layer
