@@ -107,6 +107,15 @@ def write_wind_x(grid, func):
     with fortran_file('wind_x.bin', 'w') as f:
         f.write_record(wind_x.astype(np.float64))
 
+def write_wind_y(grid, func):
+    X,Y = np.meshgrid(grid.y, grid.xp1)
+    if isinstance(func, (int, long, float)):
+        wind_y = np.ones(grid.ny+1, grid.nx) * func
+    else:
+        wind_y = func(X, Y)
+    with fortran_file('wind_y.bin', 'w') as f:
+        f.write_record(wind_y.astype(np.float64))
+
 ### Specific construction helpers
 
 def write_f_plane(nx, ny, coeff):
