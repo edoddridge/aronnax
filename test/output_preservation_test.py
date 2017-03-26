@@ -9,7 +9,7 @@ import glob
 import numpy as np
 from scipy.io import FortranFile
 
-import MIMutils as mim
+import aronnax as mim
 
 self_path = p.dirname(p.abspath(__file__))
 root_path = p.dirname(self_path)
