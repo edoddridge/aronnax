@@ -34,7 +34,7 @@ def tweak_parameters(nx, ny, layers):
         "> parameters.new", shell=True)
     sub.check_call(["mv", "parameters.new", "parameters.in"])
 
-def run_experiment(write_input, nx, ny, layers, aro_exec=None, valgrind=False):
+def run_experiment(write_input, nx, ny, layers, aro_exec=None, valgrind=False, perf=False):
     if aro_exec is None:
         aro_exec = "aronnax_test"
     sub.check_call(["rm", "-rf", "input/"])
@@ -47,7 +47,16 @@ def run_experiment(write_input, nx, ny, layers, aro_exec=None, valgrind=False):
     tweak_parameters(nx, ny, layers)
     then = time.time()
     if valgrind or 'ARONNAX_TEST_VALGRIND_ALL' in os.environ:
+        assert not perf
         sub.check_call(["valgrind", "--error-exitcode=5", p.join(root_path, aro_exec)])
+    elif perf:
+        perf_cmds = ["perf", "stat", "-e", "r530010", # "flops", on my CPU.
+            "-e", "L1-dcache-loads", "-e", "L1-dcache-load-misses",
+            "-e", "L1-dcache-stores", "-e", "L1-dcache-store-misses",
+            "-e", "L1-icache-loads", "-e", "L1-icache-misses",
+            "-e", "L1-dcache-prefetches",
+            "-e", "branch-instructions", "-e", "branch-misses"]
+        sub.check_call(perf_cmds + [p.join(root_path, aro_exec)])
     else:
         sub.check_call([p.join(root_path, aro_exec)])
     run_time = time.time() - then
