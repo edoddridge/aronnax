@@ -944,6 +944,24 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
 
   call HYPRE_StructVectorAssemble(hypre_b, ierr)
 
+  ! set initial values for vector x
+  ! we're using the recently calculated etastar 
+  ! as a first guess
+  do i = 1, nx ! loop over every grid point
+    do j = 1, ny
+  ! the 2D array is being laid out like
+  ! [x1y1, x1y2, x1y3, x2y1, x2y2, x2y3, x3y1, x3y2, x3y3]
+    values( ((i-1)*ny + j) )    = etastar(i,j)
+    end do
+  end do
+
+  do i = 0, num_procs-1
+    call HYPRE_StructVectorSetBoxValues(hypre_x, & 
+      ilower(i,:), iupper(i,:), values, ierr)
+  end do
+
+  call HYPRE_StructVectorAssemble(hypre_x, ierr)
+
 #endif
 
   etanew = etanew*wetmask
