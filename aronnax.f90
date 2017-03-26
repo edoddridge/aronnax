@@ -535,47 +535,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
     call HYPRE_StructMatrixCreate(MPI_COMM_WORLD, hypre_grid, stencil, hypre_A, ierr)
     call HYPRE_StructMatrixInitialize(hypre_A, ierr)
 
-! ilower(myid,1), & 
-!            iupper(myid,1), ilower(myid,2), iupper(myid,2)
 
-! do i = ilower(myid,1), iupper(myid,1)
-!          nnz = 1
-         
-
-! c        The left identity block:position i-n
-!          if ( (i-n) .ge. 0 ) then
-!       cols(nnz) = i-n
-!       values(nnz) = -1.0d0
-!       nnz = nnz + 1
-!          endif
-
-! c         The left -1: position i-1
-!          if ( mod(i,n).ne.0 ) then
-!             cols(nnz) = i-1
-!             values(nnz) = -1.0d0
-!             nnz = nnz + 1
-!          endif
-
-! c        Set the diagonal: position i
-!          cols(nnz) = i
-!          values(nnz) = 4.0d0
-!          nnz = nnz + 1
-
-! c        The right -1: position i+1
-!          if ( mod((i+1),n) .ne. 0 ) then
-!             cols(nnz) = i+1
-!             values(nnz) = -1.0d0
-!             nnz = nnz + 1
-!          endif
-
-! c        The right identity block:position i+n
-!          if ( (i+n) .lt. ng ) then
-!             cols(nnz) = i+n
-!             values(nnz) = -1.0d0
-!             nnz = nnz + 1
-!          endif
-
-    ! call HYPRE_IJMatrixSetValues(A, 1, nnz - 1, i, cols, values, ierr)
 #endif
 
     ! Check that the supplied free surface anomaly and layer
