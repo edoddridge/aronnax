@@ -101,10 +101,12 @@ def assert_volume_conservation(nx,ny,layers,rtol):
 
 def write_input_f_plane_red_grav(nx, ny, layers):
     assert layers == 1
+    xlen = 1e6
+    ylen = 1e6
+    grid = aro.Grid(nx, ny, xlen / nx, ylen / ny)
     aro.write_f_plane(nx, ny, 10e-4)
     aro.write_rectangular_pool(nx, ny)
-    with fortran_file('initH.bin', 'w') as f:
-        f.write_record(np.ones((nx, ny), dtype=np.float64) * 400)
+    aro.write_initial_heights(grid, [400.0])
 
 def test_f_plane_red_grav():
     with working_directory(p.join(self_path, "f_plane_red_grav")):
@@ -114,13 +116,12 @@ def test_f_plane_red_grav():
 
 def write_input_f_plane(nx, ny, layers):
     assert layers == 2
+    xlen = 1e6
+    ylen = 1e6
+    grid = aro.Grid(nx, ny, xlen / nx, ylen / ny)
     aro.write_f_plane(nx, ny, 10e-4)
     aro.write_rectangular_pool(nx, ny)
-    with fortran_file('initH.bin', 'w') as f:
-        initH = np.ones((2,nx,ny), dtype=np.float64)
-        initH[0,:,:] = 400
-        initH[1,:,:] = 2000 - initH[0,:,:]
-        f.write_record(initH)
+    aro.write_initial_heights(grid, [400.0, 1600.0])
 
 def test_f_plane():
     with working_directory(p.join(self_path, "f_plane")):
@@ -136,11 +137,9 @@ def write_input_beta_plane_bump_red_grav(nx, ny, layers):
 
     aro.write_beta_plane(grid, 1e-5, 2e-11)
     aro.write_rectangular_pool(nx, ny)
-
-    with fortran_file('initH.bin', 'w') as f:
-        X,Y = np.meshgrid(grid.x,grid.y)
-        initH = 500 + 20*np.exp(-((6e5-X)**2 + (5e5-Y)**2)/(2*1e5**2))
-        f.write_record(initH.astype(np.float64))
+    def bump(X, Y):
+        return 500. + 20*np.exp(-((6e5-X)**2 + (5e5-Y)**2)/(2*1e5**2))
+    aro.write_initial_heights(grid, [bump])
 
 def test_gaussian_bump_red_grav():
     with working_directory(p.join(self_path, "beta_plane_bump_red_grav")):
@@ -156,13 +155,9 @@ def write_input_beta_plane_bump(nx, ny, layers):
 
     aro.write_beta_plane(grid, 1e-5, 2e-11)
     aro.write_rectangular_pool(nx, ny)
-
-    with fortran_file('initH.bin', 'w') as f:
-        X,Y = np.meshgrid(grid.x,grid.y)
-        initH = np.ones((2,ny,nx))
-        initH[0,:,:] = 500. + 20*np.exp(-((6e5-X)**2 + (5e5-Y)**2)/(2*1e5**2))
-        initH[1,:,:] = 2000. - initH[0,:,:]
-        f.write_record(initH.astype(np.float64))
+    def bump(X, Y):
+        return 500. + 20*np.exp(-((6e5-X)**2 + (5e5-Y)**2)/(2*1e5**2))
+    aro.write_initial_heights(grid, [bump, lambda X, Y: 2000. - bump(X, Y)])
 
 def test_gaussian_bump():
     with working_directory(p.join(self_path, "beta_plane_bump")):
@@ -178,9 +173,7 @@ def write_input_beta_plane_gyre_red_grav(nx, ny, layers):
 
     aro.write_beta_plane(grid, 1e-5, 2e-11)
     aro.write_rectangular_pool(nx, ny)
-
-    with fortran_file('initH.bin', 'w') as f:
-        f.write_record(np.ones((nx, ny), dtype=np.float64) * 400)
+    aro.write_initial_heights(grid, [400.0])
 
     with fortran_file('wind_x.bin', 'w') as f:
         _, Y = np.meshgrid(grid.xp1, grid.y)
@@ -201,13 +194,7 @@ def write_input_beta_plane_gyre(nx, ny, layers):
 
     aro.write_beta_plane(grid, 1e-5, 2e-11)
     aro.write_rectangular_pool(nx, ny)
-
-    with fortran_file('initH.bin', 'w') as f:
-        _, Y = np.meshgrid(grid.x, grid.y)
-        initH = np.ones((2, ny, nx))
-        initH[0,:,:] = 600.
-        initH[1,:,:] = 2000. - initH[0,:,:]
-        f.write_record(initH.astype(np.float64))
+    aro.write_initial_heights(grid, [600.0, 1400.0])
 
     with fortran_file('wind_x.bin', 'w') as f:
         _, Y = np.meshgrid(grid.xp1, grid.y)

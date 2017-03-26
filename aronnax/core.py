@@ -27,6 +27,10 @@ class Grid(object):
         self.x = (self.xp1[1:] + self.xp1[:-1])/2.
         self.y = (self.yp1[1:] + self.yp1[:-1])/2.
 
+        # Size
+        self.nx = nx
+        self.ny = ny
+
 @contextmanager
 def fortran_file(*args, **kwargs):
     f = FortranFile(*args, **kwargs)
@@ -81,7 +85,20 @@ def interpret_raw_file(name, nx, ny, layers):
             return f.read_reals(dtype=np.float64) \
                     .reshape(ny+dy, nx+dx).transpose()
 
-### Input construction helpers
+### General input construction helpers
+
+def write_initial_heights(grid, h_funcs):
+    X,Y = np.meshgrid(grid.x, grid.y)
+    initH = np.ones((len(h_funcs), grid.ny, grid.nx))
+    for i, f in enumerate(h_funcs):
+        if isinstance(f, (int, long, float)):
+            initH[i,:,:] = f
+        else:
+            initH[i,:,:] = f(X, Y)
+    with fortran_file('initH.bin', 'w') as f:
+        f.write_record(initH.astype(np.float64))
+
+### Specific construction helpers
 
 def write_f_plane(nx, ny, coeff):
     """Write files defining an f-plane approximation to the Coriolis force."""
