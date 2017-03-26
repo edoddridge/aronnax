@@ -13,7 +13,7 @@ class Grid(object):
     """!Make a grid object containing all of the axes."""
 
     def __init__(self,nx,ny,dx,dy,x0=0,y0=0):
-        """!Instantiate a grid object for MIM."""
+        """!Instantiate a grid object for Aronnax."""
 
         # axes for vorticity points
         self.xp1 = np.linspace(x0,nx*dx+x0,nx+1)
