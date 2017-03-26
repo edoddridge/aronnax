@@ -545,7 +545,9 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
     nvalues = nx * ny ! total number of grid points to simulate
     allocate(values(nvalues))
 
-    do i = 1, nvalues, nentries ! loop over every grid point, skipping by the number of points in the stencil
+    do i = 1, nvalues, nentries ! loop over every grid point, skipping by the number of points in the stencil. This 
+    ! selects only the central points of the stencil
+    
     ! the 2D array is being laid out like
     ! [x1y1, x1y2, x1y3, x2y1, x2y2, x2y3, x3y1, x3y2, x3y3]
       values(i) = 1
