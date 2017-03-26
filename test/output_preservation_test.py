@@ -55,7 +55,7 @@ def run_experiment(write_input, nx, ny, layers, mim_exec=None, valgrind=False):
         write_input(nx, ny, layers)
     tweak_parameters(nx, ny, layers)
     then = time.time()
-    if valgrind or 'MIM_TEST_VALGRIND_ALL' in os.environ:
+    if valgrind or 'ARONNAX_TEST_VALGRIND_ALL' in os.environ:
         sub.check_call(["valgrind", "--error-exitcode=5", p.join(root_path, mim_exec)])
     else:
         sub.check_call([p.join(root_path, mim_exec)])

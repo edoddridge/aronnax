@@ -17,7 +17,7 @@ before_install:
 install: "pip install scipy"
 
 script:
-  - gfortran -Wall -Werror MIM.f90
-  - MIM_TEST_VALGRIND_ALL=1 pytest
+  - gfortran -Wall -Werror aronnax.f90
+  - ARONNAX_TEST_VALGRIND_ALL=1 pytest
 
 after_success:
