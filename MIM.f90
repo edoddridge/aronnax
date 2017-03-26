@@ -35,6 +35,8 @@ program MIM
 
 #ifdef useExtSolver
   include 'mpif.h'
+
+  integer, parameter :: HYPRE_PARCSR = 5555
 #endif
 
   integer, parameter :: layerwise_input_length = 10000
@@ -106,16 +108,15 @@ program MIM
   ! External pressure solver variables
   ! except for the logical switch, none of these are used
   ! unless the external solver is used.
-  logical :: useExternalSolver
   integer :: nProcX, nProcY
 
   integer :: mpi_comm
   integer :: ierr
   integer :: num_procs, myid
 
-  integer, dimension(:), allocatable :: ilower, iupper
-  integer, dimension(:), allocatable :: jlower, jupper
-  integer :: n
+  integer, dimension(:,:), allocatable :: ilower, iupper
+  integer, dimension(:,:), allocatable :: jlower, jupper
+  integer :: n, m
 
   integer*8 :: parcsr_A
   integer*8 :: A
@@ -125,6 +126,7 @@ program MIM
   integer*8 :: par_x
   integer*8 :: solver
   integer*8 :: precond
+  integer*8 :: hypre_grid
 
   ! Set default values here
 
@@ -174,33 +176,54 @@ program MIM
   call MPI_COMM_RANK(MPI_COMM_WORLD, myid, ierr)
   call MPI_COMM_SIZE(MPI_COMM_WORLD, num_procs, ierr)
   mpi_comm = MPI_COMM_WORLD
+
   if (num_procs .ne. nProcX * nProcY) then
-    print *, "number of processors must equal nProcX * nProcY - fix this and try again"
+    if (myid .eq. 0) then
+      print *, "number of processors in run command must equal nProcX * nProcY - fix this and try again"
+      print *, 'num_procs = ', num_procs
+      print *, 'nProcX = ', nProcX
+      print *, 'nProcY = ', nProcY
+    end if
     stop
   end if
 
-  allocate(ilower(num_procs))
-  allocate(iupper(num_procs))
-  allocate(jlower(num_procs))
-  allocate(jupper(num_procs))
+  ! myid starts at zero, so index these variables from zero.
+  ! i__(:,1) = indicies for x locations
+  ! i__(:,2) = indicies for y locations
+  allocate(ilower(0:num_procs-1, 2))
+  allocate(iupper(0:num_procs-1, 2))
 
-  do n = 1, nProcX
-    ilower(n) = (n - 1) * nx / nProcX
-    iupper(n) = (n * nx / nProcX) - 1
+
+  do n = 0, nProcX - 1
+    ilower(n * nProcY:(n+1)*nProcY - 1,1) = n * nx / nProcX
+    iupper(n * nProcY:(n+1)*nProcY - 1,1) = ((n+1) * nx / nProcX) - 1
   end do
   ! correct final iupper value to include the global halo
-  iupper(nProcX) = nx + 1
+  iupper((nProcX-1)*nProcY:nProcX*nProcY,1) = nx + 1
 
-  do n = 1, nProcX
-    jlower(n) = (n - 1) * ny / nProcY
-    jupper(n) = (n * ny / nProcY) - 1
+  do n = 0, nProcY - 1
+    ilower(n * nProcX:(n+1)*nProcX - 1,2) = n * ny / nProcY
+    iupper(n * nProcX:(n+1)*nProcX - 1,2) = ((n+1) * ny / nProcY) - 1
   end do
   ! correct final iupper value to include the global halo
-  jupper(nProcY) = ny + 1
+  iupper((nProcY-1)*nProcX:nProcX*nProcY,2) = ny + 1
 
-  call HYPRE_IJMatrixCreate(mpi_comm, ilower, & 
-          iupper, jlower, jupper, A, ierr)
+if (myid .eq. 0) then
+  print *, 'ilower (x) = ', ilower(:,1)
+  print *, 'ilower (y) = ', ilower(:,2)
+  print *, 'iupper (x) = ', iupper(:,1)
+  print *, 'iupper (y) = ', iupper(:,2)
+end if
+    call HYPRE_IJMatrixCreate(mpi_comm, ilower(myid,1), & 
+           iupper(myid,1), ilower(myid,2), iupper(myid,2), A, ierr)
+
+  ! ! Choose a parallel csr format storage (apparently his is the only one supported)
+  call HYPRE_IJMatrixSetObjectType(A, HYPRE_PARCSR, ierr)
+
+  ! ! Initialize before setting coefficients
+  call HYPRE_IJMatrixInitialize(A, ierr)
 #endif
+
 
   allocate(h(0:nx+1, 0:ny+1, layers))
   allocate(u(0:nx+1, 0:ny+1, layers))
