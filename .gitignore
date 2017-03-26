@@ -6,10 +6,10 @@ __pycache__/
 # C extensions
 *.so
 
-# The MIM executable
-/MIM
-/MIM_test
-/MIM_prof
+# The Aronnax executable
+/aronnax_core
+/aronnax_test
+/aronnax_prof
 
 # Profiling
 gmon.out
