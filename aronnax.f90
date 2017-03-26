@@ -1,11 +1,11 @@
 !> @author
 !> Ed Doddridge
 !
-!> Minimalist Isopycnal Model (MIM) with n layers
+!> Aronnax, an idealized isopycnal model with n layers and variable bathymetry.
 !!
 !
 !>
-!>     @mainpage Documentation for MIM.f90
+!>     @mainpage Documentation for aronnax.f90
 !>
 !>     @section Overview
 !>     This model is an isopycnal model on an Arakawa C-grid with n
@@ -29,7 +29,7 @@
 !>    Z: vorticity point - zeta
 !>
 
-program MIM
+program aronnax
   implicit none
 
   integer, parameter :: layerwise_input_length = 10000
@@ -210,7 +210,7 @@ program MIM
       nx, ny, layers, RedGrav, DumpWind)
   print *, 'Execution ended normally'
   stop 0
-end program MIM
+end program aronnax
 
 ! ------------------------------ Primary routine ----------------------------
 !> Run the model
