@@ -8,6 +8,7 @@ setup(name='aronnax',
       author_email='blank',
       license='MIT licence',
       packages=['aronnax'],
+      scripts = ['aronnax/aronnax'],
       install_requires=[
           'numpy',],
       zip_safe=False)

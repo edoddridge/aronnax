@@ -1,0 +1,35 @@
+#!/bin/python
+
+from contextlib import contextmanager
+import os
+import os.path as p
+import subprocess as sub
+import time
+
+self_path = p.dirname(p.abspath(__file__))
+root_path = p.dirname(self_path)
+
+@contextmanager
+def working_directory(path):
+    old_path = os.getcwd()
+    sub.check_call(["mkdir", "-p", path])
+    os.chdir(path)
+    try:
+        yield
+    finally:
+        os.chdir(old_path)
+
+def main():
+    aro_exec = "aronnax_core"
+    with working_directory(root_path):
+        sub.check_call(["make", aro_exec])
+    then = time.time()
+    if 'ARONNAX_TEST_VALGRIND_ALL' in os.environ:
+        sub.check_call(["valgrind", "--error-exitcode=5", p.join(root_path, aro_exec)])
+    else:
+        sub.check_call([p.join(root_path, aro_exec)])
+    run_time = time.time() - then
+    print "Aronnax execution took", run_time
+
+if __name__ == '__main__':
+    main()
