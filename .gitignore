@@ -10,6 +10,7 @@ __pycache__/
 /MIM
 /MIM_test
 /MIM_prof
+/MIM_external_solver
 
 # Profiling
 gmon.out
