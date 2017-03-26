@@ -720,8 +720,14 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
       call barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
           dx, dy, wetmask, hfacW, hfacS, dt, &
           maxits, eps, rjac, freesurfFac, thickness_error, &
-          g_vec, nx, ny, layers, n)
+          g_vec, nx, ny, layers, n, &
+          MPI_COMM_WORLD, num_procs, ilower, iupper, &
+          hypre_grid, hypre_b, ierr)
+          ! , &
+          ! MPI_COMM_WORLD, num_procs, ilower, iupper, &
+          ! hypre_grid, hypre_A, hypre_b, hypre_x)
     end if
+
 
     ! Stop layers from getting too thin
     call enforce_minimum_layer_thickness(hnew, hmin, nx, ny, layers, n)
@@ -857,7 +863,11 @@ end subroutine state_derivative
 subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
     dx, dy, wetmask, hfacW, hfacS, dt, &
     maxits, eps, rjac, freesurfFac, thickness_error, &
-    g_vec, nx, ny, layers, n)
+    g_vec, nx, ny, layers, n, &
+     MPI_COMM_WORLD, num_procs, ilower, iupper, & 
+     hypre_grid, hypre_b, ierr)
+     ! , &
+    ! hypre_grid, hypre_A, hypre_b, hypre_x)
   implicit none
 
   double precision, intent(inout) :: hnew(0:nx+1, 0:ny+1, layers)
@@ -882,6 +892,22 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
   double precision :: vb(nx, ny+1)
   double precision :: etastar(0:nx+1, 0:ny+1)
 
+  ! External solver variables
+  integer   :: offsets(2,5)
+  integer*8 :: stencil
+  integer :: ierr
+  integer :: i, j ! loop variables
+  integer*8 :: hypre_grid
+  integer*8 :: hypre_A
+  integer*8 :: hypre_b
+  integer*8 :: hypre_x
+  integer   ::  nentries, nvalues, stencil_indices(5)
+  double precision, dimension(:), allocatable :: values
+
+  integer :: MPI_COMM_WORLD
+  integer :: num_procs
+  integer :: ilower(0:num_procs-1,2), iupper(0:num_procs-1,2)
+
   ! Calculate the barotropic velocities
   call calc_baro_u(ub, unew, hnew, eta, freesurfFac, nx, ny, layers)
   call calc_baro_v(vb, vnew, hnew, eta, freesurfFac, nx, ny, layers)
@@ -894,10 +920,13 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
   ! Prevent barotropic signals from bouncing around outside the
   ! wet region of the model.
   ! etastar = etastar*wetmask
-
+#ifndef useExtSolver
   call SOR_solver(a, etanew, etastar, freesurfFac, nx, ny, &
       dt, rjac, eps, maxits, n)
   ! print *, maxval(abs(etanew))
+#elseifdef useExtSolver
+  call HYPRE_StructVectorCreate(MPI_COMM_WORLD, hypre_grid, hypre_b, ierr)
+#endif
 
   etanew = etanew*wetmask
   call wrap_fields_2D(etanew, nx, ny)
