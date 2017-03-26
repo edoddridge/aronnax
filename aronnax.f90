@@ -104,7 +104,7 @@ program aronnax
   ! Main input files
   character(30) :: initUfile, initVfile, initHfile, initEtaFile
   character(30) :: zonalWindFile, meridionalWindFile
-  
+
   ! External pressure solver variables
   ! except for the logical switch, none of these are used
   ! unless the external solver is used.
@@ -116,18 +116,15 @@ program aronnax
 
   integer, dimension(:,:), allocatable :: ilower, iupper
   integer, dimension(:,:), allocatable :: jlower, jupper
-  integer :: n, m
+  integer :: i, j
 
   integer*8 :: parcsr_A
-  integer*8 :: A
-  integer*8 :: b
-  integer*8 :: x
   integer*8 :: par_b
   integer*8 :: par_x
   integer*8 :: solver
   integer*8 :: precond
   integer*8 :: hypre_grid
-
+  integer   :: offsets(2,5)
   ! Set default values here
 
   ! TODO Possibly wait until the model is split into multiple files,
@@ -194,19 +191,19 @@ program aronnax
   allocate(iupper(0:num_procs-1, 2))
 
 
-  do n = 0, nProcX - 1
-    ilower(n * nProcY:(n+1)*nProcY - 1,1) = n * nx / nProcX
-    iupper(n * nProcY:(n+1)*nProcY - 1,1) = ((n+1) * nx / nProcX) - 1
+  do i = 0, nProcX - 1
+    ilower(i * nProcY:(i+1)*nProcY - 1,1) = i * nx / nProcX
+    iupper(i * nProcY:(i+1)*nProcY - 1,1) = ((i+1) * nx / nProcX) - 1
   end do
-  ! correct final iupper value to include the global halo
-  iupper((nProcX-1)*nProcY:nProcX*nProcY,1) = nx + 1
+  ! correct first ilower value to exclude the global halo
+  ilower(0,1) = 1
 
-  do n = 0, nProcY - 1
-    ilower(n * nProcX:(n+1)*nProcX - 1,2) = n * ny / nProcY
-    iupper(n * nProcX:(n+1)*nProcX - 1,2) = ((n+1) * ny / nProcY) - 1
+  do j = 0, nProcY - 1
+    ilower(j * nProcX:(j+1)*nProcX - 1,2) = j * ny / nProcY
+    iupper(j * nProcX:(j+1)*nProcX - 1,2) = ((j+1) * ny / nProcY) - 1
   end do
-  ! correct final iupper value to include the global halo
-  iupper((nProcY-1)*nProcX:nProcX*nProcY,2) = ny + 1
+  ! correct first ilower value to exclude the global halo
+  ilower(0,2) = 1
 
 if (myid .eq. 0) then
   print *, 'ilower (x) = ', ilower(:,1)
@@ -214,14 +211,22 @@ if (myid .eq. 0) then
   print *, 'iupper (x) = ', iupper(:,1)
   print *, 'iupper (y) = ', iupper(:,2)
 end if
-    call HYPRE_IJMatrixCreate(mpi_comm, ilower(myid,1), & 
-           iupper(myid,1), ilower(myid,2), iupper(myid,2), A, ierr)
+  !   call HYPRE_IJMatrixCreate(mpi_comm, ilower(myid,1), & 
+  !          iupper(myid,1), ilower(myid,2), iupper(myid,2), A, ierr)
 
-  ! ! Choose a parallel csr format storage (apparently his is the only one supported)
-  call HYPRE_IJMatrixSetObjectType(A, HYPRE_PARCSR, ierr)
+  ! ! ! Choose a parallel csr format storage (apparently his is the only one supported)
+  ! call HYPRE_IJMatrixSetObjectType(A, HYPRE_PARCSR, ierr)
 
-  ! ! Initialize before setting coefficients
-  call HYPRE_IJMatrixInitialize(A, ierr)
+  ! ! ! Initialize before setting coefficients
+  ! call HYPRE_IJMatrixInitialize(A, ierr)
+
+  call Hypre_StructGridCreate(MPI_COMM_WORLD, 2, hypre_grid, ierr)
+
+  do i = 0, num_procs-1
+    call HYPRE_StructGridSetExtents(hypre_grid, ilower(i,:),iupper(i,:), ierr)
+  end do
+
+  call HYPRE_StructGridAssemble(hypre_grid, ierr)
 #endif
 
 
@@ -407,6 +412,14 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   double precision :: pi
   integer :: nwrite, avwrite
   double precision :: rjac
+  ! External solver variables
+  integer   :: offsets(2,5)
+  integer*8 :: stencil
+  integer :: ierr
+  integer :: i ! loop variable
+  integer*8 :: hypre_A
+  integer*8 :: hypre_b
+  integer*8 :: hypre_x
 
   ! Time step loop variable
   integer :: n
@@ -414,6 +427,9 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   ! Wind
   double precision, dimension(:,:),   allocatable :: wind_x
   double precision, dimension(:,:),   allocatable :: wind_y
+
+
+
 
   allocate(dhdt(0:nx+1, 0:ny+1, layers))
   allocate(dhdtold(0:nx+1, 0:ny+1, layers))
@@ -440,6 +456,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   allocate(etaav(0:nx+1, 0:ny+1))
 
   allocate(a(5, nx, ny))
+
 
   allocate(hfacW(0:nx+1, 0:ny+1))
   allocate(hfacE(0:nx+1, 0:ny+1))
@@ -490,6 +507,28 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
     ! 2*pi in this calculation
 #else
     ! use the external pressure solver
+
+    ! Define the geometry of the stencil.  Each represents a relative
+    ! offset (in the index space).
+    offsets(1,1) =  0
+    offsets(2,1) =  0
+    offsets(1,2) = -1
+    offsets(2,2) =  0
+    offsets(1,3) =  1
+    offsets(2,3) =  0
+    offsets(1,4) =  0
+    offsets(2,4) = -1
+    offsets(1,5) =  0
+    offsets(2,5) =  1
+
+    call HYPRE_StructStencilCreate(2, 5, stencil, ierr)
+    ! this gives a 5 point stencil centred around the grid point of interest.   
+    do i = 1, 5
+      call HYPRE_StructStencilSetElement(stencil, i, offsets(:,i),ierr) 
+    end do
+
+    call HYPRE_StructMatrixCreate(MPI_COMM_WORLD, hypre_grid, stencil, hypre_A)
+
 ! ilower(myid,1), & 
 !            iupper(myid,1), ilower(myid,2), iupper(myid,2)
 
