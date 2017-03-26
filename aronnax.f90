@@ -29,12 +29,8 @@
 !>    Z: vorticity point - zeta
 !>
 
-<<<<<<< HEAD:MIM.f90
-program MIM
 
-=======
 program aronnax
->>>>>>> master:aronnax.f90
   implicit none
 
 #ifdef useExtSolver
