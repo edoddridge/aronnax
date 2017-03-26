@@ -110,7 +110,7 @@ program aronnax
   ! unless the external solver is used.
   integer :: nProcX, nProcY
 
-  integer :: mpi_comm
+  ! integer :: MPI_COMM_WORLD
   integer :: ierr
   integer :: num_procs, myid
 
@@ -172,7 +172,7 @@ program aronnax
   call MPI_INIT(ierr)
   call MPI_COMM_RANK(MPI_COMM_WORLD, myid, ierr)
   call MPI_COMM_SIZE(MPI_COMM_WORLD, num_procs, ierr)
-  mpi_comm = MPI_COMM_WORLD
+  ! mpi_comm = MPI_COMM_WORLD
 
   if (num_procs .ne. nProcX * nProcY) then
     if (myid .eq. 0) then
@@ -306,7 +306,8 @@ end if
       base_wind_x, base_wind_y, wind_mag_time_series, &
       spongeHTimeScale, spongeUTimeScale, spongeVTimeScale, &
       spongeH, spongeU, spongeV, &
-      nx, ny, layers, RedGrav, DumpWind)
+      nx, ny, layers, RedGrav, DumpWind, &
+      MPI_COMM_WORLD, hypre_grid)
   print *, 'Execution ended normally'
   stop 0
 end program aronnax
@@ -320,7 +321,8 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
     base_wind_x, base_wind_y, wind_mag_time_series, &
     spongeHTimeScale, spongeUTimeScale, spongeVTimeScale, &
     spongeH, spongeU, spongeV, &
-    nx, ny, layers, RedGrav, DumpWind)
+    nx, ny, layers, RedGrav, DumpWind, &
+    MPI_COMM_WORLD, hypre_grid)
   implicit none
 
   ! Layer thickness (h)
@@ -417,9 +419,12 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   integer*8 :: stencil
   integer :: ierr
   integer :: i ! loop variable
+  integer*8 :: hypre_grid
   integer*8 :: hypre_A
   integer*8 :: hypre_b
   integer*8 :: hypre_x
+
+  integer :: MPI_COMM_WORLD
 
   ! Time step loop variable
   integer :: n
@@ -527,7 +532,8 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
       call HYPRE_StructStencilSetElement(stencil, i, offsets(:,i),ierr) 
     end do
 
-    call HYPRE_StructMatrixCreate(MPI_COMM_WORLD, hypre_grid, stencil, hypre_A)
+    call HYPRE_StructMatrixCreate(MPI_COMM_WORLD, hypre_grid, stencil, hypre_A, ierr)
+    call HYPRE_StructMatrixInitialize(hypre_A, ierr)
 
 ! ilower(myid,1), & 
 !            iupper(myid,1), ilower(myid,2), iupper(myid,2)
