@@ -8,7 +8,6 @@ setup(name='MIMutils',
       author_email='blank',
       license='MIT licence',
       packages=['MIMutils'],
-      package_dir={"MIMutils": "src"},
       install_requires=[
           'numpy',],
       zip_safe=False)
