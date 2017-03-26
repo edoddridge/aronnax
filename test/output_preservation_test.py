@@ -63,52 +63,6 @@ def run_experiment(write_input, nx, ny, layers, aro_exec=None, valgrind=False):
     print "Aronnax execution took", run_time
     return run_time
 
-def interpret_aro_raw_file(name, nx, ny, layers):
-    """Read an output file dumped by the Aronnax core.
-
-    Each such file contains one array, whose size depends on what,
-    exactly, is in it, and on the resolution of the simulation.
-    Hence, the parameters nx, ny, and layers, as well as the file
-    naming convetion, suffice to interpret the content (assuming it
-    was generated on the same system)."""
-    # Note: This depends on inspection of the output writing code in
-    # the Aronnax core, to align array sizes and dimensions.  In
-    # particular, Fortran arrays are indexed in decreasing order of
-    # rate of change as one traverses the elements sequentially,
-    # whereas Python (and all other programming languages I am aware
-    # of) indexes in increasing order.
-    file_part = p.basename(name)
-    dx = 0; dy = 0; layered = True
-    if file_part.startswith("snap.h"):
-        pass
-    if file_part.startswith("snap.u"):
-        dx = 1
-    if file_part.startswith("snap.v"):
-        dy = 1
-    if file_part.startswith("snap.eta"):
-        layered = False
-    if file_part.startswith("wind_x"):
-        dx = 1
-        layered = False
-    if file_part.startswith("wind_y"):
-        dy = 1
-        layered = False
-    if file_part.startswith("av.h"):
-        pass
-    if file_part.startswith("av.u"):
-        dx = 1
-    if file_part.startswith("av.v"):
-        dy = 1
-    if file_part.startswith("av.eta"):
-        layered = False
-    with fortran_file(name, 'r') as f:
-        if layered:
-            return f.read_reals(dtype=np.float64) \
-                    .reshape(layers, ny+dy, nx+dx).transpose()
-        else:
-            return f.read_reals(dtype=np.float64) \
-                    .reshape(ny+dy, nx+dx).transpose()
-
 def array_relative_error(a1, a2):
     """Return the elementwise absolute difference between the inputs,
 scaled by the maximum value that occurs in the input."""
@@ -123,15 +77,15 @@ def assert_outputs_close(nx, ny, layers, rtol):
     outfiles = sorted(os.listdir("output/"))
     assert outfiles == sorted(os.listdir("good-output/"))
     for outfile in outfiles:
-        ans = interpret_aro_raw_file(p.join("output/", outfile), nx, ny, layers)
-        good_ans = interpret_aro_raw_file(p.join("good-output/", outfile), nx, ny, layers)
+        ans = aro.interpret_raw_file(p.join("output/", outfile), nx, ny, layers)
+        good_ans = aro.interpret_raw_file(p.join("good-output/", outfile), nx, ny, layers)
         assert np.amax(array_relative_error(ans, good_ans)) < rtol
 
 def assert_volume_conservation(nx,ny,layers,rtol):
     hfiles = sorted(glob.glob("output/snap.h.*"))
 
-    h_0 = interpret_aro_raw_file(hfiles[0], nx, ny, layers)
-    h_final = interpret_aro_raw_file(hfiles[-1], nx, ny, layers)
+    h_0 = aro.interpret_raw_file(hfiles[0], nx, ny, layers)
+    h_final = aro.interpret_raw_file(hfiles[-1], nx, ny, layers)
 
     volume_0 = np.zeros((layers))
     volume_final = np.zeros((layers))
