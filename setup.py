@@ -10,5 +10,6 @@ setup(name='aronnax',
       packages=['aronnax'],
       scripts = ['aronnax/aronnax'],
       install_requires=[
-          'numpy',],
+          'numpy',
+          'scipy',],
       zip_safe=False)
