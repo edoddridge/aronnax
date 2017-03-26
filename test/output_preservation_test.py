@@ -7,7 +7,6 @@ import time
 import glob
 
 import numpy as np
-from scipy.io import FortranFile
 
 import aronnax as aro
 
@@ -15,14 +14,6 @@ self_path = p.dirname(p.abspath(__file__))
 root_path = p.dirname(self_path)
 
 ### General helpers
-
-@contextmanager
-def fortran_file(*args, **kwargs):
-    f = FortranFile(*args, **kwargs)
-    try:
-        yield f
-    finally:
-        f.close()
 
 @contextmanager
 def working_directory(path):
