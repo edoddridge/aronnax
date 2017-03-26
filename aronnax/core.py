@@ -98,6 +98,15 @@ def write_initial_heights(grid, h_funcs):
     with fortran_file('initH.bin', 'w') as f:
         f.write_record(initH.astype(np.float64))
 
+def write_wind_x(grid, func):
+    X,Y = np.meshgrid(grid.xp1, grid.y)
+    if isinstance(func, (int, long, float)):
+        wind_x = np.ones(grid.ny, grid.nx+1) * func
+    else:
+        wind_x = func(X, Y)
+    with fortran_file('wind_x.bin', 'w') as f:
+        f.write_record(wind_x.astype(np.float64))
+
 ### Specific construction helpers
 
 def write_f_plane(nx, ny, coeff):

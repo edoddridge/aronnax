@@ -174,11 +174,9 @@ def write_input_beta_plane_gyre_red_grav(nx, ny, layers):
     aro.write_beta_plane(grid, 1e-5, 2e-11)
     aro.write_rectangular_pool(nx, ny)
     aro.write_initial_heights(grid, [400.0])
-
-    with fortran_file('wind_x.bin', 'w') as f:
-        _, Y = np.meshgrid(grid.xp1, grid.y)
-        wind_x = 0.05 * (1 - np.cos(2*np.pi * Y/np.max(grid.y)))
-        f.write_record(wind_x.astype(np.float64))
+    def wind(_, Y):
+        return 0.05 * (1 - np.cos(2*np.pi * Y/np.max(grid.y)))
+    aro.write_wind_x(grid, wind)
 
 def test_beta_plane_gyre_red_grav():
     with working_directory(p.join(self_path, "beta_plane_gyre_red_grav")):
@@ -195,11 +193,9 @@ def write_input_beta_plane_gyre(nx, ny, layers):
     aro.write_beta_plane(grid, 1e-5, 2e-11)
     aro.write_rectangular_pool(nx, ny)
     aro.write_initial_heights(grid, [600.0, 1400.0])
-
-    with fortran_file('wind_x.bin', 'w') as f:
-        _, Y = np.meshgrid(grid.xp1, grid.y)
-        wind_x = 0.05 * (1 - np.cos(2*np.pi * Y/np.max(grid.y)))
-        f.write_record(wind_x.astype(np.float64))
+    def wind(_, Y):
+        return 0.05 * (1 - np.cos(2*np.pi * Y/np.max(grid.y)))
+    aro.write_wind_x(grid, wind)
 
 def test_beta_plane_gyre():
     with working_directory(p.join(self_path, "beta_plane_gyre")):
