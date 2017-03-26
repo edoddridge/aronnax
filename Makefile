@@ -13,4 +13,4 @@ aronnax_prof: aronnax.f90 Makefile
 	gfortran -g -pg -Ofast $< -o $@ -cpp
 
 aronnax_external_solver: aronnax.f90 Makefile
-  mpifort -g $< -o $@ -cpp -DuseExtSolver $(LIBS)
+	mpifort -g $< -o $@ -cpp -DuseExtSolver $(LIBS)
