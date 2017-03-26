@@ -45,7 +45,7 @@ def tweak_parameters(nx, ny, layers):
 
 def run_experiment(write_input, nx, ny, layers, mim_exec=None, valgrind=False):
     if mim_exec is None:
-        mim_exec = "MIM_test"
+        mim_exec = "aronnax_test"
     sub.check_call(["rm", "-rf", "input/"])
     sub.check_call(["rm", "-rf", "output/"])
     sub.check_call(["mkdir", "-p", "output/"])
@@ -60,11 +60,11 @@ def run_experiment(write_input, nx, ny, layers, mim_exec=None, valgrind=False):
     else:
         sub.check_call([p.join(root_path, mim_exec)])
     run_time = time.time() - then
-    print "MIM execution took", run_time
+    print "Aronnax execution took", run_time
     return run_time
 
 def interpret_mim_raw_file(name, nx, ny, layers):
-    """Read an output file dumped by the MIM core.
+    """Read an output file dumped by the Aronnax core.
 
     Each such file contains one array, whose size depends on what,
     exactly, is in it, and on the resolution of the simulation.
@@ -72,7 +72,7 @@ def interpret_mim_raw_file(name, nx, ny, layers):
     naming convetion, suffice to interpret the content (assuming it
     was generated on the same system)."""
     # Note: This depends on inspection of the output writing code in
-    # the MIM core, to align array sizes and dimensions.  In
+    # the Aronnax core, to align array sizes and dimensions.  In
     # particular, Fortran arrays are indexed in decreasing order of
     # rate of change as one traverses the elements sequentially,
     # whereas Python (and all other programming languages I am aware
