@@ -554,7 +554,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
     end do
 
     call HYPRE_StructStencilCreate(2, 5, stencil, ierr)
-    ! this gives a 5 point stencil centred around the grid point of interest.   
+    ! this gives a 2D, 5 point stencil centred around the grid point of interest.   
     do i = 0, 4
       call HYPRE_StructStencilSetElement(stencil, i, offsets(:,i+1),ierr) 
     end do
