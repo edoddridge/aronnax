@@ -1078,11 +1078,11 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
 
   ! Set some parameters
   call HYPRE_ParCSRPCGSetMaxIter(hypre_solver, maxits, ierr)
-  call HYPRE_ParCSRPCGSetTol(hypre_solver, eps, ierr)
+  call HYPRE_ParCSRPCGSetTol(hypre_solver, 1e-10, ierr)
   ! other options not explained by user manual but present in examples
   ! call HYPRE_ParCSRPCGSetTwoNorm(hypre_solver, 1, ierr)
-  call HYPRE_ParCSRPCGSetPrintLevel(hypre_solver, 2, ierr)
-  call HYPRE_ParCSRPCGSetLogging(hypre_solver, 1, ierr)
+  ! call HYPRE_ParCSRPCGSetPrintLevel(hypre_solver, 2, ierr)
+  ! call HYPRE_ParCSRPCGSetLogging(hypre_solver, 1, ierr)
 
   ! ! use an algebraic multigrid preconditioner
   ! call HYPRE_BoomerAMGCreate(precond, ierr)
