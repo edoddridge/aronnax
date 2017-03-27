@@ -62,7 +62,6 @@ def run_experiment(write_input, nx, ny, layers, aro_exec=None, valgrind=False, p
     else:
         sub.check_call([p.join(root_path, aro_exec)], env=env)
     run_time = time.time() - then
-    print "Aronnax execution took", run_time
     return run_time
 
 def array_relative_error(a1, a2):
