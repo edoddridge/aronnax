@@ -996,6 +996,11 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
   ! set amg as the pcg preconditioner
   call HYPRE_ParCSRPCGSetPrecond(hypre_solver, 2, precond, ierr)
 
+  ! now we set the system up and do the actual solve!
+  call HYPRE_ParCSRPCGSetup(hypre_solver, hypre_A, hypre_b, &
+                            hypre_x, ierr)
+  call HYPRE_ParCSRPCGSolve(hypre_solver, hypre_A, hypre_b, &
+                            hypre_x, ierr)
 
 
 #endif
