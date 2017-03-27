@@ -193,14 +193,14 @@ program aronnax
 
   do i = 0, nProcX - 1
     ilower(i * nProcY:(i+1)*nProcY - 1,1) = i * nx / nProcX
-    iupper(i * nProcY:(i+1)*nProcY - 1,1) = ((i+1) * nx / nProcX) - 1
+    iupper(i * nProcY:(i+1)*nProcY - 1,1) = ((i+1) * nx / nProcX)
   end do
   ! correct first ilower value to exclude the global halo
   ilower(0,1) = 1
 
   do j = 0, nProcY - 1
     ilower(j * nProcX:(j+1)*nProcX - 1,2) = j * ny / nProcY
-    iupper(j * nProcX:(j+1)*nProcX - 1,2) = ((j+1) * ny / nProcY) - 1
+    iupper(j * nProcX:(j+1)*nProcX - 1,2) = ((j+1) * ny / nProcY)
   end do
   ! correct first ilower value to exclude the global halo
   ilower(0,2) = 1
