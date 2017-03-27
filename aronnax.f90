@@ -968,7 +968,6 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
   call calc_eta_star(ub, vb, eta, etastar, freesurfFac, nx, ny, dx, dy, dt)
   ! print *, maxval(abs(etastar))
 
-  call MPI_Barrier(  MPI_COMM_WORLD, ierr)
 
   ! Prevent barotropic signals from bouncing around outside the
   ! wet region of the model.
