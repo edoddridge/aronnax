@@ -976,51 +976,64 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
   call SOR_solver(a, etanew, etastar, freesurfFac, nx, ny, &
      dt, rjac, eps, maxits, n)
   ! print *, maxval(abs(etanew))
-#elseifdef useExtSolver
+#endif
+
+#ifdef useExtSolver
 
 
   call HYPRE_StructVectorCreate(MPI_COMM_WORLD, hypre_grid, hypre_b, ierr)
-  call HYPRE_StructVectorCreate(MPI_COMM_WORLD, hypre_grid, hypre_x, ierr)
-
   call HYPRE_StructVectorInitialize(hypre_b, ierr)
+
+  call HYPRE_StructVectorCreate(MPI_COMM_WORLD, hypre_grid, hypre_x, ierr)
   call HYPRE_StructVectorInitialize(hypre_x, ierr)
 
 
-! if (myid .eq. 0) then
   ! set rhs values (vector b)
-!   do i = 1, nx ! loop over every grid point
-!     do j = 1, ny
-!   ! the 2D array is being laid out like
-!   ! [x1y1, x1y2, x1y3, x2y1, x2y2, x2y3, x3y1, x3y2, x3y3]
-!     values( ((i-1)*ny + j) )    = etastar(i,j)
-!     end do
-!   end do
-! !   end if
-
-!   do i = 0, num_procs-1
-!     call HYPRE_StructVectorSetBoxValues(hypre_b, & 
-!       ilower(i,:), iupper(i,:), values, ierr)
-!     call HYPRE_StructVectorSetBoxValues(hypre_x, & 
-!       ilower(i,:), iupper(i,:), values, ierr)
-!   end do
-
-
-  do i = 1, nx !0, num_procs-1
+  do i = 1, nx ! loop over every grid point
     do j = 1, ny
-    temp(1) = i
-    temp(2) = j
-    ! call HYPRE_StructVectorSetBoxValues(hypre_b, & 
-    !   ilower(i,:), iupper(i,:), values, ierr)
-
-    call HYPRE_StructVectorSetValues(hypre_b, & 
-      temp, etastar(i,j), ierr)
-
-    call HYPRE_StructVectorSetValues(hypre_x, & 
-      temp, etastar(i,j), ierr)
+  ! the 2D array is being laid out like
+  ! [x1y1, x1y2, x1y3, x2y1, x2y2, x2y3, x3y1, x3y2, x3y3]
+    values( ((i-1)*ny + j) )    = etastar(i,j)
+    end do
   end do
+
+  do i = 0, num_procs-1
+    call HYPRE_StructVectorSetBoxValues(hypre_b, & 
+      ilower(i,:), iupper(i,:), values, ierr)
   end do
+
+  do i = 0, num_procs-1
+    call HYPRE_StructVectorSetBoxValues(hypre_x, & 
+      ilower(i,:), iupper(i,:), values, ierr)
+  end do
+
+
+  ! do i = 1, nx !0, num_procs-1
+  !   do j = 1, ny
+  !   temp(1) = i
+  !   temp(2) = j
+  !   ! call HYPRE_StructVectorSetBoxValues(hypre_b, & 
+  !   !   ilower(i,:), iupper(i,:), values, ierr)
+
+  !   call HYPRE_StructVectorSetValues(hypre_b, & 
+  !     temp, etastar(i,j), ierr)
+  ! end do
+  ! end do
 
   call HYPRE_StructVectorAssemble(hypre_b, ierr)
+
+  ! do i = 1, nx !0, num_procs-1
+  !   do j = 1, ny
+  !   temp(1) = i
+  !   temp(2) = j
+  !   ! call HYPRE_StructVectorSetBoxValues(hypre_b, & 
+  !   !   ilower(i,:), iupper(i,:), values, ierr)
+
+  !   call HYPRE_StructVectorSetValues(hypre_x, & 
+  !     temp, etastar(i,j), ierr)
+  ! end do
+  ! end do
+  
   call HYPRE_StructVectorAssemble(hypre_x, ierr)
 
   ! set initial values for vector x
