@@ -994,7 +994,14 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
 !     values( ((i-1)*ny + j) )    = etastar(i,j)
 !     end do
 !   end do
-!   end if
+! !   end if
+
+!   do i = 0, num_procs-1
+!     call HYPRE_StructVectorSetBoxValues(hypre_b, & 
+!       ilower(i,:), iupper(i,:), values, ierr)
+!     call HYPRE_StructVectorSetBoxValues(hypre_x, & 
+!       ilower(i,:), iupper(i,:), values, ierr)
+!   end do
 
 
   do i = 1, nx !0, num_procs-1
@@ -1053,66 +1060,99 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
   ! now create the solver and solve the equation.
   ! Choose the solver
   call HYPRE_ParCSRPCGCreate(MPI_COMM_WORLD, hypre_solver, ierr)
+
+
   ! Set some parameters
   call HYPRE_ParCSRPCGSetMaxIter(hypre_solver, maxits, ierr)
   call HYPRE_ParCSRPCGSetTol(hypre_solver, eps, ierr)
   ! other options not explained by user manual but present in examples
-  call HYPRE_ParCSRPCGSetTwoNorm(hypre_solver, 1, ierr)
+  ! call HYPRE_ParCSRPCGSetTwoNorm(hypre_solver, 1, ierr)
   call HYPRE_ParCSRPCGSetPrintLevel(hypre_solver, 2, ierr)
   call HYPRE_ParCSRPCGSetLogging(hypre_solver, 1, ierr)
 
-  ! use an algebraic multigrid preconditioner
-  call HYPRE_BoomerAMGCreate(precond, ierr)
-  ! values taken from hypre library example number 5
-  ! print less solver info since a preconditioner
-  call HYPRE_BoomerAMGSetPrintLevel(precond, 1, ierr); 
-  ! Falgout coarsening
-  call HYPRE_BoomerAMGSetCoarsenType(precond, 6, ierr) 
-  ! old defaults
-  call HYPRE_BoomerAMGSetOldDefault(precond, ierr) 
-  ! SYMMETRIC G-S/Jacobi hybrid relaxation 
-  call HYPRE_BoomerAMGSetRelaxType(precond, 6, ierr)     
-  ! Sweeeps on each level
-  call HYPRE_BoomerAMGSetNumSweeps(precond, 1, ierr)  
-  ! conv. tolerance
-  call HYPRE_BoomerAMGSetTol(precond, 0.0d0, ierr)     
-  ! do only one iteration! 
-  call HYPRE_BoomerAMGSetMaxIter(precond, 1, ierr)
+  ! ! use an algebraic multigrid preconditioner
+  ! call HYPRE_BoomerAMGCreate(precond, ierr)
+  ! ! values taken from hypre library example number 5
+  ! ! print less solver info since a preconditioner
+  ! call HYPRE_BoomerAMGSetPrintLevel(precond, 1, ierr); 
+  ! ! Falgout coarsening
+  ! call HYPRE_BoomerAMGSetCoarsenType(precond, 6, ierr) 
+  ! ! old defaults
+  ! call HYPRE_BoomerAMGSetOldDefault(precond, ierr) 
+  ! ! SYMMETRIC G-S/Jacobi hybrid relaxation 
+  ! call HYPRE_BoomerAMGSetRelaxType(precond, 6, ierr)     
+  ! ! Sweeeps on each level
+  ! call HYPRE_BoomerAMGSetNumSweeps(precond, 1, ierr)  
+  ! ! conv. tolerance
+  ! call HYPRE_BoomerAMGSetTol(precond, 0.0d0, ierr)     
+  ! ! do only one iteration! 
+  ! call HYPRE_BoomerAMGSetMaxIter(precond, 1, ierr)
 
-  ! set amg as the pcg preconditioner
-  call HYPRE_ParCSRPCGSetPrecond(hypre_solver, 2, precond, ierr)
-  print *, 'here', myid
+  ! ! set amg as the pcg preconditioner
+  ! call HYPRE_ParCSRPCGSetPrecond(hypre_solver, 2, precond, ierr)
 
   ! now we set the system up and do the actual solve!
   call HYPRE_ParCSRPCGSetup(hypre_solver, hypre_A, hypre_b, &
                             hypre_x, ierr)
+  
+
+
+
   call HYPRE_ParCSRPCGSolve(hypre_solver, hypre_A, hypre_b, &
                             hypre_x, ierr)
 
-  do i = 0, num_procs-1
-    call hypre_StructVectorGetBoxValues(hypre_x, & 
-      ilower(i,:), iupper(i,:), values, ierr)
-  end do
-  ! possibly this is an alternative routine for getting the values? Manual is not very helpful
-
-  ! call HYPRE_StructVectorGetValues(hypre_x, )
-
-  ! Move the values back into the 2D array etanew
-  if (myid .eq. 0) then
-  do i = 1, nx ! loop over every grid point
+  do i = 1, nx !0, num_procs-1
     do j = 1, ny
-  ! the 2D array is laid out like
-  ! [x1y1, x1y2, x1y3, x2y1, x2y2, x2y3, x3y1, x3y2, x3y3]
-      etanew(i,j) =  values( ((i-1)*ny + j) )
-    end do
-  end do
-  end if
+    temp(1) = i
+    temp(2) = j
+    ! call HYPRE_StructVectorSetBoxValues(hypre_b, & 
+    !   ilower(i,:), iupper(i,:), values, ierr)
 
-  !print *, 'etastar = ', etastar
-  !print *, 'etanew = ', etanew
+    call HYPRE_StructVectorGetValues(hypre_x, & 
+      temp, etastar(i,j), ierr)
+  end do
+  end do
+  
+  call MPI_Barrier(  MPI_COMM_WORLD, ierr)
+
+  !   do i = 1, nx !0, num_procs-1
+  !   do j = 1, ny
+  !   temp(1) = i
+  !   temp(2) = j
+  !   ! call HYPRE_StructVectorSetBoxValues(hypre_b, & 
+  !   !   ilower(i,:), iupper(i,:), values, ierr)
+
+  !   call HYPRE_StructVectorGetValues(hypre_x, & 
+  !     temp, etastar(i,j), ierr)
+  ! end do
+  ! end do
+
+  ! do i = 0, num_procs-1
+  !   call hypre_StructVectorGetBoxValues(hypre_x, & 
+  !     ilower(i,:), iupper(i,:), values, ierr)
+  ! end do
+  ! ! possibly this is an alternative routine for getting the values? Manual is not very helpful
+
+
+  ! ! Move the values back into the 2D array etanew
+  ! if (myid .eq. 0) then
+  ! do i = 1, nx ! loop over every grid point
+  !   do j = 1, ny
+  ! ! the 2D array is laid out like
+  ! ! [x1y1, x1y2, x1y3, x2y1, x2y2, x2y3, x3y1, x3y2, x3y3]
+  !     etanew(i,j) =  values( ((i-1)*ny + j) )
+  !   end do
+  ! end do
+  ! end if
+  
+
+
+
 
 #endif
 
+
+    ! print *, 'here'
   etanew = etanew*wetmask
   call wrap_fields_2D(etanew, nx, ny)
 
