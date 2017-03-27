@@ -208,7 +208,7 @@ program aronnax
       spongeHTimeScale, spongeUTimeScale, spongeVTimeScale, &
       spongeH, spongeU, spongeV, &
       nx, ny, layers, RedGrav, DumpWind)
-  stop 0
+  stop
 end program aronnax
 
 ! ------------------------------ Primary routine ----------------------------
@@ -520,7 +520,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   !   before solving for the fields at the next time step.
 
   cur_time = time()
-  print "(A, I0, A)", "Initialized in ", cur_time - start_time, " seconds."
+  print "(A, I0, A)", "Initialized in ", cur_time - start_time, " second(s)."
   last_report_time = cur_time
 
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
