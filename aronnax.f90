@@ -977,6 +977,27 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
 
   ! use an algebraic multigrid preconditioner
   call HYPRE_BoomerAMGCreate(precond, ierr)
+  ! values taken from hypre library example number 5
+  ! print less solver info since a preconditioner
+  call HYPRE_BoomerAMGSetPrintLevel(precond, 1, ierr); 
+  ! Falgout coarsening
+  call HYPRE_BoomerAMGSetCoarsenType(precond, 6, ierr) 
+  ! old defaults
+  call HYPRE_BoomerAMGSetOldDefault(precond, ierr) 
+  ! SYMMETRIC G-S/Jacobi hybrid relaxation 
+  call HYPRE_BoomerAMGSetRelaxType(precond, 6, ierr)     
+  ! Sweeeps on each level
+  call HYPRE_BoomerAMGSetNumSweeps(precond, 1, ierr)  
+  ! conv. tolerance
+  call HYPRE_BoomerAMGSetTol(precond, 0.0d0, ierr)     
+  ! do only one iteration! 
+  call HYPRE_BoomerAMGSetMaxIter(precond, 1, ierr)
+
+  ! set amg as the pcg preconditioner
+  call HYPRE_ParCSRPCGSetPrecond(solver, 2, precond, ierr)
+
+
+
 #endif
 
   etanew = etanew*wetmask
