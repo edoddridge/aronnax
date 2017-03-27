@@ -320,6 +320,9 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   double precision, dimension(:,:),   allocatable :: wind_x
   double precision, dimension(:,:),   allocatable :: wind_y
 
+  ! Time
+  integer*8 :: start_time, last_report_time, cur_time
+
   allocate(dhdt(0:nx+1, 0:ny+1, layers))
   allocate(dhdtold(0:nx+1, 0:ny+1, layers))
   allocate(dhdtveryold(0:nx+1, 0:ny+1, layers))
@@ -354,6 +357,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   allocate(wind_x(0:nx+1, 0:ny+1))
   allocate(wind_y(0:nx+1, 0:ny+1))
 
+  start_time = time()
   if (RedGrav) then
     print "(A, I0, A, I0, A, I0, A, I0, A)", &
         "Running a reduced-gravity configuration of size ", &
@@ -363,6 +367,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
         "Running an n-layer configuration of size ", &
         nx, "x", ny, "x", layers, " by ", nTimeSteps, " time steps."
   end if
+  last_report_time = start_time
 
   nwrite = int(dumpFreq/dt)
   avwrite = int(avFreq/dt)
@@ -514,7 +519,9 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   ! - The model then solves for the tendencies at the current step
   !   before solving for the fields at the next time step.
 
-  print "(A)", "Initialized"
+  cur_time = time()
+  print "(A, I0, A)", "Initialized in ", cur_time - start_time, " seconds."
+  last_report_time = cur_time
 
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !!! MAIN LOOP OF THE MODEL STARTS HERE                                  !!!
@@ -597,9 +604,19 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
         wind_x, wind_y, nx, ny, layers, &
         n, nwrite, avwrite, RedGrav, DumpWind)
 
+    cur_time = time()
+    if (cur_time - last_report_time > 3) then
+      ! Three seconds passed since last report
+      last_report_time = cur_time
+      print "(A, I0, A, I0, A)", "Completed time step ", &
+          n, " at ", cur_time - start_time, " seconds."
+    end if
+
   end do
 
-  print "(A, i10.10)", "Run finished at time step ", n
+  cur_time = time()
+  print "(A, I0, A, I0, A)", "Run finished at time step ", &
+      n, ", in ", cur_time - start_time, " seconds."
   return
 end subroutine model_run
 
