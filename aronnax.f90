@@ -1153,7 +1153,7 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
       ilower(i,:), iupper(i,:), values, ierr)
   end do
 
-  print *, 'values = ', values
+  ! print *, 'values = ', values
   do i = 1, nx ! loop over every grid point
     do j = 1, ny
   ! the 2D array is being laid out like
@@ -1162,7 +1162,7 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
     end do
   end do
 
-  print *, 'etanew = ', etanew
+  ! print *, 'etanew = ', etanew
 
   ! debuggin commands from hypre library - dump out a single copy of these two variables. Can be used to check that the values have been properly allocated.
   ! call HYPRE_StructVectorPrint(hypre_b, ierr)
