@@ -229,6 +229,10 @@ end if
   call HYPRE_StructGridAssemble(hypre_grid, ierr)
 #endif
 
+#ifndef useExtSolver
+  myid = 0
+#endif
+
 
   allocate(h(0:nx+1, 0:ny+1, layers))
   allocate(u(0:nx+1, 0:ny+1, layers))
@@ -307,9 +311,13 @@ end if
       spongeHTimeScale, spongeUTimeScale, spongeVTimeScale, &
       spongeH, spongeU, spongeV, &
       nx, ny, layers, RedGrav, DumpWind, &
-      MPI_COMM_WORLD, num_procs, ilower, iupper, &
+      MPI_COMM_WORLD, myid, num_procs, ilower, iupper, &
       hypre_grid)
   print *, 'Execution ended normally'
+  
+  ! Finalize MPI
+  call MPI_Finalize(ierr)
+  
   stop 0
 end program aronnax
 
@@ -323,7 +331,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
     spongeHTimeScale, spongeUTimeScale, spongeVTimeScale, &
     spongeH, spongeU, spongeV, &
     nx, ny, layers, RedGrav, DumpWind, &
-    MPI_COMM_WORLD, num_procs, ilower, iupper, &
+    MPI_COMM_WORLD, myid, num_procs, ilower, iupper, &
     hypre_grid)
   implicit none
 
@@ -429,6 +437,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   double precision, dimension(:), allocatable :: values
 
   integer :: MPI_COMM_WORLD
+  integer :: myid
   integer :: num_procs
   integer :: ilower(0:num_procs-1,2), iupper(0:num_procs-1,2)
 
@@ -506,8 +515,9 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   if (.not. RedGrav) then
     ! Initialise arrays for pressure solver
     ! a = derivatives of the depth field
-    call derivatives_of_the_depth_field(a, depth, g_vec(1), dx, dy, nx, ny)
-
+    if (myid .eq. 0) then
+      call derivatives_of_the_depth_field(a, depth, g_vec(1), dx, dy, nx, ny)
+    end if
 
 #ifndef useExtSolver
     ! Calculate the spectral radius of the grid for use by the
@@ -592,6 +602,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   !
   ! ------------------------- negative 2 time step --------------------------
   ! Code to work out dhdtveryold, dudtveryold and dvdtveryold
+  if (myid .eq. 0) then
 
   call state_derivative(dhdtveryold, dudtveryold, dvdtveryold, &
       h, u, v, depth, &
@@ -680,6 +691,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   call wrap_fields_3D(v, nx, ny, layers)
   call wrap_fields_3D(h, nx, ny, layers)
 
+  end if
   ! Now the model is ready to start.
   ! - We have h, u, v at the zeroth time step, and the tendencies at
   !   two older time steps.
@@ -691,6 +703,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
   do n = 1, nTimeSteps
+    if (myid .eq. 0) then
 
     wind_x = base_wind_x*wind_mag_time_series(n)
     wind_y = base_wind_y*wind_mag_time_series(n)
@@ -714,6 +727,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
     ! Apply the boundary conditions
     call apply_boundary_conditions(unew, hfacW, wetmask, nx, ny, layers)
     call apply_boundary_conditions(vnew, hfacS, wetmask, nx, ny, layers)
+    end if
 
     ! Do the isopycnal layer physics
     if (.not. RedGrav) then
@@ -721,7 +735,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
           dx, dy, wetmask, hfacW, hfacS, dt, &
           maxits, eps, rjac, freesurfFac, thickness_error, &
           g_vec, nx, ny, layers, n, &
-          MPI_COMM_WORLD, num_procs, ilower, iupper, &
+          MPI_COMM_WORLD, myid, num_procs, ilower, iupper, &
           hypre_grid, hypre_b, ierr)
           ! , &
           ! MPI_COMM_WORLD, num_procs, ilower, iupper, &
@@ -864,7 +878,7 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
     dx, dy, wetmask, hfacW, hfacS, dt, &
     maxits, eps, rjac, freesurfFac, thickness_error, &
     g_vec, nx, ny, layers, n, &
-     MPI_COMM_WORLD, num_procs, ilower, iupper, & 
+     MPI_COMM_WORLD, myid, num_procs, ilower, iupper, & 
      hypre_grid, hypre_b, ierr)
      ! , &
     ! hypre_grid, hypre_A, hypre_b, hypre_x)
@@ -905,11 +919,13 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
   integer*8 :: precond
   integer   :: nentries, nvalues, stencil_indices(5)
   double precision :: values(nx * ny)
+  double precision :: temp(nx*ny/num_procs)
 
   integer :: MPI_COMM_WORLD
-  integer :: num_procs
+  integer :: num_procs, myid
   integer :: ilower(0:num_procs-1,2), iupper(0:num_procs-1,2)
 
+  if (myid .eq. 0) then
   ! Calculate the barotropic velocities
   call calc_baro_u(ub, unew, hnew, eta, freesurfFac, nx, ny, layers)
   call calc_baro_v(vb, vnew, hnew, eta, freesurfFac, nx, ny, layers)
@@ -918,51 +934,89 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
   ! field that removes it
   call calc_eta_star(ub, vb, eta, etastar, freesurfFac, nx, ny, dx, dy, dt)
   ! print *, maxval(abs(etastar))
+  end if
 
   ! Prevent barotropic signals from bouncing around outside the
   ! wet region of the model.
   ! etastar = etastar*wetmask
-#ifndef useExtSolver
-  call SOR_solver(a, etanew, etastar, freesurfFac, nx, ny, &
-      dt, rjac, eps, maxits, n)
+!#ifndef useExtSolver
+!  call SOR_solver(a, etanew, etastar, freesurfFac, nx, ny, &
+!      dt, rjac, eps, maxits, n)
   ! print *, maxval(abs(etanew))
-#elseifdef useExtSolver
+#ifdef useExtSolver
+
   call HYPRE_StructVectorCreate(MPI_COMM_WORLD, hypre_grid, hypre_b, ierr)
   call HYPRE_StructVectorInitialize(hypre_b, ierr)
 
-  ! set rhs values (vector b)
-  do i = 1, nx ! loop over every grid point
-    do j = 1, ny
-  ! the 2D array is being laid out like
-  ! [x1y1, x1y2, x1y3, x2y1, x2y2, x2y3, x3y1, x3y2, x3y3]
-    values( ((i-1)*ny + j) )    = etastar(i,j)
-    end do
-  end do
+  call HYPRE_StructVectorCreate(MPI_COMM_WORLD, hypre_grid, hypre_x, ierr)
+  call HYPRE_StructVectorInitialize(hypre_x, ierr)
 
-  do i = 0, num_procs-1
-    call HYPRE_StructVectorSetBoxValues(hypre_b, & 
-      ilower(i,:), iupper(i,:), values, ierr)
+  call MPI_Barrier(  MPI_COMM_WORLD, ierr)
+
+! if (myid .eq. 0) then
+!   ! set rhs values (vector b)
+!   do i = 1, nx ! loop over every grid point
+!     do j = 1, ny
+!   ! the 2D array is being laid out like
+!   ! [x1y1, x1y2, x1y3, x2y1, x2y2, x2y3, x3y1, x3y2, x3y3]
+!     values( ((i-1)*ny + j) )    = etastar(i,j)
+!     end do
+!   end do
+!   end if
+
+
+  do i = 1, nx !0, num_procs-1
+    do j = 1, ny
+    temp(1) = i
+    temp(2) = j
+    ! call HYPRE_StructVectorSetBoxValues(hypre_b, & 
+    !   ilower(i,:), iupper(i,:), values, ierr)
+
+    call HYPRE_StructVectorSetValues(hypre_b, & 
+      temp, etastar(i,j), ierr)
+
+    call HYPRE_StructVectorSetValues(hypre_x, & 
+      temp, etastar(i,j), ierr)
+  end do
   end do
 
   call HYPRE_StructVectorAssemble(hypre_b, ierr)
+  call HYPRE_StructVectorAssemble(hypre_x, ierr)
 
   ! set initial values for vector x
   ! we're using the recently calculated etastar 
   ! as a first guess
-  do i = 1, nx ! loop over every grid point
-    do j = 1, ny
-  ! the 2D array is being laid out like
-  ! [x1y1, x1y2, x1y3, x2y1, x2y2, x2y3, x3y1, x3y2, x3y3]
-    values( ((i-1)*ny + j) )    = etastar(i,j)
-    end do
-  end do
+  ! if (myid .eq. 0) then
+  ! do i = 1, nx ! loop over every grid point
+  !   do j = 1, ny
+  ! ! the 2D array is being laid out like
+  ! ! [x1y1, x1y2, x1y3, x2y1, x2y2, x2y3, x3y1, x3y2, x3y3]
+  !   values( ((i-1)*ny + j) )    = etastar(i,j)
+  !   end do
+  ! end do
+  ! end if
 
-  do i = 0, num_procs-1
-    call HYPRE_StructVectorSetBoxValues(hypre_x, & 
-      ilower(i,:), iupper(i,:), values, ierr)
-  end do
+  ! do i = 0, num_procs-1
+  !   call HYPRE_StructVectorSetValues(hypre_x, & 
+  !     ilower(i,:), iupper(i,:), values, ierr)
+  ! end do
+  ! temp = 0d0
+  ! do i = 0, num_procs-1
+  !    call HYPRE_StructVectorSetBoxValues(hypre_x, & 
+  !      ilower(i,:), iupper(i,:), temp, ierr)
+  ! end do
 
-  call HYPRE_StructVectorAssemble(hypre_x, ierr)
+  ! do i = 1, nx !0, num_procs-1
+  !   do j = 1, ny
+  !   temp(1) = i
+  !   temp(2) = j
+
+  !   call HYPRE_StructVectorSetValues(hypre_x, & 
+  !     temp, etastar(i,j), ierr)
+  ! end do
+  ! end do
+
+  ! call HYPRE_StructVectorAssemble(hypre_x, ierr)
 
   ! now create the solver and solve the equation.
   ! Choose the solver
@@ -971,9 +1025,9 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
   call HYPRE_ParCSRPCGSetMaxIter(hypre_solver, maxits, ierr)
   call HYPRE_ParCSRPCGSetTol(hypre_solver, eps, ierr)
   ! other options not explained by user manual but present in examples
-  ! call HYPRE_ParCSRPCGSetTwoNorm(hypre_solver, 1, ierr)
-  ! call HYPRE_ParCSRPCGSetPrintLevel(hypre_solver, 2, ierr)
-  ! call HYPRE_ParCSRPCGSetLogging(hypre_solver, 1, ierr)
+  call HYPRE_ParCSRPCGSetTwoNorm(hypre_solver, 1, ierr)
+  call HYPRE_ParCSRPCGSetPrintLevel(hypre_solver, 2, ierr)
+  call HYPRE_ParCSRPCGSetLogging(hypre_solver, 1, ierr)
 
   ! use an algebraic multigrid preconditioner
   call HYPRE_BoomerAMGCreate(precond, ierr)
@@ -995,6 +1049,7 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
 
   ! set amg as the pcg preconditioner
   call HYPRE_ParCSRPCGSetPrecond(hypre_solver, 2, precond, ierr)
+  print *, 'here', myid
 
   ! now we set the system up and do the actual solve!
   call HYPRE_ParCSRPCGSetup(hypre_solver, hypre_A, hypre_b, &
@@ -1011,6 +1066,7 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
   ! call HYPRE_StructVectorGetValues(hypre_x, )
 
   ! Move the values back into the 2D array etanew
+  if (myid .eq. 0) then
   do i = 1, nx ! loop over every grid point
     do j = 1, ny
   ! the 2D array is laid out like
@@ -1018,6 +1074,10 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
       etanew(i,j) =  values( ((i-1)*ny + j) )
     end do
   end do
+  end if
+
+  !print *, 'etastar = ', etastar
+  !print *, 'etanew = ', etanew
 
 #endif
 
