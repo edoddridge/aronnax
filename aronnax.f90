@@ -1115,6 +1115,34 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
   call HYPRE_ParCSRPCGSolve(hypre_solver, hypre_A, hypre_b, &
                             hypre_x, ierr)
 
+  ! code for printing out results form the external solver
+  ! call HYPRE_ParCSRPCGGetNumIterations(hypre_solver, & 
+  !   temp(1), ierr)
+  ! print *, 'num iterations = ', temp(1)
+
+  ! call HYPRE_ParCSRPCGGetFinalRelative(hypre_solver, & 
+  !   temp(2), ierr)
+  ! print *, 'final residual norm = ', temp(2)
+  do i = 0, num_procs-1
+    call HYPRE_StructVectorGetBoxValues(hypre_x, & 
+      ilower(i,:), iupper(i,:), values, ierr)
+  end do
+
+  print *, 'values = ', values
+  do i = 1, nx ! loop over every grid point
+    do j = 1, ny
+  ! the 2D array is being laid out like
+  ! [x1y1, x1y2, x1y3, x2y1, x2y2, x2y3, x3y1, x3y2, x3y3]
+    etanew(i,j) = values( ((i-1)*ny + j) )
+    end do
+  end do
+
+  print *, 'etanew = ', etanew
+
+  ! debuggin commands from hypre library - dump out a single copy of these two variables. Can be used to check that the values have been properly allocated.
+  ! call HYPRE_StructVectorPrint(hypre_b, ierr)
+  ! call HYPRE_StructMatrixPrint(hypre_A, ierr)
+
   do i = 1, nx !0, num_procs-1
     do j = 1, ny
     temp(1) = i
@@ -1123,11 +1151,14 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
     !   ilower(i,:), iupper(i,:), values, ierr)
 
     call HYPRE_StructVectorGetValues(hypre_x, & 
-      temp, etastar(i,j), ierr)
+      temp, etanew(i,j), ierr)
   end do
   end do
+
+  ! print *, 'etastar = ', etastar
+  ! print *, 'etanew = ', etanew
   
-  call MPI_Barrier(  MPI_COMM_WORLD, ierr)
+  call HYPRE_ParCSRPCGDestroy(hypre_solver, ierr)
 
   !   do i = 1, nx !0, num_procs-1
   !   do j = 1, ny
