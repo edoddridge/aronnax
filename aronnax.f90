@@ -994,7 +994,7 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
   call HYPRE_BoomerAMGSetMaxIter(precond, 1, ierr)
 
   ! set amg as the pcg preconditioner
-  call HYPRE_ParCSRPCGSetPrecond(solver, 2, precond, ierr)
+  call HYPRE_ParCSRPCGSetPrecond(hypre_solver, 2, precond, ierr)
 
 
 
