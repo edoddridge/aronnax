@@ -1002,6 +1002,22 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
   call HYPRE_ParCSRPCGSolve(hypre_solver, hypre_A, hypre_b, &
                             hypre_x, ierr)
 
+  do i = 0, num_procs-1
+    call hypre_StructVectorGetBoxValues(hypre_x, & 
+      ilower(i,:), iupper(i,:), values, ierr)
+  end do
+  ! possibly this is an alternative routine for getting the values? Manual is not very helpful
+
+  ! call HYPRE_StructVectorGetValues(hypre_x, )
+
+  ! Move the values back into the 2D array etanew
+  do i = 1, nx ! loop over every grid point
+    do j = 1, ny
+  ! the 2D array is laid out like
+  ! [x1y1, x1y2, x1y3, x2y1, x2y2, x2y3, x3y1, x3y2, x3y3]
+      etanew(i,j) =  values( ((i-1)*ny + j) )
+    end do
+  end do
 
 #endif
 
