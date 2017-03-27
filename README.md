@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/edoddridge/MIM.svg?branch=master)](https://travis-ci.org/edoddridge/MIM)
+[![Build Status](https://travis-ci.org/edoddridge/aronnax.svg?branch=master)](https://travis-ci.org/edoddridge/aronnax)
 
 # Aronnax
 An idealized isopycnal model that can either be run as a reduced gravity model with n + 1/2 layers, or with n layers and variable bathymetry.
