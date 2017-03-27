@@ -169,7 +169,7 @@ program aronnax
     ! Check that depth is positive - it must be greater than zero
     if (minval(depth) .lt. 0) then
       write(17, "(A)"), "Depths must be positive."
-      stop
+      stop 1
     end if
   end if
 
@@ -1521,7 +1521,7 @@ subroutine break_if_NaN(data, nx, ny, layers, n)
       do i = 1, nx
         if (data(i,j,k) .ne. data(i,j,k)) then
           write(17, "(A, I0)"), "NaN detected at time step ", n
-          stop 'NaN detected'
+          stop 1
         end if
       end do
     end do
