@@ -435,6 +435,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   integer*8 :: hypre_x
   integer   ::  nentries, nvalues, stencil_indices(5)
   double precision, dimension(:), allocatable :: values
+  integer   :: temp(2)
 
   integer :: MPI_COMM_WORLD
   integer :: myid
@@ -621,7 +622,6 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
     ! them consistent.
     call enforce_depth_thickness_consistency(h, eta, depth, &
         freesurfFac, thickness_error, nx, ny, layers)
-
   end if
 
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -767,10 +767,11 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
           maxits, eps, rjac, freesurfFac, thickness_error, &
           g_vec, nx, ny, layers, n, &
           MPI_COMM_WORLD, myid, num_procs, ilower, iupper, &
-          hypre_grid, hypre_b, ierr)
+          hypre_grid, hypre_A, ierr)
           ! , &
           ! MPI_COMM_WORLD, num_procs, ilower, iupper, &
           ! hypre_grid, hypre_A, hypre_b, hypre_x)
+
     end if
 
 
@@ -910,7 +911,7 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
     maxits, eps, rjac, freesurfFac, thickness_error, &
     g_vec, nx, ny, layers, n, &
      MPI_COMM_WORLD, myid, num_procs, ilower, iupper, & 
-     hypre_grid, hypre_b, ierr)
+     hypre_grid, hypre_A, ierr)
      ! , &
     ! hypre_grid, hypre_A, hypre_b, hypre_x)
   implicit none
@@ -956,7 +957,6 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
   integer :: num_procs, myid
   integer :: ilower(0:num_procs-1,2), iupper(0:num_procs-1,2)
 
-  if (myid .eq. 0) then
   ! Calculate the barotropic velocities
   call calc_baro_u(ub, unew, hnew, eta, freesurfFac, nx, ny, layers)
   call calc_baro_v(vb, vnew, hnew, eta, freesurfFac, nx, ny, layers)
