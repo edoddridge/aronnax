@@ -516,9 +516,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   if (.not. RedGrav) then
     ! Initialise arrays for pressure solver
     ! a = derivatives of the depth field
-    if (myid .eq. 0) then
       call derivatives_of_the_depth_field(a, depth, g_vec(1), dx, dy, nx, ny)
-    end if
 
 #ifndef useExtSolver
     ! Calculate the spectral radius of the grid for use by the
@@ -633,7 +631,6 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   !
   ! ------------------------- negative 2 time step --------------------------
   ! Code to work out dhdtveryold, dudtveryold and dvdtveryold
-  if (myid .eq. 0) then
 
   call state_derivative(dhdtveryold, dudtveryold, dvdtveryold, &
       h, u, v, depth, &
@@ -722,7 +719,6 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   call wrap_fields_3D(v, nx, ny, layers)
   call wrap_fields_3D(h, nx, ny, layers)
 
-  end if
   ! Now the model is ready to start.
   ! - We have h, u, v at the zeroth time step, and the tendencies at
   !   two older time steps.
@@ -734,7 +730,6 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
   do n = 1, nTimeSteps
-    if (myid .eq. 0) then
 
     wind_x = base_wind_x*wind_mag_time_series(n)
     wind_y = base_wind_y*wind_mag_time_series(n)
@@ -758,7 +753,6 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
     ! Apply the boundary conditions
     call apply_boundary_conditions(unew, hfacW, wetmask, nx, ny, layers)
     call apply_boundary_conditions(vnew, hfacS, wetmask, nx, ny, layers)
-    end if
 
     ! Do the isopycnal layer physics
     if (.not. RedGrav) then
