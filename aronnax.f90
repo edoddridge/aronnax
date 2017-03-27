@@ -965,27 +965,28 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
   ! field that removes it
   call calc_eta_star(ub, vb, eta, etastar, freesurfFac, nx, ny, dx, dy, dt)
   ! print *, maxval(abs(etastar))
-  end if
+
+  call MPI_Barrier(  MPI_COMM_WORLD, ierr)
 
   ! Prevent barotropic signals from bouncing around outside the
   ! wet region of the model.
   ! etastar = etastar*wetmask
-!#ifndef useExtSolver
-!  call SOR_solver(a, etanew, etastar, freesurfFac, nx, ny, &
-!      dt, rjac, eps, maxits, n)
+#ifndef useExtSolver
+  call SOR_solver(a, etanew, etastar, freesurfFac, nx, ny, &
+     dt, rjac, eps, maxits, n)
   ! print *, maxval(abs(etanew))
-#ifdef useExtSolver
+#elseifdef useExtSolver
+
 
   call HYPRE_StructVectorCreate(MPI_COMM_WORLD, hypre_grid, hypre_b, ierr)
-  call HYPRE_StructVectorInitialize(hypre_b, ierr)
-
   call HYPRE_StructVectorCreate(MPI_COMM_WORLD, hypre_grid, hypre_x, ierr)
+
+  call HYPRE_StructVectorInitialize(hypre_b, ierr)
   call HYPRE_StructVectorInitialize(hypre_x, ierr)
 
-  call MPI_Barrier(  MPI_COMM_WORLD, ierr)
 
 ! if (myid .eq. 0) then
-!   ! set rhs values (vector b)
+  ! set rhs values (vector b)
 !   do i = 1, nx ! loop over every grid point
 !     do j = 1, ny
 !   ! the 2D array is being laid out like
