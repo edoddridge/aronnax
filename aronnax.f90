@@ -548,40 +548,71 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
 
     call HYPRE_StructStencilCreate(2, 5, stencil, ierr)
     ! this gives a 5 point stencil centred around the grid point of interest.   
-    do i = 1, 5
-      call HYPRE_StructStencilSetElement(stencil, i, offsets(:,i),ierr) 
+    do i = 0, 4
+      call HYPRE_StructStencilSetElement(stencil, i, offsets(:,i+1),ierr) 
     end do
 
     call HYPRE_StructMatrixCreate(MPI_COMM_WORLD, hypre_grid, stencil, hypre_A, ierr)
     call HYPRE_StructMatrixInitialize(hypre_A, ierr)
 
-    nentries = 5 ! a five point stncil means five entries for each grid point
-    nvalues = nx * ny * 5 ! total number of grid points to simulate * five stencil entries per grid point
-    allocate(values(nvalues))
+    ! nentries = 5 ! a five point stncil means five entries for each grid point
+    ! nvalues = nx * ny * 5 ! total number of grid points to simulate * five stencil entries per grid point
+    ! allocate(values(nvalues))
 
-    do i = 1, nx !values, nentries ! loop over every grid point, skipping by the number of points in the stencil. This 
-    ! selects only the central points of the stencil
-      do j = 1, ny
+    ! do i = 1, nx !values, nentries ! loop over every grid point, skipping by the number of points in the stencil. This 
+    ! ! selects only the central points of the stencil
+    !   do j = 1, ny
 
 
-    ! the 2D array is being laid out like
-    ! [x1y1, x1y2, x1y3, x2y1, x2y2, x2y3, x3y1, x3y2, x3y3]
-      values( ((i-1)*ny + j)*5 )    = a(5,i,j)
-      values( ((i-1)*ny + j)*5 + 1) = a(3,i,j)
-      values( ((i-1)*ny + j)*5 + 2) = a(1,i,j)
-      values( ((i-1)*ny + j)*5 + 3) = a(4,i,j)
-      values( ((i-1)*ny + j)*5 + 4) = a(2,i,j)
+    ! ! the 2D array is being laid out like
+    ! ! [x1y1, x1y2, x1y3, x2y1, x2y2, x2y3, x3y1, x3y2, x3y3]
+    !   values( ((i-1)*ny + j)*5 )    = a(5,i,j)
+    !   values( ((i-1)*ny + j)*5 + 1) = a(3,i,j)
+    !   values( ((i-1)*ny + j)*5 + 2) = a(1,i,j)
+    !   values( ((i-1)*ny + j)*5 + 3) = a(4,i,j)
+    !   values( ((i-1)*ny + j)*5 + 4) = a(2,i,j)
 
-      end do
-    end do
+    !   end do
+    ! end do
 
-    do i = 0, num_procs-1
-      call HYPRE_StructMatrixSetBoxValues(hypre_A, & 
-        ilower(i,:), iupper(i,:), 5, stencil_indices, & 
-        values, ierr)
-    end do
+    ! do i = 0, num_procs-1
+    !   call HYPRE_StructMatrixSetBoxValues(hypre_A, & 
+    !     ilower(i,:), iupper(i,:), 5, stencil_indices, & 
+    !     values, ierr)
+    ! end do
+
+  do i = 1, nx !0, num_procs-1
+    do j = 1, ny
+    temp(1) = i
+    temp(2) = j
+
+    
+    call HYPRE_StructMatrixSetValues(hypre_A, & 
+        temp, 1, 0, & 
+        a(5,i,j), ierr)
+    call HYPRE_StructMatrixSetValues(hypre_A, & 
+        temp, 1, 1, & 
+        a(3,i,j), ierr)
+    call HYPRE_StructMatrixSetValues(hypre_A, & 
+        temp, 1, 2, & 
+        a(1,i,j), ierr)
+    call HYPRE_StructMatrixSetValues(hypre_A, & 
+        temp, 1, 3, & 
+        a(4,i,j), ierr)
+    call HYPRE_StructMatrixSetValues(hypre_A, & 
+        temp, 1, 4, & 
+        a(2,i,j), ierr)
+
+  end do
+  end do
+
+
 
     call HYPRE_StructMatrixAssemble(hypre_A, ierr)
+
+      call MPI_Barrier(  MPI_COMM_WORLD, ierr)
+
+
 #endif
 
     ! Check that the supplied free surface anomaly and layer
