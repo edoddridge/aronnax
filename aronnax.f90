@@ -901,7 +901,9 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
   integer*8 :: hypre_A
   integer*8 :: hypre_b
   integer*8 :: hypre_x
-  integer   ::  nentries, nvalues, stencil_indices(5)
+  integer*8 :: hypre_solver
+  integer*8 :: precond
+  integer   :: nentries, nvalues, stencil_indices(5)
   double precision :: values(nx * ny)
 
   integer :: MPI_COMM_WORLD
@@ -962,6 +964,19 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
 
   call HYPRE_StructVectorAssemble(hypre_x, ierr)
 
+  ! now create the solver and solve the equation.
+  ! Choose the solver
+  call HYPRE_ParCSRPCGCreate(MPI_COMM_WORLD, hypre_solver, ierr)
+  ! Set some parameters
+  call HYPRE_ParCSRPCGSetMaxIter(hypre_solver, maxits, ierr)
+  call HYPRE_ParCSRPCGSetTol(hypre_solver, eps, ierr)
+  ! other options not explained by user manual but present in examples
+  ! call HYPRE_ParCSRPCGSetTwoNorm(hypre_solver, 1, ierr)
+  ! call HYPRE_ParCSRPCGSetPrintLevel(hypre_solver, 2, ierr)
+  ! call HYPRE_ParCSRPCGSetLogging(hypre_solver, 1, ierr)
+
+  ! use an algebraic multigrid preconditioner
+  call HYPRE_BoomerAMGCreate(precond, ierr)
 #endif
 
   etanew = etanew*wetmask
