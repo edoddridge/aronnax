@@ -46,9 +46,11 @@ def run_experiment(write_input, nx, ny, layers, aro_exec=None, valgrind=False, p
         write_input(nx, ny, layers)
     tweak_parameters(nx, ny, layers)
     then = time.time()
+    env = dict(os.environ, GFORTRAN_STDERR_UNIT="17")
     if valgrind or 'ARONNAX_TEST_VALGRIND_ALL' in os.environ:
         assert not perf
-        sub.check_call(["valgrind", "--error-exitcode=5", p.join(root_path, aro_exec)])
+        sub.check_call(["valgrind", "--error-exitcode=5", p.join(root_path, aro_exec)],
+            env=env)
     elif perf:
         perf_cmds = ["perf", "stat", "-e", "r530010", # "flops", on my CPU.
             "-e", "L1-dcache-loads", "-e", "L1-dcache-load-misses",
@@ -56,9 +58,9 @@ def run_experiment(write_input, nx, ny, layers, aro_exec=None, valgrind=False, p
             "-e", "L1-icache-loads", "-e", "L1-icache-misses",
             "-e", "L1-dcache-prefetches",
             "-e", "branch-instructions", "-e", "branch-misses"]
-        sub.check_call(perf_cmds + [p.join(root_path, aro_exec)])
+        sub.check_call(perf_cmds + [p.join(root_path, aro_exec)], env=env)
     else:
-        sub.check_call([p.join(root_path, aro_exec)])
+        sub.check_call([p.join(root_path, aro_exec)], env=env)
     run_time = time.time() - then
     print "Aronnax execution took", run_time
     return run_time

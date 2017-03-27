@@ -168,7 +168,7 @@ program aronnax
     call read_input_fileH_2D(initEtaFile, eta, 0.d0, nx, ny)
     ! Check that depth is positive - it must be greater than zero
     if (minval(depth) .lt. 0) then
-      print *, "depths must be positive - fix this and try again"
+      write(17, "(A)"), "Depths must be positive."
       stop
     end if
   end if
@@ -1403,7 +1403,7 @@ subroutine SOR_solver(a, etanew, etastar, freesurfFac, nx, ny, dt, &
     end if
   end do
 
-  print *, 'warning: maximum iterations exceeded at time step ', n
+  write(17, "(A, I0)"), 'Warning: maximum SOR iterations exceeded at time step ', n
 
   return
 end subroutine SOR_solver
@@ -1464,8 +1464,8 @@ subroutine enforce_depth_thickness_consistency(h, eta, depth, &
   end do
 
   if (maxval(abs(h_norming - 1d0)) .gt. thickness_error) then
-    print *, 'inconsistency between h and eta (in %):', &
-        maxval(abs(h_norming - 1d0))*100d0
+    write(17, "(A, F6.3, A)"), 'Inconsistency between h and eta: ', &
+        maxval(abs(h_norming - 1d0))*100d0, '%'
   end if
 
   return
@@ -1492,14 +1492,8 @@ subroutine enforce_minimum_layer_thickness(hnew, hmin, nx, ny, layers, n)
           hnew(i, j, k) = hmin
           counter = counter + 1
           if (counter .eq. 1) then
-            ! Write a file saying that the layer thickness value
-            ! dropped below hmin and this line has been used.
-            open(unit=10, file='layer thickness dropped below hmin.txt', &
-                action="write", status="unknown", &
-                form="formatted", position="append")
-            write(10, 1111) n
-1111          format("layer thickness dropped below hmin at time step ", 1i10.10)
-            close(unit=10)
+            write(17, "(A, I0)"), &
+                "Layer thickness dropped below hmin at time step ", n
           end if
         end if
       end do
@@ -1526,16 +1520,8 @@ subroutine break_if_NaN(data, nx, ny, layers, n)
     do j = 1, ny
       do i = 1, nx
         if (data(i,j,k) .ne. data(i,j,k)) then
-          ! write a file saying so
-          open(unit=10, file='NaN detected.txt', action="write", &
-              status="replace", form="formatted")
-          write(10, 1000) n
-1000      format( "NaN detected at time step ", 1i10.10)
-          close(unit=10)
-          ! print it on the screen
-          print *, 'NaN detected'
-          ! Stop the code
-          stop 'Nan detected'
+          write(17, "(A, I0)"), "NaN detected at time step ", n
+          stop 'NaN detected'
         end if
       end do
     end do
