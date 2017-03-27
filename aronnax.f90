@@ -208,7 +208,6 @@ program aronnax
       spongeHTimeScale, spongeUTimeScale, spongeVTimeScale, &
       spongeH, spongeU, spongeV, &
       nx, ny, layers, RedGrav, DumpWind)
-  print *, 'Execution ended normally'
   stop 0
 end program aronnax
 
@@ -354,6 +353,16 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
 
   allocate(wind_x(0:nx+1, 0:ny+1))
   allocate(wind_y(0:nx+1, 0:ny+1))
+
+  if (RedGrav) then
+    print "(A, I0, A, I0, A, I0, A, I0, A)", &
+        "Running a reduced-gravity configuration of size ", &
+        nx, "x", ny, "x", layers, " by ", nTimeSteps, " time steps."
+  else
+    print "(A, I0, A, I0, A, I0, A, I0, A)", &
+        "Running an n-layer configuration of size ", &
+        nx, "x", ny, "x", layers, " by ", nTimeSteps, " time steps."
+  end if
 
   nwrite = int(dumpFreq/dt)
   avwrite = int(avFreq/dt)
@@ -504,6 +513,8 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   !   two older time steps.
   ! - The model then solves for the tendencies at the current step
   !   before solving for the fields at the next time step.
+
+  print "(A)", "Initialized"
 
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !!! MAIN LOOP OF THE MODEL STARTS HERE                                  !!!
