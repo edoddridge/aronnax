@@ -2165,11 +2165,20 @@ subroutine derivatives_of_the_depth_field(a, depth, g, dx, dy, nx, ny)
     end do
   end do
 
-  ! set all boundary values to zero
-  a(:,nx,:) = 0d0
-  a(:,1,:)  = 0d0
-  a(:,:,ny) = 0d0
-  a(:,:,1)  = 0d0
+  ! boundary conditions
+  do j = 1, ny
+    a(1, nx, j) = 0.0
+    a(3, 1, j) = 0.0
+  end do
+  do i = 1, nx
+    a(2, i, ny) = 0.0
+    a(4, i, 1) = 0.0
+  end do
+  do j = 1, ny
+    do i = 1, nx
+      a(5,i,j) = -a(1,i,j)-a(2,i,j)-a(3,i,j)-a(4,i,j)
+    end do
+  end do
 
   return
 end subroutine derivatives_of_the_depth_field
