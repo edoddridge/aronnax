@@ -520,7 +520,11 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   !   before solving for the fields at the next time step.
 
   cur_time = time()
-  print "(A, I0, A)", "Initialized in ", cur_time - start_time, " second(s)."
+  if (cur_time - start_time .eq. 1) then
+    print "(A)", "Initialized in 1 second."
+  else
+    print "(A, I0, A)", "Initialized in " , cur_time - start_time, " seconds."
+  end if
   last_report_time = cur_time
 
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
