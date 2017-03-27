@@ -110,7 +110,10 @@ program aronnax
   ! unless the external solver is used.
   integer :: nProcX, nProcY
 
-  ! integer :: MPI_COMM_WORLD
+#ifndef useExtSolver
+  ! if we don't call mpi, then this needs to be expicitly defined
+  integer :: MPI_COMM_WORLD
+#endif
   integer :: ierr
   integer :: num_procs, myid
 
@@ -231,6 +234,9 @@ end if
 
 #ifndef useExtSolver
   myid = 0
+  num_procs = 1
+  allocate(ilower(0:num_procs-1, 2))
+  allocate(iupper(0:num_procs-1, 2))
 #endif
 
 
@@ -315,9 +321,11 @@ end if
       hypre_grid)
   print *, 'Execution ended normally'
   
+#ifdef useExtSolver
   ! Finalize MPI
   call MPI_Finalize(ierr)
-  
+#endif
+
   stop 0
 end program aronnax
 
