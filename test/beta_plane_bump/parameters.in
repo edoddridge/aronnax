@@ -41,8 +41,8 @@
  RedGrav = .FALSE.,
  /
  &PRESSURE_SOLVER
- nProcX = 2,
- nProcY = 2,
+ nProcX = 1,
+ nProcY = 1,
  /
  &SPONGE
  spongeHTimeScaleFile = '',
