@@ -588,11 +588,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
 
   end do
 
-  open(unit=10, file='run_finished.txt', action="write", status="unknown", &
-      form="formatted", position="append")
-  write(10, 1112) n
-1112 format( "run finished at time step ", 1i10.10)
-  close(unit=10)
+  print "(A, i10.10)", "Run finished at time step ", n
   return
 end subroutine model_run
 
