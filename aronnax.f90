@@ -1106,45 +1106,46 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
 
   ! now create the solver and solve the equation.
   ! Choose the solver
-  call HYPRE_ParCSRPCGCreate(MPI_COMM_WORLD, hypre_solver, ierr)
+  call HYPRE_StructPCGCreate(MPI_COMM_WORLD, hypre_solver, ierr)
 
 
   ! Set some parameters
-  call HYPRE_ParCSRPCGSetMaxIter(hypre_solver, maxits, ierr)
-  call HYPRE_ParCSRPCGSetTol(hypre_solver, 1e-10, ierr)
+  call HYPRE_StructPCGSetMaxIter(hypre_solver, maxits, ierr)
+  call HYPRE_StructPCGSetAbsTol(hypre_solver, eps, ierr)
   ! other options not explained by user manual but present in examples
-  ! call HYPRE_ParCSRPCGSetTwoNorm(hypre_solver, 1, ierr)
-  ! call HYPRE_ParCSRPCGSetPrintLevel(hypre_solver, 2, ierr)
-  ! call HYPRE_ParCSRPCGSetLogging(hypre_solver, 1, ierr)
+  ! call HYPRE_StructPCGSetMaxIter(hypre_solver, 50 );
+  ! call HYPRE_StructPCGSetTol(hypre_solver, 1.0e-06 );
+  call HYPRE_StructPCGSetTwoNorm(hypre_solver, 1 );
+  call HYPRE_StructPCGSetRelChange(hypre_solver, 0 );
+  call HYPRE_StructPCGSetPrintLevel(hypre_solver, 2 ); ! print each CG iteration
+  call HYPRE_StructPCGSetLogging(hypre_solver, 1);
 
   ! ! use an algebraic multigrid preconditioner
-  ! call HYPRE_BoomerAMGCreate(precond, ierr)
-  ! ! values taken from hypre library example number 5
-  ! ! print less solver info since a preconditioner
-  ! call HYPRE_BoomerAMGSetPrintLevel(precond, 1, ierr); 
-  ! ! Falgout coarsening
-  ! call HYPRE_BoomerAMGSetCoarsenType(precond, 6, ierr) 
-  ! ! old defaults
-  ! call HYPRE_BoomerAMGSetOldDefault(precond, ierr) 
-  ! ! SYMMETRIC G-S/Jacobi hybrid relaxation 
-  ! call HYPRE_BoomerAMGSetRelaxType(precond, 6, ierr)     
-  ! ! Sweeeps on each level
-  ! call HYPRE_BoomerAMGSetNumSweeps(precond, 1, ierr)  
-  ! ! conv. tolerance
-  ! call HYPRE_BoomerAMGSetTol(precond, 0.0d0, ierr)     
-  ! ! do only one iteration! 
-  ! call HYPRE_BoomerAMGSetMaxIter(precond, 1, ierr)
+  call HYPRE_BoomerAMGCreate(precond, ierr)
+  ! values taken from hypre library example number 5
+  ! print less solver info since a preconditioner
+  call HYPRE_BoomerAMGSetPrintLevel(precond, 1, ierr); 
+  ! Falgout coarsening
+  call HYPRE_BoomerAMGSetCoarsenType(precond, 6, ierr) 
+  ! old defaults
+  call HYPRE_BoomerAMGSetOldDefault(precond, ierr) 
+  ! SYMMETRIC G-S/Jacobi hybrid relaxation 
+  call HYPRE_BoomerAMGSetRelaxType(precond, 6, ierr)     
+  ! Sweeeps on each level
+  call HYPRE_BoomerAMGSetNumSweeps(precond, 1, ierr)  
+  ! conv. tolerance
+  call HYPRE_BoomerAMGSetTol(precond, 0.0d0, ierr)     
+  ! do only one iteration! 
+  call HYPRE_BoomerAMGSetMaxIter(precond, 1, ierr)
 
-  ! ! set amg as the pcg preconditioner
-  ! call HYPRE_ParCSRPCGSetPrecond(hypre_solver, 2, precond, ierr)
+  ! set amg as the pcg preconditioner
+  call HYPRE_StructPCGSetPrecond(hypre_solver, 2, precond, ierr)
+
 
   ! now we set the system up and do the actual solve!
-  call HYPRE_ParCSRPCGSetup(hypre_solver, hypre_A, hypre_b, &
+  call HYPRE_StructPCGSetup(hypre_solver, hypre_A, hypre_b, &
                             hypre_x, ierr)
   
-
-
-
   call HYPRE_ParCSRPCGSolve(hypre_solver, hypre_A, hypre_b, &
                             hypre_x, ierr)
 
