@@ -225,9 +225,9 @@ end if
 
   call Hypre_StructGridCreate(MPI_COMM_WORLD, 2, hypre_grid, ierr)
 
-  do i = 0, num_procs-1
-    call HYPRE_StructGridSetExtents(hypre_grid, ilower(i,:),iupper(i,:), ierr)
-  end do
+  !do i = 0, num_procs-1
+  call HYPRE_StructGridSetExtents(hypre_grid, ilower(myid,:),iupper(myid,:), ierr)
+  !end do
 
   call HYPRE_StructGridAssemble(hypre_grid, ierr)
 #endif
@@ -1030,11 +1030,20 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
       ilower(i,:), iupper(i,:), values, ierr)
   end do
 
+  call HYPRE_StructVectorAssemble(hypre_b, ierr)
+
+
+
+
+  call HYPRE_StructVectorCreate(MPI_COMM_WORLD, hypre_grid, hypre_x, ierr)
+  call HYPRE_StructVectorInitialize(hypre_x, ierr)
+
   do i = 0, num_procs-1
     call HYPRE_StructVectorSetBoxValues(hypre_x, & 
       ilower(i,:), iupper(i,:), values, ierr)
   end do
 
+  call HYPRE_StructVectorAssemble(hypre_x, ierr)
 
   ! do i = 1, nx !0, num_procs-1
   !   do j = 1, ny
@@ -1048,7 +1057,6 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
   ! end do
   ! end do
 
-  call HYPRE_StructVectorAssemble(hypre_b, ierr)
 
   ! do i = 1, nx !0, num_procs-1
   !   do j = 1, ny
@@ -1062,7 +1070,6 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
   ! end do
   ! end do
   
-  call HYPRE_StructVectorAssemble(hypre_x, ierr)
 
   ! set initial values for vector x
   ! we're using the recently calculated etastar 
@@ -1162,31 +1169,35 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
   ! the 2D array is being laid out like
   ! [x1y1, x1y2, x1y3, x2y1, x2y2, x2y3, x3y1, x3y2, x3y3]
     etanew(i,j) = values( ((i-1)*ny + j) )
+    ! print *, etanew(i,j)
     end do
   end do
 
   ! print *, 'etanew = ', etanew
 
   ! debuggin commands from hypre library - dump out a single copy of these two variables. Can be used to check that the values have been properly allocated.
-  ! call HYPRE_StructVectorPrint(hypre_b, ierr)
+  call HYPRE_StructVectorPrint(hypre_x, ierr)
   ! call HYPRE_StructMatrixPrint(hypre_A, ierr)
 
-  do i = 1, nx !0, num_procs-1
-    do j = 1, ny
-    temp(1) = i
-    temp(2) = j
-    ! call HYPRE_StructVectorSetBoxValues(hypre_b, & 
-    !   ilower(i,:), iupper(i,:), values, ierr)
+  ! do i = 1, nx !0, num_procs-1
+  !   do j = 1, ny
+  !   temp(1) = i
+  !   temp(2) = j
+  !   ! call HYPRE_StructVectorSetBoxValues(hypre_b, & 
+  !   !   ilower(i,:), iupper(i,:), values, ierr)
 
-    call HYPRE_StructVectorGetValues(hypre_x, & 
-      temp, etanew(i,j), ierr)
-  end do
-  end do
+  !   call HYPRE_StructVectorGetValues(hypre_x, & 
+  !     temp, etanew(i,j), ierr)
+  ! end do
+  ! end do
+  !   call HYPRE_StructVectorSetBoxValues(hypre_x, & 
+  !     ilower(myid,:), iupper(myid,:), values, ierr)
 
+  ! print *, 'values from hypre_x', values  
   ! print *, 'etastar = ', etastar
   ! print *, 'etanew = ', etanew
   
-  call HYPRE_ParCSRPCGDestroy(hypre_solver, ierr)
+  call HYPRE_StructPCGDestroy(hypre_solver, ierr)
 
   !   do i = 1, nx !0, num_procs-1
   !   do j = 1, ny
