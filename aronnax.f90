@@ -611,7 +611,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
     
     call HYPRE_StructMatrixSetValues(hypre_A, & 
         temp, 1, 0, & 
-        a(5,i,j), ierr)
+        a(5,i,j) - freesurfFac/dt**2, ierr)
     call HYPRE_StructMatrixSetValues(hypre_A, & 
         temp, 1, 1, & 
         a(3,i,j), ierr)
