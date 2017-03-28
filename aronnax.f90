@@ -526,6 +526,9 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
     end if
   end if
 
+  ! initialise etanew
+  etanew = 0d0
+
   call calc_boundary_masks(wetmask, hfacW, hfacE, hfacS, hfacN, nx, ny)
 
   call apply_boundary_conditions(u, hfacW, wetmask, nx, ny, layers)
