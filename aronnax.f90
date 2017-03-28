@@ -1020,7 +1020,7 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
     do j = 1, ny
   ! the 2D array is being laid out like
   ! [x1y1, x1y2, x1y3, x2y1, x2y2, x2y3, x3y1, x3y2, x3y3]
-    values( ((i-1)*ny + j) )    = etastar(i,j)/dt**2
+    values( ((i-1)*ny + j) )    = -etastar(i,j)/dt**2
     end do
   end do
 
