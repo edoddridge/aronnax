@@ -121,11 +121,11 @@ program aronnax
   integer, dimension(:,:), allocatable :: jlower, jupper
   integer :: i, j
 
-  integer*8 :: parcsr_A
-  integer*8 :: par_b
-  integer*8 :: par_x
-  integer*8 :: solver
-  integer*8 :: precond
+  ! integer*8 :: parcsr_A
+  ! integer*8 :: par_b
+  ! integer*8 :: par_x
+  ! integer*8 :: solver
+  ! integer*8 :: precond
   integer*8 :: hypre_grid
   integer   :: offsets(2,5)
   ! Set default values here
@@ -433,13 +433,13 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   double precision :: rjac
   ! External solver variables
   integer   :: offsets(2,5)
-  integer*8 :: stencil
   integer :: ierr
   integer :: i, j ! loop variables
   integer*8 :: hypre_grid
+  integer*8 :: stencil
   integer*8 :: hypre_A
-  integer*8 :: hypre_b
-  integer*8 :: hypre_x
+  ! integer*8 :: hypre_b
+  ! integer*8 :: hypre_x
   integer   ::  nentries, nvalues, stencil_indices(5)
   double precision, dimension(:), allocatable :: values
   integer   :: temp(2)
