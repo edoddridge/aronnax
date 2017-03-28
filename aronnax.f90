@@ -1112,13 +1112,13 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
 
   ! Set some parameters
   call HYPRE_StructPCGSetMaxIter(hypre_solver, maxits, ierr)
-  call HYPRE_StructPCGSetAbsTol(hypre_solver, eps, ierr)
+  call HYPRE_StructPCGSetTol(hypre_solver, eps, ierr)
   ! other options not explained by user manual but present in examples
   ! call HYPRE_StructPCGSetMaxIter(hypre_solver, 50 );
   ! call HYPRE_StructPCGSetTol(hypre_solver, 1.0e-06 );
   call HYPRE_StructPCGSetTwoNorm(hypre_solver, 1 );
   call HYPRE_StructPCGSetRelChange(hypre_solver, 0 );
-  call HYPRE_StructPCGSetPrintLevel(hypre_solver, 2 ); ! print each CG iteration
+  call HYPRE_StructPCGSetPrintLevel(hypre_solver, 1 ); ! 2 will print each CG iteration
   call HYPRE_StructPCGSetLogging(hypre_solver, 1);
 
   ! ! use an algebraic multigrid preconditioner
