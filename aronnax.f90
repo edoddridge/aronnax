@@ -574,6 +574,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
     end do
 
     call HYPRE_StructMatrixCreate(MPI_COMM_WORLD, hypre_grid, stencil, hypre_A, ierr)
+
     call HYPRE_StructMatrixInitialize(hypre_A, ierr)
 
     ! nentries = 5 ! a five point stncil means five entries for each grid point
@@ -1157,6 +1158,7 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
   ! call HYPRE_ParCSRPCGGetFinalRelative(hypre_solver, & 
   !   temp(2), ierr)
   ! print *, 'final residual norm = ', temp(2)
+
   do i = 0, num_procs-1
     call HYPRE_StructVectorGetBoxValues(hypre_x, & 
       ilower(i,:), iupper(i,:), values, ierr)
@@ -1237,6 +1239,7 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
 
     ! print *, 'here'
   etanew = etanew*wetmask
+  ! print *, 'etanew after wetmask', etanew
   call wrap_fields_2D(etanew, nx, ny)
 
   ! Now update the velocities using the barotropic tendency due to
