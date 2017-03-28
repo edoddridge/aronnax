@@ -438,11 +438,9 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   integer*8 :: hypre_grid
   integer*8 :: stencil
   integer*8 :: hypre_A
-  ! integer*8 :: hypre_b
-  ! integer*8 :: hypre_x
   integer   ::  nentries, nvalues, stencil_indices(5)
   double precision, dimension(:), allocatable :: values
-  integer   :: temp(2)
+  integer   :: indicies(2)
 
   integer :: MPI_COMM_WORLD
   integer :: myid
@@ -577,63 +575,32 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
 
     call HYPRE_StructMatrixInitialize(hypre_A, ierr)
 
-    ! nentries = 5 ! a five point stncil means five entries for each grid point
-    ! nvalues = nx * ny * 5 ! total number of grid points to simulate * five stencil entries per grid point
-    ! allocate(values(nvalues))
+    do i = 1, nx
+      do j = 1, ny
+        indicies(1) = i
+        indicies(2) = j
 
-    ! do i = 1, nx !values, nentries ! loop over every grid point, skipping by the number of points in the stencil. This 
-    ! ! selects only the central points of the stencil
-    !   do j = 1, ny
-
-
-    ! ! the 2D array is being laid out like
-    ! ! [x1y1, x1y2, x1y3, x2y1, x2y2, x2y3, x3y1, x3y2, x3y3]
-    !   values( ((i-1)*ny + j)*5 )    = a(5,i,j)
-    !   values( ((i-1)*ny + j)*5 + 1) = a(3,i,j)
-    !   values( ((i-1)*ny + j)*5 + 2) = a(1,i,j)
-    !   values( ((i-1)*ny + j)*5 + 3) = a(4,i,j)
-    !   values( ((i-1)*ny + j)*5 + 4) = a(2,i,j)
-
-    !   end do
-    ! end do
-
-    ! do i = 0, num_procs-1
-    !   call HYPRE_StructMatrixSetBoxValues(hypre_A, & 
-    !     ilower(i,:), iupper(i,:), 5, stencil_indices, & 
-    !     values, ierr)
-    ! end do
-
-  do i = 1, nx !0, num_procs-1
-    do j = 1, ny
-    temp(1) = i
-    temp(2) = j
-
-    
-    call HYPRE_StructMatrixSetValues(hypre_A, & 
-        temp, 1, 0, & 
-        a(5,i,j) - freesurfFac/dt**2, ierr)
-    call HYPRE_StructMatrixSetValues(hypre_A, & 
-        temp, 1, 1, & 
-        a(3,i,j), ierr)
-    call HYPRE_StructMatrixSetValues(hypre_A, & 
-        temp, 1, 2, & 
-        a(1,i,j), ierr)
-    call HYPRE_StructMatrixSetValues(hypre_A, & 
-        temp, 1, 3, & 
-        a(4,i,j), ierr)
-    call HYPRE_StructMatrixSetValues(hypre_A, & 
-        temp, 1, 4, & 
-        a(2,i,j), ierr)
-
-  end do
-  end do
-
-
+        call HYPRE_StructMatrixSetValues(hypre_A, & 
+            indicies, 1, 0, & 
+            a(5,i,j) - freesurfFac/dt**2, ierr)
+        call HYPRE_StructMatrixSetValues(hypre_A, & 
+            indicies, 1, 1, & 
+            a(3,i,j), ierr)
+        call HYPRE_StructMatrixSetValues(hypre_A, & 
+            indicies, 1, 2, & 
+            a(1,i,j), ierr)
+        call HYPRE_StructMatrixSetValues(hypre_A, & 
+            indicies, 1, 3, & 
+            a(4,i,j), ierr)
+        call HYPRE_StructMatrixSetValues(hypre_A, & 
+            indicies, 1, 4, & 
+            a(2,i,j), ierr)
+      end do
+    end do
 
     call HYPRE_StructMatrixAssemble(hypre_A, ierr)
 
-      call MPI_Barrier(  MPI_COMM_WORLD, ierr)
-
+    call MPI_Barrier(  MPI_COMM_WORLD, ierr)
 
 #endif
 
@@ -793,9 +760,6 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
           g_vec, nx, ny, layers, n, &
           MPI_COMM_WORLD, myid, num_procs, ilower, iupper, &
           hypre_grid, hypre_A, ierr)
-          ! , &
-          ! MPI_COMM_WORLD, num_procs, ilower, iupper, &
-          ! hypre_grid, hypre_A, hypre_b, hypre_x)
 
     end if
 
@@ -943,8 +907,7 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
     g_vec, nx, ny, layers, n, &
      MPI_COMM_WORLD, myid, num_procs, ilower, iupper, & 
      hypre_grid, hypre_A, ierr)
-     ! , &
-    ! hypre_grid, hypre_A, hypre_b, hypre_x)
+
   implicit none
 
   double precision, intent(inout) :: hnew(0:nx+1, 0:ny+1, layers)
@@ -982,7 +945,7 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
   integer*8 :: precond
   integer   :: nentries, nvalues, stencil_indices(5)
   double precision :: values(nx * ny)
-  double precision :: temp(nx*ny/num_procs)
+  double precision :: hypre_out(2)
 
   integer :: MPI_COMM_WORLD
   integer :: num_procs, myid
@@ -997,7 +960,6 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
   call calc_eta_star(ub, vb, eta, etastar, freesurfFac, nx, ny, dx, dy, dt)
   ! print *, maxval(abs(etastar))
 
-
   ! Prevent barotropic signals from bouncing around outside the
   ! wet region of the model.
   ! etastar = etastar*wetmask
@@ -1009,11 +971,9 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
 
 #ifdef useExtSolver
 
-
-
+  ! Create the rhs vector, b
   call HYPRE_StructVectorCreate(MPI_COMM_WORLD, hypre_grid, hypre_b, ierr)
   call HYPRE_StructVectorInitialize(hypre_b, ierr)
-
 
   ! set rhs values (vector b)
   do i = 1, nx ! loop over every grid point
@@ -1031,9 +991,7 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
 
   call HYPRE_StructVectorAssemble(hypre_b, ierr)
 
-
-
-
+  ! now create the x vector
   call HYPRE_StructVectorCreate(MPI_COMM_WORLD, hypre_grid, hypre_x, ierr)
   call HYPRE_StructVectorInitialize(hypre_x, ierr)
 
@@ -1044,71 +1002,9 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
 
   call HYPRE_StructVectorAssemble(hypre_x, ierr)
 
-  ! do i = 1, nx !0, num_procs-1
-  !   do j = 1, ny
-  !   temp(1) = i
-  !   temp(2) = j
-  !   ! call HYPRE_StructVectorSetBoxValues(hypre_b, & 
-  !   !   ilower(i,:), iupper(i,:), values, ierr)
-
-  !   call HYPRE_StructVectorSetValues(hypre_b, & 
-  !     temp, etastar(i,j), ierr)
-  ! end do
-  ! end do
-
-
-  ! do i = 1, nx !0, num_procs-1
-  !   do j = 1, ny
-  !   temp(1) = i
-  !   temp(2) = j
-  !   ! call HYPRE_StructVectorSetBoxValues(hypre_b, & 
-  !   !   ilower(i,:), iupper(i,:), values, ierr)
-
-  !   call HYPRE_StructVectorSetValues(hypre_x, & 
-  !     temp, etastar(i,j), ierr)
-  ! end do
-  ! end do
-  
-
-  ! set initial values for vector x
-  ! we're using the recently calculated etastar 
-  ! as a first guess
-  ! if (myid .eq. 0) then
-  ! do i = 1, nx ! loop over every grid point
-  !   do j = 1, ny
-  ! ! the 2D array is being laid out like
-  ! ! [x1y1, x1y2, x1y3, x2y1, x2y2, x2y3, x3y1, x3y2, x3y3]
-  !   values( ((i-1)*ny + j) )    = etastar(i,j)
-  !   end do
-  ! end do
-  ! end if
-
-  ! do i = 0, num_procs-1
-  !   call HYPRE_StructVectorSetValues(hypre_x, & 
-  !     ilower(i,:), iupper(i,:), values, ierr)
-  ! end do
-  ! temp = 0d0
-  ! do i = 0, num_procs-1
-  !    call HYPRE_StructVectorSetBoxValues(hypre_x, & 
-  !      ilower(i,:), iupper(i,:), temp, ierr)
-  ! end do
-
-  ! do i = 1, nx !0, num_procs-1
-  !   do j = 1, ny
-  !   temp(1) = i
-  !   temp(2) = j
-
-  !   call HYPRE_StructVectorSetValues(hypre_x, & 
-  !     temp, etastar(i,j), ierr)
-  ! end do
-  ! end do
-
-  ! call HYPRE_StructVectorAssemble(hypre_x, ierr)
-
-  ! now create the solver and solve the equation.
+    ! now create the solver and solve the equation.
   ! Choose the solver
   call HYPRE_StructPCGCreate(MPI_COMM_WORLD, hypre_solver, ierr)
-
 
   ! Set some parameters
   call HYPRE_StructPCGSetMaxIter(hypre_solver, maxits, ierr)
@@ -1150,96 +1046,42 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
   call HYPRE_ParCSRPCGSolve(hypre_solver, hypre_A, hypre_b, &
                             hypre_x, ierr)
 
-  ! code for printing out results form the external solver
+  ! code for printing out results from the external solver
+  ! Not being used, but left here since the manual isn't very helpful
+  ! and this may be useful in the future.
   ! call HYPRE_ParCSRPCGGetNumIterations(hypre_solver, & 
-  !   temp(1), ierr)
-  ! print *, 'num iterations = ', temp(1)
+  !   hypre_out(1), ierr)
+  ! print *, 'num iterations = ', hypre_out(1)
 
   ! call HYPRE_ParCSRPCGGetFinalRelative(hypre_solver, & 
-  !   temp(2), ierr)
-  ! print *, 'final residual norm = ', temp(2)
+  !   hypre_out(2), ierr)
+  ! print *, 'final residual norm = ', hypre_out(2)
 
   do i = 0, num_procs-1
     call HYPRE_StructVectorGetBoxValues(hypre_x, & 
       ilower(i,:), iupper(i,:), values, ierr)
   end do
 
-  ! print *, 'values = ', values
   do i = 1, nx ! loop over every grid point
     do j = 1, ny
   ! the 2D array is being laid out like
   ! [x1y1, x1y2, x1y3, x2y1, x2y2, x2y3, x3y1, x3y2, x3y3]
     etanew(i,j) = values( ((i-1)*ny + j) )
-    ! print *, etanew(i,j)
     end do
   end do
 
-  ! print *, 'etanew = ', etanew
-
-  ! debuggin commands from hypre library - dump out a single copy of these two variables. Can be used to check that the values have been properly allocated.
-  call HYPRE_StructVectorPrint(hypre_x, ierr)
+  ! debugging commands from hypre library - dump out a single 
+  ! copy of these two variables. Can be used to check that the 
+  ! values have been properly allocated.
+  ! call HYPRE_StructVectorPrint(hypre_x, ierr)
   ! call HYPRE_StructMatrixPrint(hypre_A, ierr)
 
-  ! do i = 1, nx !0, num_procs-1
-  !   do j = 1, ny
-  !   temp(1) = i
-  !   temp(2) = j
-  !   ! call HYPRE_StructVectorSetBoxValues(hypre_b, & 
-  !   !   ilower(i,:), iupper(i,:), values, ierr)
-
-  !   call HYPRE_StructVectorGetValues(hypre_x, & 
-  !     temp, etanew(i,j), ierr)
-  ! end do
-  ! end do
-  !   call HYPRE_StructVectorSetBoxValues(hypre_x, & 
-  !     ilower(myid,:), iupper(myid,:), values, ierr)
-
-  ! print *, 'values from hypre_x', values  
-  ! print *, 'etastar = ', etastar
-  ! print *, 'etanew = ', etanew
-  
   call HYPRE_StructPCGDestroy(hypre_solver, ierr)
-
-  !   do i = 1, nx !0, num_procs-1
-  !   do j = 1, ny
-  !   temp(1) = i
-  !   temp(2) = j
-  !   ! call HYPRE_StructVectorSetBoxValues(hypre_b, & 
-  !   !   ilower(i,:), iupper(i,:), values, ierr)
-
-  !   call HYPRE_StructVectorGetValues(hypre_x, & 
-  !     temp, etastar(i,j), ierr)
-  ! end do
-  ! end do
-
-  ! do i = 0, num_procs-1
-  !   call hypre_StructVectorGetBoxValues(hypre_x, & 
-  !     ilower(i,:), iupper(i,:), values, ierr)
-  ! end do
-  ! ! possibly this is an alternative routine for getting the values? Manual is not very helpful
-
-
-  ! ! Move the values back into the 2D array etanew
-  ! if (myid .eq. 0) then
-  ! do i = 1, nx ! loop over every grid point
-  !   do j = 1, ny
-  ! ! the 2D array is laid out like
-  ! ! [x1y1, x1y2, x1y3, x2y1, x2y2, x2y3, x3y1, x3y2, x3y3]
-  !     etanew(i,j) =  values( ((i-1)*ny + j) )
-  !   end do
-  ! end do
-  ! end if
-  
-
-
-
 
 #endif
 
-
-    ! print *, 'here'
   etanew = etanew*wetmask
-  ! print *, 'etanew after wetmask', etanew
+
   call wrap_fields_2D(etanew, nx, ny)
 
   ! Now update the velocities using the barotropic tendency due to
