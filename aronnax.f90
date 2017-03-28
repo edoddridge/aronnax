@@ -106,28 +106,25 @@ program aronnax
   character(30) :: zonalWindFile, meridionalWindFile
 
   ! External pressure solver variables
-  ! except for the logical switch, none of these are used
-  ! unless the external solver is used.
   integer :: nProcX, nProcY
 
 #ifndef useExtSolver
   ! if we don't call mpi, then this needs to be expicitly defined
   integer :: MPI_COMM_WORLD
 #endif
+
   integer :: ierr
   integer :: num_procs, myid
 
   integer, dimension(:,:), allocatable :: ilower, iupper
   integer, dimension(:,:), allocatable :: jlower, jupper
-  integer :: i, j
-
-  ! integer*8 :: parcsr_A
-  ! integer*8 :: par_b
-  ! integer*8 :: par_x
-  ! integer*8 :: solver
-  ! integer*8 :: precond
   integer*8 :: hypre_grid
+#ifdef useExtSolver
+  integer :: i, j
   integer   :: offsets(2,5)
+#endif
+
+
   ! Set default values here
 
   ! TODO Possibly wait until the model is split into multiple files,
@@ -431,21 +428,22 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   double precision :: pi
   integer :: nwrite, avwrite
   double precision :: rjac
+#ifdef useExtSolver
   ! External solver variables
   integer   :: offsets(2,5)
-  integer :: ierr
   integer :: i, j ! loop variables
-  integer*8 :: hypre_grid
-  integer*8 :: stencil
-  integer*8 :: hypre_A
   integer   ::  nentries, nvalues, stencil_indices(5)
   double precision, dimension(:), allocatable :: values
   integer   :: indicies(2)
-
+#endif
+  integer*8 :: hypre_grid
+  integer*8 :: stencil
+  integer*8 :: hypre_A
+  integer :: ilower(0:num_procs-1,2), iupper(0:num_procs-1,2)
+  integer :: ierr
   integer :: MPI_COMM_WORLD
   integer :: myid
   integer :: num_procs
-  integer :: ilower(0:num_procs-1,2), iupper(0:num_procs-1,2)
 
   ! Time step loop variable
   integer :: n
