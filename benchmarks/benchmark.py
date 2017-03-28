@@ -44,8 +44,10 @@ def benchmark_gaussian_bump_red_grav():
 def benchmark_gaussian_bump():
     run_time_O1 = np.zeros(len(grid_points))
     run_time_Ofast = np.zeros(len(grid_points))
+    run_time_hypre = np.zeros(len(grid_points))
 
     with opt.working_directory(p.join(self_path, "beta_plane_bump")):
+
         aro_exec = "aronnax_test"
         for counter, nx in enumerate(grid_points[:7]):
             run_time_O1[counter] = opt.run_experiment(
@@ -56,11 +58,18 @@ def benchmark_gaussian_bump():
             run_time_Ofast[counter] = opt.run_experiment(
                   opt.write_input_beta_plane_bump, nx, nx, 2, aro_exec)
 
+        aro_exec = "aronnax_external_solver"
+        for counter, nx in enumerate(grid_points[:7]):
+            run_time_hypre[counter] = opt.run_experiment(
+                  opt.write_input_beta_plane_bump, nx, nx, 2, aro_exec)
+
         plt.figure()
         plt.plot(grid_points[:7], run_time_O1[:7],
             '-*', label='Aronnax run time -O1')
         plt.plot(grid_points[:7], run_time_Ofast[:7], '-*',
             label='Aronnax run time -Ofast')
+        plt.plot(grid_points[:7], run_time_hypre[:7], '-*',
+            label='Aronnax run time Hypre')
         plt.plot(grid_points[:7],
             (run_time_O1[-6]/(grid_points[-6]**2))*grid_points[:7]**2,
             '-*', label='O(nx**2)')
