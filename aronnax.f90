@@ -1678,7 +1678,8 @@ subroutine Ext_solver(hypre_A, MPI_COMM_WORLD, num_procs, &
   integer :: num_procs, myid
   integer :: ilower(0:num_procs-1,2), iupper(0:num_procs-1,2)
 
-
+  ! wrap this code in preprocessing flags to allow the model to be compiled without the external library, if desired.
+#ifdef useExtSolver
   ! Create the rhs vector, b
   call HYPRE_StructVectorCreate(MPI_COMM_WORLD, hypre_grid, hypre_b, ierr)
   call HYPRE_StructVectorInitialize(hypre_b, ierr)
@@ -1785,7 +1786,8 @@ subroutine Ext_solver(hypre_A, MPI_COMM_WORLD, num_procs, &
   ! call HYPRE_StructMatrixPrint(hypre_A, ierr)
 
   call HYPRE_StructPCGDestroy(hypre_solver, ierr)
-  
+#endif
+
   return
 end subroutine Ext_solver
 
