@@ -51,9 +51,9 @@ def f_plane_red_grav_init_u_test():
 
         for counter,ufile in enumerate(ufiles):
 
-            h = opt.interpret_aro_raw_file(hfiles[counter], nx, ny, layers)
-            u = opt.interpret_aro_raw_file(ufile, nx, ny, layers)
-            v = opt.interpret_aro_raw_file(vfiles[counter], nx, ny, layers)
+            h = aro.interpret_raw_file(hfiles[counter], nx, ny, layers)
+            u = aro.interpret_raw_file(ufile, nx, ny, layers)
+            v = aro.interpret_raw_file(vfiles[counter], nx, ny, layers)
 
             model_iteration[counter] = float(ufile[-10:])
 
@@ -126,16 +126,16 @@ def f_plane_red_grav_wind_test():
     dx = 10e3
     dy = 10e3
 
-    grid = mim.Grid(nx,ny,dx,dy)
+    grid = aro.Grid(nx,ny,dx,dy)
 
     rho0 = 1035.
 
     dt = 600.
 
     with opt.working_directory(p.join(self_path, "physics_tests/f_plane_red_grav_wind")):
-        mim_exec = "MIM_test"
+        aro_exec = "aronnax_test"
         opt.run_experiment(
-              write_f_plane_red_grav_wind_input, nx, ny, layers, mim_exec)
+              write_f_plane_red_grav_wind_input, nx, ny, layers, aro_exec)
 
         hfiles = sorted(glob.glob("output/snap.h.*"))
         ufiles = sorted(glob.glob("output/snap.u.*"))
@@ -158,9 +158,9 @@ def f_plane_red_grav_wind_test():
 
         for counter,ufile in enumerate(ufiles):
 
-            h = opt.interpret_mim_raw_file(hfiles[counter], nx, ny, layers)
-            u = opt.interpret_mim_raw_file(ufile, nx, ny, layers)
-            v = opt.interpret_mim_raw_file(vfiles[counter], nx, ny, layers)
+            h = aro.interpret_raw_file(hfiles[counter], nx, ny, layers)
+            u = aro.interpret_raw_file(ufile, nx, ny, layers)
+            v = aro.interpret_raw_file(vfiles[counter], nx, ny, layers)
 
             model_iteration[counter] = float(ufile[-10:])
 
@@ -211,11 +211,11 @@ def f_plane_red_grav_wind_test():
 
 # create inputs
 def write_f_plane_red_grav_wind_input(nx,ny,layers):
-    opt.write_f_plane(nx, ny, 10e-4)
-    opt.write_rectangular_pool(nx, ny)
-    with opt.fortran_file('initH.bin', 'w') as f:
+    aro.write_f_plane(nx, ny, 10e-4)
+    aro.write_rectangular_pool(nx, ny)
+    with aro.fortran_file('initH.bin', 'w') as f:
         f.write_record(np.ones((nx, ny,layers), dtype=np.float64) * 400)
-    with opt.fortran_file('wind_x.bin','w') as f:
+    with aro.fortran_file('wind_x.bin','w') as f:
         wind_x = np.zeros((ny,nx+1),dtype=np.float64)
         wind_x[50,50] = 0.2
         f.write_record(wind_x)
@@ -226,11 +226,11 @@ def write_f_plane_red_grav_wind_input(nx,ny,layers):
         plt.savefig('wind_x.png')
 
 def write_f_plane_red_grav_init_u_input(nx,ny,layers):
-    opt.write_f_plane(nx, ny, 10e-4)
-    opt.write_rectangular_pool(nx, ny)
-    with opt.fortran_file('initH.bin', 'w') as f:
+    aro.write_f_plane(nx, ny, 10e-4)
+    aro.write_rectangular_pool(nx, ny)
+    with aro.fortran_file('initH.bin', 'w') as f:
         f.write_record(np.ones((nx, ny,layers), dtype=np.float64) * 400)
-    with opt.fortran_file('init_u.bin','w') as f:
+    with aro.fortran_file('init_u.bin','w') as f:
         init_u = np.zeros((ny,nx+1),dtype=np.float64)
         init_u[50,50] = 0.2
         f.write_record(init_u)
@@ -242,5 +242,5 @@ def write_f_plane_red_grav_init_u_input(nx,ny,layers):
 
 
 if __name__ == '__main__':
-    #f_plane_red_grav_wind_test()
+    f_plane_red_grav_wind_test()
     f_plane_red_grav_init_u_test()
