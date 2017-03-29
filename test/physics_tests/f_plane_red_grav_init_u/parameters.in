@@ -19,7 +19,7 @@
 ! input files are where to look for the various inputs
 !
  &NUMERICS
- au = 10.,
+ au = 0.,
  ah = 0.0,
  ar = 1e-8,
  dt = 600.,
