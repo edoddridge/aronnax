@@ -118,6 +118,96 @@ def f_plane_red_grav_init_u_test():
         plt.savefig('f_plane_momentum_test.png', dpi=150)
 
 
+def f_plane_red_grav_wind_test():
+    nx = 100
+    ny = 100
+    layers = 1
+
+    dx = 10e3
+    dy = 10e3
+
+    grid = mim.Grid(nx,ny,dx,dy)
+
+    rho0 = 1035.
+
+    dt = 600.
+
+    with opt.working_directory(p.join(self_path, "physics_tests/f_plane_red_grav_wind")):
+        mim_exec = "MIM_test"
+        opt.run_experiment(
+              write_f_plane_red_grav_wind_input, nx, ny, layers, mim_exec)
+
+        hfiles = sorted(glob.glob("output/snap.h.*"))
+        ufiles = sorted(glob.glob("output/snap.u.*"))
+        vfiles = sorted(glob.glob("output/snap.v.*"))
+
+        # expect the momentum to grow according to u*h*rho0 = delta_t * wind
+        # F = m * a
+        # m * v = h * rho0 * xlen * ylen * v 
+        #       = m * a * dt 
+        #       = F * dt 
+        #       = wind * dx * dy * dt 
+
+
+        momentum = np.zeros(len(hfiles))
+        model_iteration = np.zeros(len(hfiles))
+
+        momentum_expected = np.zeros(len(hfiles))
+
+        volume = np.zeros(len(hfiles))
+
+        for counter,ufile in enumerate(ufiles):
+
+            h = opt.interpret_mim_raw_file(hfiles[counter], nx, ny, layers)
+            u = opt.interpret_mim_raw_file(ufile, nx, ny, layers)
+            v = opt.interpret_mim_raw_file(vfiles[counter], nx, ny, layers)
+
+            model_iteration[counter] = float(ufile[-10:])
+
+            # plt.figure()
+            # plt.pcolormesh(grid.xp1,grid.y,u[:,:,0].transpose())
+            # plt.colorbar()
+            # plt.savefig('u.{0}.png'.format(ufile[-10:]),dpi=150)
+            # plt.close()
+
+            # plt.figure()
+            # plt.pcolormesh(grid.x,grid.y,h[:,:,0].transpose())
+            # plt.colorbar()
+            # plt.savefig('h.{0}.png'.format(ufile[-10:]),dpi=150)
+            # plt.close()
+
+            momentum[counter] = dx * dy * rho0 * (np.sum(np.absolute(h * (u[1:,...] + u[:-1,...])/2.)) + np.sum(np.absolute(h * (v[:,1:,:] + v[:,:-1,:])/2.)))
+
+            momentum_expected[counter] = dx * dy * 0.2 * (model_iteration[counter] + 2.) * dt
+
+            volume[counter] = np.sum(h)
+
+        opt.assert_volume_conservation(nx, ny, layers, 1e-9)
+
+        #assert np.amax(array_relative_error(ans, good_ans)) < rtol
+        plt.figure()
+        plt.plot(model_iteration, momentum_expected, '-o', alpha=0.5,
+                label='Expected momentum')
+        plt.plot(model_iteration, momentum, '-*', alpha=0.5,
+                label='simulated momentum')
+        plt.legend()
+        plt.xlabel('time step')
+        plt.ylabel('momentum')
+        plt.savefig('f_plane_momentum_test.png', dpi=150)
+
+        plt.figure()
+        plt.plot(model_iteration,momentum/momentum_expected)
+        plt.xlabel('timestep')
+        plt.ylabel('simulated/expected')
+        plt.savefig('ratio.png')
+        plt.close()
+
+        plt.figure()
+        plt.plot(model_iteration,volume)
+        plt.ylabel('Volume')
+        plt.xlabel('timestep')
+        plt.savefig('volume.png')
+        plt.close()
 
 # create inputs
 def write_f_plane_red_grav_wind_input(nx,ny,layers):
