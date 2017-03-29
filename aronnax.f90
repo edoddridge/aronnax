@@ -176,12 +176,12 @@ program aronnax
 
   if (num_procs .ne. nProcX * nProcY) then
     if (myid .eq. 0) then
-      print *, "number of processors in run command must equal nProcX * nProcY - fix this and try again"
-      print *, 'num_procs = ', num_procs
-      print *, 'nProcX = ', nProcX
-      print *, 'nProcY = ', nProcY
+       write(17, "(A)"), "number of processors in run command must equal nProcX * nProcY - fix this and try again"
+       write(17, "(A)"), 'num_procs = ', num_procs
+       write(17, "(A)"), 'nProcX = ', nProcX
+       write(17, "(A)"), 'nProcY = ', nProcY
     end if
-    stop
+    stop 1
   end if
 
   ! myid starts at zero, so index these variables from zero.
@@ -206,10 +206,12 @@ program aronnax
   ilower(0,2) = 1
 
 if (myid .eq. 0) then
-  print *, 'ilower (x) = ', ilower(:,1)
-  print *, 'ilower (y) = ', ilower(:,2)
-  print *, 'iupper (x) = ', iupper(:,1)
-  print *, 'iupper (y) = ', iupper(:,2)
+  ! Show the domain decomposition
+  print "(A)", "Domain decomposition:"
+  print "(A)", 'ilower (x) = ', ilower(:,1)
+  print "(A)", 'ilower (y) = ', ilower(:,2)
+  print "(A)", 'iupper (x) = ', iupper(:,1)
+  print "(A)", 'iupper (y) = ', iupper(:,2)
 end if
   !   call HYPRE_IJMatrixCreate(mpi_comm, ilower(myid,1), & 
   !          iupper(myid,1), ilower(myid,2), iupper(myid,2), A, ierr)
