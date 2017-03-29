@@ -971,112 +971,9 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
 
 #ifdef useExtSolver
 
-  ! Create the rhs vector, b
-  call HYPRE_StructVectorCreate(MPI_COMM_WORLD, hypre_grid, hypre_b, ierr)
-  call HYPRE_StructVectorInitialize(hypre_b, ierr)
-
-  ! set rhs values (vector b)
-  do i = 1, nx ! loop over every grid point
-    do j = 1, ny
-  ! the 2D array is being laid out like
-  ! [x1y1, x1y2, x1y3, x2y1, x2y2, x2y3, x3y1, x3y2, x3y3]
-    values( ((i-1)*ny + j) )    = -etastar(i,j)/dt**2
-    end do
-  end do
-
-  do i = 0, num_procs-1
-    call HYPRE_StructVectorSetBoxValues(hypre_b, & 
-      ilower(i,:), iupper(i,:), values, ierr)
-  end do
-
-  call HYPRE_StructVectorAssemble(hypre_b, ierr)
-
-  ! now create the x vector
-  call HYPRE_StructVectorCreate(MPI_COMM_WORLD, hypre_grid, hypre_x, ierr)
-  call HYPRE_StructVectorInitialize(hypre_x, ierr)
-
-  do i = 0, num_procs-1
-    call HYPRE_StructVectorSetBoxValues(hypre_x, & 
-      ilower(i,:), iupper(i,:), values, ierr)
-  end do
-
-  call HYPRE_StructVectorAssemble(hypre_x, ierr)
-
-    ! now create the solver and solve the equation.
-  ! Choose the solver
-  call HYPRE_StructPCGCreate(MPI_COMM_WORLD, hypre_solver, ierr)
-
-  ! Set some parameters
-  call HYPRE_StructPCGSetMaxIter(hypre_solver, maxits, ierr)
-  call HYPRE_StructPCGSetTol(hypre_solver, eps, ierr)
-  ! other options not explained by user manual but present in examples
-  ! call HYPRE_StructPCGSetMaxIter(hypre_solver, 50 );
-  ! call HYPRE_StructPCGSetTol(hypre_solver, 1.0e-06 );
-  call HYPRE_StructPCGSetTwoNorm(hypre_solver, 1 );
-  call HYPRE_StructPCGSetRelChange(hypre_solver, 0 );
-  call HYPRE_StructPCGSetPrintLevel(hypre_solver, 1 ); ! 2 will print each CG iteration
-  call HYPRE_StructPCGSetLogging(hypre_solver, 1);
-
-  ! ! use an algebraic multigrid preconditioner
-  call HYPRE_BoomerAMGCreate(precond, ierr)
-  ! values taken from hypre library example number 5
-  ! print less solver info since a preconditioner
-  call HYPRE_BoomerAMGSetPrintLevel(precond, 1, ierr); 
-  ! Falgout coarsening
-  call HYPRE_BoomerAMGSetCoarsenType(precond, 6, ierr) 
-  ! old defaults
-  call HYPRE_BoomerAMGSetOldDefault(precond, ierr) 
-  ! SYMMETRIC G-S/Jacobi hybrid relaxation 
-  call HYPRE_BoomerAMGSetRelaxType(precond, 6, ierr)     
-  ! Sweeeps on each level
-  call HYPRE_BoomerAMGSetNumSweeps(precond, 1, ierr)  
-  ! conv. tolerance
-  call HYPRE_BoomerAMGSetTol(precond, 0.0d0, ierr)     
-  ! do only one iteration! 
-  call HYPRE_BoomerAMGSetMaxIter(precond, 1, ierr)
-
-  ! set amg as the pcg preconditioner
-  call HYPRE_StructPCGSetPrecond(hypre_solver, 2, precond, ierr)
-
-
-  ! now we set the system up and do the actual solve!
-  call HYPRE_StructPCGSetup(hypre_solver, hypre_A, hypre_b, &
-                            hypre_x, ierr)
-  
-  call HYPRE_ParCSRPCGSolve(hypre_solver, hypre_A, hypre_b, &
-                            hypre_x, ierr)
-
-  ! code for printing out results from the external solver
-  ! Not being used, but left here since the manual isn't very helpful
-  ! and this may be useful in the future.
-  ! call HYPRE_ParCSRPCGGetNumIterations(hypre_solver, & 
-  !   hypre_out(1), ierr)
-  ! print *, 'num iterations = ', hypre_out(1)
-
-  ! call HYPRE_ParCSRPCGGetFinalRelative(hypre_solver, & 
-  !   hypre_out(2), ierr)
-  ! print *, 'final residual norm = ', hypre_out(2)
-
-  do i = 0, num_procs-1
-    call HYPRE_StructVectorGetBoxValues(hypre_x, & 
-      ilower(i,:), iupper(i,:), values, ierr)
-  end do
-
-  do i = 1, nx ! loop over every grid point
-    do j = 1, ny
-  ! the 2D array is being laid out like
-  ! [x1y1, x1y2, x1y3, x2y1, x2y2, x2y3, x3y1, x3y2, x3y3]
-    etanew(i,j) = values( ((i-1)*ny + j) )
-    end do
-  end do
-
-  ! debugging commands from hypre library - dump out a single 
-  ! copy of these two variables. Can be used to check that the 
-  ! values have been properly allocated.
-  ! call HYPRE_StructVectorPrint(hypre_x, ierr)
-  ! call HYPRE_StructMatrixPrint(hypre_A, ierr)
-
-  call HYPRE_StructPCGDestroy(hypre_solver, ierr)
+  call Ext_solver(hypre_A, MPI_COMM_WORLD, num_procs, & 
+    ilower, iupper, etastar, &
+    etanew, nx, ny, dt, hypre_grid, maxits, eps)
 
 #endif
 
@@ -1748,6 +1645,152 @@ subroutine SOR_solver(a, etanew, etastar, freesurfFac, nx, ny, dt, &
 end subroutine SOR_solver
 
 ! ---------------------------------------------------------------------------
+
+subroutine Ext_solver(hypre_A, MPI_COMM_WORLD, num_procs, & 
+    ilower, iupper, etastar, &
+    etanew, nx, ny, dt, hypre_grid, maxits, eps)
+
+  
+  double precision, intent(out)   :: etanew(0:nx+1, 0:ny+1)
+  double precision, intent(in)    :: dt
+  integer,          intent(in)    :: maxits
+  double precision, intent(in)    :: eps
+  integer,          intent(in)    :: nx, ny
+
+  double precision :: etastar(0:nx+1, 0:ny+1)
+
+  ! External solver variables
+  ! integer   :: offsets(2,5)
+  ! integer*8 :: stencil
+  integer :: ierr
+  integer :: i, j ! loop variables
+  integer*8 :: hypre_grid
+  integer*8 :: hypre_A
+  integer*8 :: hypre_b
+  integer*8 :: hypre_x
+  integer*8 :: hypre_solver
+  integer*8 :: precond
+  integer   :: nentries, nvalues, stencil_indices(5)
+  double precision :: values(nx * ny)
+  double precision :: hypre_out(2)
+
+  integer :: MPI_COMM_WORLD
+  integer :: num_procs, myid
+  integer :: ilower(0:num_procs-1,2), iupper(0:num_procs-1,2)
+
+
+  ! Create the rhs vector, b
+  call HYPRE_StructVectorCreate(MPI_COMM_WORLD, hypre_grid, hypre_b, ierr)
+  call HYPRE_StructVectorInitialize(hypre_b, ierr)
+
+  ! set rhs values (vector b)
+  do i = 1, nx ! loop over every grid point
+    do j = 1, ny
+  ! the 2D array is being laid out like
+  ! [x1y1, x1y2, x1y3, x2y1, x2y2, x2y3, x3y1, x3y2, x3y3]
+    values( ((i-1)*ny + j) )    = -etastar(i,j)/dt**2
+    end do
+  end do
+
+  do i = 0, num_procs-1
+    call HYPRE_StructVectorSetBoxValues(hypre_b, & 
+      ilower(i,:), iupper(i,:), values, ierr)
+  end do
+
+  call HYPRE_StructVectorAssemble(hypre_b, ierr)
+
+  ! now create the x vector
+  call HYPRE_StructVectorCreate(MPI_COMM_WORLD, hypre_grid, hypre_x, ierr)
+  call HYPRE_StructVectorInitialize(hypre_x, ierr)
+
+  do i = 0, num_procs-1
+    call HYPRE_StructVectorSetBoxValues(hypre_x, & 
+      ilower(i,:), iupper(i,:), values, ierr)
+  end do
+
+  call HYPRE_StructVectorAssemble(hypre_x, ierr)
+
+    ! now create the solver and solve the equation.
+  ! Choose the solver
+  call HYPRE_StructPCGCreate(MPI_COMM_WORLD, hypre_solver, ierr)
+
+  ! Set some parameters
+  call HYPRE_StructPCGSetMaxIter(hypre_solver, maxits, ierr)
+  call HYPRE_StructPCGSetTol(hypre_solver, eps, ierr)
+  ! other options not explained by user manual but present in examples
+  ! call HYPRE_StructPCGSetMaxIter(hypre_solver, 50 );
+  ! call HYPRE_StructPCGSetTol(hypre_solver, 1.0e-06 );
+  call HYPRE_StructPCGSetTwoNorm(hypre_solver, 1 );
+  call HYPRE_StructPCGSetRelChange(hypre_solver, 0 );
+  call HYPRE_StructPCGSetPrintLevel(hypre_solver, 1 ); ! 2 will print each CG iteration
+  call HYPRE_StructPCGSetLogging(hypre_solver, 1);
+
+  ! ! use an algebraic multigrid preconditioner
+  call HYPRE_BoomerAMGCreate(precond, ierr)
+  ! values taken from hypre library example number 5
+  ! print less solver info since a preconditioner
+  call HYPRE_BoomerAMGSetPrintLevel(precond, 1, ierr); 
+  ! Falgout coarsening
+  call HYPRE_BoomerAMGSetCoarsenType(precond, 6, ierr) 
+  ! old defaults
+  call HYPRE_BoomerAMGSetOldDefault(precond, ierr) 
+  ! SYMMETRIC G-S/Jacobi hybrid relaxation 
+  call HYPRE_BoomerAMGSetRelaxType(precond, 6, ierr)     
+  ! Sweeeps on each level
+  call HYPRE_BoomerAMGSetNumSweeps(precond, 1, ierr)  
+  ! conv. tolerance
+  call HYPRE_BoomerAMGSetTol(precond, 0.0d0, ierr)     
+  ! do only one iteration! 
+  call HYPRE_BoomerAMGSetMaxIter(precond, 1, ierr)
+
+  ! set amg as the pcg preconditioner
+  call HYPRE_StructPCGSetPrecond(hypre_solver, 2, precond, ierr)
+
+
+  ! now we set the system up and do the actual solve!
+  call HYPRE_StructPCGSetup(hypre_solver, hypre_A, hypre_b, &
+                            hypre_x, ierr)
+  
+  call HYPRE_ParCSRPCGSolve(hypre_solver, hypre_A, hypre_b, &
+                            hypre_x, ierr)
+
+  ! code for printing out results from the external solver
+  ! Not being used, but left here since the manual isn't very helpful
+  ! and this may be useful in the future.
+  ! call HYPRE_ParCSRPCGGetNumIterations(hypre_solver, & 
+  !   hypre_out(1), ierr)
+  ! print *, 'num iterations = ', hypre_out(1)
+
+  ! call HYPRE_ParCSRPCGGetFinalRelative(hypre_solver, & 
+  !   hypre_out(2), ierr)
+  ! print *, 'final residual norm = ', hypre_out(2)
+
+  do i = 0, num_procs-1
+    call HYPRE_StructVectorGetBoxValues(hypre_x, & 
+      ilower(i,:), iupper(i,:), values, ierr)
+  end do
+
+  do i = 1, nx ! loop over every grid point
+    do j = 1, ny
+  ! the 2D array is being laid out like
+  ! [x1y1, x1y2, x1y3, x2y1, x2y2, x2y3, x3y1, x3y2, x3y3]
+    etanew(i,j) = values( ((i-1)*ny + j) )
+    end do
+  end do
+
+  ! debugging commands from hypre library - dump out a single 
+  ! copy of these two variables. Can be used to check that the 
+  ! values have been properly allocated.
+  ! call HYPRE_StructVectorPrint(hypre_x, ierr)
+  ! call HYPRE_StructMatrixPrint(hypre_A, ierr)
+
+  call HYPRE_StructPCGDestroy(hypre_solver, ierr)
+  
+  return
+end subroutine Ext_solver
+
+! ---------------------------------------------------------------------------
+
 !> Update velocities using the barotropic tendency due to the pressure
 !> gradient.
 
