@@ -1,8 +1,19 @@
-MIM: MIM.f90 Makefile
-	gfortran -g -Ofast $< -o $@
+# External dependencies
+HYPRE_DIR = lib/hypre/src
 
-MIM_test: MIM.f90 Makefile
-	gfortran -g -O1 -fcheck=all $< -o $@
+LIBS      = -L$(HYPRE_DIR)/lib -lHYPRE -lm
 
-MIM_prof: MIM.f90 Makefile
-	gfortran -g -pg -Ofast $< -o $@
+aronnax_core: aronnax.f90 Makefile
+	gfortran -g -Ofast $< -o $@ -cpp
+
+aronnax_test: aronnax.f90 Makefile
+	gfortran -g -O1 -fcheck=all $< -o $@ -cpp
+
+aronnax_prof: aronnax.f90 Makefile
+	gfortran -g -pg -Ofast $< -o $@ -cpp
+
+aronnax_external_solver_test: aronnax.f90 Makefile
+	mpifort -g $< -o $@ -cpp -DuseExtSolver $(LIBS)
+
+aronnax_external_solver: aronnax.f90 Makefile
+	mpifort -g -Ofast $< -o $@ -cpp -DuseExtSolver $(LIBS)

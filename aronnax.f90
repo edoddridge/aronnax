@@ -1,11 +1,11 @@
 !> @author
 !> Ed Doddridge
 !
-!> Minimalist Isopycnal Model (MIM) with n layers
+!> Aronnax, an idealized isopycnal model with n layers and variable bathymetry.
 !!
 !
 !>
-!>     @mainpage Documentation for MIM.f90
+!>     @mainpage Documentation for aronnax.f90
 !>
 !>     @section Overview
 !>     This model is an isopycnal model on an Arakawa C-grid with n
@@ -29,8 +29,15 @@
 !>    Z: vorticity point - zeta
 !>
 
-program MIM
+
+program aronnax
   implicit none
+
+#ifdef useExtSolver
+  include 'mpif.h'
+
+  integer, parameter :: HYPRE_PARCSR = 5555
+#endif
 
   integer, parameter :: layerwise_input_length = 10000
   ! Resolution
@@ -98,6 +105,26 @@ program MIM
   character(30) :: initUfile, initVfile, initHfile, initEtaFile
   character(30) :: zonalWindFile, meridionalWindFile
 
+  ! External pressure solver variables
+  integer :: nProcX, nProcY
+
+#ifndef useExtSolver
+  ! if we don't call mpi, then this needs to be expicitly defined
+  integer :: MPI_COMM_WORLD
+#endif
+
+  integer :: ierr
+  integer :: num_procs, myid
+
+  integer, dimension(:,:), allocatable :: ilower, iupper
+  integer, dimension(:,:), allocatable :: jlower, jupper
+  integer*8 :: hypre_grid
+#ifdef useExtSolver
+  integer :: i, j
+  integer   :: offsets(2,5)
+#endif
+
+
   ! Set default values here
 
   ! TODO Possibly wait until the model is split into multiple files,
@@ -108,6 +135,10 @@ program MIM
       thickness_error
 
   namelist /MODEL/ hmean, depthFile, H0, RedGrav
+
+#ifdef useExtSolver
+  namelist /PRESSURE_SOLVER/ nProcX, nProcY
+#endif
 
   namelist /SPONGE/ spongeHTimeScaleFile, spongeUTimeScaleFile, &
       spongeVTimeScaleFile, spongeHfile, spongeUfile, spongeVfile
@@ -121,15 +152,92 @@ program MIM
   namelist /EXTERNAL_FORCING/ zonalWindFile, meridionalWindFile, &
       DumpWind, wind_mag_time_series_file
 
+
   open(unit=8, file="parameters.in", status='OLD', recl=80)
   read(unit=8, nml=NUMERICS)
   read(unit=8, nml=MODEL)
+#ifdef useExtSolver
+  read(unit=8, nml=PRESSURE_SOLVER)
+#endif
   read(unit=8, nml=SPONGE)
   read(unit=8, nml=PHYSICS)
   read(unit=8, nml=GRID)
   read(unit=8, nml=INITIAL_CONDITONS)
   read(unit=8, nml=EXTERNAL_FORCING)
   close(unit=8)
+
+  ! optionally include the MPI code for parallel runs with external 
+  ! pressure solver
+#ifdef useExtSolver
+  call MPI_INIT(ierr)
+  call MPI_COMM_RANK(MPI_COMM_WORLD, myid, ierr)
+  call MPI_COMM_SIZE(MPI_COMM_WORLD, num_procs, ierr)
+  ! mpi_comm = MPI_COMM_WORLD
+
+  if (num_procs .ne. nProcX * nProcY) then
+    if (myid .eq. 0) then
+       write(17, "(A)"), "number of processors in run command must equal nProcX * nProcY - fix this and try again"
+       write(17, "(A, I0)"), 'num_procs = ', num_procs
+       write(17, "(A, I0)"), 'nProcX = ', nProcX
+       write(17, "(A, I0)"), 'nProcY = ', nProcY
+    end if
+    stop 1
+  end if
+
+  ! myid starts at zero, so index these variables from zero.
+  ! i__(:,1) = indicies for x locations
+  ! i__(:,2) = indicies for y locations
+  allocate(ilower(0:num_procs-1, 2))
+  allocate(iupper(0:num_procs-1, 2))
+
+
+  do i = 0, nProcX - 1
+    ilower(i * nProcY:(i+1)*nProcY - 1,1) = i * nx / nProcX
+    iupper(i * nProcY:(i+1)*nProcY - 1,1) = ((i+1) * nx / nProcX)
+  end do
+  ! correct first ilower value to exclude the global halo
+  ilower(0,1) = 1
+
+  do j = 0, nProcY - 1
+    ilower(j * nProcX:(j+1)*nProcX - 1,2) = j * ny / nProcY
+    iupper(j * nProcX:(j+1)*nProcX - 1,2) = ((j+1) * ny / nProcY)
+  end do
+  ! correct first ilower value to exclude the global halo
+  ilower(0,2) = 1
+
+if (myid .eq. 0) then
+  ! Show the domain decomposition
+  print "(A)", "Domain decomposition:"
+  print "(A, I0)", 'ilower (x) = ', ilower(:,1)
+  print "(A, I0)", 'ilower (y) = ', ilower(:,2)
+  print "(A, I0)", 'iupper (x) = ', iupper(:,1)
+  print "(A, I0)", 'iupper (y) = ', iupper(:,2)
+end if
+  !   call HYPRE_IJMatrixCreate(mpi_comm, ilower(myid,1), & 
+  !          iupper(myid,1), ilower(myid,2), iupper(myid,2), A, ierr)
+
+  ! ! ! Choose a parallel csr format storage (apparently his is the only one supported)
+  ! call HYPRE_IJMatrixSetObjectType(A, HYPRE_PARCSR, ierr)
+
+  ! ! ! Initialize before setting coefficients
+  ! call HYPRE_IJMatrixInitialize(A, ierr)
+
+  call Hypre_StructGridCreate(MPI_COMM_WORLD, 2, hypre_grid, ierr)
+
+  !do i = 0, num_procs-1
+  call HYPRE_StructGridSetExtents(hypre_grid, ilower(myid,:),iupper(myid,:), ierr)
+  !end do
+
+  call HYPRE_StructGridAssemble(hypre_grid, ierr)
+#endif
+
+#ifndef useExtSolver
+  myid = 0
+  num_procs = 1
+  allocate(ilower(0:num_procs-1, 2))
+  allocate(iupper(0:num_procs-1, 2))
+#endif
+
 
   allocate(h(0:nx+1, 0:ny+1, layers))
   allocate(u(0:nx+1, 0:ny+1, layers))
@@ -168,8 +276,8 @@ program MIM
     call read_input_fileH_2D(initEtaFile, eta, 0.d0, nx, ny)
     ! Check that depth is positive - it must be greater than zero
     if (minval(depth) .lt. 0) then
-      print *, "depths must be positive - fix this and try again"
-      stop
+      write(17, "(A)"), "Depths must be positive."
+      stop 1
     end if
   end if
 
@@ -207,10 +315,17 @@ program MIM
       base_wind_x, base_wind_y, wind_mag_time_series, &
       spongeHTimeScale, spongeUTimeScale, spongeVTimeScale, &
       spongeH, spongeU, spongeV, &
-      nx, ny, layers, RedGrav, DumpWind)
-  print *, 'Execution ended normally'
-  stop 0
-end program MIM
+      nx, ny, layers, RedGrav, DumpWind, &
+      MPI_COMM_WORLD, myid, num_procs, ilower, iupper, &
+      hypre_grid)
+  
+#ifdef useExtSolver
+  ! Finalize MPI
+  call MPI_Finalize(ierr)
+#endif
+
+  stop 
+end program aronnax
 
 ! ------------------------------ Primary routine ----------------------------
 !> Run the model
@@ -221,7 +336,9 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
     base_wind_x, base_wind_y, wind_mag_time_series, &
     spongeHTimeScale, spongeUTimeScale, spongeVTimeScale, &
     spongeH, spongeU, spongeV, &
-    nx, ny, layers, RedGrav, DumpWind)
+    nx, ny, layers, RedGrav, DumpWind, &
+    MPI_COMM_WORLD, myid, num_procs, ilower, iupper, &
+    hypre_grid)
   implicit none
 
   ! Layer thickness (h)
@@ -313,6 +430,22 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   double precision :: pi
   integer :: nwrite, avwrite
   double precision :: rjac
+#ifdef useExtSolver
+  ! External solver variables
+  integer   :: offsets(2,5)
+  integer :: i, j ! loop variables
+  integer   ::  nentries, nvalues, stencil_indices(5)
+  double precision, dimension(:), allocatable :: values
+  integer   :: indicies(2)
+#endif
+  integer*8 :: hypre_grid
+  integer*8 :: stencil
+  integer*8 :: hypre_A
+  integer :: ilower(0:num_procs-1,2), iupper(0:num_procs-1,2)
+  integer :: ierr
+  integer :: MPI_COMM_WORLD
+  integer :: myid
+  integer :: num_procs
 
   ! Time step loop variable
   integer :: n
@@ -320,6 +453,9 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   ! Wind
   double precision, dimension(:,:),   allocatable :: wind_x
   double precision, dimension(:,:),   allocatable :: wind_y
+
+  ! Time
+  integer*8 :: start_time, last_report_time, cur_time
 
   allocate(dhdt(0:nx+1, 0:ny+1, layers))
   allocate(dhdtold(0:nx+1, 0:ny+1, layers))
@@ -347,6 +483,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
 
   allocate(a(5, nx, ny))
 
+
   allocate(hfacW(0:nx+1, 0:ny+1))
   allocate(hfacE(0:nx+1, 0:ny+1))
   allocate(hfacN(0:nx+1, 0:ny+1))
@@ -354,6 +491,18 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
 
   allocate(wind_x(0:nx+1, 0:ny+1))
   allocate(wind_y(0:nx+1, 0:ny+1))
+
+  start_time = time()
+  if (RedGrav) then
+    print "(A, I0, A, I0, A, I0, A, I0, A)", &
+        "Running a reduced-gravity configuration of size ", &
+        nx, "x", ny, "x", layers, " by ", nTimeSteps, " time steps."
+  else
+    print "(A, I0, A, I0, A, I0, A, I0, A)", &
+        "Running an n-layer configuration of size ", &
+        nx, "x", ny, "x", layers, " by ", nTimeSteps, " time steps."
+  end if
+  last_report_time = start_time
 
   nwrite = int(dumpFreq/dt)
   avwrite = int(avFreq/dt)
@@ -375,6 +524,9 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
     end if
   end if
 
+  ! initialise etanew
+  etanew = 0d0
+
   call calc_boundary_masks(wetmask, hfacW, hfacE, hfacS, hfacN, nx, ny)
 
   call apply_boundary_conditions(u, hfacW, wetmask, nx, ny, layers)
@@ -384,14 +536,73 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   if (.not. RedGrav) then
     ! Initialise arrays for pressure solver
     ! a = derivatives of the depth field
-    call derivatives_of_the_depth_field(a, depth, g_vec(1), dx, dy, nx, ny)
+      call derivatives_of_the_depth_field(a, depth, g_vec(1), dx, dy, nx, ny)
 
+#ifndef useExtSolver
     ! Calculate the spectral radius of the grid for use by the
     ! successive over-relaxation scheme
     rjac = (cos(pi/real(nx))*dy**2+cos(pi/real(ny))*dx**2) &
            /(dx**2+dy**2)
     ! If peridodic boundary conditions are ever implemented, then pi ->
     ! 2*pi in this calculation
+#else
+    ! use the external pressure solver
+
+    ! Define the geometry of the stencil.  Each represents a relative
+    ! offset (in the index space).
+    offsets(1,1) =  0
+    offsets(2,1) =  0
+    offsets(1,2) = -1
+    offsets(2,2) =  0
+    offsets(1,3) =  1
+    offsets(2,3) =  0
+    offsets(1,4) =  0
+    offsets(2,4) = -1
+    offsets(1,5) =  0
+    offsets(2,5) =  1
+
+    do i = 1, 5
+      stencil_indices(i) = i-1
+    end do
+
+    call HYPRE_StructStencilCreate(2, 5, stencil, ierr)
+    ! this gives a 2D, 5 point stencil centred around the grid point of interest.   
+    do i = 0, 4
+      call HYPRE_StructStencilSetElement(stencil, i, offsets(:,i+1),ierr) 
+    end do
+
+    call HYPRE_StructMatrixCreate(MPI_COMM_WORLD, hypre_grid, stencil, hypre_A, ierr)
+
+    call HYPRE_StructMatrixInitialize(hypre_A, ierr)
+
+    do i = 1, nx
+      do j = 1, ny
+        indicies(1) = i
+        indicies(2) = j
+
+        call HYPRE_StructMatrixSetValues(hypre_A, & 
+            indicies, 1, 0, & 
+            a(5,i,j) - freesurfFac/dt**2, ierr)
+        call HYPRE_StructMatrixSetValues(hypre_A, & 
+            indicies, 1, 1, & 
+            a(3,i,j), ierr)
+        call HYPRE_StructMatrixSetValues(hypre_A, & 
+            indicies, 1, 2, & 
+            a(1,i,j), ierr)
+        call HYPRE_StructMatrixSetValues(hypre_A, & 
+            indicies, 1, 3, & 
+            a(4,i,j), ierr)
+        call HYPRE_StructMatrixSetValues(hypre_A, & 
+            indicies, 1, 4, & 
+            a(2,i,j), ierr)
+      end do
+    end do
+
+    call HYPRE_StructMatrixAssemble(hypre_A, ierr)
+
+    call MPI_Barrier(  MPI_COMM_WORLD, ierr)
+
+#endif
 
     ! Check that the supplied free surface anomaly and layer
     ! thicknesses are consistent with the supplied depth field.
@@ -399,7 +610,6 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
     ! them consistent.
     call enforce_depth_thickness_consistency(h, eta, depth, &
         freesurfFac, thickness_error, nx, ny, layers)
-
   end if
 
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -505,6 +715,14 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   ! - The model then solves for the tendencies at the current step
   !   before solving for the fields at the next time step.
 
+  cur_time = time()
+  if (cur_time - start_time .eq. 1) then
+    print "(A)", "Initialized in 1 second."
+  else
+    print "(A, I0, A)", "Initialized in " , cur_time - start_time, " seconds."
+  end if
+  last_report_time = cur_time
+
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !!! MAIN LOOP OF THE MODEL STARTS HERE                                  !!!
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -539,8 +757,12 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
       call barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
           dx, dy, wetmask, hfacW, hfacS, dt, &
           maxits, eps, rjac, freesurfFac, thickness_error, &
-          g_vec, nx, ny, layers, n)
+          g_vec, nx, ny, layers, n, &
+          MPI_COMM_WORLD, myid, num_procs, ilower, iupper, &
+          hypre_grid, hypre_A, ierr)
+
     end if
+
 
     ! Stop layers from getting too thin
     call enforce_minimum_layer_thickness(hnew, hmin, nx, ny, layers, n)
@@ -586,13 +808,19 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
         wind_x, wind_y, nx, ny, layers, &
         n, nwrite, avwrite, RedGrav, DumpWind)
 
+    cur_time = time()
+    if (cur_time - last_report_time > 3) then
+      ! Three seconds passed since last report
+      last_report_time = cur_time
+      print "(A, I0, A, I0, A)", "Completed time step ", &
+          n, " at ", cur_time - start_time, " seconds."
+    end if
+
   end do
 
-  open(unit=10, file='run_finished.txt', action="write", status="unknown", &
-      form="formatted", position="append")
-  write(10, 1112) n
-1112 format( "run finished at time step ", 1i10.10)
-  close(unit=10)
+  cur_time = time()
+  print "(A, I0, A, I0, A)", "Run finished at time step ", &
+      n, ", in ", cur_time - start_time, " seconds."
   return
 end subroutine model_run
 
@@ -676,7 +904,10 @@ end subroutine state_derivative
 subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
     dx, dy, wetmask, hfacW, hfacS, dt, &
     maxits, eps, rjac, freesurfFac, thickness_error, &
-    g_vec, nx, ny, layers, n)
+    g_vec, nx, ny, layers, n, &
+     MPI_COMM_WORLD, myid, num_procs, ilower, iupper, & 
+     hypre_grid, hypre_A, ierr)
+
   implicit none
 
   double precision, intent(inout) :: hnew(0:nx+1, 0:ny+1, layers)
@@ -701,6 +932,25 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
   double precision :: vb(nx, ny+1)
   double precision :: etastar(0:nx+1, 0:ny+1)
 
+  ! External solver variables
+  integer   :: offsets(2,5)
+  integer*8 :: stencil
+  integer :: ierr
+  integer :: i, j ! loop variables
+  integer*8 :: hypre_grid
+  integer*8 :: hypre_A
+  integer*8 :: hypre_b
+  integer*8 :: hypre_x
+  integer*8 :: hypre_solver
+  integer*8 :: precond
+  integer   :: nentries, nvalues, stencil_indices(5)
+  double precision :: values(nx * ny)
+  double precision :: hypre_out(2)
+
+  integer :: MPI_COMM_WORLD
+  integer :: num_procs, myid
+  integer :: ilower(0:num_procs-1,2), iupper(0:num_procs-1,2)
+
   ! Calculate the barotropic velocities
   call calc_baro_u(ub, unew, hnew, eta, freesurfFac, nx, ny, layers)
   call calc_baro_v(vb, vnew, hnew, eta, freesurfFac, nx, ny, layers)
@@ -713,12 +963,22 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
   ! Prevent barotropic signals from bouncing around outside the
   ! wet region of the model.
   ! etastar = etastar*wetmask
-
+#ifndef useExtSolver
   call SOR_solver(a, etanew, etastar, freesurfFac, nx, ny, &
-      dt, rjac, eps, maxits, n)
+     dt, rjac, eps, maxits, n)
   ! print *, maxval(abs(etanew))
+#endif
+
+#ifdef useExtSolver
+
+  call Ext_solver(hypre_A, MPI_COMM_WORLD, num_procs, & 
+    ilower, iupper, etastar, &
+    etanew, nx, ny, dt, hypre_grid, maxits, eps)
+
+#endif
 
   etanew = etanew*wetmask
+
   call wrap_fields_2D(etanew, nx, ny)
 
   ! Now update the velocities using the barotropic tendency due to
@@ -1379,12 +1639,160 @@ subroutine SOR_solver(a, etanew, etastar, freesurfFac, nx, ny, dt, &
     end if
   end do
 
-  print *, 'warning: maximum iterations exceeded at time step ', n
+  write(17, "(A, I0)"), 'Warning: maximum SOR iterations exceeded at time step ', n
 
   return
 end subroutine SOR_solver
 
 ! ---------------------------------------------------------------------------
+
+subroutine Ext_solver(hypre_A, MPI_COMM_WORLD, num_procs, & 
+    ilower, iupper, etastar, &
+    etanew, nx, ny, dt, hypre_grid, maxits, eps)
+
+  
+  double precision, intent(out)   :: etanew(0:nx+1, 0:ny+1)
+  double precision, intent(in)    :: dt
+  integer,          intent(in)    :: maxits
+  double precision, intent(in)    :: eps
+  integer,          intent(in)    :: nx, ny
+
+  double precision :: etastar(0:nx+1, 0:ny+1)
+
+  ! External solver variables
+  ! integer   :: offsets(2,5)
+  ! integer*8 :: stencil
+  integer :: ierr
+  integer :: i, j ! loop variables
+  integer*8 :: hypre_grid
+  integer*8 :: hypre_A
+  integer*8 :: hypre_b
+  integer*8 :: hypre_x
+  integer*8 :: hypre_solver
+  integer*8 :: precond
+  integer   :: nentries, nvalues, stencil_indices(5)
+  double precision :: values(nx * ny)
+  double precision :: hypre_out(2)
+
+  integer :: MPI_COMM_WORLD
+  integer :: num_procs, myid
+  integer :: ilower(0:num_procs-1,2), iupper(0:num_procs-1,2)
+
+  ! wrap this code in preprocessing flags to allow the model to be compiled without the external library, if desired.
+#ifdef useExtSolver
+  ! Create the rhs vector, b
+  call HYPRE_StructVectorCreate(MPI_COMM_WORLD, hypre_grid, hypre_b, ierr)
+  call HYPRE_StructVectorInitialize(hypre_b, ierr)
+
+  ! set rhs values (vector b)
+  do i = 1, nx ! loop over every grid point
+    do j = 1, ny
+  ! the 2D array is being laid out like
+  ! [x1y1, x1y2, x1y3, x2y1, x2y2, x2y3, x3y1, x3y2, x3y3]
+    values( ((i-1)*ny + j) )    = -etastar(i,j)/dt**2
+    end do
+  end do
+
+  do i = 0, num_procs-1
+    call HYPRE_StructVectorSetBoxValues(hypre_b, & 
+      ilower(i,:), iupper(i,:), values, ierr)
+  end do
+
+  call HYPRE_StructVectorAssemble(hypre_b, ierr)
+
+  ! now create the x vector
+  call HYPRE_StructVectorCreate(MPI_COMM_WORLD, hypre_grid, hypre_x, ierr)
+  call HYPRE_StructVectorInitialize(hypre_x, ierr)
+
+  do i = 0, num_procs-1
+    call HYPRE_StructVectorSetBoxValues(hypre_x, & 
+      ilower(i,:), iupper(i,:), values, ierr)
+  end do
+
+  call HYPRE_StructVectorAssemble(hypre_x, ierr)
+
+    ! now create the solver and solve the equation.
+  ! Choose the solver
+  call HYPRE_StructPCGCreate(MPI_COMM_WORLD, hypre_solver, ierr)
+
+  ! Set some parameters
+  call HYPRE_StructPCGSetMaxIter(hypre_solver, maxits, ierr)
+  call HYPRE_StructPCGSetTol(hypre_solver, eps, ierr)
+  ! other options not explained by user manual but present in examples
+  ! call HYPRE_StructPCGSetMaxIter(hypre_solver, 50 );
+  ! call HYPRE_StructPCGSetTol(hypre_solver, 1.0e-06 );
+  call HYPRE_StructPCGSetTwoNorm(hypre_solver, 1 );
+  call HYPRE_StructPCGSetRelChange(hypre_solver, 0 );
+  call HYPRE_StructPCGSetPrintLevel(hypre_solver, 1 ); ! 2 will print each CG iteration
+  call HYPRE_StructPCGSetLogging(hypre_solver, 1);
+
+  ! ! use an algebraic multigrid preconditioner
+  call HYPRE_BoomerAMGCreate(precond, ierr)
+  ! values taken from hypre library example number 5
+  ! print less solver info since a preconditioner
+  call HYPRE_BoomerAMGSetPrintLevel(precond, 1, ierr); 
+  ! Falgout coarsening
+  call HYPRE_BoomerAMGSetCoarsenType(precond, 6, ierr) 
+  ! old defaults
+  call HYPRE_BoomerAMGSetOldDefault(precond, ierr) 
+  ! SYMMETRIC G-S/Jacobi hybrid relaxation 
+  call HYPRE_BoomerAMGSetRelaxType(precond, 6, ierr)     
+  ! Sweeeps on each level
+  call HYPRE_BoomerAMGSetNumSweeps(precond, 1, ierr)  
+  ! conv. tolerance
+  call HYPRE_BoomerAMGSetTol(precond, 0.0d0, ierr)     
+  ! do only one iteration! 
+  call HYPRE_BoomerAMGSetMaxIter(precond, 1, ierr)
+
+  ! set amg as the pcg preconditioner
+  call HYPRE_StructPCGSetPrecond(hypre_solver, 2, precond, ierr)
+
+
+  ! now we set the system up and do the actual solve!
+  call HYPRE_StructPCGSetup(hypre_solver, hypre_A, hypre_b, &
+                            hypre_x, ierr)
+  
+  call HYPRE_ParCSRPCGSolve(hypre_solver, hypre_A, hypre_b, &
+                            hypre_x, ierr)
+
+  ! code for printing out results from the external solver
+  ! Not being used, but left here since the manual isn't very helpful
+  ! and this may be useful in the future.
+  ! call HYPRE_ParCSRPCGGetNumIterations(hypre_solver, & 
+  !   hypre_out(1), ierr)
+  ! print *, 'num iterations = ', hypre_out(1)
+
+  ! call HYPRE_ParCSRPCGGetFinalRelative(hypre_solver, & 
+  !   hypre_out(2), ierr)
+  ! print *, 'final residual norm = ', hypre_out(2)
+
+  do i = 0, num_procs-1
+    call HYPRE_StructVectorGetBoxValues(hypre_x, & 
+      ilower(i,:), iupper(i,:), values, ierr)
+  end do
+
+  do i = 1, nx ! loop over every grid point
+    do j = 1, ny
+  ! the 2D array is being laid out like
+  ! [x1y1, x1y2, x1y3, x2y1, x2y2, x2y3, x3y1, x3y2, x3y3]
+    etanew(i,j) = values( ((i-1)*ny + j) )
+    end do
+  end do
+
+  ! debugging commands from hypre library - dump out a single 
+  ! copy of these two variables. Can be used to check that the 
+  ! values have been properly allocated.
+  ! call HYPRE_StructVectorPrint(hypre_x, ierr)
+  ! call HYPRE_StructMatrixPrint(hypre_A, ierr)
+
+  call HYPRE_StructPCGDestroy(hypre_solver, ierr)
+#endif
+
+  return
+end subroutine Ext_solver
+
+! ---------------------------------------------------------------------------
+
 !> Update velocities using the barotropic tendency due to the pressure
 !> gradient.
 
@@ -1440,8 +1848,8 @@ subroutine enforce_depth_thickness_consistency(h, eta, depth, &
   end do
 
   if (maxval(abs(h_norming - 1d0)) .gt. thickness_error) then
-    print *, 'inconsistency between h and eta (in %):', &
-        maxval(abs(h_norming - 1d0))*100d0
+    write(17, "(A, F6.3, A)"), 'Inconsistency between h and eta: ', &
+        maxval(abs(h_norming - 1d0))*100d0, '%'
   end if
 
   return
@@ -1468,14 +1876,8 @@ subroutine enforce_minimum_layer_thickness(hnew, hmin, nx, ny, layers, n)
           hnew(i, j, k) = hmin
           counter = counter + 1
           if (counter .eq. 1) then
-            ! Write a file saying that the layer thickness value
-            ! dropped below hmin and this line has been used.
-            open(unit=10, file='layer thickness dropped below hmin.txt', &
-                action="write", status="unknown", &
-                form="formatted", position="append")
-            write(10, 1111) n
-1111          format("layer thickness dropped below hmin at time step ", 1i10.10)
-            close(unit=10)
+            write(17, "(A, I0)"), &
+                "Layer thickness dropped below hmin at time step ", n
           end if
         end if
       end do
@@ -1502,16 +1904,8 @@ subroutine break_if_NaN(data, nx, ny, layers, n)
     do j = 1, ny
       do i = 1, nx
         if (data(i,j,k) .ne. data(i,j,k)) then
-          ! write a file saying so
-          open(unit=10, file='NaN detected.txt', action="write", &
-              status="replace", form="formatted")
-          write(10, 1000) n
-1000      format( "NaN detected at time step ", 1i10.10)
-          close(unit=10)
-          ! print it on the screen
-          print *, 'NaN detected'
-          ! Stop the code
-          stop 'Nan detected'
+          write(17, "(A, I0)"), "NaN detected at time step ", n
+          stop 1
         end if
       end do
     end do
@@ -1671,6 +2065,21 @@ subroutine derivatives_of_the_depth_field(a, depth, g, dx, dy, nx, ny)
       a(4,i,j) = g*0.5*(depth(i,j)+depth(i,j-1))/dy**2
     end do
   end do
+  do j = 1, ny
+    a(1, nx, j) = 0.0
+    a(3, 1, j) = 0.0
+  end do
+  do i = 1, nx
+    a(2, i, ny) = 0.0
+    a(4, i, 1) = 0.0
+  end do
+  do j = 1, ny
+    do i = 1, nx
+      a(5,i,j) = -a(1,i,j)-a(2,i,j)-a(3,i,j)-a(4,i,j)
+    end do
+  end do
+
+  ! boundary conditions
   do j = 1, ny
     a(1, nx, j) = 0.0
     a(3, 1, j) = 0.0
