@@ -5,7 +5,7 @@ import glob
 import numpy as np
 import matplotlib.pyplot as plt
 
-import MIMutils as mim
+import aronnax as aro
 
 self_path = p.dirname(p.abspath(__file__))
 root_path = p.dirname(self_path)
@@ -24,16 +24,16 @@ def f_plane_red_grav_init_u_test():
     dx = 10e3
     dy = 10e3
 
-    grid = mim.Grid(nx,ny,dx,dy)
+    grid = aro.Grid(nx,ny,dx,dy)
 
     rho0 = 1035.
 
     dt = 60.
 
     with opt.working_directory(p.join(self_path, "physics_tests/f_plane_red_grav_init_u")):
-        mim_exec = "MIM_test"
+        aro_exec = "aronnax_test"
         opt.run_experiment(
-              write_f_plane_red_grav_init_u_input, nx, ny, layers, mim_exec)
+              write_f_plane_red_grav_init_u_input, nx, ny, layers, aro_exec)
 
         hfiles = sorted(glob.glob("output/snap.h.*"))
         ufiles = sorted(glob.glob("output/snap.u.*"))
@@ -51,9 +51,9 @@ def f_plane_red_grav_init_u_test():
 
         for counter,ufile in enumerate(ufiles):
 
-            h = opt.interpret_mim_raw_file(hfiles[counter], nx, ny, layers)
-            u = opt.interpret_mim_raw_file(ufile, nx, ny, layers)
-            v = opt.interpret_mim_raw_file(vfiles[counter], nx, ny, layers)
+            h = opt.interpret_aro_raw_file(hfiles[counter], nx, ny, layers)
+            u = opt.interpret_aro_raw_file(ufile, nx, ny, layers)
+            v = opt.interpret_aro_raw_file(vfiles[counter], nx, ny, layers)
 
             model_iteration[counter] = float(ufile[-10:])
 
@@ -118,6 +118,8 @@ def f_plane_red_grav_init_u_test():
         plt.savefig('f_plane_momentum_test.png', dpi=150)
 
 
+
+# create inputs
 def write_f_plane_red_grav_wind_input(nx,ny,layers):
     opt.write_f_plane(nx, ny, 10e-4)
     opt.write_rectangular_pool(nx, ny)
@@ -150,5 +152,5 @@ def write_f_plane_red_grav_init_u_input(nx,ny,layers):
 
 
 if __name__ == '__main__':
-    f_plane_red_grav_wind_test()
+    #f_plane_red_grav_wind_test()
     f_plane_red_grav_init_u_test()
