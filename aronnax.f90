@@ -177,9 +177,9 @@ program aronnax
   if (num_procs .ne. nProcX * nProcY) then
     if (myid .eq. 0) then
        write(17, "(A)"), "number of processors in run command must equal nProcX * nProcY - fix this and try again"
-       write(17, "(A)"), 'num_procs = ', num_procs
-       write(17, "(A)"), 'nProcX = ', nProcX
-       write(17, "(A)"), 'nProcY = ', nProcY
+       write(17, "(A, I0)"), 'num_procs = ', num_procs
+       write(17, "(A, I0)"), 'nProcX = ', nProcX
+       write(17, "(A, I0)"), 'nProcY = ', nProcY
     end if
     stop 1
   end if
@@ -208,10 +208,10 @@ program aronnax
 if (myid .eq. 0) then
   ! Show the domain decomposition
   print "(A)", "Domain decomposition:"
-  print "(A)", 'ilower (x) = ', ilower(:,1)
-  print "(A)", 'ilower (y) = ', ilower(:,2)
-  print "(A)", 'iupper (x) = ', iupper(:,1)
-  print "(A)", 'iupper (y) = ', iupper(:,2)
+  print "(A, I0)", 'ilower (x) = ', ilower(:,1)
+  print "(A, I0)", 'ilower (y) = ', ilower(:,2)
+  print "(A, I0)", 'iupper (x) = ', iupper(:,1)
+  print "(A, I0)", 'iupper (y) = ', iupper(:,2)
 end if
   !   call HYPRE_IJMatrixCreate(mpi_comm, ilower(myid,1), & 
   !          iupper(myid,1), ilower(myid,2), iupper(myid,2), A, ierr)
