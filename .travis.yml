@@ -20,3 +20,10 @@ script:
   - ARONNAX_TEST_VALGRIND_ALL=1 pytest
 
 after_success:
+
+deploy:
+  provider: pages
+  skip_cleanup: true
+  github_token: $GH_token # Set in travis-ci.org dashboard
+  on:
+    branch: master
