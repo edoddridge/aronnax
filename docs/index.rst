@@ -6,11 +6,14 @@
 Welcome to Aronnax's documentation!
 ===================================
 
+Aronnax is an idealised and easily configurable isopycnal model. The numerical core is written in Fortran, but it is wrapped in Python.
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
    about_aronnax
+   input_generation
 
 
 Indices and tables
