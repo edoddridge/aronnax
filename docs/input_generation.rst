@@ -1,7 +1,7 @@
 Input generators
 *******************
 
-Aronnax ships with a number helper functions for generating input fields.
+Aronnax includes a number helper functions for generating input fields.
 
 Forcings
 ==========
