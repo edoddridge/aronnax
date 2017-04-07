@@ -13,8 +13,10 @@ Aronnax is an idealised and easily configurable isopycnal model. The numerical c
    :caption: Contents:
 
    about_aronnax
+   examples
    input_generation
    output_helpers
+   verification
 
 
 Indices and tables
