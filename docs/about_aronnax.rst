@@ -62,7 +62,7 @@ where :math:`H` is the depth from the free-surface to the bathymetry, and :math:
 
 
 Numerical algorithm
-================
+====================
 The model solves for two horizontal velocity components and layer thickness in an arbitrary number of layers. The model supports two sets of physics: either a reduced gravity configuration in which the horizontal pressure gradient is set to zero in a quiescent abyss below the lowest active layer; or an n-layer configuration in which bathymetry must be specified.
 
 MIM is discretised on an Arakawa C-grid, with the velocity and thickness variables in different locations on the grid cell.
