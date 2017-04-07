@@ -15,14 +15,17 @@ The use of sponge regions affects volume conservation in both global and layerwi
 +------------------+-----------------+----------+-----------+
 |                  |                 |  Global  | Layerwise |
 +==================+=================+==========+===========+
-| n-layer          |            Yes  |  Yes     | No        |
+| n-layer          |       Yes       |  Yes     | No        |
 +------------------+-----------------+----------+-----------+
-| n-layer          |            No   |  Yes     | Yes       |
+| n-layer          |       No        |  Yes     | Yes       |
 +------------------+-----------------+----------+-----------+
-| n + 1/2 layer    | Yes             |  No      | No        |
+| n + 1/2 layer    |       Yes       |  No      | No        |
 +------------------+-----------------+----------+-----------+
-| n + 1/2 layer    | No              |  Yes     | Yes       |
+| n + 1/2 layer    |       No        |  Yes     | Yes       |
 +------------------+-----------------+----------+-----------+
+
+TODO:
+- Add graphs of layerwise/global volume in simulations with(out) sponges
 
 
 Momentum
