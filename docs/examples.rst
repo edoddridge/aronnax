@@ -6,7 +6,8 @@ In the following sections we present some simplified examples and use Aronnax to
 Canonical examples
 ===================
 
-These 
+These simulations use simple domains and and inputs to show how Aronnax can easily be used for idealised modelling studies.
+
 
 Gaussian bump on a :math:`\beta`-plane
 ----------------------------------------
