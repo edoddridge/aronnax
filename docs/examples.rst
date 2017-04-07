@@ -38,5 +38,17 @@ These examples show how Aronnax can be used to reproduce results from the litera
 
 Davis et al. (2014)
 ---------------------
+Reduced gravity configuration of the Arctic
+
+
+Manucharyan and Spall (2016)
+-----------------------------
+n-layer configuration looking at eddies in the Arctic. (This was run as an MITgcm experiment, but could be done in an isopycnal model)
+
+
+Johnson and Marshall (2002)
+----------------------------
+Reduced gravity analysis of the adjustment of the MOC to changes in deep water formation rates.
+
 
 
