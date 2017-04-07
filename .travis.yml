@@ -24,7 +24,7 @@ after_success:
 deploy:
   provider: pages
   skip_cleanup: true
-  local_dir: $TRAVIS_BUILD_DIR/aronnax/docs/_build/html/
+  local_dir: $TRAVIS_BUILD_DIR/docs/_build/html
   github_token: $GH_token # Set in travis-ci.org dashboard
   on:
     branch: sphinx-docs
