@@ -20,11 +20,11 @@ script:
   - ARONNAX_TEST_VALGRIND_ALL=1 pytest
 
 after_success:
-
+  - cd docs/_build/html
+  
 deploy:
   provider: pages
   skip_cleanup: true
-  local_dir: $TRAVIS_BUILD_DIR/docs/_build/html
   github_token: $GH_token # Set in travis-ci.org dashboard
   on:
     branch: sphinx-docs
