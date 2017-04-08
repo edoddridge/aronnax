@@ -11,6 +11,8 @@ before_install:
   - sudo apt-get install gfortran
   - sudo apt-get install valgrind
   - pip install scipy
+  - pip install sphinx
+  - pip install recommonmark
   - python setup.py install
 
 install: 
@@ -23,7 +25,7 @@ after_success:
   - rm -f README.md
   - cd docs
   - make html
-  - mv _build/html/* ../
+  - cd _build/html/
 
 deploy:
   provider: pages
