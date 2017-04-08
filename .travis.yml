@@ -22,10 +22,10 @@ script:
   - ARONNAX_TEST_VALGRIND_ALL=1 pytest
 
 after_success:
-  - rm -f README.md
   - cd docs
   - make html
-  - cd _build/html/
+  - cd _build/html
+  - ls
 
 deploy:
   provider: pages
