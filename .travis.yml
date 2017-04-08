@@ -12,6 +12,7 @@ before_install:
   - sudo apt-get install valgrind
   - pip install scipy
   - pip install sphinx
+  - pip install sphinx_rtd_theme
   - pip install recommonmark
   - python setup.py install
 
