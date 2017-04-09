@@ -5,8 +5,8 @@ The Physics
 ============
 
 Aronnax can run in two different modes:
- * n + 1/2 layer mode, in which the bottom layer is quiescent and infinitely deep
- * n layer mode, in whihc the bottom topography is specified and all layers have finite thickness
+- n + 1/2 layer mode, in which the bottom layer is quiescent and infinitely deep
+- n layer mode, in whihc the bottom topography is specified and all layers have finite thickness
 
 
 n + 1/2 layer mode
@@ -61,6 +61,19 @@ The model can be used in either reduced gravity mode, with a quiescent abyss, or
 where :math:`H` is the depth from the free-surface to the bathymetry, and :math:`V` is the vertically averaged flow, the barotropic flow. With a rigid lid, the model solves an analogous equation, but it is just for the pressure field to keep the vertically integrated horizontal flow divergence free - the result is not carried from one timestep to the next.
 
 
+Discretisation
+===============
+Aronnax is discretised on an Arakawa C grid.
+
+.. figure:: _static/C-grid.png
+   :alt: Arakawa C grid
+   :width: 33%
+   :align: center
+
+   A single grid cell from an Arakawa C grid.
+
+
+
 Numerical algorithm
 ====================
 The model solves for two horizontal velocity components and layer thickness in an arbitrary number of layers. The model supports two sets of physics: either a reduced gravity configuration in which the horizontal pressure gradient is set to zero in a quiescent abyss below the lowest active layer; or an n-layer configuration in which bathymetry must be specified.
@@ -69,23 +82,23 @@ MIM is discretised on an Arakawa C-grid, with the velocity and thickness variabl
 
 The choice of quiescent abyss or n-layer physics is made by a runtime parameter in the input file. The numerical algorithm for calculating the values at the next time level, $n+1$, is as follows:
 
-  - The Bernoulli Potential is calculated using values from time-level $n$
+  - The Bernoulli Potential is calculated using values from time-level :math:`n`
   
     - The function used depends on whether the model is running in reduced gravity mode or n-layer mode
   
-  - The relative vorticity is calculated using values from time-level $n$
-  - The layer thickness tendencies are calculated using the velocities and layer thicknesses from time-level $n$
-  - the velocity tendencies are calculated using values from time-level $n$
-  - the layer thicknesses and velocities are stepped forward in time to $n+1$ using a third-order Adams-Bashforth algorithm and the stored time derivatives from the previous two timesteps. N.B. for the n-layer version these velocities are not strictly at time $n+1$, let's call it time level $n+*$.
+  - The relative vorticity is calculated using values from time-level :math:`n`
+  - The layer thickness tendencies are calculated using the velocities and layer thicknesses from time-level :math:`n`
+  - the velocity tendencies are calculated using values from time-level :math:`n`
+  - the layer thicknesses and velocities are stepped forward in time to :math:`n+1` using a third-order Adams-Bashforth algorithm and the stored time derivatives from the previous two timesteps. N.B. for the n-layer version these velocities are not strictly at time :math:`n+1`, let's call it time level :math:`n+*`.
   - For the n-layer version:
   
     - The no-normal flow boundary condition is applied (perhaps unnecessary?)
     - The barotropic velocity required to keep the vertically integrated flow non-divergent in the horizontal is calculated and added to the baroclinic velocities calculated previously
     
       - the barotropic velocities are calculated from the velocities at time-level $n+*$.
-      - the divergence of these velocities is used to solve for the free surface elevation at time-level n+1 that makes the barotropic flow non-divergent
+      - the divergence of these velocities is used to solve for the free surface elevation at time-level :math:`n+1` that makes the barotropic flow non-divergent
       
-        - This is the step that requires the matrix inversion, since we solve the equation implicitly to sidestep the issue of requiring a \emph{very} short $\delta t$.
+        - This is the step that requires the matrix inversion, since we solve the equation implicitly to sidestep the issue of requiring a \emph{very} short :math:`\delta t`.
       
       
       - the barotropic correction is applied to the velocity fields
@@ -93,7 +106,7 @@ The choice of quiescent abyss or n-layer physics is made by a runtime parameter 
     
   
   - The no normal flow and tangential (no-slip or free-slip) boundary conditions are applied
-  - The layer thicnkesses are forced to be larger than some user-specified minimum. This is for numerical stability and is probably only necessary for the layer receiving the wind forcing. (This is a limitation I would like to remove, it's what we are discussing in ticket \#26)
+  - The layer thicnkesses are forced to be larger than some user-specified minimum. This is for numerical stability and is probably only necessary for the layer receiving the wind forcing. (This is a limitation I would like to remove, it's what we are discussing in ticket [\#26](https://github.com/edoddridge/aronnax/issues/61)
   - the arrays are shuffled to prepare for the next timestep.
 
 
