@@ -30,7 +30,7 @@ Continuity equation
     \frac{\partial h_{n}}{\partial t} = \mathbf{\nabla} \cdot \left(h_{n} \mathbf{v_{n}} \right).
 
 
-in which :math:`\mathbf{v_{n}}` represents the vertically averaged horizontal velocity in layer $n$.
+in which :math:`\mathbf{v_{n}}` represents the vertically averaged horizontal velocity in layer :math:`n`.
 
 Momentum equations
 -------------------
@@ -80,7 +80,7 @@ The model solves for two horizontal velocity components and layer thickness in a
 
 MIM is discretised on an Arakawa C-grid, with the velocity and thickness variables in different locations on the grid cell.
 
-The choice of quiescent abyss or n-layer physics is made by a runtime parameter in the input file. The numerical algorithm for calculating the values at the next time level, $n+1$, is as follows:
+The choice of quiescent abyss or n-layer physics is made by a runtime parameter in the input file. The numerical algorithm for calculating the values at the next time level, :math:`n+1`, is as follows:
 
   - The Bernoulli Potential is calculated using values from time-level :math:`n`
   
@@ -95,10 +95,10 @@ The choice of quiescent abyss or n-layer physics is made by a runtime parameter 
     - The no-normal flow boundary condition is applied (perhaps unnecessary?)
     - The barotropic velocity required to keep the vertically integrated flow non-divergent in the horizontal is calculated and added to the baroclinic velocities calculated previously
     
-      - the barotropic velocities are calculated from the velocities at time-level $n+*$.
+      - the barotropic velocities are calculated from the velocities at time-level :math:`n+*`.
       - the divergence of these velocities is used to solve for the free surface elevation at time-level :math:`n+1` that makes the barotropic flow non-divergent
       
-        - This is the step that requires the matrix inversion, since we solve the equation implicitly to sidestep the issue of requiring a \emph{very} short :math:`\delta t`.
+        - This is the step that requires the matrix inversion, since we solve the equation implicitly to sidestep the issue of requiring a *very* short :math:`\delta t`.
       
       
       - the barotropic correction is applied to the velocity fields
