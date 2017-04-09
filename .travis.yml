@@ -23,7 +23,9 @@ script:
   - ARONNAX_TEST_VALGRIND_ALL=1 pytest
 
 after_success:
-  - cd docs
+  - cd benchmarks
+  - python benchmark.py
+  - cd ../docs
   - make html
   - cd _build/html
 
