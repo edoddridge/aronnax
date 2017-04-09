@@ -3,6 +3,13 @@ Input generators
 
 Aronnax includes a number helper functions for generating input fields.
 
+Grid
+=====
+.. autoclass:: aronnax.Grid
+   :members:
+   :private-members:
+
+
 Forcings
 ==========
 
