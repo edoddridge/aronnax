@@ -12,12 +12,18 @@ These simulations use simple domains and and inputs. They show some of the featu
 Gaussian bump on a :math:`\beta`-plane
 ----------------------------------------
 
+This example is initialised with a Gaussian bump in the layer thickness field. The momentum forcing is set to zero.
+
 1 + 1/2 layers
 +++++++++++++++
+to do:
+- add animated gif of the output
 
 
 2 layers
 +++++++++++
+to do:
+- add animated gif of the output
 
 
 Twin gyre on a :math:`\beta`-plane
@@ -25,11 +31,13 @@ Twin gyre on a :math:`\beta`-plane
 
 1 + 1/2 layers
 +++++++++++++++
-
+to do:
+- add animated gif of the output
 
 2 layers
 +++++++++++
-
+to do:
+- add animated gif of the output
 
 Reproducing published results
 ===============================
