@@ -5,17 +5,22 @@ The Physics
 ============
 
 Aronnax can run in two different modes:
+
 - n + 1/2 layer mode, in which the bottom layer is quiescent and infinitely deep
-- n layer mode, in whihc the bottom topography is specified and all layers have finite thickness
+- n layer mode, in which the bottom topography is specified and all layers have finite thickness
 
 
 n + 1/2 layer mode
 -------------------
-This is very cheap to run
+
+The n + 1/2 layer mode is very cheap to run: Each time-step takes time
+linear in the number of grid points.
 
 n layer mode
 --------------------
-More expensive
+
+The n layer mode is more expensive, because TODO; but admits a more
+realistic simulation, in that the effect of the ocean floor is included.
 
 
 Governing Equations
