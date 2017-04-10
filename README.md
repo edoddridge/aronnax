@@ -1,17 +1,37 @@
 [![Build Status](https://travis-ci.org/edoddridge/aronnax.svg?branch=master)](https://travis-ci.org/edoddridge/aronnax)
 
 # Aronnax
-An idealized isopycnal model that can either be run as a reduced
-gravity model with n + 1/2 layers, or with n layers and variable
-bathymetry.
 
-The model core is written in Fortran 90 and exports the data as
-unformatted fortran data files. All parameters, including grid size,
-are specified at runtime in the 'parameters.in' file.
+An idealized isopycnal ocean circulation model that can either be run
+as a reduced gravity model with n + 1/2 layers, or with n layers and
+variable bathymetry.
 
-The online documentation can be accessed
-[here](https://edoddridge.github.io/aronnax/), or it can be found in
-the docs folder.
+Aronnax is
+- Easy to install on a laptop or a compute node, including without
+  administrative privileges.
+- Easy to configure.  All parameters, including grid size, are
+  specified at runtime in a simple configuration file.
+- [Easy to use](https://edoddridge.github.io/aronnax/examples.html).
+  Aronnax can be called as a simple command-line program
+  that reads and writes the standard NetCDF data format, or can be
+  controlled programmatically as a Python library, communicating data
+  through Numpy arrays.
+- Easy to learn and understand, with extensive [online
+  documentation](https://edoddridge.github.io/aronnax/), including a
+  complete description of [the
+  physics](https://edoddridge.github.io/aronnax/about_aronnax.html#the-physics)
+  and [the
+  numerics](https://edoddridge.github.io/aronnax/about_aronnax.html#discretisation).
+- [Verified](https://edoddridge.github.io/aronnax/verification.html).
+  Aronnax successfully reproduces multiple published results from
+  idealized models appearing in the literature.
+- [Fast](https://edoddridge.github.io/aronnax/benchmarks.html).  The
+  main integration loop is a multi-core Fortran program, wrapped in
+  Python for convenient use.
+
+# Installation
+
+todo
 
 # Developing
 
