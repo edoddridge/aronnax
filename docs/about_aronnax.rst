@@ -19,8 +19,12 @@ linear in the number of grid points.
 n layer mode
 --------------------
 
-The n layer mode is more expensive, because TODO; but admits a more
-realistic simulation, in that the effect of the ocean floor is included.
+The n layer mode is more expensive, because the integration method is
+party implicit (to wit, solves a system of equations to ensure
+non-divergence of the barotropic flow).  This tends to cost an extra
+factor of one grid side length in the run time, but admits a more
+realistic simulation, in that the effect of the ocean floor is
+included.
 
 
 Governing Equations
@@ -83,7 +87,7 @@ Numerical algorithm
 ====================
 The model solves for two horizontal velocity components and layer thickness in an arbitrary number of layers. The model supports two sets of physics: either a reduced gravity configuration in which the horizontal pressure gradient is set to zero in a quiescent abyss below the lowest active layer; or an n-layer configuration in which bathymetry must be specified.
 
-MIM is discretised on an Arakawa C-grid, with the velocity and thickness variables in different locations on the grid cell.
+Aronnax is discretised on an Arakawa C-grid, with the velocity and thickness variables in different locations on the grid cell.
 
 The choice of quiescent abyss or n-layer physics is made by a runtime parameter in the input file. The numerical algorithm for calculating the values at the next time level, :math:`n+1`, is as follows:
 
@@ -103,16 +107,16 @@ The choice of quiescent abyss or n-layer physics is made by a runtime parameter 
       - the barotropic velocities are calculated from the velocities at time-level :math:`n+*`.
       - the divergence of these velocities is used to solve for the free surface elevation at time-level :math:`n+1` that makes the barotropic flow non-divergent
       
-        - This is the step that requires the matrix inversion, since we solve the equation implicitly to sidestep the issue of requiring a *very* short :math:`\delta t`.
+        - This is the step that requires the linear system solve, since we solve the equation implicitly to sidestep the issue of requiring a *very* short :math:`\delta t`.
       
       
       - the barotropic correction is applied to the velocity fields
-      - consistency between the sum of the layer thicknesses and the depth of the ocean is forced by applying a uniform inflation/deflation to the layers. (the model currently prints a warning if the discrepancy is larger than a threshold - currently 1\%?)
+      - consistency between the sum of the layer thicknesses and the depth of the ocean is forced by applying a uniform inflation/deflation to the layers. (the model currently prints a warning if the discrepancy is larger than a configurable threshold, which defaults to 1\%)
     
   
   - The no normal flow and tangential (no-slip or free-slip) boundary conditions are applied
-  - The layer thicnkesses are forced to be larger than some user-specified minimum. This is for numerical stability and is probably only necessary for the layer receiving the wind forcing. (This is a limitation I would like to remove, it's what we are discussing in ticket [\#26](https://github.com/edoddridge/aronnax/issues/61)
+  - The layer thicnkesses are forced to be larger than a configurable minimum. This is for numerical stability and is probably only necessary for the layer receiving the wind forcing. (This is a limitation I would like to remove, it's what we are discussing in ticket [\#26](https://github.com/edoddridge/aronnax/issues/61)
   - the arrays are shuffled to prepare for the next timestep.
 
 
-N.B. To get the model going, two time steps are initially performed using Runge-Kutta 4th order time stepping.
+N.B. To get the Adams-Bashforth method going, two time steps are initially performed using Runge-Kutta 4th order time stepping.
