@@ -48,8 +48,9 @@ def benchmark_gaussian_bump_red_grav_plot():
             (run_time_O1[-7]/(grid_points[-7]**2))*grid_points**2,
             '-*', label='O(nx**2)')
         plt.legend()
-        plt.xlabel('nx')
-        plt.ylabel('run time (s)')
+        plt.xlabel('Resolution (grid cells on one side)')
+        plt.ylabel('Time (s)')
+        plt.title('Runtime scaling of a 1.5-layer Aronnax simulation on a square grid')
         plt.savefig('beta_plane_bump_red_grav scaling.png', dpi=150)
         filename = p.join(root_path, 'docs/beta_plane_bump_red_grav_scaling.png')
         plt.savefig(filename, dpi=150)
