@@ -21,7 +21,9 @@ class Grid(object):
         :param float dx: Grid size in x direction in metres
         :param float dy: Grid size in y direction in metres
         :param float x0: x value at lower left corner of domain
-        :param float y0: y value at lower left corner of domain"""
+        :param float y0: y value at lower left corner of domain
+
+        :returns: Grid object containing x and y axes for tracer and velocity points."""
 
     def __init__(self,nx,ny,dx,dy,x0=0,y0=0):
         """Instantiate a grid object for Aronnax."""
