@@ -1,5 +1,6 @@
 import cPickle as pkl
 import os.path as p
+import sys
 
 import numpy as np
 import matplotlib
@@ -103,5 +104,13 @@ def benchmark_gaussian_bump():
 
 
 if __name__ == '__main__':
-    benchmark_gaussian_bump_red_grav()
-    benchmark_gaussian_bump()
+    if len(sys.argv) > 1:
+        if sys.argv[1] == "save":
+            benchmark_gaussian_bump_red_grav_save()
+            benchmark_gaussian_bump_save()
+        else:
+            benchmark_gaussian_bump_red_grav_plot()
+            benchmark_gaussian_bump_plot()
+    else:
+        benchmark_gaussian_bump_red_grav()
+        benchmark_gaussian_bump()
