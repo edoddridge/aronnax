@@ -41,12 +41,12 @@ def benchmark_gaussian_bump_red_grav_plot():
             (run_time_O1, run_time_Ofast) = pkl.load(f)
 
         plt.figure()
-        plt.plot(grid_points, run_time_O1, '-*', label='Aronnax run time -O1')
-        plt.plot(grid_points, run_time_Ofast,
+        plt.loglog(grid_points, run_time_O1, '-*', label='Aronnax run time -O1')
+        plt.loglog(grid_points, run_time_Ofast,
             '-*', label='Aronnax run time -Ofast')
-        plt.plot(grid_points,
+        plt.loglog(grid_points,
             (run_time_O1[-7]/(grid_points[-7]**2))*grid_points**2,
-            '-*', label='O(nx**2)')
+                   ':', label='O(nx**2)', color='black', linewidth=0.5)
         plt.legend()
         plt.xlabel('Resolution (grid cells on one side)')
         plt.ylabel('Time (s)')
