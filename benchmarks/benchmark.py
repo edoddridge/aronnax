@@ -1,3 +1,4 @@
+import cPickle as pkl
 import os.path as p
 
 import numpy as np
@@ -15,7 +16,7 @@ import output_preservation_test as opt
 
 grid_points = np.array([10, 20, 40, 60, 80, 100, 150, 200, 300, 400, 500])
 
-def benchmark_gaussian_bump_red_grav():
+def benchmark_gaussian_bump_red_grav_save():
     run_time_O1 = np.zeros(len(grid_points))
     run_time_Ofast = np.zeros(len(grid_points))
 
@@ -29,6 +30,14 @@ def benchmark_gaussian_bump_red_grav():
         for counter, nx in enumerate(grid_points):
             run_time_Ofast[counter] = opt.run_experiment(
                 opt.write_input_beta_plane_bump_red_grav, nx, nx, 1, aro_exec)
+
+        with open("times.pkl", "w") as f:
+            pkl.dump((run_time_O1, run_time_Ofast), f)
+
+def benchmark_gaussian_bump_red_grav_plot():
+    with opt.working_directory(p.join(self_path, "beta_plane_bump_red_grav")):
+        with open("times.pkl", "r") as f:
+            (run_time_O1, run_time_Ofast) = pkl.load(f)
 
         plt.figure()
         plt.plot(grid_points, run_time_O1, '-*', label='Aronnax run time -O1')
@@ -44,8 +53,12 @@ def benchmark_gaussian_bump_red_grav():
         filename = p.join(root_path, 'docs/beta_plane_bump_red_grav_scaling.png')
         plt.savefig(filename, dpi=150)
 
+def benchmark_gaussian_bump_red_grav():
+    benchmark_gaussian_bump_red_grav_save()
+    benchmark_gaussian_bump_red_grav_plot()
 
-def benchmark_gaussian_bump():
+
+def benchmark_gaussian_bump_save():
     run_time_O1 = np.zeros(len(grid_points))
     run_time_Ofast = np.zeros(len(grid_points))
 
@@ -54,11 +67,17 @@ def benchmark_gaussian_bump():
         for counter, nx in enumerate(grid_points[:6]):
             run_time_O1[counter] = opt.run_experiment(
                   opt.write_input_beta_plane_bump, nx, nx, 2, aro_exec)
-
         aro_exec = "aronnax_core"
         for counter, nx in enumerate(grid_points[:6]):
             run_time_Ofast[counter] = opt.run_experiment(
                   opt.write_input_beta_plane_bump, nx, nx, 2, aro_exec)
+        with open("times.pkl", "w") as f:
+            pkl.dump((run_time_O1, run_time_Ofast), f)
+
+def benchmark_gaussian_bump_plot():
+    with opt.working_directory(p.join(self_path, "beta_plane_bump_red_grav")):
+        with open("times.pkl", "r") as f:
+            (run_time_O1, run_time_Ofast) = pkl.load(f)
 
         plt.figure()
         plt.plot(grid_points[:6], run_time_O1[:6],
@@ -77,6 +96,10 @@ def benchmark_gaussian_bump():
         plt.savefig('beta_plane_bump scaling.png', dpi=150)
         filename = p.join(root_path, 'docs/beta_plane_bump_scaling.png')
         plt.savefig(filename, dpi=150)
+
+def benchmark_gaussian_bump():
+    benchmark_gaussian_bump_save()
+    benchmark_gaussian_bump_plot()
 
 
 if __name__ == '__main__':
