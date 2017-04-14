@@ -771,7 +771,9 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
     call wrap_fields_3D(unew, nx, ny, layers)
     call wrap_fields_3D(vnew, nx, ny, layers)
     call wrap_fields_3D(hnew, nx, ny, layers)
-    call wrap_fields_2D(etanew, nx, ny)
+    if (.not. RedGrav) then
+      call wrap_fields_2D(etanew, nx, ny)
+    end if    
 
     ! Accumulate average fields
     if (avwrite .ne. 0) then
