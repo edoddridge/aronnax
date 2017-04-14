@@ -14,10 +14,19 @@ import numpy as np
 from scipy.io import FortranFile
 
 class Grid(object):
-    """!Make a grid object containing all of the axes."""
+    """Make a grid object containing all of the axes.
+
+        :param int nx: Number of grid points in the x direction
+        :param int ny: Number of grid points in the y direction
+        :param float dx: Grid size in x direction in metres
+        :param float dy: Grid size in y direction in metres
+        :param float x0: x value at lower left corner of domain
+        :param float y0: y value at lower left corner of domain
+
+        :returns: Grid object containing x and y axes for tracer and velocity points."""
 
     def __init__(self,nx,ny,dx,dy,x0=0,y0=0):
-        """!Instantiate a grid object for Aronnax."""
+        """Instantiate a grid object for Aronnax."""
 
         # axes for vorticity points
         self.xp1 = np.linspace(x0,nx*dx+x0,nx+1)

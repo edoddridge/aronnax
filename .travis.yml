@@ -11,6 +11,10 @@ before_install:
   - sudo apt-get install gfortran
   - sudo apt-get install valgrind
   - pip install scipy
+  - pip install sphinx
+  - pip install sphinx_rtd_theme
+  - pip install recommonmark
+  - pip install matplotlib
   - python setup.py install
 
 install: 
@@ -20,3 +24,15 @@ script:
   - ARONNAX_TEST_VALGRIND_ALL=1 pytest
 
 after_success:
+  - cd benchmarks
+  - python benchmark.py
+  - cd ../docs
+  - make html
+  - cd _build/html
+
+deploy:
+  provider: pages
+  skip_cleanup: true
+  github_token: $GH_token # Set in travis-ci.org dashboard
+  on:
+    branch: master
