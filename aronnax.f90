@@ -288,7 +288,7 @@ end if
   call read_input_fileV(meridionalWindFile, base_wind_y, 0.d0, nx, ny, 1)
 
   call read_input_file_time_series(wind_mag_time_series_file, &
-      wind_mag_time_series, 1.d0, nTimeSteps)
+      wind_mag_time_series, 1d0, nTimeSteps)
 
   call read_input_fileH(spongeHTimeScaleFile, spongeHTimeScale, &
       zeros, nx, ny, layers)
@@ -744,9 +744,9 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
     ! Use dh/dt, du/dt and dv/dt to step h, u and v forward in time with
     ! the Adams-Bashforth third order linear multistep method
 
-    unew = u+dt*(23d0*dudt - 16d0*dudtold + 5d0*dudtveryold)/12d0
-    vnew = v+dt*(23d0*dvdt - 16d0*dvdtold + 5d0*dvdtveryold)/12d0
-    hnew = h+dt*(23d0*dhdt - 16d0*dhdtold + 5d0*dhdtveryold)/12d0
+    unew = u + dt*(23d0*dudt - 16d0*dudtold + 5d0*dudtveryold)/12d0
+    vnew = v + dt*(23d0*dvdt - 16d0*dvdtold + 5d0*dvdtveryold)/12d0
+    hnew = h + dt*(23d0*dhdt - 16d0*dhdtold + 5d0*dhdtveryold)/12d0
 
     ! Apply the boundary conditions
     call apply_boundary_conditions(unew, hfacW, wetmask, nx, ny, layers)
