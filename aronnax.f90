@@ -1362,7 +1362,7 @@ subroutine evaluate_dudt(dudt, h, u, v, b, zeta, wind_x, fu, &
             + spongeTimeScale(i,j,k)*(spongeU(i,j,k)-u(i,j,k)) ! forced relaxtion in the sponge regions
         if (k .eq. 1) then ! only have wind forcing on the top layer
           ! This will need refining in the event of allowing outcropping.
-          dudt(i,j,k) = dudt(i,j,k) + wind_x(i,j)/(rho0*h(i,j,k)) ! wind forcing
+          dudt(i,j,k) = dudt(i,j,k) + 2d0*wind_x(i,j)/(rho0*(h(i,j,k) + h(i-1,j,k))) ! wind forcing
         end if
         if (layers .gt. 1) then ! only evaluate vertical momentum diffusivity if more than 1 layer
           if (k .eq. 1) then ! adapt vertical momentum diffusivity for 2+ layer model -> top layer
@@ -1437,7 +1437,7 @@ subroutine evaluate_dvdt(dvdt, h, u, v, b, zeta, wind_y, fv, &
             + spongeTimeScale(i,j,k)*(spongeV(i,j,k)-v(i,j,k)) ! forced relaxtion to vsponge (in the sponge regions)
         if (k .eq. 1) then ! only have wind forcing on the top layer
           ! This will need refining in the event of allowing outcropping.
-          dvdt(i,j,k) = dvdt(i,j,k) + wind_y(i,j)/(rho0*h(i,j,k)) ! wind forcing
+          dvdt(i,j,k) = dvdt(i,j,k) + 2d0*wind_y(i,j)/(rho0*(h(i,j,k) + h(i,j-1,k))) ! wind forcing
         end if
         if (layers .gt. 1) then ! only evaluate vertical momentum diffusivity if more than 1 layer
           if (k .eq. 1) then ! adapt vertical momentum diffusivity for 2+ layer model -> top layer
