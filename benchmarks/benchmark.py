@@ -77,7 +77,7 @@ def benchmark_gaussian_bump_save():
             pkl.dump((run_time_O1, run_time_Ofast), f)
 
 def benchmark_gaussian_bump_plot():
-    with opt.working_directory(p.join(self_path, "beta_plane_bump_red_grav")):
+    with opt.working_directory(p.join(self_path, "beta_plane_bump")):
         with open("times.pkl", "r") as f:
             (run_time_O1, run_time_Ofast) = pkl.load(f)
 
