@@ -4,6 +4,7 @@ import os.path as p
 import subprocess as sub
 
 from aronnax.core import fortran_file
+from aronnax.core import interpret_requested_data
 from aronnax.utils import working_directory
 
 self_path = p.dirname(p.abspath(__file__))

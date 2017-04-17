@@ -152,3 +152,30 @@ def write_rectangular_pool(nx, ny):
         wetmask[ :, 0] = 0
         wetmask[ :,-1] = 0
         f.write_record(wetmask)
+
+def interpret_data_specifier(string):
+    return None
+
+def interpret_requested_data(requested_data, config):
+    """Interpret a flexible input data specification.
+
+    The requested_data can be one of
+
+    - TODO A string giving the path to a NetCDF file, whose content
+      will be interpolated to match the desired grid specification;
+
+    - A string giving the path to a raw Fortran array file, whose
+      content will be used as-is;
+
+    - TODO A numpy array in memory, whose content will be used as-is,
+      or TODO interpolated; or
+
+    - A specifier for auto-generating the required data, in this format:
+      :<generator_func_name>:arg1,arg2,...argn
+    """
+    candidate = interpret_data_specifier(requested_data)
+    if candidate is not None:
+        pass # TODO
+    # Assume Fortran file
+    with fortran_file(requested_data, 'r') as f:
+        return f.read_reals(dtype=np.float64)
