@@ -2,6 +2,7 @@ import ConfigParser as par
 import os
 import os.path as p
 import subprocess as sub
+import time
 
 from aronnax.core import fortran_file
 from aronnax.core import interpret_requested_data
@@ -26,10 +27,13 @@ def simulate(work_dir=".", config_path="aronnax.conf", **options):
         with working_directory("input"):
             generate_input_data_files(config)
         generate_parameters_file(config)
+        then = time.time()
         run_executable(config)
+        core_run_time = time.time() - then
         sub.check_call(["rm", "-rf", "netcdf-output/"])
         sub.check_call(["mkdir", "-p", "netcdf-output/"])
         convert_output_to_netcdf(config)
+        return core_run_time
 
 def default_configuration():
     config = par.RawConfigParser()

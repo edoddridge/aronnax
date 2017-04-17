@@ -14,6 +14,7 @@ import sys
 sys.path.append(p.join(root_path, 'test'))
 import output_preservation_test as opt
 from aronnax.utils import working_directory
+import aronnax.driver as aro
 
 n_time_steps = 502.0
 scale_factor = 1000 / n_time_steps # Show times in ms
@@ -21,17 +22,19 @@ scale_factor = 1000 / n_time_steps # Show times in ms
 def benchmark_gaussian_bump_red_grav_save(grid_points):
     run_time_O1 = np.zeros(len(grid_points))
     run_time_Ofast = np.zeros(len(grid_points))
+    def bump(X, Y):
+        return 500. + 20*np.exp(-((6e5-X)**2 + (5e5-Y)**2)/(2*1e5**2))
 
     with working_directory(p.join(self_path, "beta_plane_bump_red_grav")):
         aro_exec = "aronnax_test"
         for counter, nx in enumerate(grid_points):
-            run_time_O1[counter] = opt.run_experiment(
-                opt.write_input_beta_plane_bump_red_grav, nx, nx, 1, aro_exec)
+            run_time_O1[counter] = aro.simulate(
+                exe=aro_exec, initHfile=[bump], nx=nx, ny=nx)
 
         aro_exec = "aronnax_core"
         for counter, nx in enumerate(grid_points):
-            run_time_Ofast[counter] = opt.run_experiment(
-                opt.write_input_beta_plane_bump_red_grav, nx, nx, 1, aro_exec)
+            run_time_Ofast[counter] = aro.simulate(
+                exe=aro_exec, initHfile=[bump], nx=nx, ny=nx)
 
         with open("times.pkl", "w") as f:
             pkl.dump((grid_points, run_time_O1, run_time_Ofast), f)
