@@ -82,19 +82,20 @@ def benchmark_gaussian_bump_plot():
             (run_time_O1, run_time_Ofast) = pkl.load(f)
 
         plt.figure()
-        plt.plot(grid_points[:6], run_time_O1[:6],
+        plt.loglog(grid_points[:6], run_time_O1[:6],
             '-*', label='Aronnax run time -O1')
-        plt.plot(grid_points[:6], run_time_Ofast[:6], '-*',
+        plt.loglog(grid_points[:6], run_time_Ofast[:6], '-*',
             label='Aronnax run time -Ofast')
-        plt.plot(grid_points[:6],
+        plt.loglog(grid_points[:6],
             (run_time_O1[3]/(grid_points[3]**2))*grid_points[:6]**2,
-            '-*', label='O(nx**2)')
-        plt.plot(grid_points[:6],
+            ':', label='O(nx**2)', color='blue', linewidth=0.5)
+        plt.loglog(grid_points[:6],
             (run_time_O1[3]/(grid_points[3]**3))*grid_points[:6]**3,
-            '-*', label='O(nx**3)')
+            ':', label='O(nx**3)', color='black', linewidth=0.5)
         plt.legend()
-        plt.xlabel('nx')
-        plt.ylabel('run time (s)')
+        plt.xlabel('Resolution (grid cells on one side)')
+        plt.ylabel('Time (s)')
+        plt.title('Runtime scaling of a 2-layer Aronnax simulation\nwith bathymetry on a square grid')
         plt.savefig('beta_plane_bump scaling.png', dpi=150)
         filename = p.join(root_path, 'docs/beta_plane_bump_scaling.png')
         plt.savefig(filename, dpi=150)
