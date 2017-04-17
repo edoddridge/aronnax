@@ -116,7 +116,7 @@ program aronnax
 
   namelist /GRID/ nx, ny, layers, dx, dy, fUfile, fVfile, wetMaskFile
 
-  namelist /INITIAL_CONDITONS/ initUfile, initVfile, initHfile, initEtaFile
+  namelist /INITIAL_CONDITIONS/ initUfile, initVfile, initHfile, initEtaFile
 
   namelist /EXTERNAL_FORCING/ zonalWindFile, meridionalWindFile, &
       DumpWind, wind_mag_time_series_file
@@ -127,7 +127,7 @@ program aronnax
   read(unit=8, nml=SPONGE)
   read(unit=8, nml=PHYSICS)
   read(unit=8, nml=GRID)
-  read(unit=8, nml=INITIAL_CONDITONS)
+  read(unit=8, nml=INITIAL_CONDITIONS)
   read(unit=8, nml=EXTERNAL_FORCING)
   close(unit=8)
 
