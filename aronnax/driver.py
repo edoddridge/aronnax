@@ -15,10 +15,10 @@ def simulate(work_dir=".", config_path="aronnax.conf", **options):
     config = par.RawConfigParser()
     config.read(config_file)
     merge_config(config, options)
-    with working_directory(config.get("...", "core_work_dir")):
+    with working_directory(work_dir):
         compile_core(config)
         # XXX Try to avoid overwriting the input configuration
-        with open('aronnax.conf', 'w') as f:
+        with open('aronnax-merged.conf', 'w') as f:
             config.write(f)
         sub.check_call(["rm", "-rf", "input/"])
         sub.check_call(["rm", "-rf", "output/"])
@@ -31,7 +31,7 @@ def simulate(work_dir=".", config_path="aronnax.conf", **options):
         sub.check_call(["mkdir", "-p", "netcdf-output/"])
         convert_output_to_netcdf(config)
 
-section_map = dict(
+section_map = {
     "au"                   : "numerics",
     "ah"                   : "numerics",
     "ar"                   : "numerics",
@@ -73,24 +73,27 @@ section_map = dict(
     "meridionalWindFile"   : "external_forcing",
     "DumpWind"             : "external_forcing",
     "wind_mag_time_series_file" : "external_forcing",
-    "exec"                 : "executable",
+    "exe"                  : "executable",
     "valgrind"             : "executable",
     "perf"                 : "executable",
-    )
+}
 
 def merge_config(config, options):
     for k, v in options.iteritems():
         if k in section_map:
-            config.set(section_map[k], k, str(v))
+            section = section_map[k]
+            if not config.has_section(section):
+                config.add_section(section)
+            config.set(section, k, str(v))
         else:
             raise Exception("Unrecognized option", k)
 
 def compile_core(config):
-    core_name = config.get("executable", "exec")
+    core_name = config.get("executable", "exe")
     with working_directory(root_path):
         sub.check_call(["make", core_name])
 
-def generate_data_files(config):
+def generate_input_data_files(config):
     for name, section in section_map.iteritems():
         if not name.endswith("File") and not name.endswith("file"):
             continue
