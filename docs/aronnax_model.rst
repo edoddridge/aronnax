@@ -1,4 +1,4 @@
-About Aronnax
+The Aronnax Model
 ********************
 
 The Physics

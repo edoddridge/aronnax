@@ -26,8 +26,8 @@ Aronnax is
 
 - Easy to learn and understand, with extensive online
   documentation, including a complete description of `the
-  physics <about_aronnax.html#the-physics>`_
-  and `the numerics <about_aronnax.html#discretisation>`_.
+  physics <aronnax_model.html#the-physics>`_
+  and `the numerics <aronnax_model.html#discretisation>`_.
 
 - `Verified <verification.html>`_.
   Aronnax successfully reproduces multiple published results from
@@ -41,8 +41,8 @@ Aronnax is
    :maxdepth: 2
    :caption: Contents:
 
-   about_aronnax
    examples
+   aronnax_model
    input_generation
    output_helpers
    verification
