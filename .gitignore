@@ -21,5 +21,8 @@ gmon.out
 # Unit test / coverage reports
 .cache
 
+# Generated documentation
+/docs/_build
+
 # IPython Notebook
 .ipynb_checkpoints
