@@ -84,7 +84,7 @@ def merge_config(config, options):
             section = section_map[k]
             if not config.has_section(section):
                 config.add_section(section)
-            config.set(section, k, str(v))
+            config.set(section, k, v)
         else:
             raise Exception("Unrecognized option", k)
 
@@ -93,12 +93,33 @@ def compile_core(config):
     with working_directory(root_path):
         sub.check_call(["make", core_name])
 
+data_types = {
+    "depthFile"            : "2d",
+    "spongeHTimeScaleFile" : "3d",
+    "spongeUTimeScaleFile" : "3d",
+    "spongeVTimeScaleFile" : "3d",
+    "spongeHFile"          : "3d",
+    "spongeUFile"          : "3d",
+    "spongeVFile"          : "3d",
+    "fUfile"               : "2d",
+    "fVfile"               : "2d",
+    "wetMaskFile"          : "2d",
+    "initUfile"            : "3d",
+    "initVfile"            : "3d",
+    "initHfile"            : "3d",
+    "initEtaFile"          : "2d",
+    "zonalWindFile"        : "2d",
+    "meridionalWindFile"   : "2d",
+    "wind_mag_time_series_file" : "time",
+}
+
 def generate_input_data_files(config):
     for name, section in section_map.iteritems():
         if not name.endswith("File") and not name.endswith("file"):
             continue
         requested_data = config.get(section, name)
-        generated_data = interpret_requested_data(requested_data, config)
+        generated_data = interpret_requested_data(
+            requested_data, data_types[name], config)
         if generated_data is not None:
             with fortran_file(name + '.bin', 'w') as f:
                 f.write_record(generated_data)

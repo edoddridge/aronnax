@@ -94,7 +94,7 @@ def interpret_raw_file(name, nx, ny, layers):
 
 ### General input construction helpers
 
-def write_initial_heights(grid, h_funcs):
+def interpret_initial_heights(grid, h_funcs):
     X,Y = np.meshgrid(grid.x, grid.y)
     initH = np.ones((len(h_funcs), grid.ny, grid.nx))
     for i, f in enumerate(h_funcs):
@@ -102,6 +102,10 @@ def write_initial_heights(grid, h_funcs):
             initH[i,:,:] = f
         else:
             initH[i,:,:] = f(X, Y)
+    return initH
+
+def write_initial_heights(grid, h_funcs):
+    initH = interpret_initial_heights(grid, h_funcs)
     with fortran_file('initH.bin', 'w') as f:
         f.write_record(initH.astype(np.float64))
 
@@ -156,7 +160,7 @@ def write_rectangular_pool(nx, ny):
 def interpret_data_specifier(string):
     return None
 
-def interpret_requested_data(requested_data, config):
+def interpret_requested_data(requested_data, shape, config):
     """Interpret a flexible input data specification.
 
     The requested_data can be one of
@@ -176,6 +180,14 @@ def interpret_requested_data(requested_data, config):
     candidate = interpret_data_specifier(requested_data)
     if candidate is not None:
         pass # TODO
-    # Assume Fortran file
-    with fortran_file(requested_data, 'r') as f:
-        return f.read_reals(dtype=np.float64)
+    if isinstance(requested_data, basestring):
+        # Assume Fortran file name
+        with fortran_file(requested_data, 'r') as f:
+            return f.read_reals(dtype=np.float64)
+    else:
+        grid = Grid(config.getint("grid", "nx"), config.getint("grid", "ny"),
+                    config.getfloat("grid", "dx"), config.getfloat("grid", "dy"))
+        if shape == "3d":
+            interpret_initial_heights(grid, requested_data)
+        else:
+            raise Exception("TODO implement generation for other input shapes")
