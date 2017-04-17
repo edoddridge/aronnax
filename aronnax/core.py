@@ -170,6 +170,11 @@ def rectangular_pool(grid):
 def write_rectangular_pool(nx, ny):
     """Write the wet mask file for a maximal rectangular pool."""
     with fortran_file('wetmask.bin', 'w') as f:
+        wetmask = np.ones((nx, ny), dtype=np.float64)
+        wetmask[ 0, :] = 0
+        wetmask[-1, :] = 0
+        wetmask[ :, 0] = 0
+        wetmask[ :,-1] = 0
         f.write_record(wetmask)
 
 specifier_rx = re.compile(r':(.*):(.*)')
