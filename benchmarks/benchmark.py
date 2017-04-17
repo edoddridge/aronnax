@@ -14,6 +14,9 @@ import sys
 sys.path.append(p.join(root_path, 'test'))
 import output_preservation_test as opt
 
+n_time_steps = 502.0
+scale_factor = 1000 / n_time_steps # Show times in ms
+
 def benchmark_gaussian_bump_red_grav_save(grid_points):
     run_time_O1 = np.zeros(len(grid_points))
     run_time_Ofast = np.zeros(len(grid_points))
@@ -38,15 +41,16 @@ def benchmark_gaussian_bump_red_grav_plot():
             (grid_points, run_time_O1, run_time_Ofast) = pkl.load(f)
 
         plt.figure()
-        plt.loglog(grid_points, run_time_O1, '-*', label='Aronnax run time -O1')
-        plt.loglog(grid_points, run_time_Ofast,
+        plt.loglog(grid_points, run_time_O1*scale_factor,
+            '-*', label='Aronnax run time -O1')
+        plt.loglog(grid_points, run_time_Ofast*scale_factor,
             '-*', label='Aronnax run time -Ofast')
-        plt.loglog(grid_points,
-            (run_time_O1[-7]/(grid_points[-7]**2))*grid_points**2,
+        scale = scale_factor * run_time_O1[-7]/(grid_points[-7]**2)
+        plt.loglog(grid_points, scale*grid_points**2,
                    ':', label='O(nx**2)', color='black', linewidth=0.5)
         plt.legend()
         plt.xlabel('Resolution (grid cells on one side)')
-        plt.ylabel('Time (s)')
+        plt.ylabel('Avg time per step (ms)')
         plt.title('Runtime scaling of a 1.5-layer Aronnax simulation on a square grid')
         plt.savefig('beta_plane_bump_red_grav scaling.png', dpi=150)
         filename = p.join(root_path, 'docs/beta_plane_bump_red_grav_scaling.png')
@@ -79,16 +83,16 @@ def benchmark_gaussian_bump_plot():
             (grid_points, run_time_O1, run_time_Ofast) = pkl.load(f)
 
         plt.figure()
-        plt.loglog(grid_points, run_time_O1,
+        plt.loglog(grid_points, run_time_O1*scale_factor,
             '-*', label='Aronnax run time -O1')
-        plt.loglog(grid_points, run_time_Ofast, '-*',
-            label='Aronnax run time -Ofast')
-        plt.loglog(grid_points,
-            (run_time_O1[3]/(grid_points[3]**3))*grid_points**3,
+        plt.loglog(grid_points, run_time_Ofast*scale_factor,
+            '-*', label='Aronnax run time -Ofast')
+        scale = scale_factor * run_time_O1[3]/(grid_points[3]**3)
+        plt.loglog(grid_points, scale*grid_points**3,
             ':', label='O(nx**3)', color='black', linewidth=0.5)
         plt.legend()
         plt.xlabel('Resolution (grid cells on one side)')
-        plt.ylabel('Time (s)')
+        plt.ylabel('Avg time per step (ms)')
         plt.title('Runtime scaling of a 2-layer Aronnax simulation\nwith bathymetry on a square grid')
         plt.savefig('beta_plane_bump scaling.png', dpi=150)
         filename = p.join(root_path, 'docs/beta_plane_bump_scaling.png')
