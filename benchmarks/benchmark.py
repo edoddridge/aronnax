@@ -87,9 +87,6 @@ def benchmark_gaussian_bump_plot():
         plt.loglog(grid_points[:6], run_time_Ofast[:6], '-*',
             label='Aronnax run time -Ofast')
         plt.loglog(grid_points[:6],
-            (run_time_O1[3]/(grid_points[3]**2))*grid_points[:6]**2,
-            ':', label='O(nx**2)', color='blue', linewidth=0.5)
-        plt.loglog(grid_points[:6],
             (run_time_O1[3]/(grid_points[3]**3))*grid_points[:6]**3,
             ':', label='O(nx**3)', color='black', linewidth=0.5)
         plt.legend()
