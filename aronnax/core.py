@@ -137,6 +137,16 @@ def write_f_plane(nx, ny, coeff):
     with fortran_file('fv.bin', 'w') as f:
         f.write_record(np.ones((nx, ny+1), dtype=np.float64) * coeff)
 
+def beta_plane_u(grid, f0, beta):
+    _, Y = np.meshgrid(grid.xp1, grid.y)
+    fu = f0 + Y*beta
+    return fu
+
+def beta_plane_v(grid, f0, beta):
+    _, Y = np.meshgrid(grid.x, grid.yp1)
+    fv = f0 + Y*beta
+    return fv
+
 def write_beta_plane(grid, f0, beta):
     """Write files defining a beta-plane approximation to the Coriolis force."""
     with fortran_file('fu.bin', 'w') as f:
@@ -165,6 +175,8 @@ def write_rectangular_pool(nx, ny):
 specifier_rx = re.compile(r':(.*):(.*)')
 
 ok_generators = {
+    'beta_plane_u': beta_plane_u,
+    'beta_plane_v': beta_plane_v,
     'rectangular_pool': rectangular_pool,
 }
 
