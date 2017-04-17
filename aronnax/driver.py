@@ -33,10 +33,15 @@ def simulate(work_dir=".", config_path="aronnax.conf", **options):
 
 def default_configuration():
     config = par.RawConfigParser()
-    config.add_section("executable")
+    for section in sections:
+        config.add_section(section)
     config.set("executable", "valgrind", "False")
     config.set("executable", "perf", "False")
+    config.optionxform = str
     return config
+
+sections = ["executable", "numerics", "model", "sponge",
+            "physics", "grid", "initial_conditions", "external_forcing"]
 
 section_map = {
     "au"                   : "numerics",
