@@ -141,16 +141,23 @@ def generate_input_data_files(config):
             with fortran_file(name + '.bin', 'w') as f:
                 f.write_record(generated_data)
 
-def fortran_option_string(section, name, value, config):
+def fortran_option_string(section, name, config):
     if is_file_name_option(name):
-        return "'%s'" % (p.join("input", name + '.bin'),)
+        if config.has_option(section, name):
+            # A file was generated
+            return "'%s'" % (p.join("input", name + '.bin'),)
+        else:
+            return "''"
     if name in ["RedGrav", "DumpWind"]:
         if config.getboolean(section, name):
             return ".TRUE."
         else:
             return ".FALSE."
     else:
-        return value
+        if config.has_option(section, name):
+            return config.get(section, name)
+        else:
+            return None
 
 def generate_parameters_file(config):
     with open('parameters.in', 'w') as f:
@@ -158,9 +165,11 @@ def generate_parameters_file(config):
             f.write(' &')
             f.write(section.upper())
             f.write('\n')
-            for (name, value) in config.items(section):
-                val = fortran_option_string(section, name, value, config)
-                f.write(' %s = %s,\n' % (name, val))
+            for (name, section1) in section_map.iteritems():
+                if section1 != section: continue
+                val = fortran_option_string(section, name, config)
+                if val is not None:
+                    f.write(' %s = %s,\n' % (name, val))
             f.write(' /\n')
 
 def run_executable(config):
