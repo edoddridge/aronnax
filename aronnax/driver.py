@@ -2,6 +2,7 @@ import ConfigParser as par
 import os.path as p
 import subprocess as sub
 
+from aronnax.core import fortran_file
 from aronnax.utils import working_directory
 
 def simulate(work_dir=".", config_path="aronnax.conf", **options):
@@ -75,6 +76,16 @@ def merge_config(config, options):
             config.set(section_map[k], k, str(v))
         else:
             raise Exception("Unrecognized option", k)
+
+def generate_data_files(config):
+    for name, section in section_map.iteritems():
+        if not name.endswith("File") and not name.endswith("file"):
+            continue
+        requested_data = config.get(section, name)
+        generated_data = interpret_requested_data(requested_data, config)
+        if generated_data is not None:
+            with fortran_file(name + '.bin', 'w') as f:
+                f.write_record(generated_data)
 
 def convert_output_to_netcdf(config):
     # TODO Issue #30
