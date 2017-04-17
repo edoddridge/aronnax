@@ -87,6 +87,16 @@ def generate_data_files(config):
             with fortran_file(name + '.bin', 'w') as f:
                 f.write_record(generated_data)
 
+def generate_parameters_file(config):
+    with open('parameters.in', 'w') as f:
+        for section in config.sections():
+            f.write(' &')
+            f.write(section.toupper())
+            f.write('\n')
+            for (name, value) in config.items(section):
+                f.write(' %s = %s,\n' % (name, value))
+            f.write(' /\n')
+
 def convert_output_to_netcdf(config):
     # TODO Issue #30
     pass
