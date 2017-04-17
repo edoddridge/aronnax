@@ -1,9 +1,13 @@
 import ConfigParser as par
+import os
 import os.path as p
 import subprocess as sub
 
 from aronnax.core import fortran_file
 from aronnax.utils import working_directory
+
+self_path = p.dirname(p.abspath(__file__))
+root_path = p.dirname(self_path)
 
 def simulate(work_dir=".", config_path="aronnax.conf", **options):
     config_file = p.join(work_dir, config_path)
@@ -68,6 +72,9 @@ section_map = dict(
     "meridionalWindFile"   : "external_forcing",
     "DumpWind"             : "external_forcing",
     "wind_mag_time_series_file" : "external_forcing",
+    "exec"                 : "executable",
+    "valgrind"             : "executable",
+    "perf"                 : "executable",
     )
 
 def merge_config(config, options):
@@ -76,6 +83,11 @@ def merge_config(config, options):
             config.set(section_map[k], k, str(v))
         else:
             raise Exception("Unrecognized option", k)
+
+def compile_core(config):
+    core_name = config.get("executable", "exec")
+    with working_directory(root_path):
+        sub.check_call(["make", core_name])
 
 def generate_data_files(config):
     for name, section in section_map.iteritems():
@@ -96,6 +108,25 @@ def generate_parameters_file(config):
             for (name, value) in config.items(section):
                 f.write(' %s = %s,\n' % (name, value))
             f.write(' /\n')
+
+def run_executable(config):
+    core_name = config.get("executable", "exec")
+    env = dict(os.environ, GFORTRAN_STDERR_UNIT="17")
+    if config.getboolean("executable", "valgrind") \
+       or 'ARONNAX_TEST_VALGRIND_ALL' in os.environ:
+        assert not config.getboolean("executable", "perf")
+        sub.check_call(["valgrind", "--error-exitcode=5", p.join(root_path, aro_exec)],
+            env=env)
+    elif config.getboolean("executable", "perf"):
+        perf_cmds = ["perf", "stat", "-e", "r530010", # "flops", on my CPU.
+            "-e", "L1-dcache-loads", "-e", "L1-dcache-load-misses",
+            "-e", "L1-dcache-stores", "-e", "L1-dcache-store-misses",
+            "-e", "L1-icache-loads", "-e", "L1-icache-misses",
+            "-e", "L1-dcache-prefetches",
+            "-e", "branch-instructions", "-e", "branch-misses"]
+        sub.check_call(perf_cmds + [p.join(root_path, aro_exec)], env=env)
+    else:
+        sub.check_call([p.join(root_path, aro_exec)], env=env)
 
 def convert_output_to_netcdf(config):
     # TODO Issue #30
