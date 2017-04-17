@@ -7,14 +7,11 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-self_path = p.dirname(p.abspath(__file__))
-root_path = p.dirname(self_path)
-
-import sys
-sys.path.append(p.join(root_path, 'test'))
-import output_preservation_test as opt
 from aronnax.utils import working_directory
 import aronnax.driver as aro
+
+self_path = p.dirname(p.abspath(__file__))
+root_path = p.dirname(self_path)
 
 n_time_steps = 502.0
 scale_factor = 1000 / n_time_steps # Show times in ms
