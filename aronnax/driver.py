@@ -120,9 +120,12 @@ data_types = {
     "wind_mag_time_series_file" : "time",
 }
 
+def is_file_name_option(name):
+    return name.endswith("File") or name.endswith("file")
+
 def generate_input_data_files(config):
     for name, section in section_map.iteritems():
-        if not name.endswith("File") and not name.endswith("file"):
+        if not is_file_name_option(name):
             continue
         if not config.has_option(section, name):
             continue
@@ -133,6 +136,17 @@ def generate_input_data_files(config):
             with fortran_file(name + '.bin', 'w') as f:
                 f.write_record(generated_data)
 
+def fortran_option_string(section, name, value, config):
+    if is_file_name_option(name):
+        return "'%s'" % (p.join("input", name + '.bin'),)
+    if name in ["RedGrav", "DumpWind"]:
+        if config.getboolean(section, name):
+            return ".TRUE."
+        else:
+            return ".FALSE."
+    else:
+        return value
+
 def generate_parameters_file(config):
     with open('parameters.in', 'w') as f:
         for section in config.sections():
@@ -140,7 +154,8 @@ def generate_parameters_file(config):
             f.write(section.upper())
             f.write('\n')
             for (name, value) in config.items(section):
-                f.write(' %s = %s,\n' % (name, value))
+                val = fortran_option_string(section, name, value, config)
+                f.write(' %s = %s,\n' % (name, val))
             f.write(' /\n')
 
 def run_executable(config):
