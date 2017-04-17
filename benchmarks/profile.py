@@ -6,14 +6,15 @@ root_path = p.dirname(self_path)
 import sys
 sys.path.append(p.join(root_path, 'test'))
 import output_preservation_test as opt
+from aronnax.utils import working_directory
 
 def do_red_grav(nx, aro_build, perf):
-    with opt.working_directory(p.join(self_path, "beta_plane_bump_red_grav")):
+    with working_directory(p.join(self_path, "beta_plane_bump_red_grav")):
         opt.run_experiment(
             opt.write_input_beta_plane_bump_red_grav, nx, nx, 1, aro_build, perf=perf)
 
 def do_n_layer(nx, aro_build, perf):
-    with opt.working_directory(p.join(self_path, "beta_plane_bump")):
+    with working_directory(p.join(self_path, "beta_plane_bump")):
         opt.run_experiment(
             opt.write_input_beta_plane_bump, nx, nx, 2, aro_build, perf=perf)
 

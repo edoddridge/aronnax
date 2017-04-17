@@ -1,4 +1,3 @@
-from contextlib import contextmanager
 import os
 import os.path as p
 import subprocess as sub
@@ -9,21 +8,12 @@ import glob
 import numpy as np
 
 import aronnax as aro
+from aronnax.utils import working_directory
 
 self_path = p.dirname(p.abspath(__file__))
 root_path = p.dirname(self_path)
 
 ### General helpers
-
-@contextmanager
-def working_directory(path):
-    old_path = os.getcwd()
-    sub.check_call(["mkdir", "-p", path])
-    os.chdir(path)
-    try:
-        yield
-    finally:
-        os.chdir(old_path)
 
 def tweak_parameters(nx, ny, layers):
     sub.check_call(
