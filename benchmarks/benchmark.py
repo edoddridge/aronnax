@@ -14,10 +14,7 @@ import sys
 sys.path.append(p.join(root_path, 'test'))
 import output_preservation_test as opt
 
-
-grid_points = np.array([10, 20, 40, 60, 80, 100, 150, 200, 300, 400, 500])
-
-def benchmark_gaussian_bump_red_grav_save():
+def benchmark_gaussian_bump_red_grav_save(grid_points):
     run_time_O1 = np.zeros(len(grid_points))
     run_time_Ofast = np.zeros(len(grid_points))
 
@@ -33,12 +30,12 @@ def benchmark_gaussian_bump_red_grav_save():
                 opt.write_input_beta_plane_bump_red_grav, nx, nx, 1, aro_exec)
 
         with open("times.pkl", "w") as f:
-            pkl.dump((run_time_O1, run_time_Ofast), f)
+            pkl.dump((grid_points, run_time_O1, run_time_Ofast), f)
 
 def benchmark_gaussian_bump_red_grav_plot():
     with opt.working_directory(p.join(self_path, "beta_plane_bump_red_grav")):
         with open("times.pkl", "r") as f:
-            (run_time_O1, run_time_Ofast) = pkl.load(f)
+            (grid_points, run_time_O1, run_time_Ofast) = pkl.load(f)
 
         plt.figure()
         plt.loglog(grid_points, run_time_O1, '-*', label='Aronnax run time -O1')
@@ -55,39 +52,39 @@ def benchmark_gaussian_bump_red_grav_plot():
         filename = p.join(root_path, 'docs/beta_plane_bump_red_grav_scaling.png')
         plt.savefig(filename, dpi=150)
 
-def benchmark_gaussian_bump_red_grav():
-    benchmark_gaussian_bump_red_grav_save()
+def benchmark_gaussian_bump_red_grav(grid_points):
+    benchmark_gaussian_bump_red_grav_save(grid_points)
     benchmark_gaussian_bump_red_grav_plot()
 
 
-def benchmark_gaussian_bump_save():
+def benchmark_gaussian_bump_save(grid_points):
     run_time_O1 = np.zeros(len(grid_points))
     run_time_Ofast = np.zeros(len(grid_points))
 
     with opt.working_directory(p.join(self_path, "beta_plane_bump")):
         aro_exec = "aronnax_test"
-        for counter, nx in enumerate(grid_points[:6]):
+        for counter, nx in enumerate(grid_points):
             run_time_O1[counter] = opt.run_experiment(
                   opt.write_input_beta_plane_bump, nx, nx, 2, aro_exec)
         aro_exec = "aronnax_core"
-        for counter, nx in enumerate(grid_points[:6]):
+        for counter, nx in enumerate(grid_points):
             run_time_Ofast[counter] = opt.run_experiment(
                   opt.write_input_beta_plane_bump, nx, nx, 2, aro_exec)
         with open("times.pkl", "w") as f:
-            pkl.dump((run_time_O1, run_time_Ofast), f)
+            pkl.dump((grid_points, run_time_O1, run_time_Ofast), f)
 
 def benchmark_gaussian_bump_plot():
     with opt.working_directory(p.join(self_path, "beta_plane_bump")):
         with open("times.pkl", "r") as f:
-            (run_time_O1, run_time_Ofast) = pkl.load(f)
+            (grid_points, run_time_O1, run_time_Ofast) = pkl.load(f)
 
         plt.figure()
-        plt.loglog(grid_points[:6], run_time_O1[:6],
+        plt.loglog(grid_points, run_time_O1,
             '-*', label='Aronnax run time -O1')
-        plt.loglog(grid_points[:6], run_time_Ofast[:6], '-*',
+        plt.loglog(grid_points, run_time_Ofast, '-*',
             label='Aronnax run time -Ofast')
-        plt.loglog(grid_points[:6],
-            (run_time_O1[3]/(grid_points[3]**3))*grid_points[:6]**3,
+        plt.loglog(grid_points,
+            (run_time_O1[3]/(grid_points[3]**3))*grid_points**3,
             ':', label='O(nx**3)', color='black', linewidth=0.5)
         plt.legend()
         plt.xlabel('Resolution (grid cells on one side)')
@@ -97,19 +94,19 @@ def benchmark_gaussian_bump_plot():
         filename = p.join(root_path, 'docs/beta_plane_bump_scaling.png')
         plt.savefig(filename, dpi=150)
 
-def benchmark_gaussian_bump():
-    benchmark_gaussian_bump_save()
+def benchmark_gaussian_bump(grid_points):
+    benchmark_gaussian_bump_save(grid_points)
     benchmark_gaussian_bump_plot()
 
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
         if sys.argv[1] == "save":
-            benchmark_gaussian_bump_red_grav_save()
-            benchmark_gaussian_bump_save()
+            benchmark_gaussian_bump_red_grav_save(np.array([10, 20, 40, 60, 80, 100, 150, 200, 300, 400, 500]))
+            benchmark_gaussian_bump_save(np.array([10, 20, 40, 60, 80, 100]))
         else:
             benchmark_gaussian_bump_red_grav_plot()
             benchmark_gaussian_bump_plot()
     else:
-        benchmark_gaussian_bump_red_grav()
-        benchmark_gaussian_bump()
+        benchmark_gaussian_bump_red_grav(np.array([10, 20, 40, 60, 80, 100, 150, 200, 300, 400, 500]))
+        benchmark_gaussian_bump(np.array([10, 20, 40, 60, 80, 100]))
