@@ -9,6 +9,7 @@ This file contains all of the classes for the module.
 
 from contextlib import contextmanager
 import os.path as p
+import re
 
 import numpy as np
 from scipy.io import FortranFile
@@ -147,18 +148,38 @@ def write_beta_plane(grid, f0, beta):
         fv = f0 + Y*beta
         f.write_record(fv.astype(np.float64))
 
+def rectangular_pool(grid):
+    nx = grid.nx; ny = grid.ny
+    wetmask = np.ones((nx, ny), dtype=np.float64)
+    wetmask[ 0, :] = 0
+    wetmask[-1, :] = 0
+    wetmask[ :, 0] = 0
+    wetmask[ :,-1] = 0
+    return wetmask
+
 def write_rectangular_pool(nx, ny):
     """Write the wet mask file for a maximal rectangular pool."""
     with fortran_file('wetmask.bin', 'w') as f:
-        wetmask = np.ones((nx, ny), dtype=np.float64)
-        wetmask[ 0, :] = 0
-        wetmask[-1, :] = 0
-        wetmask[ :, 0] = 0
-        wetmask[ :,-1] = 0
         f.write_record(wetmask)
 
+specifier_rx = re.compile(r':(.*):(.*)')
+
+ok_generators = {
+    'rectangular_pool': rectangular_pool,
+}
+
 def interpret_data_specifier(string):
-    return None
+    m = re.match(specifier_rx, string)
+    if m:
+        name = m.group(1)
+        arg_str = m.group(2)
+        if len(arg_str) > 0:
+            args = [float(a) for a in arg_str.split(',')]
+        else:
+            args = []
+        return (ok_generators[name], args)
+    else:
+        return None
 
 def interpret_requested_data(requested_data, shape, config):
     """Interpret a flexible input data specification.
@@ -177,17 +198,19 @@ def interpret_requested_data(requested_data, shape, config):
     - A specifier for auto-generating the required data, in this format:
       :<generator_func_name>:arg1,arg2,...argn
     """
-    candidate = interpret_data_specifier(requested_data)
-    if candidate is not None:
-        pass # TODO
+    grid = Grid(config.getint("grid", "nx"), config.getint("grid", "ny"),
+                config.getfloat("grid", "dx"), config.getfloat("grid", "dy"))
     if isinstance(requested_data, basestring):
-        # Assume Fortran file name
-        with fortran_file(requested_data, 'r') as f:
-            return f.read_reals(dtype=np.float64)
-    else:
-        grid = Grid(config.getint("grid", "nx"), config.getint("grid", "ny"),
-                    config.getfloat("grid", "dx"), config.getfloat("grid", "dy"))
-        if shape == "3d":
-            interpret_initial_heights(grid, requested_data)
+        candidate = interpret_data_specifier(requested_data)
+        if candidate is not None:
+            (func, args) = candidate
+            return func(grid, *args)
         else:
-            raise Exception("TODO implement generation for other input shapes")
+            # Assume Fortran file name
+            with fortran_file(requested_data, 'r') as f:
+                return f.read_reals(dtype=np.float64)
+    else:
+        if shape == "3d":
+            return interpret_initial_heights(grid, requested_data)
+        else:
+            raise Exception("TODO implement custom generation for other input shapes")

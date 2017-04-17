@@ -117,6 +117,8 @@ def generate_input_data_files(config):
     for name, section in section_map.iteritems():
         if not name.endswith("File") and not name.endswith("file"):
             continue
+        if not config.has_option(section, name):
+            continue
         requested_data = config.get(section, name)
         generated_data = interpret_requested_data(
             requested_data, data_types[name], config)
