@@ -159,8 +159,11 @@ def write_input_beta_plane_bump(nx, ny, layers):
     aro.write_initial_heights(grid, [bump, lambda X, Y: 2000. - bump(X, Y)])
 
 def test_gaussian_bump():
+    xlen = 1e6
+    ylen = 1e6
     with working_directory(p.join(self_path, "beta_plane_bump")):
-        run_experiment(write_input_beta_plane_bump, 10, 10, 2)
+        drv.simulate(initHfile=[bump, lambda X, Y: 2000. - bump(X, Y)],
+                     nx=10, ny=10, exe="aronnax_test", dx=xlen/10, dy=ylen/10)
         assert_outputs_close(10, 10, 2, 2e-13)
         assert_volume_conservation(10, 10, 2, 1e-5)
 

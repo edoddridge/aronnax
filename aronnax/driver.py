@@ -51,6 +51,7 @@ section_map = {
     "au"                   : "numerics",
     "ah"                   : "numerics",
     "ar"                   : "numerics",
+    "botDrag"              : "numerics",
     "dt"                   : "numerics",
     "slip"                 : "numerics",
     "nTimeSteps"           : "numerics",
