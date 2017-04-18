@@ -131,17 +131,12 @@ def write_wind_y(grid, func):
 ### Specific construction helpers
 
 def f_plane_u(grid, coeff):
+    """Define an f-plane approximation to the Coriolis force (u component)."""
     return np.ones((grid.nx+1, grid.ny), dtype=np.float64) * coeff
 
 def f_plane_v(grid, coeff):
+    """Define an f-plane approximation to the Coriolis force (v component)."""
     return np.ones((grid.nx, grid.ny+1), dtype=np.float64) * coeff
-
-def write_f_plane(nx, ny, coeff):
-    """Write files defining an f-plane approximation to the Coriolis force."""
-    with fortran_file('fu.bin', 'w') as f:
-        f.write_record(np.ones((nx+1, ny), dtype=np.float64) * coeff)
-    with fortran_file('fv.bin', 'w') as f:
-        f.write_record(np.ones((nx, ny+1), dtype=np.float64) * coeff)
 
 def beta_plane_u(grid, f0, beta):
     _, Y = np.meshgrid(grid.xp1, grid.y)

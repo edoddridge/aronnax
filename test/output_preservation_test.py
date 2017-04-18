@@ -105,18 +105,12 @@ def test_f_plane_red_grav():
         assert_outputs_close(10, 10, 1, 1e-15)
         assert_volume_conservation(10, 10, 1, 1e-5)
 
-def write_input_f_plane(nx, ny, layers):
-    assert layers == 2
+def test_f_plane():
     xlen = 1e6
     ylen = 1e6
-    grid = aro.Grid(nx, ny, xlen / nx, ylen / ny)
-    aro.write_f_plane(nx, ny, 10e-4)
-    aro.write_rectangular_pool(nx, ny)
-    aro.write_initial_heights(grid, [400.0, 1600.0])
-
-def test_f_plane():
     with working_directory(p.join(self_path, "f_plane")):
-        run_experiment(write_input_f_plane, 10, 10, 2)
+        drv.simulate(exe="aronnax_test",
+            nx=10, ny=10, dx=xlen/10, dy=ylen/10)
         assert_outputs_close(10, 10, 2, 1e-15)
         assert_volume_conservation(10, 10, 2, 1e-5)
 
