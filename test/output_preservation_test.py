@@ -71,7 +71,8 @@ def assert_outputs_close(nx, ny, layers, rtol):
     for outfile in outfiles:
         ans = aro.interpret_raw_file(p.join("output/", outfile), nx, ny, layers)
         good_ans = aro.interpret_raw_file(p.join("good-output/", outfile), nx, ny, layers)
-        assert np.amax(array_relative_error(ans, good_ans)) < rtol
+        relerr = np.amax(array_relative_error(ans, good_ans))
+        assert relerr < rtol
 
 def assert_volume_conservation(nx,ny,layers,rtol):
     hfiles = sorted(glob.glob("output/snap.h.*"))
