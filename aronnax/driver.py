@@ -160,8 +160,6 @@ def fortran_option_string(section, name, config):
             return ".TRUE."
         else:
             return ".FALSE."
-    elif name in ["dx", "dy"]: # Horrible hack around Issue #96, to validate the rest of this refactoring.
-        return "2e4"
     else:
         if config.has_option(section, name):
             return config.get(section, name)
