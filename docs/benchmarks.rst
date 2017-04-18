@@ -16,19 +16,19 @@ The reduced gravity mode is substantially faster than the n-layer mode.
 
    Reduced-gravity runtime scaling with resolution.  These data are
    timings of different 500-step simulations of a Gaussian depth bump
-   evolving in a :math:`beta`-plane approximation to the Earth's
+   evolving in a :math:`\beta`-plane approximation to the Earth's
    curvature, with different resolutions.
 
 
 n-layer mode
 ==========================
-Because it requires a linear equation solve at every timestep, modeling the ocean
-floor is substantially more expensive.
+Because it requires a linear equation solve at every timestep, including the ocean
+floor leads to substantially more expensive simulations.
 
 .. figure:: beta_plane_bump_scaling.png
    :alt: run time for n-layer mode
 
    n-layer runtime scaling with resolution.  These data are
    timings of different 500-step simulations of a Gaussian depth bump
-   evolving in a :math:`beta`-plane approximation to the Earth's
+   evolving in a :math:`\beta`-plane approximation to the Earth's
    curvature, with different resolutions.
