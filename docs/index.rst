@@ -3,17 +3,46 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Aronnax's documentation!
-===================================
+Aronnax
+=======
 
-Aronnax is an idealised and easily configurable isopycnal model. The numerical core is written in Fortran, but it is wrapped in Python.
+Aronnax is an idealised and easily configurable isopycnal ocean circulation model.
+Aronnax can be run as either a reduced gravity model with n + 1/2 layers, or with n layers and variable bathymetry.
+
+Aronnax is
+
+- `Easy to install <https://github.com/edoddridge/aronnax#install>`_
+  on a laptop or a compute node, including without
+  administrative privileges.
+
+- Easy to configure.  All parameters, including grid size, are
+  specified at runtime in a simple configuration file.
+
+- `Easy to use <examples.html>`_.
+  Aronnax can be called as a simple command-line program
+  that reads and writes the standard NetCDF data format, or can be
+  controlled programmatically as a Python library, communicating data
+  through Numpy arrays.
+
+- Easy to learn and understand, with extensive online
+  documentation, including a complete description of `the
+  physics <aronnax_model.html#the-physics>`_
+  and `the numerics <aronnax_model.html#discretisation>`_.
+
+- `Verified <verification.html>`_.
+  Aronnax successfully reproduces multiple published results from
+  idealized models appearing in the literature.
+
+- `Fast <benchmarks.html>`_.  The
+  main integration loop is a multi-core Fortran program, wrapped in
+  Python for convenient use.
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
-   about_aronnax
    examples
+   aronnax_model
    input_generation
    output_helpers
    verification
