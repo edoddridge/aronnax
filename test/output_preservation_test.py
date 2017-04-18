@@ -12,48 +12,8 @@ import aronnax.driver as drv
 from aronnax.utils import working_directory
 
 self_path = p.dirname(p.abspath(__file__))
-root_path = p.dirname(self_path)
 
 ### General helpers
-
-def tweak_parameters(nx, ny, layers):
-    sub.check_call(
-        "cat parameters.in " +
-        "| sed 's/^ nx =.*,$/ nx = %d,/'" % (nx,) +
-        "| sed 's/^ ny =.*,$/ ny = %d,/'" % (ny,) +
-        "| sed 's/^ layers =.*,$/ layers = %d,/'" % (layers,) +
-        "> parameters.new", shell=True)
-    sub.check_call(["mv", "parameters.new", "parameters.in"])
-
-def run_experiment(write_input, nx, ny, layers, aro_exec=None, valgrind=False, perf=False):
-    if aro_exec is None:
-        aro_exec = "aronnax_test"
-    sub.check_call(["rm", "-rf", "input/"])
-    sub.check_call(["rm", "-rf", "output/"])
-    sub.check_call(["mkdir", "-p", "output/"])
-    with working_directory(root_path):
-        sub.check_call(["make", aro_exec])
-    with working_directory("input"):
-        write_input(nx, ny, layers)
-    tweak_parameters(nx, ny, layers)
-    then = time.time()
-    env = dict(os.environ, GFORTRAN_STDERR_UNIT="17")
-    if valgrind or 'ARONNAX_TEST_VALGRIND_ALL' in os.environ:
-        assert not perf
-        sub.check_call(["valgrind", "--error-exitcode=5", p.join(root_path, aro_exec)],
-            env=env)
-    elif perf:
-        perf_cmds = ["perf", "stat", "-e", "r530010", # "flops", on my CPU.
-            "-e", "L1-dcache-loads", "-e", "L1-dcache-load-misses",
-            "-e", "L1-dcache-stores", "-e", "L1-dcache-store-misses",
-            "-e", "L1-icache-loads", "-e", "L1-icache-misses",
-            "-e", "L1-dcache-prefetches",
-            "-e", "branch-instructions", "-e", "branch-misses"]
-        sub.check_call(perf_cmds + [p.join(root_path, aro_exec)], env=env)
-    else:
-        sub.check_call([p.join(root_path, aro_exec)], env=env)
-    run_time = time.time() - then
-    return run_time
 
 def array_relative_error(a1, a2):
     """Return the elementwise absolute difference between the inputs,
