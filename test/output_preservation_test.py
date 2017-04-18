@@ -8,6 +8,7 @@ import glob
 import numpy as np
 
 import aronnax as aro
+import aronnax.driver as drv
 from aronnax.utils import working_directory
 
 self_path = p.dirname(p.abspath(__file__))
@@ -132,9 +133,15 @@ def write_input_beta_plane_bump_red_grav(nx, ny, layers):
         return 500. + 20*np.exp(-((6e5-X)**2 + (5e5-Y)**2)/(2*1e5**2))
     aro.write_initial_heights(grid, [bump])
 
+def bump(X, Y):
+    return 500. + 20*np.exp(-((6e5-X)**2 + (5e5-Y)**2)/(2*1e5**2))
+
 def test_gaussian_bump_red_grav():
+    xlen = 1e6
+    ylen = 1e6
     with working_directory(p.join(self_path, "beta_plane_bump_red_grav")):
-        run_experiment(write_input_beta_plane_bump_red_grav, 10, 10, 1)
+        drv.simulate(initHfile=[bump], exe="aronnax_test",
+                     nx=10, ny=10, dx=xlen/10, dy=ylen/10)
         assert_outputs_close(10, 10, 1, 1.5e-13)
         assert_volume_conservation(10, 10, 1, 1e-5)
 
