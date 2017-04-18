@@ -105,11 +105,6 @@ def interpret_initial_heights(grid, *h_funcs):
             initH[i,:,:] = f(X, Y)
     return initH
 
-def write_initial_heights(grid, h_funcs):
-    initH = interpret_initial_heights(grid, *h_funcs)
-    with fortran_file('initH.bin', 'w') as f:
-        f.write_record(initH.astype(np.float64))
-
 def wind_x(grid, func):
     X,Y = np.meshgrid(grid.xp1, grid.y)
     if isinstance(func, (int, long, float)):
@@ -118,19 +113,13 @@ def wind_x(grid, func):
         wind_x = func(X, Y)
     return wind_x
 
-def write_wind_x(grid, func):
-    wind = wind_x(grid, func)
-    with fortran_file('wind_x.bin', 'w') as f:
-        f.write_record(wind.astype(np.float64))
-
-def write_wind_y(grid, func):
+def wind_y(grid, func):
     X,Y = np.meshgrid(grid.y, grid.xp1)
     if isinstance(func, (int, long, float)):
         wind_y = np.ones(grid.ny+1, grid.nx) * func
     else:
         wind_y = func(X, Y)
-    with fortran_file('wind_y.bin', 'w') as f:
-        f.write_record(wind_y.astype(np.float64))
+    return wind_y
 
 ### Specific construction helpers
 
@@ -143,27 +132,19 @@ def f_plane_v(grid, coeff):
     return np.ones((grid.nx, grid.ny+1), dtype=np.float64) * coeff
 
 def beta_plane_u(grid, f0, beta):
+    """Define a beta-plane approximation to the Coriolis force (u component)."""
     _, Y = np.meshgrid(grid.xp1, grid.y)
     fu = f0 + Y*beta
     return fu
 
 def beta_plane_v(grid, f0, beta):
+    """Define a beta-plane approximation to the Coriolis force (v component)."""
     _, Y = np.meshgrid(grid.x, grid.yp1)
     fv = f0 + Y*beta
     return fv
 
-def write_beta_plane(grid, f0, beta):
-    """Write files defining a beta-plane approximation to the Coriolis force."""
-    with fortran_file('fu.bin', 'w') as f:
-        _, Y = np.meshgrid(grid.xp1, grid.y)
-        fu = f0 + Y*beta
-        f.write_record(fu.astype(np.float64))
-    with fortran_file('fv.bin', 'w') as f:
-        _, Y = np.meshgrid(grid.x, grid.yp1)
-        fv = f0 + Y*beta
-        f.write_record(fv.astype(np.float64))
-
 def rectangular_pool(grid):
+    """The wet mask file for a maximal rectangular pool."""
     nx = grid.nx; ny = grid.ny
     wetmask = np.ones((nx, ny), dtype=np.float64)
     wetmask[ 0, :] = 0
@@ -171,16 +152,6 @@ def rectangular_pool(grid):
     wetmask[ :, 0] = 0
     wetmask[ :,-1] = 0
     return wetmask
-
-def write_rectangular_pool(nx, ny):
-    """Write the wet mask file for a maximal rectangular pool."""
-    with fortran_file('wetmask.bin', 'w') as f:
-        wetmask = np.ones((nx, ny), dtype=np.float64)
-        wetmask[ 0, :] = 0
-        wetmask[-1, :] = 0
-        wetmask[ :, 0] = 0
-        wetmask[ :,-1] = 0
-        f.write_record(wetmask)
 
 specifier_rx = re.compile(r':(.*):(.*)')
 
