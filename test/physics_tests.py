@@ -43,6 +43,7 @@ def f_plane_init_u_test(physics, aro_exec, dt):
         energy_expected = np.zeros(len(hfiles))
 
         momentum = np.zeros(len(hfiles))
+        momentum_expected = np.zeros(len(hfiles))
 
         volume = np.zeros(len(hfiles))
 
@@ -66,26 +67,35 @@ def f_plane_init_u_test(physics, aro_exec, dt):
             # plt.savefig('h.{0}.png'.format(ufile[-10:]),dpi=150)
             # plt.close()
 
-            energy[counter] = (dx * dy * rho0 * (np.sum(np.absolute(h * ((u[1:,...]**2 + u[:-1,...]**2))/4.)/2.) + np.sum(np.absolute(h * ((v[:,1:,:]**2 + v[:,:-1,:]**2))/4.)/2.)) +  
+            energy[counter] = (dx * dy * rho0 * (np.sum(np.absolute(h * (u[1:,...]**2 + u[:-1,...]**2)/4.)/2.) + np.sum(np.absolute(h * (v[:,1:,:]**2 + v[:,:-1,:]**2)/4.)/2.)) +  
               dx * dy * rho0 * 0.01 * np.sum(np.absolute(h - 400.)))
 
             momentum[counter] = dx * dy * rho0 * (np.sum(np.absolute(h * (u[1:,...] + u[:-1,...])/2.)) + np.sum(np.absolute(h * (v[:,1:,:] + v[:,:-1,:])/2.)))
 
             volume[counter] = np.sum(h)
-        
+
+            # plt.figure()
+            # plt.pcolormesh(grid.xp1, grid.y, np.transpose(u[:,:,0]))
+            # plt.colorbar()
+            # plt.savefig('output/u.{0}.png'.format(model_iteration[counter]),dpi=100)
+            # plt.close()
+
         opt.assert_volume_conservation(nx, ny, layers, 1e-9)
 
         init_u = np.zeros((nx+1,ny),dtype=np.float64)
-        init_u[50,50] = 0.2
+        init_u[50,50] = 3e-5
 
-        energy_expected[:] = (dx * dy * rho0 * np.sum(np.absolute(400. * ((init_u[1:,...] + init_u[:-1,...])**2)/2.)/2.))
+        energy_expected[:] = 2. * (dx * dy * rho0 * np.sum(np.absolute(400. * ((init_u[1:,...] + init_u[:-1,...])**2)/4.)/2.))
 
+        momentum_expected[:] = 2. * dx * dy * rho0 * (np.sum(np.absolute(400. * (init_u[1:,...] + init_u[:-1,...])/2.)))
+
+        # print momentum[0]/momentum_expected[0]
 
         #assert np.amax(array_relative_error(ans, good_ans)) < rtol
         plt.figure()
         #plt.plot(model_iteration, energy_expected, '-o', alpha=0.5,
         #        label='Expected energy')
-        plt.plot(model_iteration, energy, '-*', alpha=0.5,
+        plt.plot(model_iteration, energy, '-', alpha=1,
                 label='simulated energy')
         plt.legend()
         plt.xlabel('time step')
@@ -107,15 +117,31 @@ def f_plane_init_u_test(physics, aro_exec, dt):
         plt.close()
 
         plt.figure()
-        plt.plot(model_iteration, momentum, '-*', alpha=0.5,
+        plt.plot(model_iteration, momentum, '-', alpha=1,
                 label='simulated momentum')
         plt.legend()
         plt.xlabel('time step')
         plt.ylabel('momentum')
         plt.savefig('f_plane_momentum_test.png', dpi=150)
 
+        plt.figure()
+        plt.plot(model_iteration,momentum/momentum_expected)
+        plt.xlabel('timestep')
+        plt.ylabel('simulated/expected')
+        plt.savefig('momentum_ratio.png')
+        plt.close()
 
-def f_plane_red_grav_wind_test():
+        plt.figure()
+        plt.plot(model_iteration,
+            100.*(momentum - momentum_expected)/momentum_expected)
+        plt.xlabel('timestep')
+        plt.ylabel('percent error')
+        plt.ylim(-20,80)
+        plt.savefig('momentum_percent_error.png')
+        plt.close()
+
+
+def f_plane_wind_test(physics, aro_exec, dt):
     nx = 100
     ny = 100
     layers = 1
@@ -144,10 +170,10 @@ def f_plane_red_grav_wind_test():
         #       = wind * dx * dy * dt 
 
 
-        momentum = np.zeros(len(hfiles))
-        model_iteration = np.zeros(len(hfiles))
+        momentum = np.zeros(len(hfiles),dtype=np.float64)
+        model_iteration = np.zeros(len(hfiles),dtype=np.float64)
 
-        momentum_expected = np.zeros(len(hfiles))
+        momentum_expected = np.zeros(len(hfiles),dtype=np.float64)
 
         volume = np.zeros(len(hfiles))
 
@@ -173,17 +199,23 @@ def f_plane_red_grav_wind_test():
 
             momentum[counter] = dx * dy * rho0 * (np.sum(np.absolute(h * (u[1:,...] + u[:-1,...])/2.)) + np.sum(np.absolute(h * (v[:,1:,:] + v[:,:-1,:])/2.)))
 
-            momentum_expected[counter] = dx * dy * 0.2 * (model_iteration[counter] + 2.) * dt
+            momentum_expected[counter] =  2.* dx * dy * 1e-5 * (model_iteration[counter] + 2) * dt
 
-            volume[counter] = np.sum(h)
+            volume[counter] = np.sum(dx * dy * h)
+
+            # plt.figure()
+            # plt.pcolormesh(grid.xp1, grid.y, np.transpose(u[:,:,0]))
+            # plt.colorbar()
+            # plt.savefig('output/u.{0}.png'.format(model_iteration[counter]),dpi=100)
+            # plt.close()
+
 
         opt.assert_volume_conservation(nx, ny, layers, 1e-9)
 
-        #assert np.amax(array_relative_error(ans, good_ans)) < rtol
         plt.figure()
-        plt.plot(model_iteration, momentum_expected, '-o', alpha=0.5,
+        plt.plot(model_iteration, momentum_expected, '-', alpha=1,
                 label='Expected momentum')
-        plt.plot(model_iteration, momentum, '-*', alpha=0.5,
+        plt.plot(model_iteration, momentum, '-', alpha=1,
                 label='simulated momentum')
         plt.legend()
         plt.xlabel('time step')
@@ -194,7 +226,24 @@ def f_plane_red_grav_wind_test():
         plt.plot(model_iteration,momentum/momentum_expected)
         plt.xlabel('timestep')
         plt.ylabel('simulated/expected')
+        plt.title('final ratio = {0}'.format(str(momentum[-1]/momentum_expected[-1])))
         plt.savefig('ratio.png')
+        plt.close()
+
+        plt.figure()
+        plt.plot(model_iteration,
+            100.*(momentum - momentum_expected)/momentum_expected)
+        plt.xlabel('timestep')
+        plt.ylabel('percent error')
+        plt.ylim(-2,2)
+        plt.savefig('percent_error.png')
+        plt.close()
+
+        plt.figure()
+        plt.plot(model_iteration,momentum - momentum_expected)
+        plt.xlabel('timestep')
+        plt.ylabel('simulated - expected')
+        plt.savefig('difference.png')
         plt.close()
 
         plt.figure()
@@ -205,14 +254,14 @@ def f_plane_red_grav_wind_test():
         plt.close()
 
 # create inputs
-def write_f_plane_red_grav_wind_input(nx,ny,layers):
+def write_f_plane_wind_input(nx,ny,layers):
     aro.write_f_plane(nx, ny, 10e-4)
     aro.write_rectangular_pool(nx, ny)
     with aro.fortran_file('initH.bin', 'w') as f:
         f.write_record(np.ones((nx, ny,layers), dtype=np.float64) * 400)
     with aro.fortran_file('wind_x.bin','w') as f:
         wind_x = np.zeros((ny,nx+1),dtype=np.float64)
-        wind_x[50,50] = 0.2
+        wind_x[50,50] = 1e-5
         f.write_record(wind_x)
 
         plt.figure()
