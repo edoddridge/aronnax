@@ -100,6 +100,8 @@ def merge_config(config, options):
             section = section_map[k]
             if not config.has_section(section):
                 config.add_section(section)
+            if v == True: v = "yes"
+            if v == False: v = "no"
             config.set(section, k, v)
         else:
             raise Exception("Unrecognized option", k)
