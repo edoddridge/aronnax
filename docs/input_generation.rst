@@ -24,7 +24,7 @@ Forcings
 Initial conditions
 ===================
 
-.. autofunction:: aronnax.interpret_initial_heights
+.. autofunction:: aronnax.depths
 
 
 Domain fields

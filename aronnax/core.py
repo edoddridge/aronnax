@@ -95,7 +95,7 @@ def interpret_raw_file(name, nx, ny, layers):
 
 ### General input construction helpers
 
-def interpret_initial_heights(grid, *h_funcs):
+def depths(grid, *h_funcs):
     X,Y = np.meshgrid(grid.x, grid.y)
     initH = np.ones((len(h_funcs), grid.ny, grid.nx))
     for i, f in enumerate(h_funcs):
@@ -156,7 +156,7 @@ def rectangular_pool(grid):
 specifier_rx = re.compile(r':(.*):(.*)')
 
 ok_generators = {
-    'flat': interpret_initial_heights,
+    'depths': depths,
     'beta_plane_u': beta_plane_u,
     'beta_plane_v': beta_plane_v,
     'f_plane_u': f_plane_u,
@@ -209,7 +209,7 @@ def interpret_requested_data(requested_data, shape, config):
                 return f.read_reals(dtype=np.float64)
     else:
         if shape == "3d":
-            return interpret_initial_heights(grid, *requested_data)
+            return depths(grid, *requested_data)
         if shape == "2dx":
             return wind_x(grid, requested_data)
         else:
