@@ -1,7 +1,9 @@
 Input generators
 *******************
 
-Aronnax includes a number helper functions for generating input fields.
+Aronnax includes a number of helper functions for generating input fields.
+These can be called with numerical arguments (generating very simple input fields)
+directory from the aronnax.conf file, using the syntax `:generator_name:arg1,arg2,...,argn`.
 
 Grid
 =====
@@ -14,22 +16,26 @@ Forcings
 ==========
 
 
-.. autofunction:: aronnax.write_wind_x
+.. autofunction:: aronnax.wind_x
 
-.. autofunction:: aronnax.write_wind_y
+.. autofunction:: aronnax.wind_y
 
 
 Initial conditions
 ===================
 
-.. autofunction:: aronnax.write_initial_heights
+.. autofunction:: aronnax.interpret_initial_heights
 
 
 Domain fields
 ===============
 
-.. autofunction:: aronnax.write_f_plane
+.. autofunction:: aronnax.f_plane_u
 
-.. autofunction:: aronnax.write_beta_plane
+.. autofunction:: aronnax.f_plane_v
 
-.. autofunction:: aronnax.write_rectangular_pool
+.. autofunction:: aronnax.beta_plane_u
+
+.. autofunction:: aronnax.beta_plane_v
+
+.. autofunction:: aronnax.rectangular_pool

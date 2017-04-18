@@ -163,6 +163,7 @@ ok_generators = {
     'f_plane_v': f_plane_v,
     'rectangular_pool': rectangular_pool,
     'wind_x': wind_x,
+    'wind_y': wind_y,
 }
 
 def interpret_data_specifier(string):
