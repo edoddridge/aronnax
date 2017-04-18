@@ -1,22 +1,24 @@
 import os.path as p
+import sys
+
+import numpy as np
+
+from aronnax.utils import working_directory
+import aronnax.driver as aro
 
 self_path = p.dirname(p.abspath(__file__))
-root_path = p.dirname(self_path)
 
-import sys
-sys.path.append(p.join(root_path, 'test'))
-import output_preservation_test as opt
-from aronnax.utils import working_directory
+def bump(X, Y):
+    return 500. + 20*np.exp(-((6e5-X)**2 + (5e5-Y)**2)/(2*1e5**2))
 
 def do_red_grav(nx, aro_build, perf):
     with working_directory(p.join(self_path, "beta_plane_bump_red_grav")):
-        opt.run_experiment(
-            opt.write_input_beta_plane_bump_red_grav, nx, nx, 1, aro_build, perf=perf)
+        aro.simulate(exe=aro_build, initHfile=[bump], nx=nx, ny=nx, perf=perf)
 
 def do_n_layer(nx, aro_build, perf):
     with working_directory(p.join(self_path, "beta_plane_bump")):
-        opt.run_experiment(
-            opt.write_input_beta_plane_bump, nx, nx, 2, aro_build, perf=perf)
+        aro.simulate(exe=aro_build, nx=nx, ny=nx, perf=perf,
+                     initHfile=[bump, lambda X, Y: 2000. - bump(X, Y)])
 
 def main():
     aro_build = "aronnax_prof"
