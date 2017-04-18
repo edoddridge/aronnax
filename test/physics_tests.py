@@ -141,10 +141,9 @@ def f_plane_init_u_test(physics, aro_exec, dt):
         plt.close()
 
 
-def f_plane_wind_test(physics, aro_exec, dt):
-    nx = 100
-    ny = 100
-    layers = 1
+def f_plane_wind_test(physics, aro_exec, nx, ny, dt):
+
+    layers = 2
 
     dx = 10e3
     dy = 10e3
@@ -259,9 +258,10 @@ def write_f_plane_wind_input(nx,ny,layers):
     aro.write_rectangular_pool(nx, ny)
     with aro.fortran_file('initH.bin', 'w') as f:
         f.write_record(np.ones((nx, ny,layers), dtype=np.float64) * 400)
+
     with aro.fortran_file('wind_x.bin','w') as f:
         wind_x = np.zeros((ny,nx+1),dtype=np.float64)
-        wind_x[50,50] = 1e-5
+        wind_x[int(nx/2),int(ny/2)] = 1e-5
         f.write_record(wind_x)
 
         plt.figure()
@@ -271,7 +271,7 @@ def write_f_plane_wind_input(nx,ny,layers):
 
     with aro.fortran_file('wind_y.bin','w') as f:
         wind_y = np.zeros((ny+1,nx),dtype=np.float64)
-        wind_y[50,50] = 1e-5
+        wind_y[int(nx/2),int(ny/2)] = 1e-5
         f.write_record(wind_y)
 
         plt.figure()
@@ -286,7 +286,7 @@ def write_f_plane_init_u_input(nx,ny,layers):
         f.write_record(np.ones((nx, ny,layers), dtype=np.float64) * 400)
     with aro.fortran_file('init_u.bin','w') as f:
         init_u = np.zeros((ny,nx+1),dtype=np.float64)
-        init_u[50,50] = 3e-5
+        init_u[int(nx/2),int(ny/2)] = 3e-5
         f.write_record(init_u)
 
         plt.figure()
@@ -295,7 +295,7 @@ def write_f_plane_init_u_input(nx,ny,layers):
         plt.savefig('init_u.png')
     with aro.fortran_file('init_v.bin','w') as f:
         init_v = np.zeros((ny,nx+1),dtype=np.float64)
-        init_v[50,50] = 3e-5
+        init_v[int(nx/2),int(ny/2)] = 3e-5
         f.write_record(init_v)
 
         plt.figure()
@@ -305,8 +305,10 @@ def write_f_plane_init_u_input(nx,ny,layers):
 
 
 if __name__ == '__main__':
-    f_plane_wind_test('red_grav', aro_exec = "aronnax_core",dt = 600.)
-    f_plane_wind_test('n_layer', aro_exec = "aronnax_core", dt = 100.)
+    f_plane_wind_test('red_grav', aro_exec = "aronnax_core",
+        nx = 200, ny = 200, dt = 600.)
+    f_plane_wind_test('n_layer', aro_exec = "aronnax_external_solver",
+        nx = 50, ny = 50, dt = 100.)
 
     f_plane_init_u_test('red_grav', aro_exec = "aronnax_core", dt = 600.)
     f_plane_init_u_test('n_layer', aro_exec = "aronnax_external_solver", dt = 100.)

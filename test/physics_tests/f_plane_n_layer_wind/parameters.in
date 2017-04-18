@@ -24,8 +24,8 @@
  ar = 0e-8,
  dt = 100.,
  slip = 0.0,
- nTimeSteps = 901,
- dumpFreq = 3000,
+ nTimeSteps = 2001,
+ dumpFreq = 30000,
  avFreq = 3e6,
  hmin = 100,
  maxits = 1000,
@@ -34,9 +34,9 @@
  thickness_error = 1e-2,
  /
  &MODEL
- hmean = 400.,
+ hmean = 400.,400.,
  depthFile = '',
- H0 = 400.,
+ H0 = 800.,
  RedGrav = .False.,
  /
  &PRESSURE_SOLVER
@@ -56,9 +56,9 @@
  rho0 = 1035.,
  /
  &GRID
- nx = 100,
- ny = 100,
- layers = 1,
+ nx = 50,
+ ny = 50,
+ layers = 2,
  dx = 10e3,
  dy = 10e3,
  fUfile = 'input/fu.bin',
