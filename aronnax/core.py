@@ -95,7 +95,7 @@ def interpret_raw_file(name, nx, ny, layers):
 
 ### General input construction helpers
 
-def interpret_initial_heights(grid, h_funcs):
+def interpret_initial_heights(grid, *h_funcs):
     X,Y = np.meshgrid(grid.x, grid.y)
     initH = np.ones((len(h_funcs), grid.ny, grid.nx))
     for i, f in enumerate(h_funcs):
@@ -106,7 +106,7 @@ def interpret_initial_heights(grid, h_funcs):
     return initH
 
 def write_initial_heights(grid, h_funcs):
-    initH = interpret_initial_heights(grid, h_funcs)
+    initH = interpret_initial_heights(grid, *h_funcs)
     with fortran_file('initH.bin', 'w') as f:
         f.write_record(initH.astype(np.float64))
 
@@ -129,6 +129,12 @@ def write_wind_y(grid, func):
         f.write_record(wind_y.astype(np.float64))
 
 ### Specific construction helpers
+
+def f_plane_u(grid, coeff):
+    return np.ones((grid.nx+1, grid.ny), dtype=np.float64) * coeff
+
+def f_plane_v(grid, coeff):
+    return np.ones((grid.nx, grid.ny+1), dtype=np.float64) * coeff
 
 def write_f_plane(nx, ny, coeff):
     """Write files defining an f-plane approximation to the Coriolis force."""
@@ -180,8 +186,11 @@ def write_rectangular_pool(nx, ny):
 specifier_rx = re.compile(r':(.*):(.*)')
 
 ok_generators = {
+    'flat': interpret_initial_heights,
     'beta_plane_u': beta_plane_u,
     'beta_plane_v': beta_plane_v,
+    'f_plane_u': f_plane_u,
+    'f_plane_v': f_plane_v,
     'rectangular_pool': rectangular_pool,
 }
 
@@ -228,6 +237,6 @@ def interpret_requested_data(requested_data, shape, config):
                 return f.read_reals(dtype=np.float64)
     else:
         if shape == "3d":
-            return interpret_initial_heights(grid, requested_data)
+            return interpret_initial_heights(grid, *requested_data)
         else:
             raise Exception("TODO implement custom generation for other input shapes")
