@@ -126,18 +126,6 @@ def test_f_plane():
         assert_outputs_close(10, 10, 2, 1e-15)
         assert_volume_conservation(10, 10, 2, 1e-5)
 
-def write_input_beta_plane_bump_red_grav(nx, ny, layers):
-    assert layers == 1
-    xlen = 1e6
-    ylen = 1e6
-    grid = aro.Grid(nx, ny, xlen / nx, ylen / ny)
-
-    aro.write_beta_plane(grid, 1e-5, 2e-11)
-    aro.write_rectangular_pool(nx, ny)
-    def bump(X, Y):
-        return 500. + 20*np.exp(-((6e5-X)**2 + (5e5-Y)**2)/(2*1e5**2))
-    aro.write_initial_heights(grid, [bump])
-
 def bump(X, Y):
     return 500. + 20*np.exp(-((6e5-X)**2 + (5e5-Y)**2)/(2*1e5**2))
 
@@ -149,18 +137,6 @@ def test_gaussian_bump_red_grav():
                      nx=10, ny=10, dx=xlen/10, dy=ylen/10)
         assert_outputs_close(10, 10, 1, 1.5e-13)
         assert_volume_conservation(10, 10, 1, 1e-5)
-
-def write_input_beta_plane_bump(nx, ny, layers):
-    assert layers == 2
-    xlen = 1e6
-    ylen = 1e6
-    grid = aro.Grid(nx, ny, xlen / nx, ylen / ny)
-
-    aro.write_beta_plane(grid, 1e-5, 2e-11)
-    aro.write_rectangular_pool(nx, ny)
-    def bump(X, Y):
-        return 500. + 20*np.exp(-((6e5-X)**2 + (5e5-Y)**2)/(2*1e5**2))
-    aro.write_initial_heights(grid, [bump, lambda X, Y: 2000. - bump(X, Y)])
 
 def test_gaussian_bump():
     xlen = 1e6
