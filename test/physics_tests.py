@@ -16,7 +16,7 @@ import output_preservation_test as opt
 
 
 
-def f_plane_red_grav_init_u_test():
+def f_plane_init_u_test(physics, aro_exec, dt):
     nx = 100
     ny = 100
     layers = 1
@@ -28,12 +28,9 @@ def f_plane_red_grav_init_u_test():
 
     rho0 = 1035.
 
-    dt = 60.
-
-    with opt.working_directory(p.join(self_path, "physics_tests/f_plane_red_grav_init_u")):
-        aro_exec = "aronnax_test"
+    with opt.working_directory(p.join(self_path, "physics_tests/f_plane_{0}_init_u".format(physics))):
         opt.run_experiment(
-              write_f_plane_red_grav_init_u_input, nx, ny, layers, aro_exec)
+              write_f_plane_init_u_input, nx, ny, layers, aro_exec)
 
         hfiles = sorted(glob.glob("output/snap.h.*"))
         ufiles = sorted(glob.glob("output/snap.u.*"))
@@ -99,7 +96,7 @@ def f_plane_red_grav_init_u_test():
         plt.plot(model_iteration,energy/energy_expected)
         plt.xlabel('timestep')
         plt.ylabel('simulated/expected')
-        plt.savefig('ratio.png')
+        plt.savefig('energy_ratio.png')
         plt.close()
 
         plt.figure()
@@ -130,12 +127,10 @@ def f_plane_red_grav_wind_test():
 
     rho0 = 1035.
 
-    dt = 600.
 
-    with opt.working_directory(p.join(self_path, "physics_tests/f_plane_red_grav_wind")):
-        aro_exec = "aronnax_test"
+    with opt.working_directory(p.join(self_path, "physics_tests/f_plane_{0}_wind".format(physics))):
         opt.run_experiment(
-              write_f_plane_red_grav_wind_input, nx, ny, layers, aro_exec)
+              write_f_plane_wind_input, nx, ny, layers, aro_exec)
 
         hfiles = sorted(glob.glob("output/snap.h.*"))
         ufiles = sorted(glob.glob("output/snap.u.*"))
@@ -225,22 +220,44 @@ def write_f_plane_red_grav_wind_input(nx,ny,layers):
         plt.colorbar()
         plt.savefig('wind_x.png')
 
-def write_f_plane_red_grav_init_u_input(nx,ny,layers):
+    with aro.fortran_file('wind_y.bin','w') as f:
+        wind_y = np.zeros((ny+1,nx),dtype=np.float64)
+        wind_y[50,50] = 1e-5
+        f.write_record(wind_y)
+
+        plt.figure()
+        plt.pcolormesh(wind_y)
+        plt.colorbar()
+        plt.savefig('wind_y.png')
+
+def write_f_plane_init_u_input(nx,ny,layers):
     aro.write_f_plane(nx, ny, 10e-4)
     aro.write_rectangular_pool(nx, ny)
     with aro.fortran_file('initH.bin', 'w') as f:
         f.write_record(np.ones((nx, ny,layers), dtype=np.float64) * 400)
     with aro.fortran_file('init_u.bin','w') as f:
         init_u = np.zeros((ny,nx+1),dtype=np.float64)
-        init_u[50,50] = 0.2
+        init_u[50,50] = 3e-5
         f.write_record(init_u)
 
         plt.figure()
         plt.pcolormesh(init_u)
         plt.colorbar()
         plt.savefig('init_u.png')
+    with aro.fortran_file('init_v.bin','w') as f:
+        init_v = np.zeros((ny,nx+1),dtype=np.float64)
+        init_v[50,50] = 3e-5
+        f.write_record(init_v)
+
+        plt.figure()
+        plt.pcolormesh(init_v)
+        plt.colorbar()
+        plt.savefig('init_v.png')
 
 
 if __name__ == '__main__':
-    f_plane_red_grav_wind_test()
-    f_plane_red_grav_init_u_test()
+    f_plane_wind_test('red_grav', aro_exec = "aronnax_core",dt = 600.)
+    f_plane_wind_test('n_layer', aro_exec = "aronnax_core", dt = 100.)
+
+    f_plane_init_u_test('red_grav', aro_exec = "aronnax_core", dt = 600.)
+    f_plane_init_u_test('n_layer', aro_exec = "aronnax_external_solver", dt = 100.)
