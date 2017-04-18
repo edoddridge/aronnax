@@ -127,7 +127,7 @@ data_types = {
     "initVfile"            : "3d",
     "initHfile"            : "3d",
     "initEtaFile"          : "2d",
-    "zonalWindFile"        : "2d",
+    "zonalWindFile"        : "2dx",
     "meridionalWindFile"   : "2d",
     "wind_mag_time_series_file" : "time",
 }

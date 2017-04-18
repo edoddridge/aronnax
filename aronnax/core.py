@@ -110,14 +110,18 @@ def write_initial_heights(grid, h_funcs):
     with fortran_file('initH.bin', 'w') as f:
         f.write_record(initH.astype(np.float64))
 
-def write_wind_x(grid, func):
+def wind_x(grid, func):
     X,Y = np.meshgrid(grid.xp1, grid.y)
     if isinstance(func, (int, long, float)):
         wind_x = np.ones(grid.ny, grid.nx+1) * func
     else:
         wind_x = func(X, Y)
+    return wind_x
+
+def write_wind_x(grid, func):
+    wind = wind_x(grid, func)
     with fortran_file('wind_x.bin', 'w') as f:
-        f.write_record(wind_x.astype(np.float64))
+        f.write_record(wind.astype(np.float64))
 
 def write_wind_y(grid, func):
     X,Y = np.meshgrid(grid.y, grid.xp1)
@@ -187,6 +191,7 @@ ok_generators = {
     'f_plane_u': f_plane_u,
     'f_plane_v': f_plane_v,
     'rectangular_pool': rectangular_pool,
+    'wind_x': wind_x,
 }
 
 def interpret_data_specifier(string):
@@ -233,5 +238,7 @@ def interpret_requested_data(requested_data, shape, config):
     else:
         if shape == "3d":
             return interpret_initial_heights(grid, *requested_data)
+        if shape == "2dx":
+            return wind_x(grid, requested_data)
         else:
             raise Exception("TODO implement custom generation for other input shapes")
