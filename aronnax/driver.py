@@ -120,15 +120,15 @@ data_types = {
     "spongeHFile"          : "3d",
     "spongeUFile"          : "3d",
     "spongeVFile"          : "3d",
-    "fUfile"               : "2d",
-    "fVfile"               : "2d",
+    "fUfile"               : "2dx",
+    "fVfile"               : "2dy",
     "wetMaskFile"          : "2d",
     "initUfile"            : "3d",
     "initVfile"            : "3d",
     "initHfile"            : "3d",
     "initEtaFile"          : "2d",
     "zonalWindFile"        : "2dx",
-    "meridionalWindFile"   : "2d",
+    "meridionalWindFile"   : "2dy",
     "wind_mag_time_series_file" : "time",
 }
 
