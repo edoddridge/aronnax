@@ -24,7 +24,7 @@
  ar = 1e-8,
  dt = 600.,
  slip = 0.0,
- nTimeSteps = 8001,
+ nTimeSteps = 9001,
  dumpFreq = 30000,
  avFreq = 3e6,
  hmin = 100,
@@ -64,7 +64,7 @@
 ! Inital conditions for u, v, and h
  &INITIAL_CONDITONS
  initUfile = 'input/init_u.bin',
- initVfile = '',
+ initVfile = 'input/init_v.bin',
  initHfile = 'input/initH.bin',
  initEtaFile = '',
  /

@@ -22,22 +22,26 @@
  au = 0.,
  ah = 0.0,
  ar = 0e-8,
- dt = 600.,
+ dt = 100.,
  slip = 0.0,
- nTimeSteps = 9001,
- dumpFreq = 30000,
+ nTimeSteps = 901,
+ dumpFreq = 3000,
  avFreq = 3e6,
  hmin = 100,
  maxits = 1000,
- eps = 1e-2,
+ eps = 1e-7,
  freesurfFac = 0.,
  thickness_error = 1e-2,
  /
  &MODEL
  hmean = 400.,
  depthFile = '',
- H0 = 2000.,
- RedGrav = .TRUE.,
+ H0 = 400.,
+ RedGrav = .False.,
+ /
+ &PRESSURE_SOLVER
+ nProcX = 1,
+ nProcY = 1,
  /
  &SPONGE
  spongeHTimeScaleFile = '',
@@ -48,7 +52,7 @@
  spongeVfile = '',
  /
  &PHYSICS
- g_vec = 0.01,
+ g_vec = 9.8,
  rho0 = 1035.,
  /
  &GRID
