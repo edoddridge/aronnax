@@ -148,21 +148,15 @@ def test_beta_plane_gyre_red_grav():
         assert_outputs_close(10, 10, 1, 2e-13)
         assert_volume_conservation(10, 10, 1, 1e-5)
 
-def write_input_beta_plane_gyre(nx, ny, layers):
-    assert layers == 2
+def test_beta_plane_gyre():
     xlen = 1e6
     ylen = 2e6
+    nx = 10; ny = 10
     grid = aro.Grid(nx, ny, xlen / nx, ylen / ny)
-
-    aro.write_beta_plane(grid, 1e-5, 2e-11)
-    aro.write_rectangular_pool(nx, ny)
-    aro.write_initial_heights(grid, [600.0, 1400.0])
     def wind(_, Y):
         return 0.05 * (1 - np.cos(2*np.pi * Y/np.max(grid.y)))
-    aro.write_wind_x(grid, wind)
-
-def test_beta_plane_gyre():
     with working_directory(p.join(self_path, "beta_plane_gyre")):
-        run_experiment(write_input_beta_plane_gyre, 10, 10, 2, valgrind=True)
+        drv.simulate(zonalWindFile=wind, valgrind=True,
+                     nx=10, ny=10, exe="aronnax_test", dx=xlen/10, dy=ylen/10)
         assert_outputs_close(10, 10, 2, 3e-12)
         assert_volume_conservation(10, 10, 2, 1e-5)
