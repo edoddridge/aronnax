@@ -85,7 +85,7 @@ def default_configuration():
     config.optionxform = str
     return config
 
-sections = ["executable", "numerics", "model", "sponge",
+sections = ["executable", "numerics", "model", "pressure_solver", "sponge",
             "physics", "grid", "initial_conditions", "external_forcing"]
 
 section_map = {
@@ -107,6 +107,8 @@ section_map = {
     "depthFile"            : "model",
     "H0"                   : "model",
     "RedGrav"              : "model",
+    "nProcX"               : "pressure_solver",
+    "nProcY"               : "pressure_solver",
     "spongeHTimeScaleFile" : "sponge",
     "spongeUTimeScaleFile" : "sponge",
     "spongeVTimeScaleFile" : "sponge",
