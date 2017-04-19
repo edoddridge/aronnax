@@ -12,6 +12,40 @@ self_path = p.dirname(p.abspath(__file__))
 root_path = p.dirname(self_path)
 
 def simulate(work_dir=".", config_path="aronnax.conf", **options):
+    """Main entry point for running an Aronnax simulation.
+
+    A simulation occurs in the working directory given by the
+    `work_dir` parameter, which defaults to the current directory when
+    `simulate` is invoked.  The default arrangement of the working
+    directory is as follows:
+    - aronnax.conf - configuration file for that run
+    - aronnax-merged.conf - file to save effective configuration, including
+      effects of options passed to `simulate`
+    - parameters.in - relevant portions of aronnax-merged.conf in Fortran
+      namelist format
+    - input/ - subdirectory where Aronnax will save input field files
+      in Fortran raw array format
+    - output/ - subdirectory where Aronnax will save output field files
+      in Fortran raw array format
+
+    The process for a simulation is to
+    1. Compute the configuration
+    2. Recompile the Fortran core if necessary
+    3. Save the computed configuration in aronnax-merged.conf
+    4. Write raw-format input fields into input/
+    5. Write parameters.in
+    6. Execute the Fortran core, which writes progress messages
+       to standard output and raw-format output fields into output/
+
+    All the simulation parameters can be controlled from the
+    configuration file aronnax.conf, and additionally can be
+    overridden by passing them as optional arguments to `simulate`.
+
+    Calling `simulate` directly provides one capability that cannot be
+    accessed from the configuration file: custom idealized input
+    generators.
+
+    """
     config_file = p.join(work_dir, config_path)
     config = default_configuration()
     config.read(config_file)
@@ -36,6 +70,9 @@ def simulate(work_dir=".", config_path="aronnax.conf", **options):
         return core_run_time
 
 def default_configuration():
+    """Configuration defaults before parsing aronnax.conf.
+
+    The configuration is represented as a ConfigParser.RawConfigParser instance."""
     config = par.RawConfigParser()
     for section in sections:
         config.add_section(section)
@@ -96,6 +133,9 @@ section_map = {
 }
 
 def merge_config(config, options):
+    """Merge the options given in the `options` dict into the RawConfigParser instance `config`.
+
+    Mutates the given config instance."""
     for k, v in options.iteritems():
         if k in section_map:
             section = section_map[k]
@@ -108,6 +148,7 @@ def merge_config(config, options):
             raise Exception("Unrecognized option", k)
 
 def compile_core(config):
+    """Compile the Aronnax core, if needed."""
     core_name = config.get("executable", "exe")
     with working_directory(root_path):
         sub.check_call(["make", core_name])
@@ -149,6 +190,14 @@ def generate_input_data_files(config):
                 f.write_record(generated_data)
 
 def fortran_option_string(section, name, config):
+    """Convert option values to strings that Fortran namelists will understand correctly.
+
+    Two conversions are of interest: Booleans are rendered as
+    .TRUE. or .FALSE., and options that are input fields are rendered
+    as the file names where `generate_input_data_files` has written
+    those data, or the Fortran empty string `''` if no file is written
+    (which means the core should use its internal default).
+    """
     if is_file_name_option(name):
         if config.has_option(section, name):
             # A file was generated
@@ -180,6 +229,7 @@ def generate_parameters_file(config):
             f.write(' /\n')
 
 def run_executable(config):
+    """Run the compiled Fortran core, possibly in a test or debug regime."""
     core_name = config.get("executable", "exe")
     env = dict(os.environ, GFORTRAN_STDERR_UNIT="17")
     if config.getboolean("executable", "valgrind") \
