@@ -210,7 +210,7 @@ end if
   ! call HYPRE_IJMatrixInitialize(A, ierr)
 #ifdef useExtSolver
   call create_Hypre_grid(MPI_COMM_WORLD, hypre_grid, ilower, iupper, &
-          num_procs, ierr)
+          num_procs, myid, ierr)
 #endif
 
 
@@ -295,10 +295,8 @@ end if
       MPI_COMM_WORLD, myid, num_procs, ilower, iupper, &
       hypre_grid)
   
-#ifdef useExtSolver
   ! Finalize MPI
   call MPI_Finalize(ierr)
-#endif
 
   stop 
 end program aronnax
@@ -406,14 +404,12 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   double precision :: pi
   integer :: nwrite, avwrite
   double precision :: rjac
-#ifdef useExtSolver
   ! External solver variables
   integer   :: offsets(2,5)
   integer :: i, j ! loop variables
   integer   ::  nentries, nvalues, stencil_indices(5)
   double precision, dimension(:), allocatable :: values
   integer   :: indicies(2)
-#endif
   integer*8 :: hypre_grid
   integer*8 :: stencil
   integer*8 :: hypre_A
@@ -523,61 +519,8 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
     ! 2*pi in this calculation
 #else
     ! use the external pressure solver
-
-    ! Define the geometry of the stencil.  Each represents a relative
-    ! offset (in the index space).
-    offsets(1,1) =  0
-    offsets(2,1) =  0
-    offsets(1,2) = -1
-    offsets(2,2) =  0
-    offsets(1,3) =  1
-    offsets(2,3) =  0
-    offsets(1,4) =  0
-    offsets(2,4) = -1
-    offsets(1,5) =  0
-    offsets(2,5) =  1
-
-    do i = 1, 5
-      stencil_indices(i) = i-1
-    end do
-
-    call HYPRE_StructStencilCreate(2, 5, stencil, ierr)
-    ! this gives a 2D, 5 point stencil centred around the grid point of interest.   
-    do i = 0, 4
-      call HYPRE_StructStencilSetElement(stencil, i, offsets(:,i+1),ierr) 
-    end do
-
-    call HYPRE_StructMatrixCreate(MPI_COMM_WORLD, hypre_grid, stencil, hypre_A, ierr)
-
-    call HYPRE_StructMatrixInitialize(hypre_A, ierr)
-
-    do i = 1, nx
-      do j = 1, ny
-        indicies(1) = i
-        indicies(2) = j
-
-        call HYPRE_StructMatrixSetValues(hypre_A, & 
-            indicies, 1, 0, & 
-            a(5,i,j) - freesurfFac/dt**2, ierr)
-        call HYPRE_StructMatrixSetValues(hypre_A, & 
-            indicies, 1, 1, & 
-            a(3,i,j), ierr)
-        call HYPRE_StructMatrixSetValues(hypre_A, & 
-            indicies, 1, 2, & 
-            a(1,i,j), ierr)
-        call HYPRE_StructMatrixSetValues(hypre_A, & 
-            indicies, 1, 3, & 
-            a(4,i,j), ierr)
-        call HYPRE_StructMatrixSetValues(hypre_A, & 
-            indicies, 1, 4, & 
-            a(2,i,j), ierr)
-      end do
-    end do
-
-    call HYPRE_StructMatrixAssemble(hypre_A, ierr)
-
-    call MPI_Barrier(  MPI_COMM_WORLD, ierr)
-
+    call create_Hypre_A_vector(MPI_COMM_WORLD, hypre_grid, hypre_A, &
+          a, nx, ny, freesurfFac, dt, ierr)
 #endif
 
     ! Check that the supplied free surface anomaly and layer
@@ -1623,12 +1566,16 @@ end subroutine SOR_solver
 ! ---------------------------------------------------------------------------
 
 subroutine create_Hypre_grid(MPI_COMM_WORLD, hypre_grid, ilower, iupper, &
-          num_procs, ierr)
+          num_procs, myid, ierr)
+  implicit none
 
   integer, intent(in) :: MPI_COMM_WORLD
   integer*8 :: hypre_grid
   integer :: num_procs
   integer :: ilower(0:num_procs-1,2), iupper(0:num_procs-1,2)
+  integer :: myid
+  integer :: ierr
+
 
   call Hypre_StructGridCreate(MPI_COMM_WORLD, 2, hypre_grid, ierr)
 
@@ -1640,6 +1587,81 @@ subroutine create_Hypre_grid(MPI_COMM_WORLD, hypre_grid, ilower, iupper, &
 
   return
 end subroutine create_Hypre_grid
+
+! ---------------------------------------------------------------------------
+
+subroutine create_Hypre_A_vector(MPI_COMM_WORLD, hypre_grid, hypre_A, &
+          a, nx, ny, freesurfFac, dt, ierr)
+  implicit none
+
+  integer, intent(in) :: MPI_COMM_WORLD
+  integer*8 :: hypre_grid
+  integer*8 :: hypre_A
+  double precision, intent(in) :: a(5, nx, ny)
+  integer :: nx, ny
+  integer :: ierr
+  double precision, intent(in) :: freesurfFac
+  double precision, intent(in)    :: dt
+
+  integer*8 :: stencil
+
+  integer :: offsets(2,5)
+  integer :: indicies(2)
+  integer :: i, j
+
+  ! Define the geometry of the stencil.  Each represents a relative
+  ! offset (in the index space).
+  offsets(1,1) =  0
+  offsets(2,1) =  0
+  offsets(1,2) = -1
+  offsets(2,2) =  0
+  offsets(1,3) =  1
+  offsets(2,3) =  0
+  offsets(1,4) =  0
+  offsets(2,4) = -1
+  offsets(1,5) =  0
+  offsets(2,5) =  1
+
+
+  call HYPRE_StructStencilCreate(2, 5, stencil, ierr)
+  ! this gives a 2D, 5 point stencil centred around the grid point of interest.   
+  do i = 0, 4
+    call HYPRE_StructStencilSetElement(stencil, i, offsets(:,i+1),ierr) 
+  end do
+
+  call HYPRE_StructMatrixCreate(MPI_COMM_WORLD, hypre_grid, stencil, hypre_A, ierr)
+
+  call HYPRE_StructMatrixInitialize(hypre_A, ierr)
+
+  do i = 1, nx
+    do j = 1, ny
+      indicies(1) = i
+      indicies(2) = j
+
+      call HYPRE_StructMatrixSetValues(hypre_A, & 
+          indicies, 1, 0, & 
+          a(5,i,j) - freesurfFac/dt**2, ierr)
+      call HYPRE_StructMatrixSetValues(hypre_A, & 
+          indicies, 1, 1, & 
+          a(3,i,j), ierr)
+      call HYPRE_StructMatrixSetValues(hypre_A, & 
+          indicies, 1, 2, & 
+          a(1,i,j), ierr)
+      call HYPRE_StructMatrixSetValues(hypre_A, & 
+          indicies, 1, 3, & 
+          a(4,i,j), ierr)
+      call HYPRE_StructMatrixSetValues(hypre_A, & 
+          indicies, 1, 4, & 
+          a(2,i,j), ierr)
+    end do
+  end do
+
+  call HYPRE_StructMatrixAssemble(hypre_A, ierr)
+
+  call MPI_Barrier(MPI_COMM_WORLD, ierr)
+
+  return
+end subroutine create_Hypre_A_vector
 
 ! ---------------------------------------------------------------------------
 
