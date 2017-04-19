@@ -30,12 +30,12 @@ Initial conditions
 Domain fields
 ===============
 
-.. autofunction:: aronnax.f_plane_u
+.. autofunction:: aronnax.f_plane_f_u
 
-.. autofunction:: aronnax.f_plane_v
+.. autofunction:: aronnax.f_plane_f_v
 
-.. autofunction:: aronnax.beta_plane_u
+.. autofunction:: aronnax.beta_plane_f_u
 
-.. autofunction:: aronnax.beta_plane_v
+.. autofunction:: aronnax.beta_plane_f_v
 
 .. autofunction:: aronnax.rectangular_pool
