@@ -192,22 +192,6 @@ program aronnax
   ! correct first ilower value to exclude the global halo
   ilower(0,2) = 1
 
-if (myid .eq. 0) then
-  ! Show the domain decomposition
-  print "(A)", "Domain decomposition:"
-  print "(A, I0)", 'ilower (x) = ', ilower(:,1)
-  print "(A, I0)", 'ilower (y) = ', ilower(:,2)
-  print "(A, I0)", 'iupper (x) = ', iupper(:,1)
-  print "(A, I0)", 'iupper (y) = ', iupper(:,2)
-end if
-  !   call HYPRE_IJMatrixCreate(mpi_comm, ilower(myid,1), & 
-  !          iupper(myid,1), ilower(myid,2), iupper(myid,2), A, ierr)
-
-  ! ! ! Choose a parallel csr format storage (apparently his is the only one supported)
-  ! call HYPRE_IJMatrixSetObjectType(A, HYPRE_PARCSR, ierr)
-
-  ! ! ! Initialize before setting coefficients
-  ! call HYPRE_IJMatrixInitialize(A, ierr)
 #ifdef useExtSolver
   call create_Hypre_grid(MPI_COMM_WORLD, hypre_grid, ilower, iupper, &
           num_procs, myid, ierr)
@@ -474,6 +458,16 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
         "Running an n-layer configuration of size ", &
         nx, "x", ny, "x", layers, " by ", nTimeSteps, " time steps."
   end if
+
+  if (myid .eq. 0) then
+    ! Show the domain decomposition
+    print "(A)", "Domain decomposition:"
+    print "(A, I0)", 'ilower (x) = ', ilower(:,1)
+    print "(A, I0)", 'ilower (y) = ', ilower(:,2)
+    print "(A, I0)", 'iupper (x) = ', iupper(:,1)
+    print "(A, I0)", 'iupper (y) = ', iupper(:,2)
+  end if
+  
   last_report_time = start_time
 
   nwrite = int(dumpFreq/dt)
@@ -1576,7 +1570,7 @@ subroutine create_Hypre_grid(MPI_COMM_WORLD, hypre_grid, ilower, iupper, &
   integer :: myid
   integer :: ierr
 
-
+#ifdef useExtSolver
   call Hypre_StructGridCreate(MPI_COMM_WORLD, 2, hypre_grid, ierr)
 
   !do i = 0, num_procs-1
@@ -1584,6 +1578,7 @@ subroutine create_Hypre_grid(MPI_COMM_WORLD, hypre_grid, ilower, iupper, &
   !end do
 
   call HYPRE_StructGridAssemble(hypre_grid, ierr)
+#endif
 
   return
 end subroutine create_Hypre_grid
@@ -1608,6 +1603,8 @@ subroutine create_Hypre_A_vector(MPI_COMM_WORLD, hypre_grid, hypre_A, &
   integer :: offsets(2,5)
   integer :: indicies(2)
   integer :: i, j
+
+#ifdef useExtSolver
 
   ! Define the geometry of the stencil.  Each represents a relative
   ! offset (in the index space).
@@ -1659,6 +1656,8 @@ subroutine create_Hypre_A_vector(MPI_COMM_WORLD, hypre_grid, hypre_A, &
   call HYPRE_StructMatrixAssemble(hypre_A, ierr)
 
   call MPI_Barrier(MPI_COMM_WORLD, ierr)
+
+#endif
 
   return
 end subroutine create_Hypre_A_vector
