@@ -44,6 +44,7 @@ Aronnax is
    examples
    aronnax_model
    input_generation
+   running_aronnax
    output_helpers
    verification
    benchmarks
