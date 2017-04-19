@@ -27,7 +27,7 @@ Initial conditions
 .. autofunction:: aronnax.depths
 
 
-Domain fields
+Coriolis fields
 ===============
 
 .. autofunction:: aronnax.f_plane_f_u
@@ -37,5 +37,9 @@ Domain fields
 .. autofunction:: aronnax.beta_plane_f_u
 
 .. autofunction:: aronnax.beta_plane_f_v
+
+
+Domain shape
+============
 
 .. autofunction:: aronnax.rectangular_pool
