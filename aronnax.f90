@@ -33,11 +33,9 @@
 program aronnax
   implicit none
 
-#ifdef useExtSolver
   include 'mpif.h'
 
   integer, parameter :: HYPRE_PARCSR = 5555
-#endif
 
   integer, parameter :: layerwise_input_length = 10000
   ! Resolution
@@ -108,10 +106,6 @@ program aronnax
   ! External pressure solver variables
   integer :: nProcX, nProcY
 
-#ifndef useExtSolver
-  ! if we don't call mpi, then this needs to be expicitly defined
-  integer :: MPI_COMM_WORLD
-#endif
 
   integer :: ierr
   integer :: num_procs, myid
@@ -119,10 +113,8 @@ program aronnax
   integer, dimension(:,:), allocatable :: ilower, iupper
   integer, dimension(:,:), allocatable :: jlower, jupper
   integer*8 :: hypre_grid
-#ifdef useExtSolver
   integer :: i, j
   integer   :: offsets(2,5)
-#endif
 
 
   ! Set default values here
@@ -136,9 +128,7 @@ program aronnax
 
   namelist /MODEL/ hmean, depthFile, H0, RedGrav
 
-#ifdef useExtSolver
   namelist /PRESSURE_SOLVER/ nProcX, nProcY
-#endif
 
   namelist /SPONGE/ spongeHTimeScaleFile, spongeUTimeScaleFile, &
       spongeVTimeScaleFile, spongeHfile, spongeUfile, spongeVfile
@@ -156,9 +146,7 @@ program aronnax
   open(unit=8, file="parameters.in", status='OLD', recl=80)
   read(unit=8, nml=NUMERICS)
   read(unit=8, nml=MODEL)
-#ifdef useExtSolver
   read(unit=8, nml=PRESSURE_SOLVER)
-#endif
   read(unit=8, nml=SPONGE)
   read(unit=8, nml=PHYSICS)
   read(unit=8, nml=GRID)
@@ -168,7 +156,6 @@ program aronnax
 
   ! optionally include the MPI code for parallel runs with external 
   ! pressure solver
-#ifdef useExtSolver
   call MPI_INIT(ierr)
   call MPI_COMM_RANK(MPI_COMM_WORLD, myid, ierr)
   call MPI_COMM_SIZE(MPI_COMM_WORLD, num_procs, ierr)
@@ -221,22 +208,11 @@ end if
 
   ! ! ! Initialize before setting coefficients
   ! call HYPRE_IJMatrixInitialize(A, ierr)
-
-  call Hypre_StructGridCreate(MPI_COMM_WORLD, 2, hypre_grid, ierr)
-
-  !do i = 0, num_procs-1
-  call HYPRE_StructGridSetExtents(hypre_grid, ilower(myid,:),iupper(myid,:), ierr)
-  !end do
-
-  call HYPRE_StructGridAssemble(hypre_grid, ierr)
+#ifdef useExtSolver
+  call create_Hypre_grid(MPI_COMM_WORLD, hypre_grid, ilower, iupper, &
+          num_procs, ierr)
 #endif
 
-#ifndef useExtSolver
-  myid = 0
-  num_procs = 1
-  allocate(ilower(0:num_procs-1, 2))
-  allocate(iupper(0:num_procs-1, 2))
-#endif
 
 
   allocate(h(0:nx+1, 0:ny+1, layers))
@@ -1643,6 +1619,27 @@ subroutine SOR_solver(a, etanew, etastar, freesurfFac, nx, ny, dt, &
 
   return
 end subroutine SOR_solver
+
+! ---------------------------------------------------------------------------
+
+subroutine create_Hypre_grid(MPI_COMM_WORLD, hypre_grid, ilower, iupper, &
+          num_procs, ierr)
+
+  integer, intent(in) :: MPI_COMM_WORLD
+  integer*8 :: hypre_grid
+  integer :: num_procs
+  integer :: ilower(0:num_procs-1,2), iupper(0:num_procs-1,2)
+
+  call Hypre_StructGridCreate(MPI_COMM_WORLD, 2, hypre_grid, ierr)
+
+  !do i = 0, num_procs-1
+  call HYPRE_StructGridSetExtents(hypre_grid, ilower(myid,:),iupper(myid,:), ierr)
+  !end do
+
+  call HYPRE_StructGridAssemble(hypre_grid, ierr)
+
+  return
+end subroutine create_Hypre_grid
 
 ! ---------------------------------------------------------------------------
 
