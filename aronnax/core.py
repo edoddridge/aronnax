@@ -9,6 +9,7 @@ This file contains all of the classes for the module.
 
 from contextlib import contextmanager
 import os.path as p
+import re
 
 import numpy as np
 from scipy.io import FortranFile
@@ -94,7 +95,7 @@ def interpret_raw_file(name, nx, ny, layers):
 
 ### General input construction helpers
 
-def write_initial_heights(grid, h_funcs):
+def depths(grid, *h_funcs):
     X,Y = np.meshgrid(grid.x, grid.y)
     initH = np.ones((len(h_funcs), grid.ny, grid.nx))
     for i, f in enumerate(h_funcs):
@@ -102,53 +103,124 @@ def write_initial_heights(grid, h_funcs):
             initH[i,:,:] = f
         else:
             initH[i,:,:] = f(X, Y)
-    with fortran_file('initH.bin', 'w') as f:
-        f.write_record(initH.astype(np.float64))
+    return initH
 
-def write_wind_x(grid, func):
+def wind_x(grid, func):
     X,Y = np.meshgrid(grid.xp1, grid.y)
     if isinstance(func, (int, long, float)):
         wind_x = np.ones(grid.ny, grid.nx+1) * func
     else:
         wind_x = func(X, Y)
-    with fortran_file('wind_x.bin', 'w') as f:
-        f.write_record(wind_x.astype(np.float64))
+    return wind_x
 
-def write_wind_y(grid, func):
+def wind_y(grid, func):
     X,Y = np.meshgrid(grid.y, grid.xp1)
     if isinstance(func, (int, long, float)):
         wind_y = np.ones(grid.ny+1, grid.nx) * func
     else:
         wind_y = func(X, Y)
-    with fortran_file('wind_y.bin', 'w') as f:
-        f.write_record(wind_y.astype(np.float64))
+    return wind_y
 
 ### Specific construction helpers
 
-def write_f_plane(nx, ny, coeff):
-    """Write files defining an f-plane approximation to the Coriolis force."""
-    with fortran_file('fu.bin', 'w') as f:
-        f.write_record(np.ones((nx+1, ny), dtype=np.float64) * coeff)
-    with fortran_file('fv.bin', 'w') as f:
-        f.write_record(np.ones((nx, ny+1), dtype=np.float64) * coeff)
+def f_plane_f_u(grid, coeff):
+    """Define an f-plane approximation to the Coriolis force (u location)."""
+    return np.ones((grid.nx+1, grid.ny), dtype=np.float64) * coeff
 
-def write_beta_plane(grid, f0, beta):
-    """Write files defining a beta-plane approximation to the Coriolis force."""
-    with fortran_file('fu.bin', 'w') as f:
-        _, Y = np.meshgrid(grid.xp1, grid.y)
-        fu = f0 + Y*beta
-        f.write_record(fu.astype(np.float64))
-    with fortran_file('fv.bin', 'w') as f:
-        _, Y = np.meshgrid(grid.x, grid.yp1)
-        fv = f0 + Y*beta
-        f.write_record(fv.astype(np.float64))
+def f_plane_f_v(grid, coeff):
+    """Define an f-plane approximation to the Coriolis force (v location)."""
+    return np.ones((grid.nx, grid.ny+1), dtype=np.float64) * coeff
 
-def write_rectangular_pool(nx, ny):
-    """Write the wet mask file for a maximal rectangular pool."""
-    with fortran_file('wetmask.bin', 'w') as f:
-        wetmask = np.ones((nx, ny), dtype=np.float64)
-        wetmask[ 0, :] = 0
-        wetmask[-1, :] = 0
-        wetmask[ :, 0] = 0
-        wetmask[ :,-1] = 0
-        f.write_record(wetmask)
+def beta_plane_f_u(grid, f0, beta):
+    """Define a beta-plane approximation to the Coriolis force (u location)."""
+    _, Y = np.meshgrid(grid.xp1, grid.y)
+    fu = f0 + Y*beta
+    return fu
+
+def beta_plane_f_v(grid, f0, beta):
+    """Define a beta-plane approximation to the Coriolis force (v location)."""
+    _, Y = np.meshgrid(grid.x, grid.yp1)
+    fv = f0 + Y*beta
+    return fv
+
+def rectangular_pool(grid):
+    """The wet mask file for a maximal rectangular pool."""
+    nx = grid.nx; ny = grid.ny
+    wetmask = np.ones((nx, ny), dtype=np.float64)
+    wetmask[ 0, :] = 0
+    wetmask[-1, :] = 0
+    wetmask[ :, 0] = 0
+    wetmask[ :,-1] = 0
+    return wetmask
+
+specifier_rx = re.compile(r':(.*):(.*)')
+
+ok_generators = {
+    'depths': depths,
+    'beta_plane_f_u': beta_plane_f_u,
+    'beta_plane_f_v': beta_plane_f_v,
+    'f_plane_f_u': f_plane_f_u,
+    'f_plane_f_v': f_plane_f_v,
+    'rectangular_pool': rectangular_pool,
+    'wind_x': wind_x,
+    'wind_y': wind_y,
+}
+
+def interpret_data_specifier(string):
+    m = re.match(specifier_rx, string)
+    if m:
+        name = m.group(1)
+        arg_str = m.group(2)
+        if len(arg_str) > 0:
+            args = [float(a) for a in arg_str.split(',')]
+        else:
+            args = []
+        return (ok_generators[name], args)
+    else:
+        return None
+
+def interpret_requested_data(requested_data, shape, config):
+    """Interpret a flexible input data specification.
+
+    The requested_data can be one of
+
+    - TODO A string giving the path to a NetCDF file, whose content
+      will be interpolated to match the desired grid specification;
+
+    - A string giving the path to a raw Fortran array file, whose
+      content will be used as-is;
+
+    - TODO A numpy array in memory, whose content will be used as-is,
+      or TODO interpolated; or
+
+    - A string specifying auto-generation of the required data, in this format:
+      :<generator_func_name>:arg1,arg2,...argn
+
+    - Python objects specifying auto-generation of the required data.
+      In this case, `interpret_requested_data` will construct the
+      appropriate `Grid` instance and pass it, together with the
+      `requested_data`, to an appropriate meta-generator for the array
+      shape of the needful datum (determined by the `shape` argument).
+      The exact API varies with the meta-generator, but they typically
+      interpret numbers as that constant and functions as an analytic
+      definition of the field, which is evaluated on appropriate numpy
+      arrays to produce the needed numerical values.
+    """
+    grid = Grid(config.getint("grid", "nx"), config.getint("grid", "ny"),
+                config.getfloat("grid", "dx"), config.getfloat("grid", "dy"))
+    if isinstance(requested_data, basestring):
+        candidate = interpret_data_specifier(requested_data)
+        if candidate is not None:
+            (func, args) = candidate
+            return func(grid, *args)
+        else:
+            # Assume Fortran file name
+            with fortran_file(requested_data, 'r') as f:
+                return f.read_reals(dtype=np.float64)
+    else:
+        if shape == "3d":
+            return depths(grid, *requested_data)
+        if shape == "2dx":
+            return wind_x(grid, requested_data)
+        else:
+            raise Exception("TODO implement custom generation for other input shapes")
