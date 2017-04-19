@@ -123,21 +123,21 @@ def wind_y(grid, func):
 
 ### Specific construction helpers
 
-def f_plane_u(grid, coeff):
+def f_plane_f_u(grid, coeff):
     """Define an f-plane approximation to the Coriolis force (u component)."""
     return np.ones((grid.nx+1, grid.ny), dtype=np.float64) * coeff
 
-def f_plane_v(grid, coeff):
+def f_plane_f_v(grid, coeff):
     """Define an f-plane approximation to the Coriolis force (v component)."""
     return np.ones((grid.nx, grid.ny+1), dtype=np.float64) * coeff
 
-def beta_plane_u(grid, f0, beta):
+def beta_plane_f_u(grid, f0, beta):
     """Define a beta-plane approximation to the Coriolis force (u component)."""
     _, Y = np.meshgrid(grid.xp1, grid.y)
     fu = f0 + Y*beta
     return fu
 
-def beta_plane_v(grid, f0, beta):
+def beta_plane_f_v(grid, f0, beta):
     """Define a beta-plane approximation to the Coriolis force (v component)."""
     _, Y = np.meshgrid(grid.x, grid.yp1)
     fv = f0 + Y*beta
@@ -157,10 +157,10 @@ specifier_rx = re.compile(r':(.*):(.*)')
 
 ok_generators = {
     'depths': depths,
-    'beta_plane_u': beta_plane_u,
-    'beta_plane_v': beta_plane_v,
-    'f_plane_u': f_plane_u,
-    'f_plane_v': f_plane_v,
+    'beta_plane_f_u': beta_plane_f_u,
+    'beta_plane_f_v': beta_plane_f_v,
+    'f_plane_f_u': f_plane_f_u,
+    'f_plane_f_v': f_plane_f_v,
     'rectangular_pool': rectangular_pool,
     'wind_x': wind_x,
     'wind_y': wind_y,
