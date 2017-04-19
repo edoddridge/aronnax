@@ -124,21 +124,21 @@ def wind_y(grid, func):
 ### Specific construction helpers
 
 def f_plane_f_u(grid, coeff):
-    """Define an f-plane approximation to the Coriolis force (u component)."""
+    """Define an f-plane approximation to the Coriolis force (u location)."""
     return np.ones((grid.nx+1, grid.ny), dtype=np.float64) * coeff
 
 def f_plane_f_v(grid, coeff):
-    """Define an f-plane approximation to the Coriolis force (v component)."""
+    """Define an f-plane approximation to the Coriolis force (v location)."""
     return np.ones((grid.nx, grid.ny+1), dtype=np.float64) * coeff
 
 def beta_plane_f_u(grid, f0, beta):
-    """Define a beta-plane approximation to the Coriolis force (u component)."""
+    """Define a beta-plane approximation to the Coriolis force (u location)."""
     _, Y = np.meshgrid(grid.xp1, grid.y)
     fu = f0 + Y*beta
     return fu
 
 def beta_plane_f_v(grid, f0, beta):
-    """Define a beta-plane approximation to the Coriolis force (v component)."""
+    """Define a beta-plane approximation to the Coriolis force (v location)."""
     _, Y = np.meshgrid(grid.x, grid.yp1)
     fv = f0 + Y*beta
     return fv
