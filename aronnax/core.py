@@ -193,8 +193,18 @@ def interpret_requested_data(requested_data, shape, config):
     - TODO A numpy array in memory, whose content will be used as-is,
       or TODO interpolated; or
 
-    - A specifier for auto-generating the required data, in this format:
+    - A string specifying auto-generation of the required data, in this format:
       :<generator_func_name>:arg1,arg2,...argn
+
+    - Python objects specifying auto-generation of the required data.
+      In this case, `interpret_requested_data` will construct the
+      appropriate `Grid` instance and pass it, together with the
+      `requested_data`, to an appropriate meta-generator for the array
+      shape of the needful datum (determined by the `shape` argument).
+      The exact API varies with the meta-generator, but they typically
+      interpret numbers as that constant and functions as an analytic
+      definition of the field, which is evaluated on appropriate numpy
+      arrays to produce the needed numerical values.
     """
     grid = Grid(config.getint("grid", "nx"), config.getint("grid", "ny"),
                 config.getfloat("grid", "dx"), config.getfloat("grid", "dy"))
