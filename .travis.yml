@@ -10,7 +10,7 @@ branches:
 before_install: 
   - sudo apt-get install gfortran
   - sudo apt-get install valgrind
-  - sudo apt-get isntall libhypre
+  - sudo apt-get install libhypre
   - pip install scipy
   - pip install sphinx
   - pip install sphinx_rtd_theme
