@@ -3,7 +3,7 @@ Input generators
 
 Aronnax includes a number of helper functions for generating input fields.
 These can be called with numerical arguments (generating very simple input fields)
-directory from the aronnax.conf file, using the syntax `:generator_name:arg1,arg2,...,argn`.
+directly from the aronnax.conf file, using the syntax `:generator_name:arg1,arg2,...,argn`.
 
 Grid
 =====
