@@ -10,6 +10,7 @@ branches:
 before_install: 
   - sudo apt-get install gfortran
   - sudo apt-get install valgrind
+  - sudo apt-get install openmpi-common
   - sudo apt-get install libhypre-dev
   - pip install scipy
   - pip install sphinx
