@@ -163,10 +163,10 @@ program aronnax
 
   if (num_procs .ne. nProcX * nProcY) then
     if (myid .eq. 0) then
-       write(17, "(A)"), "number of processors in run command must equal nProcX * nProcY - fix this and try again"
-       write(17, "(A, I0)"), 'num_procs = ', num_procs
-       write(17, "(A, I0)"), 'nProcX = ', nProcX
-       write(17, "(A, I0)"), 'nProcY = ', nProcY
+       write(17, "(A)") "number of processors in run command must equal nProcX * nProcY - fix this and try again"
+       write(17, "(A, I0)") 'num_procs = ', num_procs
+       write(17, "(A, I0)") 'nProcX = ', nProcX
+       write(17, "(A, I0)") 'nProcY = ', nProcY
     end if
     stop 1
   end if
@@ -236,7 +236,7 @@ program aronnax
     call read_input_fileH_2D(initEtaFile, eta, 0.d0, nx, ny)
     ! Check that depth is positive - it must be greater than zero
     if (minval(depth) .lt. 0) then
-      write(17, "(A)"), "Depths must be positive."
+      write(17, "(A)") "Depths must be positive."
       stop 1
     end if
   end if
@@ -1552,7 +1552,7 @@ subroutine SOR_solver(a, etanew, etastar, freesurfFac, nx, ny, dt, &
     end if
   end do
 
-  write(17, "(A, I0)"), 'Warning: maximum SOR iterations exceeded at time step ', n
+  write(17, "(A, I0)") 'Warning: maximum SOR iterations exceeded at time step ', n
 
   return
 end subroutine SOR_solver
@@ -1866,7 +1866,7 @@ subroutine enforce_depth_thickness_consistency(h, eta, depth, &
   end do
 
   if (maxval(abs(h_norming - 1d0)) .gt. thickness_error) then
-    write(17, "(A, F6.3, A)"), 'Inconsistency between h and eta: ', &
+    write(17, "(A, F6.3, A)") 'Inconsistency between h and eta: ', &
         maxval(abs(h_norming - 1d0))*100d0, '%'
   end if
 
@@ -1894,7 +1894,7 @@ subroutine enforce_minimum_layer_thickness(hnew, hmin, nx, ny, layers, n)
           hnew(i, j, k) = hmin
           counter = counter + 1
           if (counter .eq. 1) then
-            write(17, "(A, I0)"), &
+            write(17, "(A, I0)") &
                 "Layer thickness dropped below hmin at time step ", n
           end if
         end if
@@ -1922,7 +1922,7 @@ subroutine break_if_NaN(data, nx, ny, layers, n)
     do j = 1, ny
       do i = 1, nx
         if (data(i,j,k) .ne. data(i,j,k)) then
-          write(17, "(A, I0)"), "NaN detected at time step ", n
+          write(17, "(A, I0)") "NaN detected at time step ", n
           stop 1
         end if
       end do
