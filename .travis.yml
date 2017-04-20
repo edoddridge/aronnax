@@ -23,7 +23,7 @@ install:
 
 script:
   - gfortran -Werror aronnax.f90 -cpp
-  - ARONNAX_TEST_VALGRIND_ALL=1 pytest
+  - pytest
 
 after_success:
   - cd benchmarks
