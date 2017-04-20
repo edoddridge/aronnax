@@ -95,31 +95,31 @@ def interpret_raw_file(name, nx, ny, layers):
 
 ### General input construction helpers
 
-def depths(grid, *h_funcs):
+def tracer_point_variable_3d(grid, *h_funcs):
     X,Y = np.meshgrid(grid.x, grid.y)
-    initH = np.ones((len(h_funcs), grid.ny, grid.nx))
+    T_variable_3d = np.ones((len(h_funcs), grid.ny, grid.nx))
     for i, f in enumerate(h_funcs):
         if isinstance(f, (int, long, float)):
-            initH[i,:,:] = f
+            T_variable_3d[i,:,:] = f
         else:
-            initH[i,:,:] = f(X, Y)
-    return initH
+            T_variable_3d[i,:,:] = f(X, Y)
+    return T_variable_3d
 
-def wind_x(grid, func):
+def u_point_variable_2d(grid, func):
     X,Y = np.meshgrid(grid.xp1, grid.y)
     if isinstance(func, (int, long, float)):
-        wind_x = np.ones(grid.ny, grid.nx+1) * func
+        u_variable_2d = np.ones(grid.ny, grid.nx+1) * func
     else:
-        wind_x = func(X, Y)
-    return wind_x
+        u_variable_2d = func(X, Y)
+    return u_variable_2d
 
-def wind_y(grid, func):
+def v_point_variable_2d(grid, func):
     X,Y = np.meshgrid(grid.y, grid.xp1)
     if isinstance(func, (int, long, float)):
-        wind_y = np.ones(grid.ny+1, grid.nx) * func
+        v_varaible_2d = np.ones(grid.ny+1, grid.nx) * func
     else:
-        wind_y = func(X, Y)
-    return wind_y
+        v_varaible_2d = func(X, Y)
+    return v_varaible_2d
 
 ### Specific construction helpers
 
@@ -218,9 +218,9 @@ def interpret_requested_data(requested_data, shape, config):
             with fortran_file(requested_data, 'r') as f:
                 return f.read_reals(dtype=np.float64)
     else:
-        if shape == "3d":
-            return depths(grid, *requested_data)
-        if shape == "2dx":
-            return wind_x(grid, requested_data)
+        if shape == "3dT":
+            return tracer_point_variable_3d(grid, *requested_data)
+        if shape == "2dU":
+            return u_point_variable_2d(grid, requested_data)
         else:
             raise Exception("TODO implement custom generation for other input shapes")
