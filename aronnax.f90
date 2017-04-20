@@ -510,7 +510,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
     ! 2*pi in this calculation
 #else
     ! use the external pressure solver
-    call create_Hypre_A_vector(MPI_COMM_WORLD, hypre_grid, hypre_A, &
+    call create_Hypre_A_matrix(MPI_COMM_WORLD, hypre_grid, hypre_A, &
           a, nx, ny, freesurfFac, dt, ierr)
 #endif
 
@@ -1569,7 +1569,7 @@ end subroutine create_Hypre_grid
 
 ! ---------------------------------------------------------------------------
 
-subroutine create_Hypre_A_vector(MPI_COMM_WORLD, hypre_grid, hypre_A, &
+subroutine create_Hypre_A_matrix(MPI_COMM_WORLD, hypre_grid, hypre_A, &
           a, nx, ny, freesurfFac, dt, ierr)
   implicit none
 
@@ -1645,7 +1645,7 @@ subroutine create_Hypre_A_vector(MPI_COMM_WORLD, hypre_grid, hypre_A, &
 #endif
 
   return
-end subroutine create_Hypre_A_vector
+end subroutine create_Hypre_A_matrix
 
 ! ---------------------------------------------------------------------------
 
