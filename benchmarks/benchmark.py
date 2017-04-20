@@ -110,12 +110,15 @@ def benchmark_gaussian_bump_plot():
         plt.loglog(grid_points, run_time_Ofast*scale_factor,
             '-*', label='Aronnax run time -Ofast')
         plt.loglog(grid_points, run_time_hypre_test*scale_factor,
-            '-*', label='Aronnax run time Hypre')
+            '-*', label='Aronnax run time Hypre -O1')
         plt.loglog(grid_points, run_time_hypre*scale_factor,
             '-*', label='Aronnax run time Hypre -Ofast')
         scale = scale_factor * run_time_O1[3]/(grid_points[3]**3)
         plt.loglog(grid_points, scale*grid_points**3,
             ':', label='O(nx**3)', color='black', linewidth=0.5)
+        scale = scale_factor * run_time_hypre[3]/(grid_points[3]**2)
+        plt.loglog(grid_points, scale*grid_points**2,
+            ':', label='O(nx**2)', color='blue', linewidth=0.5)
         plt.legend()
         plt.xlabel('Resolution (grid cells on one side)')
         plt.ylabel('Avg time per integration step (ms)')
