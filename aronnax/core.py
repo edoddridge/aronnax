@@ -185,14 +185,18 @@ def rectangular_pool(grid):
 specifier_rx = re.compile(r':(.*):(.*)')
 
 ok_generators = {
-    'depths': depths,
+    'tracer_point_variable_2d': tracer_point_variable_2d,
+    'tracer_point_variable_3d': tracer_point_variable_3d,
+    'u_point_variable_2d': u_point_variable_2d,
+    'u_point_variable_3d': u_point_variable_3d,
+    'v_point_variable_2d': v_point_variable_2d,
+    'v_point_variable_3d': v_point_variable_3d,
     'beta_plane_f_u': beta_plane_f_u,
     'beta_plane_f_v': beta_plane_f_v,
     'f_plane_f_u': f_plane_f_u,
     'f_plane_f_v': f_plane_f_v,
     'rectangular_pool': rectangular_pool,
-    'wind_x': wind_x,
-    'wind_y': wind_y,
+
 }
 
 def interpret_data_specifier(string):
@@ -247,9 +251,17 @@ def interpret_requested_data(requested_data, shape, config):
             with fortran_file(requested_data, 'r') as f:
                 return f.read_reals(dtype=np.float64)
     else:
+        if shape == "2dT":
+            return tracer_point_variable_2d(grid, *requested_data)
         if shape == "3dT":
             return tracer_point_variable_3d(grid, *requested_data)
         if shape == "2dU":
             return u_point_variable_2d(grid, requested_data)
+        if shape == "3dU":
+            return u_point_variable_3d(grid, requested_data)
+        if shape == "2dV":
+            return v_point_variable_2d(grid, requested_data)
+        if shape == "3dV":
+            return v_point_variable_3d(grid, requested_data)
         else:
             raise Exception("TODO implement custom generation for other input shapes")
