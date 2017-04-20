@@ -15,7 +15,7 @@ before_install:
   - pip install sphinx_rtd_theme
   - pip install recommonmark
   - pip install matplotlib
-  - python setup.py install
+  - pip install -e .
 
 install: 
 
