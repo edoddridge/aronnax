@@ -389,7 +389,6 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   ! External solver variables
   integer   :: offsets(2,5)
   integer :: i, j ! loop variables
-  integer   ::  nentries, nvalues, stencil_indices(5)
   double precision, dimension(:), allocatable :: values
   integer   :: indicies(2)
   integer*8 :: hypre_grid
@@ -837,30 +836,18 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
   double precision, intent(in)    :: eps, rjac, freesurfFac, thickness_error
   double precision, intent(in)    :: g_vec(layers)
   integer,          intent(in)    :: nx, ny, layers, n
+  integer,          intent(in)    :: MPI_COMM_WORLD
+  integer,          intent(in)    :: myid, num_procs
+  integer,          intent(in)    :: ilower(0:num_procs-1,2)
+  integer,          intent(in)    :: iupper(0:num_procs-1,2)
+  integer*8,        intent(in)    :: hypre_grid
+  integer*8,        intent(in)    :: hypre_A
+  integer,          intent(out) :: ierr
 
   ! barotropic velocity components (for pressure solver)
   double precision :: ub(nx+1, ny)
   double precision :: vb(nx, ny+1)
   double precision :: etastar(0:nx+1, 0:ny+1)
-
-  ! External solver variables
-  integer   :: offsets(2,5)
-  integer*8 :: stencil
-  integer :: ierr
-  integer :: i, j ! loop variables
-  integer*8 :: hypre_grid
-  integer*8 :: hypre_A
-  integer*8 :: hypre_b
-  integer*8 :: hypre_x
-  integer*8 :: hypre_solver
-  integer*8 :: precond
-  integer   :: nentries, nvalues, stencil_indices(5)
-  double precision :: values(nx * ny)
-  double precision :: hypre_out(2)
-
-  integer :: MPI_COMM_WORLD
-  integer :: num_procs, myid
-  integer :: ilower(0:num_procs-1,2), iupper(0:num_procs-1,2)
 
   ! Calculate the barotropic velocities
   call calc_baro_u(ub, unew, hnew, eta, freesurfFac, nx, ny, layers)
@@ -881,11 +868,9 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
 #endif
 
 #ifdef useExtSolver
-
-  call Ext_solver(hypre_A, MPI_COMM_WORLD, num_procs, & 
+  call Ext_solver(MPI_COMM_WORLD, hypre_A, hypre_grid, num_procs, & 
     ilower, iupper, etastar, &
-    etanew, nx, ny, dt, hypre_grid, maxits, eps)
-
+    etanew, nx, ny, dt, maxits, eps, ierr)
 #endif
 
   etanew = etanew*wetmask
@@ -1561,12 +1546,13 @@ subroutine create_Hypre_grid(MPI_COMM_WORLD, hypre_grid, ilower, iupper, &
           num_procs, myid, ierr)
   implicit none
 
-  integer, intent(in) :: MPI_COMM_WORLD
-  integer*8 :: hypre_grid
-  integer :: num_procs
-  integer :: ilower(0:num_procs-1,2), iupper(0:num_procs-1,2)
-  integer :: myid
-  integer :: ierr
+  integer,   intent(in)  :: MPI_COMM_WORLD
+  integer*8, intent(out) :: hypre_grid
+  integer,   intent(in)  :: ilower(0:num_procs-1,2)
+  integer,   intent(in)  :: iupper(0:num_procs-1,2)
+  integer,   intent(in)  :: num_procs
+  integer,   intent(in)  :: myid
+  integer,   intent(out)  :: ierr
 
 #ifdef useExtSolver
   call Hypre_StructGridCreate(MPI_COMM_WORLD, 2, hypre_grid, ierr)
@@ -1587,15 +1573,16 @@ subroutine create_Hypre_A_vector(MPI_COMM_WORLD, hypre_grid, hypre_A, &
           a, nx, ny, freesurfFac, dt, ierr)
   implicit none
 
-  integer, intent(in) :: MPI_COMM_WORLD
-  integer*8 :: hypre_grid
-  integer*8 :: hypre_A
-  double precision, intent(in) :: a(5, nx, ny)
-  integer :: nx, ny
-  integer :: ierr
-  double precision, intent(in) :: freesurfFac
-  double precision, intent(in)    :: dt
+  integer,          intent(in)  :: MPI_COMM_WORLD
+  integer*8,        intent(in)  :: hypre_grid
+  integer*8,        intent(out) :: hypre_A
+  double precision, intent(in)  :: a(5, nx, ny)
+  integer,          intent(in)  :: nx, ny
+  double precision, intent(in)  :: freesurfFac
+  double precision, intent(in)  :: dt
+  integer,          intent(out) :: ierr
 
+  ! Hypre stencil for creating the A matrix
   integer*8 :: stencil
 
   integer :: offsets(2,5)
@@ -1662,37 +1649,35 @@ end subroutine create_Hypre_A_vector
 
 ! ---------------------------------------------------------------------------
 
-subroutine Ext_solver(hypre_A, MPI_COMM_WORLD, num_procs, & 
+subroutine Ext_solver(MPI_COMM_WORLD, hypre_A, hypre_grid, num_procs, & 
     ilower, iupper, etastar, &
-    etanew, nx, ny, dt, hypre_grid, maxits, eps)
-
+    etanew, nx, ny, dt, maxits, eps, ierr)
+  implicit none
   
-  double precision, intent(out)   :: etanew(0:nx+1, 0:ny+1)
-  double precision, intent(in)    :: dt
-  integer,          intent(in)    :: maxits
-  double precision, intent(in)    :: eps
-  integer,          intent(in)    :: nx, ny
+  integer,          intent(in)  :: MPI_COMM_WORLD
+  integer*8,        intent(in)  :: hypre_A
+  integer*8,        intent(in)  :: hypre_grid
+  integer,          intent(in)  :: num_procs
+  integer,          intent(in)  :: ilower(0:num_procs-1,2)
+  integer,          intent(in)  :: iupper(0:num_procs-1,2)
+  double precision, intent(in)  :: etastar(0:nx+1, 0:ny+1)
+  double precision, intent(out) :: etanew(0:nx+1, 0:ny+1)
+  integer,          intent(in)  :: nx, ny
+  double precision, intent(in)  :: dt
+  integer,          intent(in)  :: maxits
+  double precision, intent(in)  :: eps
+  integer,          intent(out) :: ierr
 
-  double precision :: etastar(0:nx+1, 0:ny+1)
-
-  ! External solver variables
-  ! integer   :: offsets(2,5)
-  ! integer*8 :: stencil
-  integer :: ierr
-  integer :: i, j ! loop variables
-  integer*8 :: hypre_grid
-  integer*8 :: hypre_A
-  integer*8 :: hypre_b
-  integer*8 :: hypre_x
-  integer*8 :: hypre_solver
-  integer*8 :: precond
-  integer   :: nentries, nvalues, stencil_indices(5)
+  integer          :: i, j ! loop variables
+  integer*8        :: hypre_b
+  integer*8        :: hypre_x
+  integer*8        :: hypre_solver
+  integer*8        :: precond
   double precision :: values(nx * ny)
-  double precision :: hypre_out(2)
+  ! A currently unused variable that can be used to
+  ! print information from the solver - see comments below.
+!  double precision :: hypre_out(2)
 
-  integer :: MPI_COMM_WORLD
-  integer :: num_procs, myid
-  integer :: ilower(0:num_procs-1,2), iupper(0:num_procs-1,2)
 
   ! wrap this code in preprocessing flags to allow the model to be compiled without the external library, if desired.
 #ifdef useExtSolver
@@ -1727,7 +1712,7 @@ subroutine Ext_solver(hypre_A, MPI_COMM_WORLD, num_procs, &
 
   call HYPRE_StructVectorAssemble(hypre_x, ierr)
 
-    ! now create the solver and solve the equation.
+  ! now create the solver and solve the equation.
   ! Choose the solver
   call HYPRE_StructPCGCreate(MPI_COMM_WORLD, hypre_solver, ierr)
 
@@ -1742,7 +1727,7 @@ subroutine Ext_solver(hypre_A, MPI_COMM_WORLD, num_procs, &
   call HYPRE_StructPCGSetPrintLevel(hypre_solver, 1 ); ! 2 will print each CG iteration
   call HYPRE_StructPCGSetLogging(hypre_solver, 1);
 
-  ! ! use an algebraic multigrid preconditioner
+  ! use an algebraic multigrid preconditioner
   call HYPRE_BoomerAMGCreate(precond, ierr)
   ! values taken from hypre library example number 5
   ! print less solver info since a preconditioner
