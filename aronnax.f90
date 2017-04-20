@@ -35,8 +35,6 @@ program aronnax
 
   include 'mpif.h'
 
-  integer, parameter :: HYPRE_PARCSR = 5555
-
   integer, parameter :: layerwise_input_length = 10000
   ! Resolution
   integer :: nx !< number of x grid points
