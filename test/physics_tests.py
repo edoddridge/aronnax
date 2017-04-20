@@ -6,6 +6,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import aronnax as aro
+import aronnax.driver as drv
+from aronnax.utils import working_directory
 
 self_path = p.dirname(p.abspath(__file__))
 root_path = p.dirname(self_path)
@@ -24,13 +26,37 @@ def f_plane_init_u_test(physics, aro_exec, dt):
     dx = 10e3
     dy = 10e3
 
-    grid = aro.Grid(nx,ny,dx,dy)
-
     rho0 = 1035.
 
-    with opt.working_directory(p.join(self_path, "physics_tests/f_plane_{0}_init_u".format(physics))):
-        opt.run_experiment(
-              write_f_plane_init_u_input, nx, ny, layers, aro_exec)
+    grid = aro.Grid(nx, ny, dx, dy)
+
+
+
+    def init_U():
+        init_u = np.zeros((grid.ny,grid.nx+1),dtype=np.float64)
+        init_u[int(grid.nx/2),int(grid.ny/2)] = 3e-5
+
+        plt.figure()
+        plt.pcolormesh(init_u)
+        plt.colorbar()
+        plt.savefig('init_u.png')
+        return init_u
+
+    def init_V():
+        init_v = np.zeros((ny,nx+1),dtype=np.float64)
+        init_v[int(nx/2),int(ny/2)] = 3e-5
+
+        plt.figure()
+        plt.pcolormesh(init_u)
+        plt.colorbar()
+        plt.savefig('init_u.png')
+        return init_v
+
+
+    with working_directory(p.join(self_path, "physics_tests/f_plane_{0}_init_u".format(physics))):
+        drv.simulate(#initHfile=400., 
+            #initUfile=init_U, initVfile=init_V, valgrind=False,
+                     nx=nx, ny=ny, exe="aronnax_test", dx=dx, dy=dy)
 
         hfiles = sorted(glob.glob("output/snap.h.*"))
         ufiles = sorted(glob.glob("output/snap.u.*"))
@@ -305,10 +331,10 @@ def write_f_plane_init_u_input(nx,ny,layers):
 
 
 if __name__ == '__main__':
-    f_plane_wind_test('red_grav', aro_exec = "aronnax_core",
-        nx = 200, ny = 200, dt = 600.)
-    f_plane_wind_test('n_layer', aro_exec = "aronnax_external_solver",
-        nx = 50, ny = 50, dt = 100.)
+    #f_plane_wind_test('red_grav', aro_exec = "aronnax_core",
+    #    nx = 200, ny = 200, dt = 600.)
+    #f_plane_wind_test('n_layer', aro_exec = "aronnax_external_solver",
+    #    nx = 50, ny = 50, dt = 100.)
 
     f_plane_init_u_test('red_grav', aro_exec = "aronnax_core", dt = 600.)
-    f_plane_init_u_test('n_layer', aro_exec = "aronnax_external_solver", dt = 100.)
+    #f_plane_init_u_test('n_layer', aro_exec = "aronnax_external_solver", dt = 100.)
