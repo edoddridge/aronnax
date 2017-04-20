@@ -222,6 +222,8 @@ def fortran_option_string(section, name, config):
 def generate_parameters_file(config):
     with open('parameters.in', 'w') as f:
         for section in config.sections():
+            if section not in sections:
+                raise Exception("Detected unexpected section name %s", section)
             f.write(' &')
             f.write(section.upper())
             f.write('\n')
