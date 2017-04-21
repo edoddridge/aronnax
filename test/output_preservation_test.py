@@ -99,7 +99,8 @@ def test_beta_plane_gyre_red_grav():
     xlen = 1e6
     ylen = 2e6
     nx = 10; ny = 10
-    grid = aro.Grid(nx, ny, xlen / nx, ylen / ny)
+    layers = 1
+    grid = aro.Grid(nx, ny, layers, xlen / nx, ylen / ny)
     def wind(_, Y):
         return 0.05 * (1 - np.cos(2*np.pi * Y/np.max(grid.y)))
     with working_directory(p.join(self_path, "beta_plane_gyre_red_grav")):
@@ -112,7 +113,8 @@ def test_beta_plane_gyre():
     xlen = 1e6
     ylen = 2e6
     nx = 10; ny = 10
-    grid = aro.Grid(nx, ny, xlen / nx, ylen / ny)
+    layers = 1
+    grid = aro.Grid(nx, ny, layers, xlen / nx, ylen / ny)
     def wind(_, Y):
         return 0.05 * (1 - np.cos(2*np.pi * Y/np.max(grid.y)))
     with working_directory(p.join(self_path, "beta_plane_gyre")):
