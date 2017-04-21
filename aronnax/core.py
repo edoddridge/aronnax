@@ -108,7 +108,9 @@ def tracer_point_variable_2d(grid, *h_funcs):
 
 def tracer_point_variable_3d(grid, *h_funcs):
     X,Y = np.meshgrid(grid.x, grid.y)
-    T_variable_3d = np.ones((len(h_funcs), grid.ny, grid.nx))
+    T_variable_3d = np.ones((grid.layers, grid.ny, grid.nx))
+    assert grid.layers == len(h_funcs)
+
     for i, f in enumerate(h_funcs):
         if isinstance(f, (int, long, float)):
             T_variable_3d[i,:,:] = f
@@ -126,7 +128,9 @@ def u_point_variable_2d(grid, func):
 
 def u_point_variable_3d(grid, func):
     X,Y = np.meshgrid(grid.xp1, grid.y)
-    u_variable_3d = np.ones((len(func), grid.ny, grid.nx+1))
+    u_variable_3d = np.ones((grid.layers, grid.ny, grid.nx+1))
+    assert grid.layers == len(func)
+
     for i, f in enumerate(func):
         if isinstance(func, (int, long, float)):
             u_variable_3d[i,:,:] = np.ones(grid.ny, grid.nx+1) * f
@@ -144,7 +148,9 @@ def v_point_variable_2d(grid, func):
 
 def v_point_variable_3d(grid, func):
     X,Y = np.meshgrid(grid.x, grid.yp1)
-    v_variable_3d = np.ones((len(func), grid.ny+1, grid.nx))
+    v_variable_3d = np.ones((grid.layers, grid.ny+1, grid.nx))
+    assert grid.layers == len(func)
+    
     for i, f in enumerate(func):
         if isinstance(func, (int, long, float)):
             v_variable_3d[i,:,:] = np.ones(grid.ny, grid.nx) * f
