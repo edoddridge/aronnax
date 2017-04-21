@@ -19,12 +19,13 @@ class Grid(object):
 
         :param int nx: Number of grid points in the x direction
         :param int ny: Number of grid points in the y direction
+        :param int layers: Number of active layers
         :param float dx: Grid size in x direction in metres
         :param float dy: Grid size in y direction in metres
         :param float x0: x value at lower left corner of domain
         :param float y0: y value at lower left corner of domain"""
 
-    def __init__(self,nx,ny,dx,dy,x0=0,y0=0):
+    def __init__(self,nx,ny,layers,dx,dy,x0=0,y0=0):
         """Instantiate a grid object for Aronnax."""
 
         # axes for vorticity points
@@ -38,6 +39,7 @@ class Grid(object):
         # Size
         self.nx = nx
         self.ny = ny
+        self.layers = layers
 
 @contextmanager
 def fortran_file(*args, **kwargs):
@@ -240,6 +242,7 @@ def interpret_requested_data(requested_data, shape, config):
       arrays to produce the needed numerical values.
     """
     grid = Grid(config.getint("grid", "nx"), config.getint("grid", "ny"),
+                config.getint("grid", "layers"),
                 config.getfloat("grid", "dx"), config.getfloat("grid", "dy"))
     if isinstance(requested_data, basestring):
         candidate = interpret_data_specifier(requested_data)
