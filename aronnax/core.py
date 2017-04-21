@@ -127,9 +127,9 @@ def u_point_variable_3d(grid, func):
     u_variable_3d = np.ones((len(func), grid.ny, grid.nx+1))
     for i, f in enumerate(func):
         if isinstance(func, (int, long, float)):
-            u_variable_3d[i,:,:] = np.ones(grid.ny, grid.nx+1) * func
+            u_variable_3d[i,:,:] = np.ones(grid.ny, grid.nx+1) * f
         else:
-            u_variable_3d[i,:,:] = func(X, Y)
+            u_variable_3d[i,:,:] = f(X, Y)
     return u_variable_3d
 
 def v_point_variable_2d(grid, func):
@@ -145,9 +145,9 @@ def v_point_variable_3d(grid, func):
     v_variable_3d = np.ones((len(func), grid.ny+1, grid.nx))
     for i, f in enumerate(func):
         if isinstance(func, (int, long, float)):
-            v_variable_3d[i,:,:] = np.ones(grid.ny, grid.nx) * func
+            v_variable_3d[i,:,:] = np.ones(grid.ny, grid.nx) * f
         else:
-            v_variable_3d[i,:,:] = func(X, Y)
+            v_variable_3d[i,:,:] = f(X, Y)
     return v_variable_3d
 
 ### Specific construction helpers
