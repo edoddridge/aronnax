@@ -183,11 +183,33 @@ def f_plane_wind_test(physics, aro_exec, nx, ny, dt):
 
     rho0 = 1035.
 
+    def wind_x(X, Y, *arg):
+        wind_x = np.zeros(Y.shape,dtype=np.float64)
+        wind_x[int(grid.nx/2),int(grid.ny/2)] = 1e-5
+
+        if not arg:
+            plt.figure()
+            plt.pcolormesh(X/1e3, Y/1e3, wind_x)
+            plt.colorbar()
+            plt.savefig('wind_x.png')
+        return wind_x
+
+    def wind_y(X, Y, *arg):
+        wind_y = np.zeros(X.shape,dtype=np.float64)
+        wind_y[int(grid.nx/2),int(grid.ny/2)] = 1e-5
+
+        if not arg:
+            plt.figure()
+            plt.pcolormesh(X/1e3, Y/1e3, wind_y)
+            plt.colorbar()
+            plt.savefig('wind_y.png')
+        return wind_y
+
 
     with opt.working_directory(p.join(self_path, "physics_tests/f_plane_{0}_wind".format(physics))):
-        drv.simulate(initHfile=[400.], 
-            zonalWindFile=[init_U], meridionalWindFile=[init_V], valgrind=False,
-                     nx=nx, ny=ny, exe="aronnax_test", dx=dx, dy=dy)
+        drv.simulate(initHfile=[400.],
+            zonalWindFile=wind_x, meridionalWindFile=wind_y, valgrind=False,
+                     nx=nx, ny=ny, exe="aronnax_test", dx=dx, dy=dy, dt=dt)
 
 
         hfiles = sorted(glob.glob("output/snap.h.*"))
