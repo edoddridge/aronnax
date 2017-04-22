@@ -337,7 +337,7 @@ def truncation_error(physics, aro_exec, nx, ny, grid_resolution):
 
 if __name__ == '__main__':
     truncation_error('red_grav', aro_exec = "aronnax_core",
-        nx = 200, ny = 200, 
+        nx = 100, ny = 100, 
         grid_resolution = [1e3, 5e3, 1e4, 5e4, 1e5, 5e5, 1e6])
 
     #f_plane_wind_test('red_grav', aro_exec = "aronnax_core",
