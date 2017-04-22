@@ -316,14 +316,17 @@ def f_plane_wind_test(physics, aro_exec, nx, ny, dx, dy, dt):
 def truncation_error(physics, aro_exec, nx, ny, grid_resolution):
 
     if isinstance(grid_resolution, (int, long, float)):
-        dt = 100.# 10./grid_resolution
-        error = f_plane_wind_test(physics, aro_exec, nx, ny, grid_resolution, dt)
+        dx = grid_resolution
+        dy = grid_resolution
+        dt = 50.# 10./grid_resolution
+
+        error = f_plane_wind_test(physics, aro_exec, nx, ny, dx, dy, dt)
     else:
         error = np.zeros(len(grid_resolution))
 
         for i, dx in enumerate(grid_resolution):
             dy = dx
-            dt = 10.# 10./dx
+            dt = 50.# 10./dx
 
             error[i] = f_plane_wind_test(physics, aro_exec, 
                 nx, ny, dx, dy, dt)
