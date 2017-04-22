@@ -32,24 +32,26 @@ def f_plane_init_u_test(physics, aro_exec, dt):
 
 
 
-    def init_U(X, Y):
+    def init_U(X, Y, *arg):
         init_u = np.zeros(Y.shape,dtype=np.float64)
         init_u[int(grid.nx/2),int(grid.ny/2)] = 3e-5
 
-        plt.figure()
-        plt.pcolormesh(init_u)
-        plt.colorbar()
-        plt.savefig('init_u.png')
+        if not arg:
+            plt.figure()
+            plt.pcolormesh(init_u)
+            plt.colorbar()
+            plt.savefig('init_u.png')
         return init_u
 
-    def init_V(X, Y):
+    def init_V(X, Y, *arg):
         init_v = np.zeros(X.shape,dtype=np.float64)
         init_v[int(nx/2),int(ny/2)] = 3e-5
 
-        plt.figure()
-        plt.pcolormesh(init_v)
-        plt.colorbar()
-        plt.savefig('init_v.png')
+        if not arg:
+            plt.figure()
+            plt.pcolormesh(init_v)
+            plt.colorbar()
+            plt.savefig('init_v.png')
         return init_v
 
 
@@ -108,8 +110,11 @@ def f_plane_init_u_test(physics, aro_exec, dt):
 
         opt.assert_volume_conservation(nx, ny, layers, 1e-9)
 
-        init_u = np.zeros((nx+1,ny),dtype=np.float64)
-        init_u[50,50] = 3e-5
+        X, Y = np.meshgrid(grid.xp1, grid.y)
+        init_u = init_U(X, Y, True)
+
+        X, Y = np.meshgrid(grid.x, grid.yp1)
+        init_v = init_V(X, Y, True)
 
         energy_expected[:] = 2. * (dx * dy * rho0 * np.sum(np.absolute(400. * ((init_u[1:,...] + init_u[:-1,...])**2)/4.)/2.))
 
