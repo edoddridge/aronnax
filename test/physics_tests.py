@@ -54,8 +54,8 @@ def f_plane_init_u_test(physics, aro_exec, dt):
 
 
     with working_directory(p.join(self_path, "physics_tests/f_plane_{0}_init_u".format(physics))):
-        drv.simulate(#initHfile=400., 
-            #initUfile=init_U, initVfile=init_V, valgrind=False,
+        drv.simulate(initHfile=[400.], 
+            initUfile=[init_U], initVfile=[init_V], valgrind=False,
                      nx=nx, ny=ny, exe="aronnax_test", dx=dx, dy=dy)
 
         hfiles = sorted(glob.glob("output/snap.h.*"))
