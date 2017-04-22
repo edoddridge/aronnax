@@ -19,6 +19,7 @@ class Grid(object):
 
         :param int nx: Number of grid points in the x direction
         :param int ny: Number of grid points in the y direction
+        :param int layers: Number of active layers
         :param float dx: Grid size in x direction in metres
         :param float dy: Grid size in y direction in metres
         :param float x0: x value at lower left corner of domain
@@ -26,7 +27,7 @@ class Grid(object):
 
         :returns: Grid object containing x and y axes for tracer and velocity points."""
 
-    def __init__(self,nx,ny,dx,dy,x0=0,y0=0):
+    def __init__(self,nx,ny,layers,dx,dy,x0=0,y0=0):
         """Instantiate a grid object for Aronnax."""
 
         # axes for vorticity points
@@ -40,6 +41,7 @@ class Grid(object):
         # Size
         self.nx = nx
         self.ny = ny
+        self.layers = layers
 
 @contextmanager
 def fortran_file(*args, **kwargs):
@@ -108,7 +110,9 @@ def tracer_point_variable_2d(grid, *h_funcs):
 
 def tracer_point_variable_3d(grid, *h_funcs):
     X,Y = np.meshgrid(grid.x, grid.y)
-    T_variable_3d = np.ones((len(h_funcs), grid.ny, grid.nx))
+    T_variable_3d = np.ones((grid.layers, grid.ny, grid.nx))
+    assert grid.layers == len(h_funcs)
+
     for i, f in enumerate(h_funcs):
         if isinstance(f, (int, long, float)):
             T_variable_3d[i,:,:] = f
@@ -126,12 +130,14 @@ def u_point_variable_2d(grid, func):
 
 def u_point_variable_3d(grid, func):
     X,Y = np.meshgrid(grid.xp1, grid.y)
-    u_variable_3d = np.ones((len(func), grid.ny, grid.nx+1))
+    u_variable_3d = np.ones((grid.layers, grid.ny, grid.nx+1))
+    assert grid.layers == len(func)
+
     for i, f in enumerate(func):
         if isinstance(func, (int, long, float)):
-            u_variable_3d[i,:,:] = np.ones(grid.ny, grid.nx+1) * func
+            u_variable_3d[i,:,:] = np.ones(grid.ny, grid.nx+1) * f
         else:
-            u_variable_3d[i,:,:] = func(X, Y)
+            u_variable_3d[i,:,:] = f(X, Y)
     return u_variable_3d
 
 def v_point_variable_2d(grid, func):
@@ -144,12 +150,14 @@ def v_point_variable_2d(grid, func):
 
 def v_point_variable_3d(grid, func):
     X,Y = np.meshgrid(grid.x, grid.yp1)
-    v_variable_3d = np.ones((len(func), grid.ny+1, grid.nx))
+    v_variable_3d = np.ones((grid.layers, grid.ny+1, grid.nx))
+    assert grid.layers == len(func)
+    
     for i, f in enumerate(func):
         if isinstance(func, (int, long, float)):
-            v_variable_3d[i,:,:] = np.ones(grid.ny, grid.nx) * func
+            v_variable_3d[i,:,:] = np.ones(grid.ny, grid.nx) * f
         else:
-            v_variable_3d[i,:,:] = func(X, Y)
+            v_variable_3d[i,:,:] = f(X, Y)
     return v_variable_3d
 
 ### Specific construction helpers
@@ -242,6 +250,7 @@ def interpret_requested_data(requested_data, shape, config):
       arrays to produce the needed numerical values.
     """
     grid = Grid(config.getint("grid", "nx"), config.getint("grid", "ny"),
+                config.getint("grid", "layers"),
                 config.getfloat("grid", "dx"), config.getfloat("grid", "dy"))
     if isinstance(requested_data, basestring):
         candidate = interpret_data_specifier(requested_data)
