@@ -209,7 +209,7 @@ def f_plane_wind_test(physics, aro_exec, nx, ny, dx, dy, dt):
         drv.simulate(initHfile=[400.],
             zonalWindFile=wind_x, meridionalWindFile=wind_y, valgrind=False,
                      nx=nx, ny=ny, exe=aro_exec, dx=dx, dy=dy, 
-                     dt=dt, dumpFreq=500*dt)
+                     dt=dt, dumpFreq=500*dt, nTimeSteps=10000)
 
 
         hfiles = sorted(glob.glob("output/snap.h.*"))
