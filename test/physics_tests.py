@@ -173,7 +173,7 @@ def f_plane_init_u_test(physics, aro_exec, dt):
 
 
 
-def f_plane_wind_test(physics, aro_exec, nx, ny, dx, dy, dt):
+def f_plane_wind_test(physics, aro_exec, nx, ny, dx, dy, dt, nTimeSteps):
 
     layers = 1
     grid = aro.Grid(nx, ny, layers, dx, dy)
@@ -209,7 +209,7 @@ def f_plane_wind_test(physics, aro_exec, nx, ny, dx, dy, dt):
         drv.simulate(initHfile=[400.],
             zonalWindFile=wind_x, meridionalWindFile=wind_y, valgrind=False,
                      nx=nx, ny=ny, exe=aro_exec, dx=dx, dy=dy, 
-                     dt=dt, dumpFreq=500*dt, nTimeSteps=10000)
+                     dt=dt, dumpFreq=500*dt, nTimeSteps=nTimeSteps)
 
 
         hfiles = sorted(glob.glob("output/snap.h.*"))
@@ -313,14 +313,15 @@ def f_plane_wind_test(physics, aro_exec, nx, ny, dx, dy, dt):
         return percent_error[-1]
 
 
-def truncation_error(physics, aro_exec, nx, ny, grid_resolution):
+def truncation_error(physics, aro_exec, nx, ny, grid_resolution, nTimeSteps):
 
     if isinstance(grid_resolution, (int, long, float)):
         dx = grid_resolution
         dy = grid_resolution
         dt = 50.# 10./grid_resolution
 
-        error = f_plane_wind_test(physics, aro_exec, nx, ny, dx, dy, dt)
+        error = f_plane_wind_test(physics, aro_exec, 
+            nx, ny, dx, dy, dt, nTimeSteps)
     else:
         error = np.zeros(len(grid_resolution))
 
@@ -329,7 +330,7 @@ def truncation_error(physics, aro_exec, nx, ny, grid_resolution):
             dt = 50.# 10./dx
 
             error[i] = f_plane_wind_test(physics, aro_exec, 
-                nx, ny, dx, dy, dt)
+                nx, ny, dx, dy, dt, nTimeSteps)
 
     with opt.working_directory(p.join(self_path, "physics_tests/f_plane_{0}_wind".format(physics))):
         plt.figure()
@@ -355,8 +356,16 @@ if __name__ == '__main__':
         grid_resolution = [1e3, 2e3, 3e3, 4e3, 5e3, 6e3, 7e3, 8e3, 9e3,
                             1e4, 2e4, 3e4, 4e4, 5e4, 6e4, 7e4, 8e4, 9e4,
                             1e5, 2e5, 3e5, 4e5, 5e5, 6e5, 7e5, 8e5, 9e5,
-                            1e6]
-                            )
+                            1e6],
+                            nTimeSteps = 10000)
+
+    truncation_error('n_layer', aro_exec = "aronnax_core",
+        nx = 100, ny = 100, 
+        grid_resolution = [1e3, 2e3, 3e3, 4e3, 5e3, 6e3, 7e3, 8e3, 9e3,
+                            1e4, 2e4, 3e4, 4e4, 5e4, 6e4, 7e4, 8e4, 9e4,
+                            1e5, 2e5, 3e5, 4e5, 5e5, 6e5, 7e5, 8e5, 9e5,
+                            1e6],
+                            nTimeSteps = 500)
 
     #f_plane_wind_test('red_grav', aro_exec = "aronnax_core",
     #    nx = 200, ny = 200, dt = 600.)
