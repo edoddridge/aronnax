@@ -172,13 +172,10 @@ def f_plane_init_u_test(physics, aro_exec, dt):
         plt.close()
 
 
-def f_plane_wind_test(physics, aro_exec, nx, ny, dt):
+
+def f_plane_wind_test(physics, aro_exec, nx, ny, dx, dy, dt):
 
     layers = 1
-
-    dx = 10e3
-    dy = 10e3
-
     grid = aro.Grid(nx, ny, layers, dx, dy)
 
     rho0 = 1035.
@@ -307,13 +304,7 @@ def f_plane_wind_test(physics, aro_exec, nx, ny, dt):
         plt.savefig('volume.png')
         plt.close()
 
+        percent_error = 100.*(momentum - momentum_expected)/momentum_expected
 
+        return percent_error[-1]
 
-if __name__ == '__main__':
-    f_plane_wind_test('red_grav', aro_exec = "aronnax_core",
-        nx = 200, ny = 200, dt = 600.)
-    #f_plane_wind_test('n_layer', aro_exec = "aronnax_external_solver",
-    #    nx = 50, ny = 50, dt = 100.)
-
-    # f_plane_init_u_test('red_grav', aro_exec = "aronnax_core", dt = 600.)
-    #f_plane_init_u_test('n_layer', aro_exec = "aronnax_external_solver", dt = 100.)
