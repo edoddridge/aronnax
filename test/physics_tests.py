@@ -179,14 +179,16 @@ def f_plane_wind_test(physics, aro_exec, nx, ny, dt):
     dx = 10e3
     dy = 10e3
 
-    grid = aro.Grid(nx,ny,dx,dy)
+    grid = aro.Grid(nx, ny, layers, dx, dy)
 
     rho0 = 1035.
 
 
     with opt.working_directory(p.join(self_path, "physics_tests/f_plane_{0}_wind".format(physics))):
-        opt.run_experiment(
-              write_f_plane_wind_input, nx, ny, layers, aro_exec)
+        drv.simulate(initHfile=[400.], 
+            zonalWindFile=[init_U], meridionalWindFile=[init_V], valgrind=False,
+                     nx=nx, ny=ny, exe="aronnax_test", dx=dx, dy=dy)
+
 
         hfiles = sorted(glob.glob("output/snap.h.*"))
         ufiles = sorted(glob.glob("output/snap.u.*"))
