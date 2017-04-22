@@ -337,6 +337,8 @@ def truncation_error(physics, aro_exec, nx, ny, grid_resolution):
         plt.ylabel('Percentage error')
         plt.xlabel('Horizontal grid spacing (m)')
         plt.savefig('error_by_resolution_semilogx.png',dpi=100)
+        filename = p.join(root_path, 'docs/error_by_resolution_semilogx.png')
+        plt.savefig(filename,dpi=150)
         plt.close()
 
         plt.figure()
