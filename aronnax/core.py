@@ -19,12 +19,13 @@ class Grid(object):
 
         :param int nx: Number of grid points in the x direction
         :param int ny: Number of grid points in the y direction
+        :param int layers: Number of active layers
         :param float dx: Grid size in x direction in metres
         :param float dy: Grid size in y direction in metres
         :param float x0: x value at lower left corner of domain
         :param float y0: y value at lower left corner of domain"""
 
-    def __init__(self,nx,ny,dx,dy,x0=0,y0=0):
+    def __init__(self,nx,ny,layers,dx,dy,x0=0,y0=0):
         """Instantiate a grid object for Aronnax."""
 
         # axes for vorticity points
@@ -38,6 +39,7 @@ class Grid(object):
         # Size
         self.nx = nx
         self.ny = ny
+        self.layers = layers
 
 @contextmanager
 def fortran_file(*args, **kwargs):
@@ -95,31 +97,66 @@ def interpret_raw_file(name, nx, ny, layers):
 
 ### General input construction helpers
 
-def depths(grid, *h_funcs):
+def tracer_point_variable_2d(grid, *h_funcs):
     X,Y = np.meshgrid(grid.x, grid.y)
-    initH = np.ones((len(h_funcs), grid.ny, grid.nx))
+    T_variable_2d = np.ones((grid.ny, grid.nx))
+    if isinstance(f, (int, long, float)):
+        T_variable_2d[:,:] = f
+    else:
+        T_variable_2d[:,:] = f(X, Y)
+    return T_variable_2d
+
+def tracer_point_variable_3d(grid, *h_funcs):
+    X,Y = np.meshgrid(grid.x, grid.y)
+    T_variable_3d = np.ones((grid.layers, grid.ny, grid.nx))
+    assert grid.layers == len(h_funcs)
+
     for i, f in enumerate(h_funcs):
         if isinstance(f, (int, long, float)):
-            initH[i,:,:] = f
+            T_variable_3d[i,:,:] = f
         else:
-            initH[i,:,:] = f(X, Y)
-    return initH
+            T_variable_3d[i,:,:] = f(X, Y)
+    return T_variable_3d
 
-def wind_x(grid, func):
+def u_point_variable_2d(grid, func):
     X,Y = np.meshgrid(grid.xp1, grid.y)
     if isinstance(func, (int, long, float)):
-        wind_x = np.ones(grid.ny, grid.nx+1) * func
+        u_variable_2d = np.ones(grid.ny, grid.nx+1) * func
     else:
-        wind_x = func(X, Y)
-    return wind_x
+        u_variable_2d = func(X, Y)
+    return u_variable_2d
 
-def wind_y(grid, func):
+def u_point_variable_3d(grid, func):
+    X,Y = np.meshgrid(grid.xp1, grid.y)
+    u_variable_3d = np.ones((grid.layers, grid.ny, grid.nx+1))
+    assert grid.layers == len(func)
+
+    for i, f in enumerate(func):
+        if isinstance(func, (int, long, float)):
+            u_variable_3d[i,:,:] = np.ones(grid.ny, grid.nx+1) * f
+        else:
+            u_variable_3d[i,:,:] = f(X, Y)
+    return u_variable_3d
+
+def v_point_variable_2d(grid, func):
     X,Y = np.meshgrid(grid.y, grid.xp1)
     if isinstance(func, (int, long, float)):
-        wind_y = np.ones(grid.ny+1, grid.nx) * func
+        v_varaible_2d = np.ones(grid.ny+1, grid.nx) * func
     else:
-        wind_y = func(X, Y)
-    return wind_y
+        v_varaible_2d = func(X, Y)
+    return v_varaible_2d
+
+def v_point_variable_3d(grid, func):
+    X,Y = np.meshgrid(grid.x, grid.yp1)
+    v_variable_3d = np.ones((grid.layers, grid.ny+1, grid.nx))
+    assert grid.layers == len(func)
+    
+    for i, f in enumerate(func):
+        if isinstance(func, (int, long, float)):
+            v_variable_3d[i,:,:] = np.ones(grid.ny, grid.nx) * f
+        else:
+            v_variable_3d[i,:,:] = f(X, Y)
+    return v_variable_3d
 
 ### Specific construction helpers
 
@@ -156,14 +193,18 @@ def rectangular_pool(grid):
 specifier_rx = re.compile(r':(.*):(.*)')
 
 ok_generators = {
-    'depths': depths,
+    'tracer_point_variable_2d': tracer_point_variable_2d,
+    'tracer_point_variable_3d': tracer_point_variable_3d,
+    'u_point_variable_2d': u_point_variable_2d,
+    'u_point_variable_3d': u_point_variable_3d,
+    'v_point_variable_2d': v_point_variable_2d,
+    'v_point_variable_3d': v_point_variable_3d,
     'beta_plane_f_u': beta_plane_f_u,
     'beta_plane_f_v': beta_plane_f_v,
     'f_plane_f_u': f_plane_f_u,
     'f_plane_f_v': f_plane_f_v,
     'rectangular_pool': rectangular_pool,
-    'wind_x': wind_x,
-    'wind_y': wind_y,
+
 }
 
 def interpret_data_specifier(string):
@@ -207,6 +248,7 @@ def interpret_requested_data(requested_data, shape, config):
       arrays to produce the needed numerical values.
     """
     grid = Grid(config.getint("grid", "nx"), config.getint("grid", "ny"),
+                config.getint("grid", "layers"),
                 config.getfloat("grid", "dx"), config.getfloat("grid", "dy"))
     if isinstance(requested_data, basestring):
         candidate = interpret_data_specifier(requested_data)
@@ -218,9 +260,17 @@ def interpret_requested_data(requested_data, shape, config):
             with fortran_file(requested_data, 'r') as f:
                 return f.read_reals(dtype=np.float64)
     else:
-        if shape == "3d":
-            return depths(grid, *requested_data)
-        if shape == "2dx":
-            return wind_x(grid, requested_data)
+        if shape == "2dT":
+            return tracer_point_variable_2d(grid, *requested_data)
+        if shape == "3dT":
+            return tracer_point_variable_3d(grid, *requested_data)
+        if shape == "2dU":
+            return u_point_variable_2d(grid, requested_data)
+        if shape == "3dU":
+            return u_point_variable_3d(grid, requested_data)
+        if shape == "2dV":
+            return v_point_variable_2d(grid, requested_data)
+        if shape == "3dV":
+            return v_point_variable_3d(grid, requested_data)
         else:
             raise Exception("TODO implement custom generation for other input shapes")
