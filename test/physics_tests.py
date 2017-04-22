@@ -28,7 +28,7 @@ def f_plane_init_u_test(physics, aro_exec, dt):
 
     rho0 = 1035.
 
-    grid = aro.Grid(nx, ny, dx, dy)
+    grid = aro.Grid(nx, ny, layers, dx, dy)
 
 
 
