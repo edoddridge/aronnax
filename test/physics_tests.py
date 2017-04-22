@@ -174,7 +174,7 @@ def f_plane_init_u_test(physics, aro_exec, dt):
 
 def f_plane_wind_test(physics, aro_exec, nx, ny, dt):
 
-    layers = 2
+    layers = 1
 
     dx = 10e3
     dy = 10e3
