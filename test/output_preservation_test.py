@@ -104,7 +104,7 @@ def test_beta_plane_gyre_red_grav():
     def wind(_, Y):
         return 0.05 * (1 - np.cos(2*np.pi * Y/np.max(grid.y)))
     with working_directory(p.join(self_path, "beta_plane_gyre_red_grav")):
-        drv.simulate(zonalWindFile=wind, valgrind=True,
+        drv.simulate(zonalWindFile=wind, valgrind=False,
                      nx=10, ny=10, exe="aronnax_test", dx=xlen/10, dy=ylen/10)
         assert_outputs_close(10, 10, 1, 2e-13)
         assert_volume_conservation(10, 10, 1, 1e-5)
@@ -118,7 +118,7 @@ def test_beta_plane_gyre():
     def wind(_, Y):
         return 0.05 * (1 - np.cos(2*np.pi * Y/np.max(grid.y)))
     with working_directory(p.join(self_path, "beta_plane_gyre")):
-        drv.simulate(zonalWindFile=wind, valgrind=True,
+        drv.simulate(zonalWindFile=wind, valgrind=False,
                      nx=10, ny=10, exe="aronnax_test", dx=xlen/10, dy=ylen/10)
         assert_outputs_close(10, 10, 2, 3e-12)
         assert_volume_conservation(10, 10, 2, 1e-5)
