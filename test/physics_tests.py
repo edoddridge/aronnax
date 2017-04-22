@@ -208,7 +208,8 @@ def f_plane_wind_test(physics, aro_exec, nx, ny, dx, dy, dt):
     with opt.working_directory(p.join(self_path, "physics_tests/f_plane_{0}_wind".format(physics))):
         drv.simulate(initHfile=[400.],
             zonalWindFile=wind_x, meridionalWindFile=wind_y, valgrind=False,
-                     nx=nx, ny=ny, exe="aronnax_test", dx=dx, dy=dy, dt=dt)
+                     nx=nx, ny=ny, exe=aro_exec, dx=dx, dy=dy, 
+                     dt=dt, dumpFreq=500*dt)
 
 
         hfiles = sorted(glob.glob("output/snap.h.*"))
@@ -322,7 +323,7 @@ def truncation_error(physics, aro_exec, nx, ny, grid_resolution):
 
         for i, dx in enumerate(grid_resolution):
             dy = dx
-            dt = 100.# 10./dx
+            dt = 10.# 10./dx
 
             error[i] = f_plane_wind_test(physics, aro_exec, 
                 nx, ny, dx, dy, dt)
