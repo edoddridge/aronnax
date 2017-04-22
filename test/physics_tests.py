@@ -32,8 +32,8 @@ def f_plane_init_u_test(physics, aro_exec, dt):
 
 
 
-    def init_U():
-        init_u = np.zeros((grid.ny,grid.nx+1),dtype=np.float64)
+    def init_U(X, Y):
+        init_u = np.zeros(Y.shape,dtype=np.float64)
         init_u[int(grid.nx/2),int(grid.ny/2)] = 3e-5
 
         plt.figure()
@@ -42,14 +42,14 @@ def f_plane_init_u_test(physics, aro_exec, dt):
         plt.savefig('init_u.png')
         return init_u
 
-    def init_V():
-        init_v = np.zeros((ny,nx+1),dtype=np.float64)
+    def init_V(X, Y):
+        init_v = np.zeros(X.shape,dtype=np.float64)
         init_v[int(nx/2),int(ny/2)] = 3e-5
 
         plt.figure()
-        plt.pcolormesh(init_u)
+        plt.pcolormesh(init_v)
         plt.colorbar()
-        plt.savefig('init_u.png')
+        plt.savefig('init_v.png')
         return init_v
 
 
