@@ -189,6 +189,7 @@ def f_plane_wind_test(physics, aro_exec, nx, ny, dx, dy, dt):
             plt.pcolormesh(X/1e3, Y/1e3, wind_x)
             plt.colorbar()
             plt.savefig('wind_x.png')
+            plt.close()
         return wind_x
 
     def wind_y(X, Y, *arg):
@@ -200,6 +201,7 @@ def f_plane_wind_test(physics, aro_exec, nx, ny, dx, dy, dt):
             plt.pcolormesh(X/1e3, Y/1e3, wind_y)
             plt.colorbar()
             plt.savefig('wind_y.png')
+            plt.close()
         return wind_y
 
 
@@ -272,6 +274,7 @@ def f_plane_wind_test(physics, aro_exec, nx, ny, dx, dy, dt):
         plt.xlabel('time step')
         plt.ylabel('momentum')
         plt.savefig('f_plane_momentum_test.png', dpi=150)
+        plt.close()
 
         plt.figure()
         plt.plot(model_iteration,momentum/momentum_expected)
@@ -308,3 +311,38 @@ def f_plane_wind_test(physics, aro_exec, nx, ny, dx, dy, dt):
 
         return percent_error[-1]
 
+
+def truncation_error(physics, aro_exec, nx, ny, grid_resolution):
+
+    if isinstance(grid_resolution, (int, long, float)):
+        dt = 100.# 10./grid_resolution
+        error = f_plane_wind_test(physics, aro_exec, nx, ny, grid_resolution, dt)
+    else:
+        error = np.zeros(len(grid_resolution))
+
+        for i, dx in enumerate(grid_resolution):
+            dy = dx
+            dt = 100.# 10./dx
+
+            error[i] = f_plane_wind_test(physics, aro_exec, 
+                nx, ny, dx, dy, dt)
+
+    with opt.working_directory(p.join(self_path, "physics_tests/f_plane_{0}_wind".format(physics))):
+        plt.figure()
+        plt.semilogx(grid_resolution,error)
+        plt.savefig('error_by_resolution.png',dpi=100)
+        plt.close()
+
+
+if __name__ == '__main__':
+    truncation_error('red_grav', aro_exec = "aronnax_core",
+        nx = 200, ny = 200, 
+        grid_resolution = [1e3, 5e3, 1e4, 5e4, 1e5, 5e5, 1e6])
+
+    #f_plane_wind_test('red_grav', aro_exec = "aronnax_core",
+    #    nx = 200, ny = 200, dt = 600.)
+    #f_plane_wind_test('n_layer', aro_exec = "aronnax_external_solver",
+    #    nx = 50, ny = 50, dt = 100.)
+
+    # f_plane_init_u_test('red_grav', aro_exec = "aronnax_core", dt = 600.)
+    #f_plane_init_u_test('n_layer', aro_exec = "aronnax_external_solver", dt = 100.)
