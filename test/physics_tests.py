@@ -305,6 +305,7 @@ def f_plane_wind_test(physics, aro_exec, nx, ny, dx, dy, dt, nTimeSteps):
         plt.plot(model_iteration,volume)
         plt.ylabel('Volume')
         plt.xlabel('timestep')
+        plt.ylim(np.min(volume), np.max(volume))
         plt.savefig('volume.png')
         plt.close()
 
