@@ -318,7 +318,7 @@ def truncation_error(physics, aro_exec, nx, ny, grid_resolution, integration_tim
 
     if isinstance(grid_resolution, (int, long, float)):
         dx = grid_resolution
-        dt = np.min([dx/10., 1000.])
+        dt = 300. #np.min([dx/10., 1000.])
 
         nTimeSteps = int(integration_time/dt)
 
@@ -328,7 +328,7 @@ def truncation_error(physics, aro_exec, nx, ny, grid_resolution, integration_tim
         error = np.zeros(len(grid_resolution))
 
         for i, dx in enumerate(grid_resolution):
-            dt = np.min([dx/10., 300.])
+            dt = 300. #np.min([dx/10., 300.])
 
             nTimeSteps = int(integration_time/dt)
 
@@ -359,16 +359,15 @@ if __name__ == '__main__':
         nx = 50, ny = 50, 
         grid_resolution = [3e3, 4e3, 5e3, 6e3, 7e3, 8e3, 9e3,
                             1e4, 2e4, 3e4, 4e4, 5e4, 6e4, 7e4, 8e4, 9e4,
-                            1e5, 2e5],
+                            1e5],
                             integration_time = 1*365*86400)
 
-    # truncation_error('n_layer', aro_exec = "aronnax_core",
-    #     nx = 50, ny = 50, 
-    #     grid_resolution = [1e3, 2e3, 3e3, 4e3, 5e3, 6e3, 7e3, 8e3, 9e3,
-    #                         1e4, 5e4,
-    #                         1e5,
-    #                         1e6],
-    #                         integration_time = 1*365*86400)
+    truncation_error('n_layer', aro_exec = "aronnax_core",
+        nx = 50, ny = 50, 
+        grid_resolution = [3e3, 6e3, 9e3,
+                            1e4, 5e4,
+                            1e5],
+                            integration_time = 0.1*365*86400)
 
     #f_plane_wind_test('red_grav', aro_exec = "aronnax_core",
     #    nx = 200, ny = 200, dt = 600.)
