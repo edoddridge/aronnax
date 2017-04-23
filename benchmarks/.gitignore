@@ -2,6 +2,7 @@ input/
 output/
 run_finished.txt
 layer thickness dropped below hmin.txt
-MIM
-MIM.f90
 *scaling.png
+**/times.pkl
+parameters.in
+aronnax-merged.conf
