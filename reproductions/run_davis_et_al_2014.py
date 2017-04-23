@@ -27,7 +27,7 @@ def run_davis_et_al_2014(nx,ny,layers,nTimeSteps,dt,simulation=None):
     xlen = 1530e3
     ylen = 2730e3
 
-        grid = mim.Grid(nx, ny, layers, xlen / nx, ylen / ny)
+    grid = mim.Grid(nx, ny, layers, xlen / nx, ylen / ny)
 
 
     def davis_wetmask(X, Y):
@@ -140,81 +140,6 @@ def run_davis_et_al_2014(nx,ny,layers,nTimeSteps,dt,simulation=None):
                 nx=nx, ny=ny, dx=dx, dy=dy, 
                 exe=aro_exec, 
                 dt=dt, dumpFreq=int(dt*nTimeSteps/50), nTimeSteps=nTimeSteps)
-
-
-# Generic function to run an experiment
-def run_experiment(write_input, nx, ny, layers, nTimeSteps,dt):
-    """ Run MIM"""
-
-
-    sub.check_call(["rm", "-rf", "input/"])
-    sub.check_call(["rm", "-rf", "output/"])
-    sub.check_call(["mkdir", "-p", "output/"])
-    sub.check_call(["rm", "-rf", "run_finished.txt"])
-
-    with opt.working_directory(root_path):
-        sub.check_call(["make", "MIM"])
-    with opt.working_directory("input"):
-        write_input(nx, ny, layers,nTimeSteps,dt)
-    tweak_parameters(nx, ny, layers,nTimeSteps, dt)
-
-    then = time.time()
-    sub.check_call([mim_exec])
-    print "MIM execution took", time.time() - then
-
-
-def tweak_parameters(nx, ny, layers, nTimeSteps,dt):
-    """Alter the parameters.in file"""
-    sub.check_call(
-        "cat parameters.in " +
-        "| sed 's/^ nx =.*,$/ nx = %d,/'" % (nx,) +
-        "| sed 's/^ ny =.*,$/ ny = %d,/'" % (ny,) +
-        "| sed 's/^ layers =.*,$/ layers = %d,/'" % (layers,) +
-        "| sed 's/^ nTimeSteps =.*,$/ nTimeSteps = %d,/'" % (nTimeSteps,) +
-        "| sed 's/^ dt =.*,$/ dt = %d,/'" % (dt,) +
-        "> parameters.new", shell=True)
-    sub.check_call(["mv", "parameters.new", "parameters.in"])
-
-
-# Creat the inputs
-def write_input_davis_et_al_2014(nx, ny, layers, nTimeSteps,dt):
-    assert layers == 1
-    xlen = 1530e3
-    ylen = 2730e3
-    grid = mim.Grid(nx, ny, xlen / nx, ylen / ny)
-
-    opt.write_f_plane(nx,ny, 14.5842318e-5) # Coriolis at North Pole
-    
-    write_davis_wetmask(grid)
-    write_davis_wind(grid)
-    write_davis_sponge(grid)
-    write_wind_time_series(nTimeSteps,dt)
-
-
-    with opt.fortran_file('initH.bin', 'w') as f:
-        X,Y = np.meshgrid(grid.x,grid.y)
-        initH = 400.*np.ones(X.shape)
-        f.write_record(initH.astype(np.float64))
-
-        plt.pcolormesh(X,Y,initH)
-        plt.colorbar()
-        plt.savefig('initH.png',dpi=150)
-        plt.close()
-
-
-
-
-def write_davis_wind(grid):
-    """produce the wind forcing files for a recreation of Davis et al. (2014)."""
-    
-
-
-
-
-
-
-
-
 
 
 
