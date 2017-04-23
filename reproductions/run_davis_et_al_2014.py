@@ -10,24 +10,24 @@ import sys
 sys.path.append(p.join(root_path, 'test'))
 sys.path.append(p.join(root_path, 'reproductions/Davis_et_al_2014'))
 
+import aronnax as aro
+import aronnax.driver as drv
+from aronnax.utils import working_directory
+
 import output_preservation_test as opt
 
-import subprocess as sub
 
-import MIMutils as mim
-
-import time
-
-mim_exec = p.join(root_path, "MIM")
 
 
 def run_davis_et_al_2014(nx,ny,layers,nTimeSteps,dt,simulation=None):
 
-    assert layers == 1
+    #assert layers == 1
     xlen = 1530e3
     ylen = 2730e3
+    dx = xlen / nx
+    dy = ylen / ny
 
-    grid = mim.Grid(nx, ny, layers, xlen / nx, ylen / ny)
+    grid = aro.Grid(nx, ny, layers, dx, dy)
 
 
     def davis_wetmask(X, Y):
@@ -46,16 +46,17 @@ def run_davis_et_al_2014(nx,ny,layers,nTimeSteps,dt,simulation=None):
         wetmask[-1, :] = 0
         wetmask[ :, 0] = 0
         wetmask[ :,-1] = 0
-        f.write_record(wetmask.astype(np.float64))
 
         plt.pcolormesh(X,Y,wetmask)
         plt.colorbar()
         plt.savefig('wetmask.png',dpi=150)
         plt.close()
 
+        return wetmask
+
     def davis_wind_x(X, Y):
         L = 750e3
-        
+
         r = np.sqrt((Y-1965e3)**2 + (X-765e3)**2)
         theta = np.arctan2(Y-1965e3,X-765e3)
 
@@ -70,12 +71,14 @@ def run_davis_et_al_2014(nx,ny,layers,nTimeSteps,dt,simulation=None):
         #np.sin(theta)*(r/(4.*L) + np.sin(np.pi*r/(2.*L))/4. + np.cos(np.pi*r/(2.*L))/(r*8.))
         #tau_x[Y<1200e3] = (tau_x[82,50]*(1950e3-Y[Y<1200e3]))/(r[Y<1200e3])**2
         #tau_x = tau_x/np.max(np.absolute(tau_x[:,:]))
-        f.write_record(tau_x.astype(np.float64))
 
         plt.pcolormesh(X,Y,tau_x,cmap='RdBu_r')
+        plt.axes().set_aspect('equal', 'datalim')
         plt.colorbar()
         plt.savefig('tau_x.png',bbox_inches='tight')
         plt.close()
+
+        return tau_x
 
     def davis_wind_y(X, Y):
         L = 750e3
@@ -94,23 +97,26 @@ def run_davis_et_al_2014(nx,ny,layers,nTimeSteps,dt,simulation=None):
         #     np.sin(np.pi*r/(2.*L))/4. + np.cos(np.pi*r/(2.*L))/(r*8.))
         # tau_y[Y<1250e3] = -tau_x[82,50]*(750e3 - X[Y<1250e3])/(r[Y<1250e3])**2
         # tau_y = tau_y/np.max(np.absolute(tau_y[:,-1]))
-        f.write_record(tau_y.astype(np.float64))
 
         plt.pcolormesh(X,Y,tau_y,cmap='RdBu_r')
+        plt.axes().set_aspect('equal', 'datalim')
         plt.colorbar()
         plt.savefig('tau_y.png',bbox_inches='tight')
         plt.close()
+
+        return tau_y
 
     def davis_sponge_h_timescale(X, Y):
         """Produce the sponge timescale file used by Davis et al. (2014)."""
         sponge_h_timescale = np.zeros(X.shape, dtype=np.float64)
         sponge_h_timescale[Y<300e3] = 1/(3.*30.*86400.) # six month relaxation time
-        f.write_record(sponge_h_timescale)
 
         plt.pcolormesh(X,Y,sponge_h_timescale*86400.*30.)
         plt.colorbar()
         plt.savefig('sponge_h_timescale.png',dpi=150)
         plt.close()
+
+        return sponge_h_timescale
 
     def davis_sponge_h(X, Y):
         """Produce the sponge timescale file used by Davis et al. (2014)."""
@@ -122,8 +128,10 @@ def run_davis_et_al_2014(nx,ny,layers,nTimeSteps,dt,simulation=None):
         plt.savefig('sponge_h.png',dpi=150)
         plt.close()
 
+        return sponge_h
 
-    def wind_time_series(nTimeSteps,dt):
+
+    def davis_wind_time_series(nTimeSteps,dt):
         wind_time_series = 0.02375*np.ones(nTimeSteps,dtype=np.float64)
         time = np.arange(nTimeSteps)*dt
         wind_time_series[(np.mod(time,12.*30.*86400.)>8.*30.*86400.)] = 0.0125
@@ -132,13 +140,16 @@ def run_davis_et_al_2014(nx,ny,layers,nTimeSteps,dt,simulation=None):
         plt.savefig('wind_time_series.png')
         plt.close()
 
+        return wind_time_series
+
     with opt.working_directory(p.join(self_path, 
         "Davis_et_al_2014/{0}".format(simulation))):
         drv.simulate(initHfile=[400.],
-                zonalWindFile=wind_x, meridionalWindFile=wind_y,
-                fUfile = [14.5842318e-5], fVfile = [14.5842318e-5],
+                zonalWindFile=davis_wind_x, meridionalWindFile=davis_wind_y,
+                wind_mag_time_series_file=davis_wind_time_series,
+                wetMaskFile=[davis_wetmask],
                 nx=nx, ny=ny, dx=dx, dy=dy, 
-                exe=aro_exec, 
+                exe='aronnax_core', 
                 dt=dt, dumpFreq=int(dt*nTimeSteps/50), nTimeSteps=nTimeSteps)
 
 
