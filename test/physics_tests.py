@@ -209,7 +209,7 @@ def f_plane_wind_test(physics, aro_exec, nx, ny, dx, dy, dt, nTimeSteps):
         drv.simulate(initHfile=[400.],
             zonalWindFile=wind_x, meridionalWindFile=wind_y, valgrind=False,
                      nx=nx, ny=ny, exe=aro_exec, dx=dx, dy=dy, 
-                     dt=dt, dumpFreq=500*dt, nTimeSteps=nTimeSteps)
+                     dt=dt, dumpFreq=int(dt*nTimeSteps/50), nTimeSteps=nTimeSteps)
 
 
         hfiles = sorted(glob.glob("output/snap.h.*"))
@@ -313,24 +313,26 @@ def f_plane_wind_test(physics, aro_exec, nx, ny, dx, dy, dt, nTimeSteps):
         return percent_error[-1]
 
 
-def truncation_error(physics, aro_exec, nx, ny, grid_resolution, nTimeSteps):
+def truncation_error(physics, aro_exec, nx, ny, grid_resolution, integration_time):
 
     if isinstance(grid_resolution, (int, long, float)):
         dx = grid_resolution
-        dy = grid_resolution
-        dt = 50.# 10./grid_resolution
+        dt = np.min([dx/10., 300.])
+
+        nTimeSteps = int(integration_time/dt)
 
         error = f_plane_wind_test(physics, aro_exec, 
-            nx, ny, dx, dy, dt, nTimeSteps)
+            nx, ny, dx, dx, dt, nTimeSteps)
     else:
         error = np.zeros(len(grid_resolution))
 
         for i, dx in enumerate(grid_resolution):
-            dy = dx
-            dt = 50.# 10./dx
+            dt = np.min([dx/10., 300.])
+
+            nTimeSteps = int(integration_time/dt)
 
             error[i] = f_plane_wind_test(physics, aro_exec, 
-                nx, ny, dx, dy, dt, nTimeSteps)
+                nx, ny, dx, dx, dt, nTimeSteps)
 
     with opt.working_directory(p.join(self_path, "physics_tests/f_plane_{0}_wind".format(physics))):
         plt.figure()
@@ -339,34 +341,33 @@ def truncation_error(physics, aro_exec, nx, ny, grid_resolution, nTimeSteps):
         plt.xlabel('Horizontal grid spacing (m)')
         plt.savefig('error_by_resolution_semilogx.png',dpi=100)
         filename = p.join(root_path, 
-            'docs/error_by_resolution_semilogx{0}.png'.format(physics))
-        plt.savefig(filename,dpi=150)
+            'docs/error_by_resolution_semilogx_{0}.png'.format(physics))
+        plt.savefig(filename, dpi=150, bbox_inchs='tight')
         plt.close()
 
         plt.figure()
         plt.plot(grid_resolution,error)
         plt.ylabel('Percentage error')
-        plt.xlabel('Horizontal grid spacing (km)')
-        plt.savefig('error_by_resolution.png',dpi=100)
+        plt.xlabel('Horizontal grid spacing (m)')
+        plt.savefig('error_by_resolution.png', dpi=100)
         plt.close()
 
 
 if __name__ == '__main__':
     truncation_error('red_grav', aro_exec = "aronnax_core",
-        nx = 100, ny = 100, 
+        nx = 50, ny = 50, 
         grid_resolution = [1e3, 2e3, 3e3, 4e3, 5e3, 6e3, 7e3, 8e3, 9e3,
                             1e4, 2e4, 3e4, 4e4, 5e4, 6e4, 7e4, 8e4, 9e4,
-                            1e5, 2e5, 3e5, 4e5, 5e5, 6e5, 7e5, 8e5, 9e5,
-                            1e6],
-                            nTimeSteps = 10000)
+                            1e5, 2e5],
+                            integration_time = 1*365*86400)
 
-    truncation_error('n_layer', aro_exec = "aronnax_core",
-        nx = 100, ny = 100, 
-        grid_resolution = [1e3, 2e3, 3e3, 4e3, 5e3, 6e3, 7e3, 8e3, 9e3,
-                            1e4, 2e4, 3e4, 4e4, 5e4, 6e4, 7e4, 8e4, 9e4,
-                            1e5, 2e5, 3e5, 4e5, 5e5, 6e5, 7e5, 8e5, 9e5,
-                            1e6],
-                            nTimeSteps = 500)
+    # truncation_error('n_layer', aro_exec = "aronnax_core",
+    #     nx = 50, ny = 50, 
+    #     grid_resolution = [1e3, 2e3, 3e3, 4e3, 5e3, 6e3, 7e3, 8e3, 9e3,
+    #                         1e4, 5e4,
+    #                         1e5,
+    #                         1e6],
+    #                         integration_time = 1*365*86400)
 
     #f_plane_wind_test('red_grav', aro_exec = "aronnax_core",
     #    nx = 200, ny = 200, dt = 600.)
