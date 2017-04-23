@@ -338,6 +338,7 @@ def truncation_error(physics, aro_exec, nx, ny, grid_resolution, integration_tim
     with opt.working_directory(p.join(self_path, "physics_tests/f_plane_{0}_wind".format(physics))):
         plt.figure()
         plt.semilogx(grid_resolution,error)
+        plt.hlines(0, grid_resolution[0], grid_resolution[-1])
         plt.ylabel('Percentage error')
         plt.xlabel('Horizontal grid spacing (m)')
         plt.savefig('error_by_resolution_semilogx.png',dpi=100)
@@ -348,6 +349,7 @@ def truncation_error(physics, aro_exec, nx, ny, grid_resolution, integration_tim
 
         plt.figure()
         plt.plot(grid_resolution,error)
+        plt.hlines(0, grid_resolution[0], grid_resolution[-1])
         plt.ylabel('Percentage error')
         plt.xlabel('Horizontal grid spacing (m)')
         plt.savefig('error_by_resolution.png', dpi=100)
