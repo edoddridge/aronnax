@@ -267,14 +267,17 @@ def f_plane_wind_test(physics, aro_exec, nx, ny, dx, dy, dt, nTimeSteps):
         opt.assert_volume_conservation(nx, ny, layers, 1e-9)
 
         plt.figure()
-        plt.plot(model_iteration, momentum_expected, '-', alpha=1,
+        plt.plot(model_iteration*dt/(30*86400), momentum_expected, '-', alpha=1,
                 label='Expected momentum')
-        plt.plot(model_iteration, momentum, '-', alpha=1,
+        plt.plot(model_iteration*dt/(30*86400), momentum, '-', alpha=1,
                 label='simulated momentum')
         plt.legend()
-        plt.xlabel('time step')
-        plt.ylabel('momentum')
+        plt.xlabel('Time (months)')
+        plt.ylabel('Momentum')
         plt.savefig('f_plane_momentum_test.png', dpi=150)
+        filename = p.join(root_path, 
+            'docs/f_plane_momentum_test_{0}.png'.format(physics))
+        plt.savefig(filename, dpi=150, bbox_inchs='tight')
         plt.close()
 
         plt.figure()
@@ -290,7 +293,7 @@ def f_plane_wind_test(physics, aro_exec, nx, ny, dx, dy, dt, nTimeSteps):
             100.*(momentum - momentum_expected)/momentum_expected)
         plt.xlabel('timestep')
         plt.ylabel('percent error')
-        plt.ylim(-2,2)
+        plt.ylim(-4,4)
         plt.savefig('percent_error.png')
         plt.close()
 
@@ -370,6 +373,12 @@ if __name__ == '__main__':
                             1e4, 5e4,
                             1e5],
                             integration_time = 0.1*365*86400)
+
+    # run two experiments again to produce temporal evolution curves
+    f_plane_wind_test('red_grav', aro_exec="aronnax_core", 
+                nx=50, ny=50, dx=8e3, dy=8e3, dt=300., nTimeSteps=105120)
+    f_plane_wind_test('n_layer', aro_exec="aronnax_core", 
+                nx=50, ny=50, dx=8e3, dy=8e3, dt=300., nTimeSteps=105120)
 
     #f_plane_wind_test('red_grav', aro_exec = "aronnax_core",
     #    nx = 200, ny = 200, dt = 600.)
