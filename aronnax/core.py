@@ -23,7 +23,16 @@ class Grid(object):
         :param float dx: Grid size in x direction in metres
         :param float dy: Grid size in y direction in metres
         :param float x0: x value at lower left corner of domain
-        :param float y0: y value at lower left corner of domain"""
+        :param float y0: y value at lower left corner of domain
+
+
+        The initialisation call returns an object containing each of the input parameters as well as the following arrays:
+
+        - x: x locations of the tracer points
+        - y: y locations of the tracer points
+        - xp1: x locations of the u velocity points and vorticity points
+        - yp1: y locations of the v velocity points and vorticity points
+        """
 
     def __init__(self,nx,ny,layers,dx,dy,x0=0,y0=0):
         """Instantiate a grid object for Aronnax."""
@@ -40,6 +49,10 @@ class Grid(object):
         self.nx = nx
         self.ny = ny
         self.layers = layers
+
+        # Grid spacing
+        self.dx = dx
+        self.dy = dy
 
 @contextmanager
 def fortran_file(*args, **kwargs):
