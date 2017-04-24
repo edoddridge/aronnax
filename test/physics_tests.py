@@ -372,13 +372,13 @@ if __name__ == '__main__':
         grid_resolution = [3e3, 6e3, 9e3,
                             1e4, 5e4,
                             1e5],
-                            integration_time = 0.1*365*86400)
+                            integration_time = 90*86400)
 
     # run two experiments again to produce temporal evolution curves
     f_plane_wind_test('red_grav', aro_exec="aronnax_core", 
                 nx=50, ny=50, dx=8e3, dy=8e3, dt=300., nTimeSteps=105120)
     f_plane_wind_test('n_layer', aro_exec="aronnax_core", 
-                nx=50, ny=50, dx=8e3, dy=8e3, dt=300., nTimeSteps=105120)
+                nx=50, ny=50, dx=8e3, dy=8e3, dt=300., nTimeSteps=1051)
 
     #f_plane_wind_test('red_grav', aro_exec = "aronnax_core",
     #    nx = 200, ny = 200, dt = 600.)
