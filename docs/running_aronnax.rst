@@ -16,5 +16,8 @@ As described above, it is possible to define functions that can be passed to `ar
           return 0.05 * (1 - np.cos(2*np.pi * Y/np.max(grid.y)))
 
       with working_directory(p.join(self_path, "beta_plane_gyre_red_grav")):
-          drv.simulate(zonalWindFile=wind, valgrind=True,
+          drv.simulate(zonalWindFile=wind,
                        nx=10, ny=10, exe="aronnax_test", dx=xlen/10, dy=ylen/10)
+
+.. warning::
+    Running Aronnax in a directory that contains outputs from a previous simulation will result in those outputs being overwritten. The model does not currently check if the intended outputs directory is empty.
