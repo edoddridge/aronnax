@@ -27,6 +27,8 @@ directly from the aronnax.conf file, using the syntax `:generator_name:arg1,arg2
 
 .. autofunction:: aronnax.v_point_variable_3d
 
+.. autofunction:: aronnax.time_series_variable
+
 
 
 

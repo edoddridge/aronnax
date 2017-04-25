@@ -172,13 +172,13 @@ def v_point_variable_3d(grid, func):
     return v_variable_3d
 
 def time_series_variable(nTimeSteps, dt, func):
-    '''Input generator for a time series variable. The function can depend on the number of timesteps, `nTimeSteps`, and the timestep, `dt`.'''
-    
+    '''Input generator for a time series variable. If passed a function, then that function can depend on the number of timesteps, `nTimeSteps`, and the timestep, `dt`.'''
+
     ts_variable = np.zeros((nTimeSteps))
 
     for i, f in enumerate(func):
         if isinstance(func, (int, long, float)):
-            ts_variable[:] = np.ones(nTimeSteps, grid.nx) * f
+            ts_variable[:] = np.ones(nTimeSteps) * f
         else:
             ts_variable[:] = f(nTimeSteps, dt)
     return ts_variable
