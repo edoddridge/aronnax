@@ -43,6 +43,7 @@ Aronnax is
 
    examples
    aronnax_model
+   installation
    input_generation
    running_aronnax
    output_helpers
