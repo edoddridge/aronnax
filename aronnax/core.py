@@ -171,6 +171,18 @@ def v_point_variable_3d(grid, func):
             v_variable_3d[i,:,:] = f(X, Y)
     return v_variable_3d
 
+def time_series_variable(nTimeSteps, dt, func):
+    '''Input generator for a time series variable. The function can depend on the number of timesteps, `nTimeSteps`, and the timestep, `dt`.'''
+    
+    ts_variable = np.zeros((nTimeSteps))
+
+    for i, f in enumerate(func):
+        if isinstance(func, (int, long, float)):
+            ts_variable[:] = np.ones(nTimeSteps, grid.nx) * f
+        else:
+            ts_variable[:] = f(nTimeSteps, dt)
+    return ts_variable
+
 ### Specific construction helpers
 
 def f_plane_f_u(grid, coeff):
@@ -212,6 +224,7 @@ ok_generators = {
     'u_point_variable_3d': u_point_variable_3d,
     'v_point_variable_2d': v_point_variable_2d,
     'v_point_variable_3d': v_point_variable_3d,
+    'time_series_variable': time_series_variable,
     'beta_plane_f_u': beta_plane_f_u,
     'beta_plane_f_v': beta_plane_f_v,
     'f_plane_f_u': f_plane_f_u,
@@ -285,5 +298,9 @@ def interpret_requested_data(requested_data, shape, config):
             return v_point_variable_2d(grid, requested_data)
         if shape == "3dV":
             return v_point_variable_3d(grid, requested_data)
+        if shape == "time":
+            nTimeSteps = config.getint("numerics", "nTimeSteps")
+            dt = config.getfloat("numerics", "dt")
+            return time_series_variable(nTimeSteps, dt, requested_data)
         else:
             raise Exception("TODO implement custom generation for other input shapes")
