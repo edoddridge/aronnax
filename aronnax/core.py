@@ -152,7 +152,7 @@ def u_point_variable_3d(grid, func):
     return u_variable_3d
 
 def v_point_variable_2d(grid, func):
-    X,Y = np.meshgrid(grid.y, grid.xp1)
+    X,Y = np.meshgrid(grid.x, grid.yp1)
     if isinstance(func, (int, long, float)):
         v_varaible_2d = np.ones(grid.ny+1, grid.nx) * func
     else:
