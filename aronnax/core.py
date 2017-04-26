@@ -23,7 +23,16 @@ class Grid(object):
         :param float dx: Grid size in x direction in metres
         :param float dy: Grid size in y direction in metres
         :param float x0: x value at lower left corner of domain
-        :param float y0: y value at lower left corner of domain"""
+        :param float y0: y value at lower left corner of domain
+
+
+        The initialisation call returns an object containing each of the input parameters as well as the following arrays:
+
+        - x: x locations of the tracer points
+        - y: y locations of the tracer points
+        - xp1: x locations of the u velocity points and vorticity points
+        - yp1: y locations of the v velocity points and vorticity points
+        """
 
     def __init__(self,nx,ny,layers,dx,dy,x0=0,y0=0):
         """Instantiate a grid object for Aronnax."""
@@ -40,6 +49,10 @@ class Grid(object):
         self.nx = nx
         self.ny = ny
         self.layers = layers
+
+        # Grid spacing
+        self.dx = dx
+        self.dy = dy
 
 @contextmanager
 def fortran_file(*args, **kwargs):
@@ -100,10 +113,10 @@ def interpret_raw_file(name, nx, ny, layers):
 def tracer_point_variable_2d(grid, *h_funcs):
     X,Y = np.meshgrid(grid.x, grid.y)
     T_variable_2d = np.ones((grid.ny, grid.nx))
-    if isinstance(f, (int, long, float)):
-        T_variable_2d[:,:] = f
+    if isinstance(h_funcs, (int, long, float)):
+        T_variable_2d[:,:] = h_funcs
     else:
-        T_variable_2d[:,:] = f(X, Y)
+        T_variable_2d[:,:] = h_funcs(X, Y)
     return T_variable_2d
 
 def tracer_point_variable_3d(grid, *h_funcs):
@@ -132,14 +145,14 @@ def u_point_variable_3d(grid, func):
     assert grid.layers == len(func)
 
     for i, f in enumerate(func):
-        if isinstance(func, (int, long, float)):
+        if isinstance(f, (int, long, float)):
             u_variable_3d[i,:,:] = np.ones(grid.ny, grid.nx+1) * f
         else:
             u_variable_3d[i,:,:] = f(X, Y)
     return u_variable_3d
 
 def v_point_variable_2d(grid, func):
-    X,Y = np.meshgrid(grid.y, grid.xp1)
+    X,Y = np.meshgrid(grid.x, grid.yp1)
     if isinstance(func, (int, long, float)):
         v_varaible_2d = np.ones(grid.ny+1, grid.nx) * func
     else:
@@ -152,11 +165,26 @@ def v_point_variable_3d(grid, func):
     assert grid.layers == len(func)
     
     for i, f in enumerate(func):
-        if isinstance(func, (int, long, float)):
+        if isinstance(f, (int, long, float)):
             v_variable_3d[i,:,:] = np.ones(grid.ny, grid.nx) * f
         else:
             v_variable_3d[i,:,:] = f(X, Y)
     return v_variable_3d
+
+def time_series_variable(nTimeSteps, dt, func):
+    '''Input generator for a time series variable. If passed a function, then that function can depend on the number of timesteps, `nTimeSteps`, and the timestep, `dt`.'''
+
+    ts_variable = np.zeros((nTimeSteps))
+
+    # number of elements in `func` list should always be one
+    assert len(func) == 1
+
+    for i, f in enumerate(func):
+        if isinstance(f, (int, long, float)):
+            ts_variable[:] = np.ones(nTimeSteps) * f
+        else:
+            ts_variable[:] = f(nTimeSteps, dt)
+    return ts_variable
 
 ### Specific construction helpers
 
@@ -199,6 +227,7 @@ ok_generators = {
     'u_point_variable_3d': u_point_variable_3d,
     'v_point_variable_2d': v_point_variable_2d,
     'v_point_variable_3d': v_point_variable_3d,
+    'time_series_variable': time_series_variable,
     'beta_plane_f_u': beta_plane_f_u,
     'beta_plane_f_v': beta_plane_f_v,
     'f_plane_f_u': f_plane_f_u,
@@ -272,5 +301,9 @@ def interpret_requested_data(requested_data, shape, config):
             return v_point_variable_2d(grid, requested_data)
         if shape == "3dV":
             return v_point_variable_3d(grid, requested_data)
+        if shape == "time":
+            nTimeSteps = config.getint("numerics", "nTimeSteps")
+            dt = config.getfloat("numerics", "dt")
+            return time_series_variable(nTimeSteps, dt, requested_data)
         else:
             raise Exception("TODO implement custom generation for other input shapes")

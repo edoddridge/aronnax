@@ -49,7 +49,7 @@ program aronnax
   ! Free surface (eta)
   double precision, dimension(:,:),   allocatable :: eta
   ! Bathymetry
-  character(30) :: depthFile
+  character(60) :: depthFile
   double precision, dimension(:,:),   allocatable :: depth
   double precision :: H0 ! default depth in no file specified
   ! Grid
@@ -59,8 +59,8 @@ program aronnax
   double precision, dimension(:,:),   allocatable :: fu
   double precision, dimension(:,:),   allocatable :: fv
   ! File names to read them from
-  character(30) :: fUfile, fVfile
-  character(30) :: wetMaskFile
+  character(60) :: fUfile, fVfile
+  character(60) :: wetMaskFile
   ! Numerics
   double precision :: dt
   double precision :: au, ar, botDrag
@@ -82,7 +82,7 @@ program aronnax
   double precision, dimension(:,:),   allocatable :: base_wind_x
   double precision, dimension(:,:),   allocatable :: base_wind_y
   logical :: DumpWind
-  character(30) :: wind_mag_time_series_file
+  character(60) :: wind_mag_time_series_file
   double precision, dimension(:),     allocatable :: wind_mag_time_series
   ! Sponge regions
   double precision, dimension(:,:,:), allocatable :: spongeHTimeScale
@@ -91,15 +91,15 @@ program aronnax
   double precision, dimension(:,:,:), allocatable :: spongeH
   double precision, dimension(:,:,:), allocatable :: spongeU
   double precision, dimension(:,:,:), allocatable :: spongeV
-  character(30) :: spongeHTimeScaleFile
-  character(30) :: spongeUTimeScaleFile
-  character(30) :: spongeVTimeScaleFile
-  character(30) :: spongeHfile
-  character(30) :: spongeUfile
-  character(30) :: spongeVfile
+  character(60) :: spongeHTimeScaleFile
+  character(60) :: spongeUTimeScaleFile
+  character(60) :: spongeVTimeScaleFile
+  character(60) :: spongeHfile
+  character(60) :: spongeUfile
+  character(60) :: spongeVfile
   ! Main input files
-  character(30) :: initUfile, initVfile, initHfile, initEtaFile
-  character(30) :: zonalWindFile, meridionalWindFile
+  character(60) :: initUfile, initVfile, initHfile, initEtaFile
+  character(60) :: zonalWindFile, meridionalWindFile
 
   ! External pressure solver variables
   integer :: nProcX, nProcY
@@ -2103,7 +2103,7 @@ end subroutine derivatives_of_the_depth_field
 subroutine read_input_fileH(name, array, default, nx, ny, layers)
   implicit none
 
-  character(30), intent(in) :: name
+  character(60), intent(in) :: name
   double precision, intent(out) :: array(0:nx+1, 0:ny+1, layers)
   double precision, intent(in) :: default(layers)
   integer, intent(in) :: nx, ny, layers
@@ -2131,7 +2131,7 @@ end subroutine read_input_fileH
 subroutine read_input_fileH_2D(name, array, default, nx, ny)
   implicit none
 
-  character(30), intent(in) :: name
+  character(60), intent(in) :: name
   double precision, intent(out) :: array(0:nx+1, 0:ny+1)
   double precision, intent(in) :: default
   integer, intent(in) :: nx, ny
@@ -2156,7 +2156,7 @@ end subroutine read_input_fileH_2D
 subroutine read_input_fileU(name, array, default, nx, ny, layers)
   implicit none
 
-  character(30), intent(in) :: name
+  character(60), intent(in) :: name
   double precision, intent(out) :: array(0:nx+1, 0:ny+1, layers)
   double precision, intent(in) :: default
   integer, intent(in) :: nx, ny, layers
@@ -2181,7 +2181,7 @@ end subroutine read_input_fileU
 subroutine read_input_fileV(name, array, default, nx, ny, layers)
   implicit none
 
-  character(30), intent(in) :: name
+  character(60), intent(in) :: name
   double precision, intent(out) :: array(0:nx+1, 0:ny+1, layers)
   double precision, intent(in) :: default
   integer, intent(in) :: nx, ny, layers
@@ -2206,7 +2206,7 @@ end subroutine read_input_fileV
 subroutine read_input_file_time_series(name, array, default, nTimeSteps)
   implicit none
 
-  character(30), intent(in) :: name
+  character(60), intent(in) :: name
   double precision, intent(out) :: array(nTimeSteps)
   double precision, intent(in) :: default
   integer, intent(in) :: nTimeSteps
