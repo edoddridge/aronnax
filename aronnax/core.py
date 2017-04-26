@@ -176,6 +176,8 @@ def time_series_variable(nTimeSteps, dt, func):
 
     ts_variable = np.zeros((nTimeSteps))
 
+    # number of elements in `func` list should always be one
+    assert len(func) == 1
 
     for i, f in enumerate(func):
         if isinstance(f, (int, long, float)):
