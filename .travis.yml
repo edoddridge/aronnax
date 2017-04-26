@@ -11,6 +11,7 @@ before_install:
   - sudo apt-get install gfortran
   - sudo apt-get install valgrind
   - sudo apt-get install libopenmpi-dev
+  - sudo apt-get install openmpi-bin
   - sudo apt-get install libhypre-dev
   - pip install scipy
   - pip install sphinx
