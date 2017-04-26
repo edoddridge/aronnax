@@ -121,7 +121,6 @@ def run_davis_et_al_2014(nx,ny,layers,nTimeSteps,dt,simulation=None):
     def davis_sponge_h(X, Y):
         """Produce the sponge timescale file used by Davis et al. (2014)."""
         sponge_h = 400.*np.ones(X.shape, dtype=np.float64)
-        f.write_record(sponge_h)
 
         plt.pcolormesh(X,Y,sponge_h)
         plt.colorbar()
@@ -135,7 +134,7 @@ def run_davis_et_al_2014(nx,ny,layers,nTimeSteps,dt,simulation=None):
         wind_time_series = 0.02375*np.ones(nTimeSteps,dtype=np.float64)
         time = np.arange(nTimeSteps)*dt
         wind_time_series[(np.mod(time,12.*30.*86400.)>8.*30.*86400.)] = 0.0125
-        f.write_record(wind_time_series)
+
         plt.plot(time/86400./30/12, wind_time_series)
         plt.savefig('wind_time_series.png')
         plt.close()
@@ -146,8 +145,10 @@ def run_davis_et_al_2014(nx,ny,layers,nTimeSteps,dt,simulation=None):
         "Davis_et_al_2014/{0}".format(simulation))):
         drv.simulate(initHfile=[400.],
                 zonalWindFile=davis_wind_x, meridionalWindFile=davis_wind_y,
-                wind_mag_time_series_file=davis_wind_time_series,
-                wetMaskFile=[davis_wetmask],
+                wind_mag_time_series_file=[davis_wind_time_series],
+                wetMaskFile=davis_wetmask,
+                spongeHTimeScaleFile=[davis_sponge_h_timescale],
+                spongeHFile=[davis_sponge_h],
                 nx=nx, ny=ny, dx=dx, dy=dy, 
                 exe='aronnax_core', 
                 dt=dt, dumpFreq=int(dt*nTimeSteps/50), nTimeSteps=nTimeSteps)
