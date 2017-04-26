@@ -16,6 +16,7 @@ before_install:
   - pip install recommonmark
   - pip install matplotlib
   - pip install pytest-cov
+  - pip install python-coveralls
   - pip install -e .
 
 install: 
