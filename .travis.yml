@@ -15,20 +15,24 @@ before_install:
   - pip install sphinx_rtd_theme
   - pip install recommonmark
   - pip install matplotlib
+  - pip install pytest-cov
+  - pip install python-coveralls
   - pip install -e .
 
 install: 
 
 script:
   - gfortran -Wall -Werror aronnax.f90
-  - ARONNAX_TEST_VALGRIND_ALL=1 pytest
+  - ARONNAX_TEST_VALGRIND_ALL=1 pytest --cov=aronnax
 
 after_success:
+  - coveralls
   - cd benchmarks
   - python benchmark.py
   - cd ../docs
   - make html
   - cd _build/html
+
 
 deploy:
   provider: pages
