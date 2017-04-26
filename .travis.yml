@@ -28,7 +28,8 @@ script:
   - ARONNAX_TEST_VALGRIND_ALL=1 pytest --cov=aronnax
 
 after_success:
-  - coveralls
+  - gcov aronnax.gcda > coverage.json
+  - coveralls --merge=coverage.json
   - cd benchmarks
   - python benchmark.py
   - cd ../docs
