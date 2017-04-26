@@ -166,6 +166,7 @@ program aronnax
        write(17, "(A, I0)") 'nProcX = ', nProcX
        write(17, "(A, I0)") 'nProcY = ', nProcY
     end if
+    call clean_stop(0, .FALSE.)
     stop 1
   end if
 
@@ -235,6 +236,7 @@ program aronnax
     ! Check that depth is positive - it must be greater than zero
     if (minval(depth) .lt. 0) then
       write(17, "(A)") "Depths must be positive."
+      call clean_stop(0, .FALSE.)
       stop 1
     end if
   end if
@@ -278,7 +280,7 @@ program aronnax
       hypre_grid)
 
   ! Finalize MPI
-  call MPI_Finalize(ierr)
+  call clean_stop(nTimeSteps, .TRUE.)
 
   stop
 end program aronnax
@@ -1906,6 +1908,7 @@ subroutine break_if_NaN(data, nx, ny, layers, n)
       do i = 1, nx
         if (data(i,j,k) .ne. data(i,j,k)) then
           write(17, "(A, I0)") "NaN detected at time step ", n
+          call clean_stop(n, .FALSE.)
           stop 1
         end if
       end do
@@ -2311,3 +2314,26 @@ subroutine write_output(h, u, v, eta, wind_x, wind_y, &
   end if
   return
 end subroutine write_output
+
+!-----------------------------------------------------------------
+!> finalise MPI and then stop the model
+
+subroutine clean_stop(n, happy)
+  implicit none
+
+  integer, intent(in) :: n
+  logical, intent(in) :: happy
+  
+  integer :: ierr
+
+  if (happy) then
+    call MPI_Finalize(ierr)
+    stop
+  else
+    print "(A, I0, A, I0, A)", "Unexpected termination at time step ", n
+    call MPI_Finalize(ierr)
+    stop 1
+  end if
+
+  return
+end subroutine clean_stop
