@@ -15,7 +15,7 @@ before_install:
   - pip install sphinx_rtd_theme
   - pip install recommonmark
   - pip install matplotlib
-  - pip install python-coveralls
+  - pip install pytest-cov
   - pip install -e .
 
 install: 
