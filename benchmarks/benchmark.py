@@ -93,7 +93,7 @@ def benchmark_gaussian_bump_save(grid_points):
                 exe=aro_exec, initHfile=[bump, lambda X, Y: 2000. - bump(X, Y)], nx=nx, ny=nx)
 
         with open("times.pkl", "w") as f:
-                pkl.dump((grid_points, run_time_O1, run_time_Ofast, 
+                pkl.dump((grid_points, run_time_O1, run_time_Ofast,
                           run_time_hypre_test, run_time_hypre), f)
 
 
@@ -101,7 +101,7 @@ def benchmark_gaussian_bump_save(grid_points):
 def benchmark_gaussian_bump_plot():
     with working_directory(p.join(self_path, "beta_plane_bump")):
         with open("times.pkl", "r") as f:
-            (grid_points, run_time_O1, run_time_Ofast, 
+            (grid_points, run_time_O1, run_time_Ofast,
                       run_time_hypre_test, run_time_hypre) = pkl.load(f)
 
         plt.figure()

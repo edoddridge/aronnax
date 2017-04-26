@@ -152,7 +152,7 @@ program aronnax
   read(unit=8, nml=EXTERNAL_FORCING)
   close(unit=8)
 
-  ! optionally include the MPI code for parallel runs with external 
+  ! optionally include the MPI code for parallel runs with external
   ! pressure solver
   call MPI_INIT(ierr)
   call MPI_COMM_RANK(MPI_COMM_WORLD, myid, ierr)
@@ -276,11 +276,11 @@ program aronnax
       nx, ny, layers, RedGrav, DumpWind, &
       MPI_COMM_WORLD, myid, num_procs, ilower, iupper, &
       hypre_grid)
-  
+
   ! Finalize MPI
   call MPI_Finalize(ierr)
 
-  stop 
+  stop
 end program aronnax
 
 ! ------------------------------ Primary routine ----------------------------
@@ -464,7 +464,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
     print "(A, I0)", 'iupper (x) = ', iupper(:,1)
     print "(A, I0)", 'iupper (y) = ', iupper(:,2)
   end if
-  
+
   last_report_time = start_time
 
   nwrite = int(dumpFreq/dt)
@@ -516,7 +516,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
 
     ! Check that the supplied free surface anomaly and layer
     ! thicknesses are consistent with the supplied depth field.
-    ! If they are not, then scale the layer thicknesses to make 
+    ! If they are not, then scale the layer thicknesses to make
     ! them consistent.
     call enforce_depth_thickness_consistency(h, eta, depth, &
         freesurfFac, thickness_error, nx, ny, layers)
@@ -815,7 +815,7 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
     dx, dy, wetmask, hfacW, hfacS, dt, &
     maxits, eps, rjac, freesurfFac, thickness_error, &
     g_vec, nx, ny, layers, n, &
-     MPI_COMM_WORLD, myid, num_procs, ilower, iupper, & 
+     MPI_COMM_WORLD, myid, num_procs, ilower, iupper, &
      hypre_grid, hypre_A, ierr)
 
   implicit none
@@ -868,7 +868,7 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
 #endif
 
 #ifdef useExtSolver
-  call Ext_solver(MPI_COMM_WORLD, hypre_A, hypre_grid, num_procs, & 
+  call Ext_solver(MPI_COMM_WORLD, hypre_A, hypre_grid, num_procs, &
     ilower, iupper, etastar, &
     etanew, nx, ny, dt, maxits, eps, ierr)
 #endif
@@ -1606,9 +1606,9 @@ subroutine create_Hypre_A_matrix(MPI_COMM_WORLD, hypre_grid, hypre_A, &
 
 
   call HYPRE_StructStencilCreate(2, 5, stencil, ierr)
-  ! this gives a 2D, 5 point stencil centred around the grid point of interest.   
+  ! this gives a 2D, 5 point stencil centred around the grid point of interest.
   do i = 0, 4
-    call HYPRE_StructStencilSetElement(stencil, i, offsets(:,i+1),ierr) 
+    call HYPRE_StructStencilSetElement(stencil, i, offsets(:,i+1),ierr)
   end do
 
   call HYPRE_StructMatrixCreate(MPI_COMM_WORLD, hypre_grid, stencil, hypre_A, ierr)
@@ -1620,20 +1620,20 @@ subroutine create_Hypre_A_matrix(MPI_COMM_WORLD, hypre_grid, hypre_A, &
       indicies(1) = i
       indicies(2) = j
 
-      call HYPRE_StructMatrixSetValues(hypre_A, & 
-          indicies, 1, 0, & 
+      call HYPRE_StructMatrixSetValues(hypre_A, &
+          indicies, 1, 0, &
           a(5,i,j) - freesurfFac/dt**2, ierr)
-      call HYPRE_StructMatrixSetValues(hypre_A, & 
-          indicies, 1, 1, & 
+      call HYPRE_StructMatrixSetValues(hypre_A, &
+          indicies, 1, 1, &
           a(3,i,j), ierr)
-      call HYPRE_StructMatrixSetValues(hypre_A, & 
-          indicies, 1, 2, & 
+      call HYPRE_StructMatrixSetValues(hypre_A, &
+          indicies, 1, 2, &
           a(1,i,j), ierr)
-      call HYPRE_StructMatrixSetValues(hypre_A, & 
-          indicies, 1, 3, & 
+      call HYPRE_StructMatrixSetValues(hypre_A, &
+          indicies, 1, 3, &
           a(4,i,j), ierr)
-      call HYPRE_StructMatrixSetValues(hypre_A, & 
-          indicies, 1, 4, & 
+      call HYPRE_StructMatrixSetValues(hypre_A, &
+          indicies, 1, 4, &
           a(2,i,j), ierr)
     end do
   end do
@@ -1649,11 +1649,11 @@ end subroutine create_Hypre_A_matrix
 
 ! ---------------------------------------------------------------------------
 
-subroutine Ext_solver(MPI_COMM_WORLD, hypre_A, hypre_grid, num_procs, & 
+subroutine Ext_solver(MPI_COMM_WORLD, hypre_A, hypre_grid, num_procs, &
     ilower, iupper, etastar, &
     etanew, nx, ny, dt, maxits, eps, ierr)
   implicit none
-  
+
   integer,          intent(in)  :: MPI_COMM_WORLD
   integer*8,        intent(in)  :: hypre_A
   integer*8,        intent(in)  :: hypre_grid
@@ -1695,7 +1695,7 @@ subroutine Ext_solver(MPI_COMM_WORLD, hypre_A, hypre_grid, num_procs, &
   end do
 
   do i = 0, num_procs-1
-    call HYPRE_StructVectorSetBoxValues(hypre_b, & 
+    call HYPRE_StructVectorSetBoxValues(hypre_b, &
       ilower(i,:), iupper(i,:), values, ierr)
   end do
 
@@ -1706,7 +1706,7 @@ subroutine Ext_solver(MPI_COMM_WORLD, hypre_A, hypre_grid, num_procs, &
   call HYPRE_StructVectorInitialize(hypre_x, ierr)
 
   do i = 0, num_procs-1
-    call HYPRE_StructVectorSetBoxValues(hypre_x, & 
+    call HYPRE_StructVectorSetBoxValues(hypre_x, &
       ilower(i,:), iupper(i,:), values, ierr)
   end do
 
@@ -1731,18 +1731,18 @@ subroutine Ext_solver(MPI_COMM_WORLD, hypre_A, hypre_grid, num_procs, &
   call HYPRE_BoomerAMGCreate(precond, ierr)
   ! values taken from hypre library example number 5
   ! print less solver info since a preconditioner
-  call HYPRE_BoomerAMGSetPrintLevel(precond, 1, ierr); 
+  call HYPRE_BoomerAMGSetPrintLevel(precond, 1, ierr);
   ! Falgout coarsening
-  call HYPRE_BoomerAMGSetCoarsenType(precond, 6, ierr) 
+  call HYPRE_BoomerAMGSetCoarsenType(precond, 6, ierr)
   ! old defaults
-  call HYPRE_BoomerAMGSetOldDefault(precond, ierr) 
-  ! SYMMETRIC G-S/Jacobi hybrid relaxation 
-  call HYPRE_BoomerAMGSetRelaxType(precond, 6, ierr)     
+  call HYPRE_BoomerAMGSetOldDefault(precond, ierr)
+  ! SYMMETRIC G-S/Jacobi hybrid relaxation
+  call HYPRE_BoomerAMGSetRelaxType(precond, 6, ierr)
   ! Sweeeps on each level
-  call HYPRE_BoomerAMGSetNumSweeps(precond, 1, ierr)  
+  call HYPRE_BoomerAMGSetNumSweeps(precond, 1, ierr)
   ! conv. tolerance
-  call HYPRE_BoomerAMGSetTol(precond, 0.0d0, ierr)     
-  ! do only one iteration! 
+  call HYPRE_BoomerAMGSetTol(precond, 0.0d0, ierr)
+  ! do only one iteration!
   call HYPRE_BoomerAMGSetMaxIter(precond, 1, ierr)
 
   ! set amg as the pcg preconditioner
@@ -1752,23 +1752,23 @@ subroutine Ext_solver(MPI_COMM_WORLD, hypre_A, hypre_grid, num_procs, &
   ! now we set the system up and do the actual solve!
   call HYPRE_StructPCGSetup(hypre_solver, hypre_A, hypre_b, &
                             hypre_x, ierr)
-  
+
   call HYPRE_ParCSRPCGSolve(hypre_solver, hypre_A, hypre_b, &
                             hypre_x, ierr)
 
   ! code for printing out results from the external solver
   ! Not being used, but left here since the manual isn't very helpful
   ! and this may be useful in the future.
-  ! call HYPRE_ParCSRPCGGetNumIterations(hypre_solver, & 
+  ! call HYPRE_ParCSRPCGGetNumIterations(hypre_solver, &
   !   hypre_out(1), ierr)
   ! print *, 'num iterations = ', hypre_out(1)
 
-  ! call HYPRE_ParCSRPCGGetFinalRelative(hypre_solver, & 
+  ! call HYPRE_ParCSRPCGGetFinalRelative(hypre_solver, &
   !   hypre_out(2), ierr)
   ! print *, 'final residual norm = ', hypre_out(2)
 
   do i = 0, num_procs-1
-    call HYPRE_StructVectorGetBoxValues(hypre_x, & 
+    call HYPRE_StructVectorGetBoxValues(hypre_x, &
       ilower(i,:), iupper(i,:), values, ierr)
   end do
 
@@ -1780,8 +1780,8 @@ subroutine Ext_solver(MPI_COMM_WORLD, hypre_A, hypre_grid, num_procs, &
     end do
   end do
 
-  ! debugging commands from hypre library - dump out a single 
-  ! copy of these two variables. Can be used to check that the 
+  ! debugging commands from hypre library - dump out a single
+  ! copy of these two variables. Can be used to check that the
   ! values have been properly allocated.
   ! call HYPRE_StructVectorPrint(hypre_x, ierr)
   ! call HYPRE_StructMatrixPrint(hypre_A, ierr)
