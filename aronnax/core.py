@@ -145,7 +145,7 @@ def u_point_variable_3d(grid, func):
     assert grid.layers == len(func)
 
     for i, f in enumerate(func):
-        if isinstance(func, (int, long, float)):
+        if isinstance(f, (int, long, float)):
             u_variable_3d[i,:,:] = np.ones(grid.ny, grid.nx+1) * f
         else:
             u_variable_3d[i,:,:] = f(X, Y)
@@ -165,7 +165,7 @@ def v_point_variable_3d(grid, func):
     assert grid.layers == len(func)
     
     for i, f in enumerate(func):
-        if isinstance(func, (int, long, float)):
+        if isinstance(f, (int, long, float)):
             v_variable_3d[i,:,:] = np.ones(grid.ny, grid.nx) * f
         else:
             v_variable_3d[i,:,:] = f(X, Y)
@@ -176,8 +176,9 @@ def time_series_variable(nTimeSteps, dt, func):
 
     ts_variable = np.zeros((nTimeSteps))
 
+
     for i, f in enumerate(func):
-        if isinstance(func, (int, long, float)):
+        if isinstance(f, (int, long, float)):
             ts_variable[:] = np.ones(nTimeSteps) * f
         else:
             ts_variable[:] = f(nTimeSteps, dt)
