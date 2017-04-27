@@ -3,10 +3,13 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+
 # The Aronnax executable
 /aronnax_core
 /aronnax_test
 /aronnax_prof
+/aronnax_external_solver
+/aronnax_external_solver_test
 
 # Profiling
 gmon.out
