@@ -167,7 +167,6 @@ program aronnax
        write(17, "(A, I0)") 'nProcY = ', nProcY
     end if
     call clean_stop(0, .FALSE.)
-    stop 1
   end if
 
   ! myid starts at zero, so index these variables from zero.
@@ -237,7 +236,6 @@ program aronnax
     if (minval(depth) .lt. 0) then
       write(17, "(A)") "Depths must be positive."
       call clean_stop(0, .FALSE.)
-      stop 1
     end if
   end if
 
@@ -281,8 +279,6 @@ program aronnax
 
   ! Finalize MPI
   call clean_stop(nTimeSteps, .TRUE.)
-
-  stop
 end program aronnax
 
 ! ------------------------------ Primary routine ----------------------------
@@ -1909,7 +1905,6 @@ subroutine break_if_NaN(data, nx, ny, layers, n)
         if (data(i,j,k) .ne. data(i,j,k)) then
           write(17, "(A, I0)") "NaN detected at time step ", n
           call clean_stop(n, .FALSE.)
-          stop 1
         end if
       end do
     end do
