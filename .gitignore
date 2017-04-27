@@ -9,6 +9,7 @@ __pycache__/
 /aronnax_test
 /aronnax_prof
 /aronnax_external_solver
+/aronnax_external_solver_test
 
 # Profiling
 gmon.out
