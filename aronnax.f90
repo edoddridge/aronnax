@@ -1692,10 +1692,10 @@ subroutine Ext_solver(MPI_COMM_WORLD, hypre_A, hypre_grid, num_procs, &
     end do
   end do
 
-  ! do i = 0, num_procs-1
-  call HYPRE_StructVectorSetBoxValues(hypre_b, &
+  do i = 0, num_procs-1
+    call HYPRE_StructVectorSetBoxValues(hypre_b, &
       ilower(i,:), iupper(i,:), values, ierr)
-  ! end do
+  end do
 
   call HYPRE_StructVectorAssemble(hypre_b, ierr)
 
@@ -1703,10 +1703,10 @@ subroutine Ext_solver(MPI_COMM_WORLD, hypre_A, hypre_grid, num_procs, &
   call HYPRE_StructVectorCreate(MPI_COMM_WORLD, hypre_grid, hypre_x, ierr)
   call HYPRE_StructVectorInitialize(hypre_x, ierr)
 
-  ! do i = 0, num_procs-1
-  call HYPRE_StructVectorSetBoxValues(hypre_x, &
+  do i = 0, num_procs-1
+    call HYPRE_StructVectorSetBoxValues(hypre_x, &
       ilower(i,:), iupper(i,:), values, ierr)
-  ! end do
+  end do
 
   call HYPRE_StructVectorAssemble(hypre_x, ierr)
 
@@ -1765,10 +1765,10 @@ subroutine Ext_solver(MPI_COMM_WORLD, hypre_A, hypre_grid, num_procs, &
   !   hypre_out(2), ierr)
   ! print *, 'final residual norm = ', hypre_out(2)
 
-  ! do i = 0, num_procs-1
-  call HYPRE_StructVectorGetBoxValues(hypre_x, &
+  do i = 0, num_procs-1
+    call HYPRE_StructVectorGetBoxValues(hypre_x, &
       ilower(i,:), iupper(i,:), values, ierr)
-  ! end do
+  end do
 
   do i = 1, nx ! loop over every grid point
     do j = 1, ny
