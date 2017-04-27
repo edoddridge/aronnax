@@ -32,7 +32,7 @@ def simulate(work_dir=".", config_path="aronnax.conf", **options):
           in Fortran raw array format
 
     The process for a simulation is to
-    
+
         1. Compute the configuration
         2. Recompile the Fortran core if necessary
         3. Save the computed configuration in aronnax-merged.conf
@@ -85,7 +85,7 @@ def default_configuration():
     config.optionxform = str
     return config
 
-sections = ["executable", "numerics", "model", "sponge",
+sections = ["executable", "numerics", "model", "pressure_solver", "sponge",
             "physics", "grid", "initial_conditions", "external_forcing"]
 
 section_map = {
@@ -107,6 +107,8 @@ section_map = {
     "depthFile"            : "model",
     "H0"                   : "model",
     "RedGrav"              : "model",
+    "nProcX"               : "pressure_solver",
+    "nProcY"               : "pressure_solver",
     "spongeHTimeScaleFile" : "sponge",
     "spongeUTimeScaleFile" : "sponge",
     "spongeVTimeScaleFile" : "sponge",
@@ -241,7 +243,8 @@ def run_executable(config):
     if config.getboolean("executable", "valgrind") \
        or 'ARONNAX_TEST_VALGRIND_ALL' in os.environ:
         assert not config.getboolean("executable", "perf")
-        sub.check_call(["valgrind", "--error-exitcode=5", p.join(root_path, core_name)],
+        sub.check_call(["mpirun", "-np", "1",
+            "valgrind", "--error-exitcode=5", p.join(root_path, core_name)],
             env=env)
     elif config.getboolean("executable", "perf"):
         perf_cmds = ["perf", "stat", "-e", "r530010", # "flops", on my CPU.
@@ -252,7 +255,7 @@ def run_executable(config):
             "-e", "branch-instructions", "-e", "branch-misses"]
         sub.check_call(perf_cmds + [p.join(root_path, core_name)], env=env)
     else:
-        sub.check_call([p.join(root_path, core_name)], env=env)
+        sub.check_call(["mpirun", "-np", "1", p.join(root_path, core_name)], env=env)
 
 def convert_output_to_netcdf(config):
     # TODO Issue #30

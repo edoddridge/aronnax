@@ -41,6 +41,10 @@
  H0 = 2000.,
  RedGrav = .False.,
  /
+ &PRESSURE_SOLVER
+ nProcX = 1,
+ nProcY = 1,
+ /
  &SPONGE
  spongeHTimeScaleFile = '',
  spongeUTimeScaleFile = '',
