@@ -97,6 +97,15 @@ def test_gaussian_bump():
         assert_outputs_close(10, 10, 2, 2e-13)
         assert_volume_conservation(10, 10, 2, 1e-5)
 
+def test_gaussian_bump_degug_test():
+    xlen = 1e6
+    ylen = 1e6
+    with working_directory(p.join(self_path, "beta_plane_bump_debug_test")):
+        drv.simulate(initHfile=[bump, lambda X, Y: 2000. - bump(X, Y)],
+                     nx=10, ny=10, exe=test_executable, dx=xlen/10, dy=ylen/10)
+        assert_outputs_close(10, 10, 2, 2e-13)
+        assert_volume_conservation(10, 10, 2, 1e-5)
+
 def test_beta_plane_gyre_red_grav():
     xlen = 1e6
     ylen = 2e6

@@ -932,10 +932,19 @@ subroutine maybe_dump_output(h, hav, u, uav, v, vav, eta, etaav, &
   integer,          intent(in)    :: debug_level
 
   character(10) :: num
+  logical       :: dump_output
+
 
   ! Write snapshot to file?
   if (mod(n-1, nwrite) .eq. 0) then
+    dump_output = .TRUE.
+  else if (debug_level .ge. 4) then
+    dump_output = .TRUE.
+  else
+    dump_output = .FALSE.
+  end if
 
+  if (dump_output) then 
     write(num, '(i10.10)') n
 
     call write_output_3d(h, nx, ny, layers, 0, 0, &
