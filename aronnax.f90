@@ -958,6 +958,15 @@ subroutine maybe_dump_output(h, hav, u, uav, v, vav, eta, etaav, &
         num, 'wind_y.')
     end if
 
+    if (debug_level .ge. 1) then
+      call write_output_3d(dhdt, nx, ny, layers, 0, 0, &
+        num, 'debug.dhdt.')
+      call write_output_3d(dudt, nx, ny, layers, 1, 0, &
+        num, 'debug.dudt.')
+      call write_output_3d(dvdt, nx, ny, layers, 0, 1, &
+        num, 'debug.dvdt.')
+    end if
+
     ! Check if there are NaNs in the data
     call break_if_NaN(h, nx, ny, layers, n)
     ! call break_if_NaN(u, nx, ny, layers, n)

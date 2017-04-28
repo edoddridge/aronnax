@@ -100,6 +100,12 @@ def interpret_raw_file(name, nx, ny, layers):
         dy = 1
     if file_part.startswith("av.eta"):
         layered = False
+    if file_part.startswith("debug.dhdt"):
+        pass
+    if file_part.startswith("debug.dudt"):
+        dx = 1
+    if file_part.startswith("debug.dvdt"):
+        dy = 1
     with fortran_file(name, 'r') as f:
         if layered:
             return f.read_reals(dtype=np.float64) \
