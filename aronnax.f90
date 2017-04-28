@@ -71,6 +71,7 @@ program aronnax
   double precision, dimension(:),     allocatable :: zeros
   integer maxits
   double precision :: eps, freesurfFac, thickness_error
+  integer          :: debug_level
   ! Model
   double precision :: hmean(layerwise_input_length)
   ! Switch for using n + 1/2 layer physics, or using n layer physics
@@ -115,14 +116,14 @@ program aronnax
   integer   :: offsets(2,5)
 
 
-  ! Set default values here
+
 
   ! TODO Possibly wait until the model is split into multiple files,
   ! then hide the long unsightly code there.
 
   namelist /NUMERICS/ au, ah, ar, botDrag, dt, slip, nTimeSteps, &
       dumpFreq, avFreq, hmin, maxits, freesurfFac, eps, &
-      thickness_error
+      thickness_error, debug_level
 
   namelist /MODEL/ hmean, depthFile, H0, RedGrav
 
@@ -140,7 +141,10 @@ program aronnax
   namelist /EXTERNAL_FORCING/ zonalWindFile, meridionalWindFile, &
       DumpWind, wind_mag_time_series_file
 
+  ! Set default values here
+  debug_level = 0
 
+  
   open(unit=8, file="parameters.in", status='OLD', recl=80)
   read(unit=8, nml=NUMERICS)
   read(unit=8, nml=MODEL)
@@ -269,7 +273,7 @@ program aronnax
 
   call model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
       dt, au, ar, botDrag, ah, slip, hmin, nTimeSteps, dumpFreq, avFreq, &
-      maxits, eps, freesurfFac, thickness_error, g_vec, rho0, &
+      maxits, eps, freesurfFac, thickness_error, debug_level, g_vec, rho0, &
       base_wind_x, base_wind_y, wind_mag_time_series, &
       spongeHTimeScale, spongeUTimeScale, spongeVTimeScale, &
       spongeH, spongeU, spongeV, &
@@ -286,7 +290,7 @@ end program aronnax
 
 subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
     dt, au, ar, botDrag, ah, slip, hmin, nTimeSteps, dumpFreq, avFreq, &
-    maxits, eps, freesurfFac, thickness_error, g_vec, rho0, &
+    maxits, eps, freesurfFac, thickness_error, debug_level, g_vec, rho0, &
     base_wind_x, base_wind_y, wind_mag_time_series, &
     spongeHTimeScale, spongeUTimeScale, spongeVTimeScale, &
     spongeH, spongeU, spongeV, &
@@ -319,6 +323,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   double precision, intent(in) :: dumpFreq, avFreq
   integer,          intent(in) :: maxits
   double precision, intent(in) :: eps, freesurfFac, thickness_error
+  integer,          intent(in) :: debug_level
   ! Physics
   double precision, intent(in) :: g_vec(layers)
   double precision, intent(in) :: rho0
@@ -538,7 +543,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
       spongeHTimeScale, spongeH, &
       spongeUTimeScale, spongeU, &
       spongeVTimeScale, spongeV, &
-      nx, ny, layers)
+      nx, ny, layers, debug_level)
 
   ! Calculate the values at half the time interval with Forward Euler
   hhalf = h+0.5d0*dt*dhdtveryold
@@ -553,7 +558,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
       spongeHTimeScale, spongeH, &
       spongeUTimeScale, spongeU, &
       spongeVTimeScale, spongeV, &
-      nx, ny, layers)
+      nx, ny, layers, debug_level)
 
   ! These are the values to be stored in the 'veryold' variables ready
   ! to start the proper model run.
@@ -583,7 +588,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
       spongeHTimeScale, spongeH, &
       spongeUTimeScale, spongeU, &
       spongeVTimeScale, spongeV, &
-      nx, ny, layers)
+      nx, ny, layers, debug_level)
 
   ! Calculate the values at half the time interval with Forward Euler
   hhalf = h+0.5d0*dt*dhdtold
@@ -598,7 +603,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
       spongeHTimeScale, spongeH, &
       spongeUTimeScale, spongeU, &
       spongeVTimeScale, spongeV, &
-      nx, ny, layers)
+      nx, ny, layers, debug_level)
 
   ! These are the values to be stored in the 'old' variables ready to start
   ! the proper model run.
@@ -647,7 +652,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
         spongeHTimeScale, spongeH, &
         spongeUTimeScale, spongeU, &
         spongeVTimeScale, spongeV, &
-        nx, ny, layers)
+        nx, ny, layers, debug_level)
 
     ! Use dh/dt, du/dt and dv/dt to step h, u and v forward in time with
     ! the Adams-Bashforth third order linear multistep method
@@ -665,7 +670,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
       call barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
           dx, dy, wetmask, hfacW, hfacS, dt, &
           maxits, eps, rjac, freesurfFac, thickness_error, &
-          g_vec, nx, ny, layers, n, &
+          debug_level, g_vec, nx, ny, layers, n, &
           MPI_COMM_WORLD, myid, num_procs, ilower, iupper, &
           hypre_grid, hypre_A, ierr)
 
@@ -742,7 +747,7 @@ subroutine state_derivative(dhdt, dudt, dvdt, h, u, v, depth, &
     spongeHTimeScale, spongeH, &
     spongeUTimeScale, spongeU, &
     spongeVTimeScale, spongeV, &
-    nx, ny, layers)
+    nx, ny, layers, debug_level)
   implicit none
 
   double precision, intent(out) :: dhdt(0:nx+1, 0:ny+1, layers)
@@ -775,6 +780,7 @@ subroutine state_derivative(dhdt, dudt, dvdt, h, u, v, depth, &
   double precision, intent(in) :: spongeVTimeScale(0:nx+1, 0:ny+1, layers)
   double precision, intent(in) :: spongeV(0:nx+1, 0:ny+1, layers)
   integer, intent(in) :: nx, ny, layers
+  integer, intent(in) :: debug_level
 
   ! Bernoulli potential
   double precision :: b(0:nx+1, 0:ny+1, layers)
@@ -812,7 +818,7 @@ end subroutine state_derivative
 subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
     dx, dy, wetmask, hfacW, hfacS, dt, &
     maxits, eps, rjac, freesurfFac, thickness_error, &
-    g_vec, nx, ny, layers, n, &
+    debug_level, g_vec, nx, ny, layers, n, &
      MPI_COMM_WORLD, myid, num_procs, ilower, iupper, &
      hypre_grid, hypre_A, ierr)
 
@@ -832,6 +838,7 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
   double precision, intent(in)    :: dt
   integer,          intent(in)    :: maxits
   double precision, intent(in)    :: eps, rjac, freesurfFac, thickness_error
+  integer,          intent(in)    :: debug_level
   double precision, intent(in)    :: g_vec(layers)
   integer,          intent(in)    :: nx, ny, layers, n
   integer,          intent(in)    :: MPI_COMM_WORLD

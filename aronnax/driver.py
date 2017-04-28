@@ -103,6 +103,7 @@ section_map = {
     "eps"                  : "numerics",
     "freesurfFac"          : "numerics",
     "thickness_error"      : "numerics",
+    "debug_level"          : "numerics",
     "hmean"                : "model",
     "depthFile"            : "model",
     "H0"                   : "model",
