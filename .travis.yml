@@ -1,3 +1,4 @@
+
 language: python
 python:
   - "2.7"
@@ -19,7 +20,7 @@ before_install:
   - pip install recommonmark
   - pip install matplotlib
   - pip install pytest-cov
-  - pip install python-coveralls
+  - pip install codecov
   - pip install -e .
 
 install: 
@@ -29,7 +30,7 @@ script:
   - pytest --cov=aronnax
 
 after_success:
-  - coveralls
+  - codecov
   - cd benchmarks
   - python benchmark.py
   - cd ../docs
