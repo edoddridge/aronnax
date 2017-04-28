@@ -931,11 +931,32 @@ subroutine maybe_dump_output(h, hav, u, uav, v, vav, eta, etaav, &
   logical,          intent(in)    :: RedGrav, DumpWind
   integer,          intent(in)    :: debug_level
 
+  character(10) :: num
+
   ! Write snapshot to file?
   if (mod(n-1, nwrite) .eq. 0) then
 
-    call write_output(h, u, v, eta, wind_x, wind_y, &
-        nx, ny, layers, n, RedGrav, DumpWind, 'snap')
+    write(num, '(i10.10)') n
+
+    call write_output_3d(h, nx, ny, layers, 0, 0, &
+    num, 'snap.h.')
+    call write_output_3d(u, nx, ny, layers, 1, 0, &
+    num, 'snap.u.')
+    call write_output_3d(v, nx, ny, layers, 0, 1, &
+    num, 'snap.v.')
+
+
+    if (.not. RedGrav) then
+      call write_output_2d(eta, nx, ny, 0, 0, &
+        num, 'snap.eta.')
+    end if
+
+    if (DumpWind .eqv. .true.) then
+      call write_output_2d(wind_x, nx, ny, 1, 0, &
+        num, 'wind_x.')
+      call write_output_2d(wind_y, nx, ny, 0, 1, &
+        num, 'wind_y.')
+    end if
 
     ! Check if there are NaNs in the data
     call break_if_NaN(h, nx, ny, layers, n)
@@ -956,8 +977,20 @@ subroutine maybe_dump_output(h, hav, u, uav, v, vav, eta, etaav, &
       etaav = etaav/real(avwrite)
     end if
 
-    call write_output(hav, uav, vav, etaav, wind_x, wind_y, &
-        nx, ny, layers, n, RedGrav, .false., 'av')
+    write(num, '(i10.10)') n
+
+    call write_output_3d(hav, nx, ny, layers, 0, 0, &
+    num, 'av.h.')
+    call write_output_3d(uav, nx, ny, layers, 1, 0, &
+    num, 'av.u.')
+    call write_output_3d(vav, nx, ny, layers, 0, 1, &
+    num, 'av.v.')
+
+
+    if (.not. RedGrav) then
+      call write_output_2d(etaav, nx, ny, 0, 0, &
+        num, 'av.eta.')
+    end if
 
     ! Check if there are NaNs in the data
     call break_if_NaN(h, nx, ny, layers, n)
@@ -2270,58 +2303,48 @@ subroutine wrap_fields_2D(array, nx, ny)
 end subroutine wrap_fields_2D
 
 !-----------------------------------------------------------------
-!> Write snapshot output
+!> Write snapshot output of 3d field
 
-subroutine write_output(h, u, v, eta, wind_x, wind_y, &
-    nx, ny, layers, n, RedGrav, DumpWind, name)
+subroutine write_output_3d(array, nx, ny, layers, xstep, ystep, &
+    num, name)
   implicit none
 
-  double precision, intent(in) :: h(0:nx+1, 0:ny+1, layers)
-  double precision, intent(in) :: u(0:nx+1, 0:ny+1, layers)
-  double precision, intent(in) :: v(0:nx+1, 0:ny+1, layers)
-  double precision, intent(in) :: eta(0:nx+1, 0:ny+1)
-  double precision, intent(in) :: wind_x(0:nx+1, 0:ny+1)
-  double precision, intent(in) :: wind_y(0:nx+1, 0:ny+1)
-  integer, intent(in) :: nx, ny, layers, n
-  logical, intent(in) :: RedGrav, DumpWind
-  character(*), intent(in) :: name
+  double precision, intent(in) :: array(0:nx+1, 0:ny+1, layers)
+  integer,          intent(in) :: nx, ny, layers, xstep, ystep
+  character(10),    intent(in) :: num
+  character(*),     intent(in) :: name
 
-  character(10) :: num
-
-  write(num, '(i10.10)') n
 
   ! Output the data to a file
-  open(unit=10, status='replace', file='output/'//name//'.h.'//num, &
+  open(unit=10, status='replace', file='output/'//name//num, &
       form='unformatted')
-  write(10) h(1:nx, 1:ny, :)
+  write(10) array(1:nx+xstep, 1:ny+ystep, :)
   close(10)
-  open(unit=10, status='replace', file='output/'//name//'.u.'//num, &
-      form='unformatted')
-  write(10) u(1:nx+1, 1:ny, :)
-  close(10)
-  open(unit=10, status='replace', file='output/'//name//'.v.'//num, &
-      form='unformatted')
-  write(10) v(1:nx, 1:ny+1, :)
-  close(10)
-  if (.not. RedGrav) then
-    open(unit=10, status='replace', file='output/'//name//'.eta.'//num, &
-        form='unformatted')
-    write(10) eta(1:nx, 1:ny)
-    close(10)
-  end if
 
-  if (DumpWind .eqv. .true.) then
-    open(unit=10, status='replace', file='output/wind_x.'//num, &
-        form='unformatted')
-    write(10) wind_x(1:nx+1, 1:ny)
-    close(10)
-    open(unit=10, status='replace', file='output/wind_y.'//num, &
-        form='unformatted')
-    write(10) wind_y(1:nx, 1:ny+1)
-    close(10)
-  end if
   return
-end subroutine write_output
+end subroutine write_output_3d
+
+!-----------------------------------------------------------------
+!> Write snapshot output of 2d field
+
+subroutine write_output_2d(array, nx, ny, xstep, ystep, &
+    num, name)
+  implicit none
+
+  double precision, intent(in) :: array(0:nx+1, 0:ny+1)
+  integer,          intent(in) :: nx, ny, xstep, ystep
+  character(10),    intent(in) :: num
+  character(*),     intent(in) :: name
+
+
+  ! Output the data to a file
+  open(unit=10, status='replace', file='output/'//name//num, &
+      form='unformatted')
+  write(10) array(1:nx+xstep, 1:ny+ystep)
+  close(10)
+
+  return
+end subroutine write_output_2d
 
 !-----------------------------------------------------------------
 !> finalise MPI and then stop the model
