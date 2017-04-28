@@ -718,8 +718,9 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
     ! Now have new fields in main arrays and old fields in very old arrays
 
     call maybe_dump_output(h, hav, u, uav, v, vav, eta, etaav, &
+        dudt, dvdt, dhdt, &
         wind_x, wind_y, nx, ny, layers, &
-        n, nwrite, avwrite, RedGrav, DumpWind)
+        n, nwrite, avwrite, RedGrav, DumpWind, debug_level)
 
     cur_time = time()
     if (cur_time - last_report_time > 3) then
@@ -908,8 +909,9 @@ end subroutine barotropic_correction
 !> Write output if it's time
 
 subroutine maybe_dump_output(h, hav, u, uav, v, vav, eta, etaav, &
-    wind_x, wind_y, nx, ny, layers, &
-    n, nwrite, avwrite, RedGrav, DumpWind)
+        dudt, dvdt, dhdt, &
+        wind_x, wind_y, nx, ny, layers, &
+        n, nwrite, avwrite, RedGrav, DumpWind, debug_level)
   implicit none
 
   double precision, intent(in)    :: h(0:nx+1, 0:ny+1, layers)
@@ -920,10 +922,14 @@ subroutine maybe_dump_output(h, hav, u, uav, v, vav, eta, etaav, &
   double precision, intent(inout) :: vav(0:nx+1, 0:ny+1, layers)
   double precision, intent(in)    :: eta(0:nx+1, 0:ny+1)
   double precision, intent(inout) :: etaav(0:nx+1, 0:ny+1)
+  double precision, intent(in)    :: dudt(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)    :: dvdt(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)    :: dhdt(0:nx+1, 0:ny+1, layers)
   double precision, intent(in)    :: wind_x(0:nx+1, 0:ny+1)
   double precision, intent(in)    :: wind_y(0:nx+1, 0:ny+1)
   integer,          intent(in)    :: nx, ny, layers, n, nwrite, avwrite
   logical,          intent(in)    :: RedGrav, DumpWind
+  integer,          intent(in)    :: debug_level
 
   ! Write snapshot to file?
   if (mod(n-1, nwrite) .eq. 0) then
