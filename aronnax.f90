@@ -868,17 +868,26 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
   double precision :: vb(nx, ny+1)
   double precision :: etastar(0:nx+1, 0:ny+1)
 
+  character(10)    :: num
+
   ! Calculate the barotropic velocities
   call calc_baro_u(ub, unew, hnew, eta, freesurfFac, nx, ny, layers)
   call calc_baro_v(vb, vnew, hnew, eta, freesurfFac, nx, ny, layers)
   
   if (debug_level .ge. 4) then
-    call write_output_2d(ub, nx, ny, 1, 0, &
-      n, 'snap.ub.')
-  end if
-  if (debug_level .ge. 4) then
-    call write_output_2d(vb, nx, ny, 0, 1, &
-      n, 'snap.vb.')
+
+    write(num, '(i10.10)') n
+
+    ! Output the data to a file
+    open(unit=10, status='replace', file='output/'//'snap.ub.'//num, &
+        form='unformatted')
+    write(10) ub(1:nx+1, 1:ny)
+    close(10)
+
+    open(unit=10, status='replace', file='output/'//'snap.vb.'//num, &
+        form='unformatted')
+    write(10) vb(1:nx, 1:ny+1)
+    close(10)
   end if
 
 
