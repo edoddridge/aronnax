@@ -543,7 +543,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
       spongeHTimeScale, spongeH, &
       spongeUTimeScale, spongeU, &
       spongeVTimeScale, spongeV, &
-      nx, ny, layers, debug_level)
+      nx, ny, layers, n, debug_level)
 
   ! Calculate the values at half the time interval with Forward Euler
   hhalf = h+0.5d0*dt*dhdtveryold
@@ -558,7 +558,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
       spongeHTimeScale, spongeH, &
       spongeUTimeScale, spongeU, &
       spongeVTimeScale, spongeV, &
-      nx, ny, layers, debug_level)
+      nx, ny, layers, n, debug_level)
 
   ! These are the values to be stored in the 'veryold' variables ready
   ! to start the proper model run.
@@ -588,7 +588,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
       spongeHTimeScale, spongeH, &
       spongeUTimeScale, spongeU, &
       spongeVTimeScale, spongeV, &
-      nx, ny, layers, debug_level)
+      nx, ny, layers, n, debug_level)
 
   ! Calculate the values at half the time interval with Forward Euler
   hhalf = h+0.5d0*dt*dhdtold
@@ -603,7 +603,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
       spongeHTimeScale, spongeH, &
       spongeUTimeScale, spongeU, &
       spongeVTimeScale, spongeV, &
-      nx, ny, layers, debug_level)
+      nx, ny, layers, n, debug_level)
 
   ! These are the values to be stored in the 'old' variables ready to start
   ! the proper model run.
@@ -652,7 +652,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
         spongeHTimeScale, spongeH, &
         spongeUTimeScale, spongeU, &
         spongeVTimeScale, spongeV, &
-        nx, ny, layers, debug_level)
+        nx, ny, layers, n, debug_level)
 
     ! Use dh/dt, du/dt and dv/dt to step h, u and v forward in time with
     ! the Adams-Bashforth third order linear multistep method
@@ -748,7 +748,7 @@ subroutine state_derivative(dhdt, dudt, dvdt, h, u, v, depth, &
     spongeHTimeScale, spongeH, &
     spongeUTimeScale, spongeU, &
     spongeVTimeScale, spongeV, &
-    nx, ny, layers, debug_level)
+    nx, ny, layers, n, debug_level)
   implicit none
 
   double precision, intent(out) :: dhdt(0:nx+1, 0:ny+1, layers)
@@ -781,6 +781,7 @@ subroutine state_derivative(dhdt, dudt, dvdt, h, u, v, depth, &
   double precision, intent(in) :: spongeVTimeScale(0:nx+1, 0:ny+1, layers)
   double precision, intent(in) :: spongeV(0:nx+1, 0:ny+1, layers)
   integer, intent(in) :: nx, ny, layers
+  integer, intent(in) :: n
   integer, intent(in) :: debug_level
 
   ! Bernoulli potential
@@ -791,12 +792,24 @@ subroutine state_derivative(dhdt, dudt, dvdt, h, u, v, depth, &
   ! Calculate Bernoulli potential
   if (RedGrav) then
     call evaluate_b_RedGrav(b, h, u, v, nx, ny, layers, g_vec)
+    if (debug_level .ge. 4) then
+      call write_output_3d(b, nx, ny, layers, 0, 0, &
+        n, 'snap.BP.')
+    end if
   else
     call evaluate_b_iso(b, h, u, v, nx, ny, layers, g_vec, depth)
+    if (debug_level .ge. 4) then
+      call write_output_3d(b, nx, ny, layers, 0, 0, &
+        n, 'snap.BP.')
+    end if
   end if
 
   ! Calculate relative vorticity
   call evaluate_zeta(zeta, u, v, nx, ny, layers, dx, dy)
+  if (debug_level .ge. 4) then
+    call write_output_3d(zeta, nx, ny, layers, 1, 1, &
+      n, 'snap.zeta.')
+  end if
 
   ! Calculate dhdt, dudt, dvdt at current time step
   call evaluate_dhdt(dhdt, h, u, v, ah, dx, dy, nx, ny, layers, &
@@ -931,7 +944,6 @@ subroutine maybe_dump_output(h, hav, u, uav, v, vav, eta, etaav, &
   logical,          intent(in)    :: RedGrav, DumpWind
   integer,          intent(in)    :: debug_level
 
-  character(10) :: num
   logical       :: dump_output
 
 
@@ -945,35 +957,34 @@ subroutine maybe_dump_output(h, hav, u, uav, v, vav, eta, etaav, &
   end if
 
   if (dump_output) then 
-    write(num, '(i10.10)') n
-
+    
     call write_output_3d(h, nx, ny, layers, 0, 0, &
-    num, 'snap.h.')
+    n, 'snap.h.')
     call write_output_3d(u, nx, ny, layers, 1, 0, &
-    num, 'snap.u.')
+    n, 'snap.u.')
     call write_output_3d(v, nx, ny, layers, 0, 1, &
-    num, 'snap.v.')
+    n, 'snap.v.')
 
 
     if (.not. RedGrav) then
       call write_output_2d(eta, nx, ny, 0, 0, &
-        num, 'snap.eta.')
+        n, 'snap.eta.')
     end if
 
     if (DumpWind .eqv. .true.) then
       call write_output_2d(wind_x, nx, ny, 1, 0, &
-        num, 'wind_x.')
+        n, 'wind_x.')
       call write_output_2d(wind_y, nx, ny, 0, 1, &
-        num, 'wind_y.')
+        n, 'wind_y.')
     end if
 
     if (debug_level .ge. 1) then
       call write_output_3d(dhdt, nx, ny, layers, 0, 0, &
-        num, 'debug.dhdt.')
+        n, 'debug.dhdt.')
       call write_output_3d(dudt, nx, ny, layers, 1, 0, &
-        num, 'debug.dudt.')
+        n, 'debug.dudt.')
       call write_output_3d(dvdt, nx, ny, layers, 0, 1, &
-        num, 'debug.dvdt.')
+        n, 'debug.dvdt.')
     end if
 
     ! Check if there are NaNs in the data
@@ -995,19 +1006,17 @@ subroutine maybe_dump_output(h, hav, u, uav, v, vav, eta, etaav, &
       etaav = etaav/real(avwrite)
     end if
 
-    write(num, '(i10.10)') n
-
     call write_output_3d(hav, nx, ny, layers, 0, 0, &
-    num, 'av.h.')
+    n, 'av.h.')
     call write_output_3d(uav, nx, ny, layers, 1, 0, &
-    num, 'av.u.')
+    n, 'av.u.')
     call write_output_3d(vav, nx, ny, layers, 0, 1, &
-    num, 'av.v.')
+    n, 'av.v.')
 
 
     if (.not. RedGrav) then
       call write_output_2d(etaav, nx, ny, 0, 0, &
-        num, 'av.eta.')
+        n, 'av.eta.')
     end if
 
     ! Check if there are NaNs in the data
@@ -2324,14 +2333,17 @@ end subroutine wrap_fields_2D
 !> Write snapshot output of 3d field
 
 subroutine write_output_3d(array, nx, ny, layers, xstep, ystep, &
-    num, name)
+    n, name)
   implicit none
 
   double precision, intent(in) :: array(0:nx+1, 0:ny+1, layers)
   integer,          intent(in) :: nx, ny, layers, xstep, ystep
-  character(10),    intent(in) :: num
+  integer,          intent(in) :: n
   character(*),     intent(in) :: name
 
+  character(10)  :: num
+
+  write(num, '(i10.10)') n
 
   ! Output the data to a file
   open(unit=10, status='replace', file='output/'//name//num, &
@@ -2346,14 +2358,17 @@ end subroutine write_output_3d
 !> Write snapshot output of 2d field
 
 subroutine write_output_2d(array, nx, ny, xstep, ystep, &
-    num, name)
+    n, name)
   implicit none
 
   double precision, intent(in) :: array(0:nx+1, 0:ny+1)
   integer,          intent(in) :: nx, ny, xstep, ystep
-  character(10),    intent(in) :: num
+  integer,          intent(in) :: n
   character(*),     intent(in) :: name
 
+  character(10)  :: num
+  
+  write(num, '(i10.10)') n
 
   ! Output the data to a file
   open(unit=10, status='replace', file='output/'//name//num, &

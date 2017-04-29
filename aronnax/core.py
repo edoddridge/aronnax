@@ -80,6 +80,11 @@ def interpret_raw_file(name, nx, ny, layers):
     dx = 0; dy = 0; layered = True
     if file_part.startswith("snap.h"):
         pass
+    if file_part.startswith("snap.BP"):
+        pass
+    if file_part.startswith("snap.zeta"):
+        dx = 1 
+        dy = 1   
     if file_part.startswith("snap.u"):
         dx = 1
     if file_part.startswith("snap.v"):
