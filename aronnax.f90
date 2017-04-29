@@ -871,11 +871,25 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
   ! Calculate the barotropic velocities
   call calc_baro_u(ub, unew, hnew, eta, freesurfFac, nx, ny, layers)
   call calc_baro_v(vb, vnew, hnew, eta, freesurfFac, nx, ny, layers)
+  
+  if (debug_level .ge. 4) then
+    call write_output_2d(ub, nx, ny, 1, 0, &
+      n, 'snap.ub.')
+  end if
+  if (debug_level .ge. 4) then
+    call write_output_2d(vb, nx, ny, 0, 1, &
+      n, 'snap.vb.')
+  end if
+
 
   ! Calculate divergence of ub and vb, and solve for the pressure
   ! field that removes it
   call calc_eta_star(ub, vb, eta, etastar, freesurfFac, nx, ny, dx, dy, dt)
   ! print *, maxval(abs(etastar))
+  if (debug_level .ge. 4) then
+    call write_output_2d(etastar, nx, ny, 0, 0, &
+      n, 'snap.eta_star.')
+  end if
 
   ! Prevent barotropic signals from bouncing around outside the
   ! wet region of the model.
@@ -891,6 +905,11 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
     ilower, iupper, etastar, &
     etanew, nx, ny, dt, maxits, eps, ierr)
 #endif
+
+  if (debug_level .ge. 4) then
+    call write_output_2d(etanew, nx, ny, 0, 0, &
+      n, 'snap.eta_new.')
+  end if
 
   etanew = etanew*wetmask
 

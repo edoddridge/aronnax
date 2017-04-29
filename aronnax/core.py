@@ -77,26 +77,36 @@ def interpret_raw_file(name, nx, ny, layers):
     # whereas Python (and all other programming languages I am aware
     # of) indexes in increasing order.
     file_part = p.basename(name)
-    dx = 0; dy = 0; layered = True
+    dx = 0; dy = 0;
     if file_part.startswith("snap.BP"):
         pass
     if file_part.startswith("snap.eta"):
-        layered = False
+        layers = 1
+    if file_part.startswith("snap.eta_new"):
+        layers = 1
+    if file_part.startswith("snap.eta_star"):
+        layers = 1
     if file_part.startswith("snap.h"):
         pass
     if file_part.startswith("snap.u"):
         dx = 1
+    if file_part.startswith("snap.ub"):
+        dx = 1
+        layers = 1
     if file_part.startswith("snap.v"):
         dy = 1
+    if file_part.startswith("snap.vb"):
+        dy = 1
+        layers = 1
     if file_part.startswith("snap.zeta"):
         dx = 1 
         dy = 1   
     if file_part.startswith("wind_x"):
         dx = 1
-        layered = False
+        layers = 1
     if file_part.startswith("wind_y"):
         dy = 1
-        layered = False
+        layers = 1
     if file_part.startswith("av.h"):
         pass
     if file_part.startswith("av.u"):
@@ -104,7 +114,7 @@ def interpret_raw_file(name, nx, ny, layers):
     if file_part.startswith("av.v"):
         dy = 1
     if file_part.startswith("av.eta"):
-        layered = False
+        layers = 1
     if file_part.startswith("debug.dhdt"):
         pass
     if file_part.startswith("debug.dudt"):
@@ -112,12 +122,9 @@ def interpret_raw_file(name, nx, ny, layers):
     if file_part.startswith("debug.dvdt"):
         dy = 1
     with fortran_file(name, 'r') as f:
-        if layered:
-            return f.read_reals(dtype=np.float64) \
+        return f.read_reals(dtype=np.float64) \
                     .reshape(layers, ny+dy, nx+dx).transpose()
-        else:
-            return f.read_reals(dtype=np.float64) \
-                    .reshape(ny+dy, nx+dx).transpose()
+
 
 ### General input construction helpers
 
