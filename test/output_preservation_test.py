@@ -7,6 +7,8 @@ import glob
 
 import numpy as np
 
+import matplotlib.pyplot as plt
+
 import aronnax as aro
 import aronnax.driver as drv
 from aronnax.utils import working_directory
@@ -36,6 +38,21 @@ def assert_outputs_close(nx, ny, layers, rtol):
             print outfile
             print ans
             print good_ans
+
+            plt.figure()
+            plt.pcolormesh(ans[:,:,0])
+            plt.colorbar()
+            plt.title(outfile)
+            plt.savefig('current_output.png')
+            plt.close()
+
+            plt.figure()
+            plt.pcolormesh(good_ans[:,:,0])
+            plt.colorbar()
+            plt.title(outfile)
+            plt.savefig('blessed_output.png')
+            plt.close()
+
         assert relerr < rtol
 
 def assert_volume_conservation(nx,ny,layers,rtol):
