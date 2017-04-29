@@ -34,7 +34,7 @@ def assert_outputs_close(nx, ny, layers, rtol):
         ans = aro.interpret_raw_file(p.join("output/", outfile), nx, ny, layers)
         good_ans = aro.interpret_raw_file(p.join("good-output/", outfile), nx, ny, layers)
         relerr = np.amax(array_relative_error(ans, good_ans))
-        if relerr >= rtol:
+        if (relerr >= rtol or np.isnan(relerr)):
             print outfile
             print ans
             print good_ans
