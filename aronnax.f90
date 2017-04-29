@@ -534,7 +534,8 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   !
   ! ------------------------- negative 2 time step --------------------------
   ! Code to work out dhdtveryold, dudtveryold and dvdtveryold
-
+  n = 0
+  
   call state_derivative(dhdtveryold, dudtveryold, dvdtveryold, &
       h, u, v, depth, &
       dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
