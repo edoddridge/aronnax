@@ -15,20 +15,19 @@ sys.path.append(p.join(root_path, 'reproductions/Davis_et_al_2014'))
 
 import subprocess as sub
 
-import output_preservation_test as opt
-
-import MIMutils as mim
-
+import aronnax as aro
+import aronnax.driver as drv
+from aronnax.utils import working_directory
 
 xlen = 1530e3
 ylen = 2730e3
 nx = 102
 ny = 182
-grid = mim.Grid(nx, ny, xlen / nx, ylen / ny)
+grid = aro.Grid(nx, ny, 1, xlen / nx, ylen / ny)
 
 def plt_h_cross_section(simulation=None):
     h_files = sorted(glob.glob("{0}output/snap.h.*".format(simulation)))
-    h_final = opt.interpret_mim_raw_file(h_files[-1],102,182,1,)
+    h_final = aro.interpret_raw_file(h_files[-1],102,182,1,)
 
     plt.figure()
     for i in xrange(100,160):
@@ -42,10 +41,10 @@ def plt_state(simulation=None):
     h_max = np.zeros(len(h_files))
 
     for i in xrange(len(u_files)):
-        h = opt.interpret_mim_raw_file(h_files[i],102,182,1,)
+        h = aro.interpret_raw_file(h_files[i],102,182,1,)
         h_max[i] = np.max(h)
 
-        u = opt.interpret_mim_raw_file(u_files[i],102,182,1,)
+        u = aro.interpret_raw_file(u_files[i],102,182,1,)
 
         X,Y = np.meshgrid(grid.x,grid.y)
 
