@@ -68,9 +68,6 @@ def plt_state(simulation=None):
 
     plt.savefig('{0}figures/state_{1}.png'.format(simulation,v_files[i][-10:]),dpi=150,
         bbox_inches='tight')
-    if simulation == 'control_final_five/':
-        plt.savefig('../../docs/Davis_state_{0}.png'.format(v_files[i][-10:]),dpi=150,
-            bbox_inches='tight')
     plt.close()
 
     if simulation == 'control_final_five/':
@@ -80,9 +77,6 @@ def plt_state(simulation=None):
         plt.plot(h_max)
     plt.ylabel('Depth and centre of gyre (m)')
     plt.savefig('{0}figures/h_max.png'.format(simulation),dpi=150)
-    if simulation == 'control_final_five/':
-        plt.savefig('../../docs/Davis_h_max.png',dpi=150,
-            bbox_inches='tight')
     plt.close()
 
 def plot_channel_transport(simulation=None):
@@ -107,9 +101,6 @@ def plot_channel_transport(simulation=None):
         plt.plot(transport)
     plt.ylabel('Transport trhough the channel (Sv)')
     plt.savefig('{0}figures/transport.png'.format(simulation),dpi=150)
-    if simulation == 'control_final_five/':
-        plt.savefig('../../docs/Davis_channel_transport.png',dpi=150,
-            bbox_inches='tight')
     plt.close()
 
 
