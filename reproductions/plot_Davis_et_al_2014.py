@@ -75,7 +75,7 @@ def plt_state(simulation=None):
         plt.xlabel('Time (years)')
     else:
         plt.plot(h_max)
-    plt.ylabel('Depth and centre of gyre (m)')
+    plt.ylabel('Depth at centre of gyre (m)')
     plt.savefig('{0}figures/h_max.png'.format(simulation),dpi=150)
     plt.close()
 
@@ -99,7 +99,7 @@ def plot_channel_transport(simulation=None):
         plt.xlabel('Time (years)')
     else:
         plt.plot(transport)
-    plt.ylabel('Transport trhough the channel (Sv)')
+    plt.ylabel('Transport through the channel (Sv)')
     plt.savefig('{0}figures/transport.png'.format(simulation),dpi=150)
     plt.close()
 
