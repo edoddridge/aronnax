@@ -4,6 +4,8 @@ import os.path as p
 import glob
 
 import numpy as np
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 self_path = p.dirname(p.abspath(__file__))
