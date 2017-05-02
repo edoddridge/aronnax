@@ -290,7 +290,7 @@ def interpret_requested_data(requested_data, shape, config):
                 return f.read_reals(dtype=np.float64)
     else:
         if shape == "2dT":
-            return tracer_point_variable_2d(grid, *requested_data)
+            return tracer_point_variable_2d(grid, requested_data)
         if shape == "3dT":
             return tracer_point_variable_3d(grid, *requested_data)
         if shape == "2dU":
