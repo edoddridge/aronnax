@@ -219,5 +219,5 @@ def run_davis_control_final_five(nx,ny,layers,nTimeSteps,dt,simulation=None):
 
 
 if __name__ == '__main__':
-    run_davis_2014_control(102, 182, 1, 1244160, 1000, 'control')
-    #run_davis_control_final_five(102, 182, 1, 155520, 1000, 'control_final_five') # need to copy final outputs from the previous run
+    #run_davis_2014_control(102, 182, 1, 1244160, 1000, 'control')
+    run_davis_control_final_five(102, 182, 1, 155520, 1000, 'control_final_five') # need to copy final outputs from the previous run
