@@ -100,7 +100,7 @@ def plot_channel_transport(simulation=None):
     else:
         plt.plot(transport)
     plt.ylabel('Transport through the channel (Sv)')
-    plt.savefig('{0}figures/transport.png'.format(simulation),dpi=150)
+    plt.savefig('{0}figures/transport.png'.format(simulation),dpi=150, bbox_inches='tight')
     plt.close()
 
 
