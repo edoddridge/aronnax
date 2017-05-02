@@ -42,21 +42,21 @@ def plt_state(simulation=None):
     h_max = np.zeros(len(h_files))
 
     for i in xrange(len(v_files)):
-        h = aro.interpret_raw_file(h_files[i],102,182,1,)
+        h = aro.interpret_raw_file(h_files[i], 102, 182, 1)
         h_max[i] = np.max(h)
 
     # plot the final state of the run
     i = len(h_files) - 1
-    v = aro.interpret_raw_file(v_files[i],102,182,1,)
+    v = aro.interpret_raw_file(v_files[i], 102, 182, 1)
 
-    X,Y = np.meshgrid(grid.x/1e3,grid.y/1e3)
+    X,Y = np.meshgrid(grid.x/1e3, grid.y/1e3)
 
     plt.figure()
     CS = plt.contour(X,Y,np.transpose(h[:,:,0]),colors='k')
     plt.clabel(CS, inline=1, fontsize=10)
-    X,Y = np.meshgrid(grid.x/1e3,grid.yp1/1e3)
+    X,Y = np.meshgrid(grid.x/1e3, grid.yp1/1e3)
 
-    plt.pcolormesh(X,Y,np.transpose(v[:,:,0])*100.,cmap='RdBu_r'
+    plt.pcolormesh(X,Y,np.transpose(v[:,:,0])*100., cmap='RdBu_r'
         ,vmin = -2, vmax = 2)
     CB = plt.colorbar()
     CB.set_label('y component of velocity (cm / s)')
@@ -65,18 +65,18 @@ def plt_state(simulation=None):
     plt.xlabel('x coordinate (km)')
     plt.ylabel('y coordinate (km)')
 
-    plt.savefig('{0}figures/state_{1}.png'.format(simulation,v_files[i][-10:]),dpi=150,
+    plt.savefig('{0}figures/state_{1}.png'.format(simulation,v_files[i][-10:]), dpi=150,
         bbox_inches='tight')
     plt.close()
 
     plt.figure()
     if simulation == 'control_final_five/':
-        plt.plot(np.arange(360.)*5./360.,h_max)
+        plt.plot(np.arange(360.)*5./360., h_max)
         plt.xlabel('Time (years)')
     else:
         plt.plot(h_max)
     plt.ylabel('Depth at centre of gyre (m)')
-    plt.savefig('{0}figures/h_max.png'.format(simulation),dpi=150)
+    plt.savefig('{0}figures/h_max.png'.format(simulation), dpi=150)
     plt.close()
 
 def plot_channel_transport(simulation=None):
@@ -86,7 +86,7 @@ def plot_channel_transport(simulation=None):
     transport = np.zeros(len(h_files))
 
     for i in xrange(len(v_files)):
-        h = aro.interpret_raw_file(h_files[i],102,182,1,)
+        h = aro.interpret_raw_file(h_files[i], 102, 182, 1)
         v = aro.interpret_raw_file(v_files[i], 102, 182, 1)
 
 
@@ -95,13 +95,14 @@ def plot_channel_transport(simulation=None):
     plt.figure()
 
     if simulation == 'control_final_five/':
-        plt.plot(np.arange(360.)*5./360.,transport)
+        plt.plot(np.arange(360.)*5./360., transport)
         plt.hlines(0,0,5)
         plt.xlabel('Time (years)')
     else:
         plt.plot(transport)
     plt.ylabel('Transport through the channel (Sv)')
-    plt.savefig('{0}figures/transport.png'.format(simulation),dpi=150, bbox_inches='tight')
+    plt.savefig('{0}figures/transport.png'.format(simulation), dpi=150,
+        bbox_inches='tight')
     plt.close()
 
 

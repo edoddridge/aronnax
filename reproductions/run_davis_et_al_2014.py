@@ -35,13 +35,13 @@ def davis_wetmask(X, Y):
     wetmask[ :,-1] = 0
 
     plt.figure()
-    plt.pcolormesh(X/1e3,Y/1e3,wetmask, cmap='Greys_r')
+    plt.pcolormesh(X/1e3, Y/1e3, wetmask, cmap='Greys_r')
     #plt.colorbar()
     plt.xlim(0,1500)
     plt.axes().set_aspect('equal')
     plt.xlabel('x coordinate (km)')
     plt.ylabel('y coordinate (km)')
-    plt.savefig('wetmask.png',dpi=150, bbox_inches='tight')
+    plt.savefig('wetmask.png', dpi=150, bbox_inches='tight')
     plt.close()
 
     return wetmask
@@ -50,7 +50,7 @@ def davis_wind_x(X, Y):
     L = 1500e3
 
     r = np.sqrt((Y-1965e3)**2 + (X-765e3)**2)
-    theta = np.arctan2(Y-1965e3,X-765e3)
+    theta = np.arctan2(Y-1965e3, X-765e3)
 
     # From Pete's code
     # This wind forcing gave an upper layer that was slightly too thin.
@@ -96,7 +96,7 @@ def davis_wind_y(X, Y):
     L = 1500e3
 
     r = np.sqrt((Y-1965e3)**2 + (X-765e3)**2)
-    theta = np.arctan2(Y-1965e3,X-765e3)
+    theta = np.arctan2(Y-1965e3, X-765e3)
 
     # From Pete's code
     # This wind forcing gave an upper layer that was slightly too thin.
@@ -155,14 +155,14 @@ def davis_sponge_h(X, Y):
     plt.pcolormesh(X,Y,sponge_h)
     plt.colorbar()
     plt.axes().set_aspect('equal', 'datalim')
-    plt.savefig('sponge_h.png',dpi=150)
+    plt.savefig('sponge_h.png', dpi=150)
     plt.close()
 
     return sponge_h
 
 
-def davis_wind_time_series(nTimeSteps,dt):
-    wind_time_series = 0.02375*np.ones(nTimeSteps,dtype=np.float64)
+def davis_wind_time_series(nTimeSteps, dt):
+    wind_time_series = 0.02375*np.ones(nTimeSteps, dtype=np.float64)
     time = np.arange(nTimeSteps)*dt
     wind_time_series[(np.mod(time,12.*30.*86400.)>8.*30.*86400.)] = 0.0125
 
@@ -176,7 +176,7 @@ def davis_wind_time_series(nTimeSteps,dt):
 
     return wind_time_series
 
-def run_davis_2014_control(nx,ny,layers,nTimeSteps,dt,simulation=None):
+def run_davis_2014_control(nx, ny, layers, nTimeSteps, dt, simulation=None):
 
     #assert layers == 1
     xlen = 1530e3
@@ -199,7 +199,7 @@ def run_davis_2014_control(nx,ny,layers,nTimeSteps,dt,simulation=None):
                 dt=dt, dumpFreq=int(dt*nTimeSteps/40), nTimeSteps=nTimeSteps)
 
 
-def run_davis_control_final_five(nx,ny,layers,nTimeSteps,dt,simulation=None):
+def run_davis_control_final_five(nx, ny, layers, nTimeSteps, dt, simulation=None):
 
     #assert layers == 1
     xlen = 1530e3
