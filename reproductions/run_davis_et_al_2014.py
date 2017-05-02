@@ -34,10 +34,13 @@ def davis_wetmask(X, Y):
     wetmask[ :, 0] = 0
     wetmask[ :,-1] = 0
 
-    plt.pcolormesh(X,Y,wetmask)
-    plt.colorbar()
-    plt.axes().set_aspect('equal', 'datalim')
-    plt.savefig('wetmask.png',dpi=150)
+    plt.pcolormesh(X/1e3,Y/1e3,wetmask, cmap='Greys_r')
+    #plt.colorbar()
+    plt.xlim(0,1500)
+    plt.axes().set_aspect('equal')
+    plt.xlabel('x coordinate (km)')
+    plt.ylabel('y coordinate (km)')
+    plt.savefig('wetmask.png',dpi=150, bbox_inches='tight')
     plt.close()
 
     return wetmask
@@ -48,12 +51,26 @@ def davis_wind_x(X, Y):
     r = np.sqrt((Y-1965e3)**2 + (X-765e3)**2)
     theta = np.arctan2(Y-1965e3,X-765e3)
 
-    norm = (L*(2+np.pi)/2.)/(4*np.pi);
-    
-    tau_x = (L/(2*np.pi))*np.sin(np.pi*r/L)+(r/4)+(L/(4*np.pi))*(np.cos(np.pi*r/L)-1);
-    tau_x = tau_x*np.sin(theta)/norm;
+    base_wind = ((2.*L)/(np.pi*r))*(
+                        np.pi*r*np.sin(np.pi*r/L)/(8.*L) - 
+                        (np.sin(np.pi*r/(2.*L))**2)/4. + 
+                        np.pi**2 * r**2 / (16.*L))
 
-    tau_x[Y<1200e3] = 0
+
+    base_wind[r>L] = np.max(base_wind[r<L])
+
+    base_wind = base_wind/np.max(base_wind)
+
+    tau_x = base_wind*np.sin(theta)
+
+
+    # norm = (L*(2+np.pi)/2.)/(4*np.pi);
+    
+    # tau_x = (L/(2*np.pi))*np.sin(np.pi*r/L)+(r/4)+(L/(4*np.pi))*(np.cos(np.pi*r/L)-1);
+    # tau_x = tau_x*np.sin(theta)/norm;
+
+    # tau_x[Y<1200e3] = 0
+
     #-2*L*((np.pi-2)/(np.pi+2))*(-Y[Y<1200e3]/r[Y<1200e3]**2)
     #tau_x = np.sin(theta) * (r**2 * np.pi / (8. * L) + r * np.sin(r * np.pi / L)/4. + L * np.cos(r * np.pi / L)/(4. * r**2 * np.pi))
     #np.sin(theta)*(r/(4.*L) + np.sin(np.pi*r/(2.*L))/4. + np.cos(np.pi*r/(2.*L))/(r*8.))
@@ -74,21 +91,37 @@ def davis_wind_y(X, Y):
     r = np.sqrt((Y-1965e3)**2 + (X-765e3)**2)
     theta = np.arctan2(Y-1965e3,X-765e3)
 
-    norm = (L*(2+np.pi)/2.)/(4*np.pi);
-    
-    tau_y = (L/(2*np.pi))*np.sin(np.pi*r/L)+(r/4)+(L/(4*np.pi))*(np.cos(np.pi*r/L)-1);
-    tau_y = -tau_y*np.cos(theta)/norm;
+    base_wind = ((2.*L)/(np.pi*r))*(
+                        np.pi*r*np.sin(np.pi*r/L)/(8.*L) - 
+                        (np.sin(np.pi*r/(2.*L))**2)/4. + 
+                        np.pi**2 * r**2 / (16.*L))
 
-    tau_y[Y<1200e3] = 0
+
+    base_wind[r>L] = np.max(base_wind[r<L])
+
+    base_wind = base_wind/np.max(base_wind)
+
+    tau_y = -base_wind*np.cos(theta)
+
+    # norm = (L*(2+np.pi)/2.)/(4*np.pi);
+    
+    # tau_y = (L/(2*np.pi))*np.sin(np.pi*r/L)+(r/4)+(L/(4*np.pi))*(np.cos(np.pi*r/L)-1);
+    # tau_y = -tau_y*np.cos(theta)/norm;
+
+    # tau_y[Y<1200e3] = 0
 
     # tau_y = -np.cos(theta)*(np.pi*r/(8.*L) + 
     #     np.sin(np.pi*r/(2.*L))/4. + np.cos(np.pi*r/(2.*L))/(r*8.))
     # tau_y[Y<1250e3] = -tau_x[82,50]*(750e3 - X[Y<1250e3])/(r[Y<1250e3])**2
     # tau_y = tau_y/np.max(np.absolute(tau_y[:,-1]))
 
-    plt.pcolormesh(X,Y,tau_y,cmap='RdBu_r')
-    plt.axes().set_aspect('equal', 'datalim')
-    plt.colorbar()
+    plt.pcolormesh(X/1e3,Y/1e3,tau_y,cmap='RdBu_r')
+    CB = plt.colorbar()
+    CB.set_label('Normalised pattern for y component of wind stress')
+    plt.xlim(0,1500)
+    plt.axes().set_aspect('equal')
+    plt.xlabel('x coordinate (km)')
+    plt.ylabel('y coordinate (km)')
     plt.savefig('tau_y.png',bbox_inches='tight')
     plt.close()
 
@@ -126,6 +159,9 @@ def davis_wind_time_series(nTimeSteps,dt):
     wind_time_series[(np.mod(time,12.*30.*86400.)>8.*30.*86400.)] = 0.0125
 
     plt.plot(time/86400./30/12, wind_time_series)
+    plt.title('Wind stress time series')
+    plt.xlabel('Time (years)')
+    plt.ylabel('Wind stress (N / m^2)')
     plt.savefig('wind_time_series.png')
     plt.close()
 
@@ -180,5 +216,5 @@ def run_davis_control_final_five(nx,ny,layers,nTimeSteps,dt,simulation=None):
 
 
 if __name__ == '__main__':
-    #run_davis_2014_control(102, 182, 1, 1244160, 1000, 'control')
-    run_davis_control_final_five(102, 182, 1, 155520, 1000, 'control_final_five') # need to copy final outputs from the previous run
+    run_davis_2014_control(102, 182, 1, 1244160, 1000, 'control')
+    #run_davis_control_final_five(102, 182, 1, 155520, 1000, 'control_final_five') # need to copy final outputs from the previous run
