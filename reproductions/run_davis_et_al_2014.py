@@ -34,6 +34,7 @@ def davis_wetmask(X, Y):
     wetmask[ :, 0] = 0
     wetmask[ :,-1] = 0
 
+    plt.figure()
     plt.pcolormesh(X/1e3,Y/1e3,wetmask, cmap='Greys_r')
     #plt.colorbar()
     plt.xlim(0,1500)
@@ -78,6 +79,7 @@ def davis_wind_x(X, Y):
     #tau_x[Y<1200e3] = (tau_x[82,50]*(1950e3-Y[Y<1200e3]))/(r[Y<1200e3])**2
     #tau_x = tau_x/np.max(np.absolute(tau_x[:,:]))
 
+    plt.figure()
     plt.pcolormesh(X/1e3,Y/1e3,tau_x,cmap='RdBu_r')
     CB = plt.colorbar()
     CB.set_label('Normalised pattern for x component of wind stress')
@@ -118,6 +120,7 @@ def davis_wind_y(X, Y):
 
 
 
+    plt.figure()
     plt.pcolormesh(X/1e3,Y/1e3,tau_y,cmap='RdBu_r')
     CB = plt.colorbar()
     CB.set_label('Normalised pattern for y component of wind stress')
@@ -135,6 +138,7 @@ def davis_sponge_h_timescale(X, Y):
     sponge_h_timescale = np.zeros(X.shape, dtype=np.float64)
     sponge_h_timescale[Y<480e3] = 1/(1.*30.*86400.) # six month relaxation time
 
+    plt.figure()
     plt.pcolormesh(X,Y,sponge_h_timescale*86400.*30.)
     plt.colorbar()
     plt.axes().set_aspect('equal', 'datalim')
@@ -147,6 +151,7 @@ def davis_sponge_h(X, Y):
     """Produce the sponge file used by Davis et al. (2014)."""
     sponge_h = 400.*np.ones(X.shape, dtype=np.float64)
 
+    plt.figure()
     plt.pcolormesh(X,Y,sponge_h)
     plt.colorbar()
     plt.axes().set_aspect('equal', 'datalim')
@@ -161,6 +166,7 @@ def davis_wind_time_series(nTimeSteps,dt):
     time = np.arange(nTimeSteps)*dt
     wind_time_series[(np.mod(time,12.*30.*86400.)>8.*30.*86400.)] = 0.0125
 
+    plt.figure()
     plt.plot(time/86400./30/12, wind_time_series)
     plt.title('Wind stress time series')
     plt.xlabel('Time (years)')

@@ -53,6 +53,7 @@ def plt_state(simulation=None):
 
     X,Y = np.meshgrid(grid.x/1e3,grid.y/1e3)
 
+    plt.figure()
     CS = plt.contour(X,Y,np.transpose(h[:,:,0]),colors='k')
     plt.clabel(CS, inline=1, fontsize=10)
     X,Y = np.meshgrid(grid.x/1e3,grid.yp1/1e3)
@@ -70,6 +71,7 @@ def plt_state(simulation=None):
         bbox_inches='tight')
     plt.close()
 
+    plt.figure()
     if simulation == 'control_final_five/':
         plt.plot(np.arange(360.)*5./360.,h_max)
         plt.xlabel('Time (years)')
@@ -92,6 +94,7 @@ def plot_channel_transport(simulation=None):
 
         transport[i] = np.sum(h[:,70,0]*(v[:,53,0]+v[:,54,0])/2.)*grid.dx/1e6
 
+    plt.figure()
 
     if simulation == 'control_final_five/':
         plt.plot(np.arange(360.)*5./360.,transport)
