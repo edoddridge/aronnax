@@ -110,7 +110,7 @@ def interpret_raw_file(name, nx, ny, layers):
 
 ### General input construction helpers
 
-def tracer_point_variable_2d(grid, *h_funcs):
+def tracer_point_variable_2d(grid, h_funcs):
     X,Y = np.meshgrid(grid.x, grid.y)
     T_variable_2d = np.ones((grid.ny, grid.nx))
     if isinstance(h_funcs, (int, long, float)):
