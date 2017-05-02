@@ -114,9 +114,9 @@ if __name__ == '__main__':
     sub.check_call(["rm", "-rf", "control_final_five/figures/"])
     sub.check_call(["mkdir", "-p", "control_final_five/figures/"])
 
-    plt_h_cross_section('control/')
-    plt_state('control/')
-    plot_channel_transport('control/')
+    # plt_h_cross_section('control/')
+    # plt_state('control/')
+    # plot_channel_transport('control/')
 
     plt_h_cross_section('control_final_five/')
     plt_state('control_final_five/')
