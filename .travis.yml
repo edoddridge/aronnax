@@ -1,3 +1,4 @@
+
 language: python
 python:
   - "2.7"
@@ -10,27 +11,32 @@ branches:
 before_install: 
   - sudo apt-get install gfortran
   - sudo apt-get install valgrind
+  - sudo apt-get install libopenmpi-dev
+  - sudo apt-get install openmpi-bin
+  - sudo apt-get install libhypre-dev
   - pip install scipy
   - pip install sphinx
   - pip install sphinx_rtd_theme
   - pip install recommonmark
   - pip install matplotlib
   - pip install pytest-cov
-  - pip install python-coveralls
+  - pip install codecov
   - pip install -e .
 
 install: 
 
 script:
-  - gfortran -Wall -Werror aronnax.f90
-  - ARONNAX_TEST_VALGRIND_ALL=1 pytest --cov=aronnax
+  - mpif90 -Werror aronnax.f90 -cpp
+  - pytest --cov=aronnax
 
 after_success:
-  - coveralls
+  - codecov
   - cd reproductions
   - python run_davis_et_al_2014.py
   - python plot_Davis_et_al_2014.py
   - cd ../benchmarks
+  - codecov
+  - cd benchmarks
   - python benchmark.py
   - cd ../docs
   - make html
