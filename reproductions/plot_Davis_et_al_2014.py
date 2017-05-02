@@ -18,8 +18,6 @@ sys.path.append(p.join(root_path, 'reproductions/Davis_et_al_2014'))
 import subprocess as sub
 
 import aronnax as aro
-import aronnax.driver as drv
-from aronnax.utils import working_directory
 
 xlen = 1530e3
 ylen = 2730e3

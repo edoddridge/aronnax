@@ -16,8 +16,6 @@ import aronnax as aro
 import aronnax.driver as drv
 from aronnax.utils import working_directory
 
-import output_preservation_test as opt
-
 
 def davis_wetmask(X, Y):
     """The wet mask for a recreation of Davis et al. (2014)."""
@@ -188,7 +186,7 @@ def run_davis_2014_control(nx,ny,layers,nTimeSteps,dt,simulation=None):
 
     grid = aro.Grid(nx, ny, layers, dx, dy)
 
-    with opt.working_directory(p.join(self_path, 
+    with working_directory(p.join(self_path, 
         "Davis_et_al_2014/{0}".format(simulation))):
         drv.simulate(initHfile=[400.],
                 zonalWindFile=davis_wind_x, meridionalWindFile=davis_wind_y,
@@ -211,7 +209,7 @@ def run_davis_control_final_five(nx,ny,layers,nTimeSteps,dt,simulation=None):
 
     grid = aro.Grid(nx, ny, layers, dx, dy)
 
-    with opt.working_directory(p.join(self_path, 
+    with working_directory(p.join(self_path, 
         "Davis_et_al_2014/{0}".format(simulation))):
         drv.simulate(initHfile='../final_state_of_control/final.h.0001244161',
                 initUfile='../final_state_of_control/final.u.0001244161',
