@@ -35,7 +35,6 @@ after_success:
   - python run_davis_et_al_2014.py
   - python plot_Davis_et_al_2014.py
   - cd ../benchmarks
-  - codecov
   - cd benchmarks
   - python benchmark.py
   - cd ../docs
