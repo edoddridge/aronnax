@@ -46,30 +46,31 @@ def davis_wetmask(X, Y):
     return wetmask
 
 def davis_wind_x(X, Y):
-    L = 750e3
+    L = 1500e3
 
     r = np.sqrt((Y-1965e3)**2 + (X-765e3)**2)
     theta = np.arctan2(Y-1965e3,X-765e3)
 
-    base_wind = ((2.*L)/(np.pi*r))*(
-                        np.pi*r*np.sin(np.pi*r/L)/(8.*L) - 
-                        (np.sin(np.pi*r/(2.*L))**2)/4. + 
-                        np.pi**2 * r**2 / (16.*L))
+    # From Pete's code
+    # This wind forcing gave an upper layer that was slightly too thin.
+    # base_wind = ((2.*L)/(np.pi*r))*(
+    #                     np.pi*r*np.sin(np.pi*r/L)/(8.*L) - 
+    #                     (np.sin(np.pi*r/(2.*L))**2)/4. + 
+    #                     np.pi**2 * r**2 / (16.*L))
+
+    # base_wind[Y-1965e3<-L] = np.max(base_wind[r<L])
+    # base_wind = base_wind/np.mean(np.fabs(base_wind[r<L]))
+    # tau_x = base_wind*np.sin(theta)
 
 
-    base_wind[r>L] = np.max(base_wind[r<L])
-
-    base_wind = base_wind/np.max(base_wind)
-
-    tau_x = base_wind*np.sin(theta)
-
-
-    # norm = (L*(2+np.pi)/2.)/(4*np.pi);
+    # my attempt
+    norm = (L*(2+np.pi)/2.)/(4*np.pi);
     
-    # tau_x = (L/(2*np.pi))*np.sin(np.pi*r/L)+(r/4)+(L/(4*np.pi))*(np.cos(np.pi*r/L)-1);
-    # tau_x = tau_x*np.sin(theta)/norm;
+    tau_x = (L/(2*np.pi))*np.sin(np.pi*r/L)+(r/4)+(L/(4*np.pi))*(np.cos(np.pi*r/L)-1);
+    tau_x = tau_x/np.mean(np.fabs(tau_x[r<L]))
+    tau_x = tau_x*np.sin(theta)
 
-    # tau_x[Y<1200e3] = 0
+    tau_x[Y<1200e3] = 0
 
     #-2*L*((np.pi-2)/(np.pi+2))*(-Y[Y<1200e3]/r[Y<1200e3]**2)
     #tau_x = np.sin(theta) * (r**2 * np.pi / (8. * L) + r * np.sin(r * np.pi / L)/4. + L * np.cos(r * np.pi / L)/(4. * r**2 * np.pi))
@@ -77,43 +78,45 @@ def davis_wind_x(X, Y):
     #tau_x[Y<1200e3] = (tau_x[82,50]*(1950e3-Y[Y<1200e3]))/(r[Y<1200e3])**2
     #tau_x = tau_x/np.max(np.absolute(tau_x[:,:]))
 
-    plt.pcolormesh(X,Y,tau_x,cmap='RdBu_r')
-    plt.axes().set_aspect('equal', 'datalim')
-    plt.colorbar()
+    plt.pcolormesh(X/1e3,Y/1e3,tau_x,cmap='RdBu_r')
+    CB = plt.colorbar()
+    CB.set_label('Normalised pattern for x component of wind stress')
+    plt.xlim(0,1500)
+    plt.axes().set_aspect('equal')
+    plt.xlabel('x coordinate (km)')
+    plt.ylabel('y coordinate (km)')
     plt.savefig('tau_x.png',bbox_inches='tight')
     plt.close()
 
     return tau_x
 
 def davis_wind_y(X, Y):
-    L = 750e3
+    L = 1500e3
 
     r = np.sqrt((Y-1965e3)**2 + (X-765e3)**2)
     theta = np.arctan2(Y-1965e3,X-765e3)
 
-    base_wind = ((2.*L)/(np.pi*r))*(
-                        np.pi*r*np.sin(np.pi*r/L)/(8.*L) - 
-                        (np.sin(np.pi*r/(2.*L))**2)/4. + 
-                        np.pi**2 * r**2 / (16.*L))
+    # From Pete's code
+    # This wind forcing gave an upper layer that was slightly too thin.
+    # base_wind = ((2.*L)/(np.pi*r))*(
+    #                     np.pi*r*np.sin(np.pi*r/L)/(8.*L) - 
+    #                     (np.sin(np.pi*r/(2.*L))**2)/4. + 
+    #                     np.pi**2 * r**2 / (16.*L))
 
 
-    base_wind[r>L] = np.max(base_wind[r<L])
+    # base_wind[Y-1965e3<-L] = np.max(base_wind[r<L])
+    # base_wind = base_wind/np.mean(np.fabs(base_wind[r<L]))
 
-    base_wind = base_wind/np.max(base_wind)
+    # tau_y = -base_wind*np.cos(theta)
 
-    tau_y = -base_wind*np.cos(theta)
-
-    # norm = (L*(2+np.pi)/2.)/(4*np.pi);
     
-    # tau_y = (L/(2*np.pi))*np.sin(np.pi*r/L)+(r/4)+(L/(4*np.pi))*(np.cos(np.pi*r/L)-1);
-    # tau_y = -tau_y*np.cos(theta)/norm;
+    tau_y = (L/(2*np.pi))*np.sin(np.pi*r/L)+(r/4)+(L/(4*np.pi))*(np.cos(np.pi*r/L)-1);
+    tau_y = tau_y/np.mean(np.fabs(tau_y[r<L]))
+    tau_y = -tau_y*np.cos(theta)
 
-    # tau_y[Y<1200e3] = 0
+    tau_y[Y<1200e3] = 0
 
-    # tau_y = -np.cos(theta)*(np.pi*r/(8.*L) + 
-    #     np.sin(np.pi*r/(2.*L))/4. + np.cos(np.pi*r/(2.*L))/(r*8.))
-    # tau_y[Y<1250e3] = -tau_x[82,50]*(750e3 - X[Y<1250e3])/(r[Y<1250e3])**2
-    # tau_y = tau_y/np.max(np.absolute(tau_y[:,-1]))
+
 
     plt.pcolormesh(X/1e3,Y/1e3,tau_y,cmap='RdBu_r')
     CB = plt.colorbar()
