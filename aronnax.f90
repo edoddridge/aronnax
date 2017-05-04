@@ -71,6 +71,7 @@ program aronnax
   double precision, dimension(:),     allocatable :: zeros
   integer maxits
   double precision :: eps, freesurfFac, thickness_error
+  integer          :: debug_level
   ! Model
   double precision :: hmean(layerwise_input_length)
   ! Switch for using n + 1/2 layer physics, or using n layer physics
@@ -115,14 +116,14 @@ program aronnax
   integer   :: offsets(2,5)
 
 
-  ! Set default values here
+
 
   ! TODO Possibly wait until the model is split into multiple files,
   ! then hide the long unsightly code there.
 
   namelist /NUMERICS/ au, ah, ar, botDrag, dt, slip, nTimeSteps, &
       dumpFreq, avFreq, hmin, maxits, freesurfFac, eps, &
-      thickness_error
+      thickness_error, debug_level
 
   namelist /MODEL/ hmean, depthFile, H0, RedGrav
 
@@ -140,7 +141,10 @@ program aronnax
   namelist /EXTERNAL_FORCING/ zonalWindFile, meridionalWindFile, &
       DumpWind, wind_mag_time_series_file
 
+  ! Set default values here
+  debug_level = 0
 
+  
   open(unit=8, file="parameters.in", status='OLD', recl=80)
   read(unit=8, nml=NUMERICS)
   read(unit=8, nml=MODEL)
@@ -269,7 +273,7 @@ program aronnax
 
   call model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
       dt, au, ar, botDrag, ah, slip, hmin, nTimeSteps, dumpFreq, avFreq, &
-      maxits, eps, freesurfFac, thickness_error, g_vec, rho0, &
+      maxits, eps, freesurfFac, thickness_error, debug_level, g_vec, rho0, &
       base_wind_x, base_wind_y, wind_mag_time_series, &
       spongeHTimeScale, spongeUTimeScale, spongeVTimeScale, &
       spongeH, spongeU, spongeV, &
@@ -286,7 +290,7 @@ end program aronnax
 
 subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
     dt, au, ar, botDrag, ah, slip, hmin, nTimeSteps, dumpFreq, avFreq, &
-    maxits, eps, freesurfFac, thickness_error, g_vec, rho0, &
+    maxits, eps, freesurfFac, thickness_error, debug_level, g_vec, rho0, &
     base_wind_x, base_wind_y, wind_mag_time_series, &
     spongeHTimeScale, spongeUTimeScale, spongeVTimeScale, &
     spongeH, spongeU, spongeV, &
@@ -319,6 +323,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   double precision, intent(in) :: dumpFreq, avFreq
   integer,          intent(in) :: maxits
   double precision, intent(in) :: eps, freesurfFac, thickness_error
+  integer,          intent(in) :: debug_level
   ! Physics
   double precision, intent(in) :: g_vec(layers)
   double precision, intent(in) :: rho0
@@ -529,7 +534,8 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   !
   ! ------------------------- negative 2 time step --------------------------
   ! Code to work out dhdtveryold, dudtveryold and dvdtveryold
-
+  n = 0
+  
   call state_derivative(dhdtveryold, dudtveryold, dvdtveryold, &
       h, u, v, depth, &
       dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
@@ -538,7 +544,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
       spongeHTimeScale, spongeH, &
       spongeUTimeScale, spongeU, &
       spongeVTimeScale, spongeV, &
-      nx, ny, layers)
+      nx, ny, layers, n, debug_level)
 
   ! Calculate the values at half the time interval with Forward Euler
   hhalf = h+0.5d0*dt*dhdtveryold
@@ -553,7 +559,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
       spongeHTimeScale, spongeH, &
       spongeUTimeScale, spongeU, &
       spongeVTimeScale, spongeV, &
-      nx, ny, layers)
+      nx, ny, layers, n, debug_level)
 
   ! These are the values to be stored in the 'veryold' variables ready
   ! to start the proper model run.
@@ -583,7 +589,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
       spongeHTimeScale, spongeH, &
       spongeUTimeScale, spongeU, &
       spongeVTimeScale, spongeV, &
-      nx, ny, layers)
+      nx, ny, layers, n, debug_level)
 
   ! Calculate the values at half the time interval with Forward Euler
   hhalf = h+0.5d0*dt*dhdtold
@@ -598,7 +604,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
       spongeHTimeScale, spongeH, &
       spongeUTimeScale, spongeU, &
       spongeVTimeScale, spongeV, &
-      nx, ny, layers)
+      nx, ny, layers, n, debug_level)
 
   ! These are the values to be stored in the 'old' variables ready to start
   ! the proper model run.
@@ -647,7 +653,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
         spongeHTimeScale, spongeH, &
         spongeUTimeScale, spongeU, &
         spongeVTimeScale, spongeV, &
-        nx, ny, layers)
+        nx, ny, layers, n, debug_level)
 
     ! Use dh/dt, du/dt and dv/dt to step h, u and v forward in time with
     ! the Adams-Bashforth third order linear multistep method
@@ -665,7 +671,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
       call barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
           dx, dy, wetmask, hfacW, hfacS, dt, &
           maxits, eps, rjac, freesurfFac, thickness_error, &
-          g_vec, nx, ny, layers, n, &
+          debug_level, g_vec, nx, ny, layers, n, &
           MPI_COMM_WORLD, myid, num_procs, ilower, iupper, &
           hypre_grid, hypre_A, ierr)
 
@@ -713,8 +719,9 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
     ! Now have new fields in main arrays and old fields in very old arrays
 
     call maybe_dump_output(h, hav, u, uav, v, vav, eta, etaav, &
+        dudt, dvdt, dhdt, &
         wind_x, wind_y, nx, ny, layers, &
-        n, nwrite, avwrite, RedGrav, DumpWind)
+        n, nwrite, avwrite, RedGrav, DumpWind, debug_level)
 
     cur_time = time()
     if (cur_time - last_report_time > 3) then
@@ -742,7 +749,7 @@ subroutine state_derivative(dhdt, dudt, dvdt, h, u, v, depth, &
     spongeHTimeScale, spongeH, &
     spongeUTimeScale, spongeU, &
     spongeVTimeScale, spongeV, &
-    nx, ny, layers)
+    nx, ny, layers, n, debug_level)
   implicit none
 
   double precision, intent(out) :: dhdt(0:nx+1, 0:ny+1, layers)
@@ -775,6 +782,8 @@ subroutine state_derivative(dhdt, dudt, dvdt, h, u, v, depth, &
   double precision, intent(in) :: spongeVTimeScale(0:nx+1, 0:ny+1, layers)
   double precision, intent(in) :: spongeV(0:nx+1, 0:ny+1, layers)
   integer, intent(in) :: nx, ny, layers
+  integer, intent(in) :: n
+  integer, intent(in) :: debug_level
 
   ! Bernoulli potential
   double precision :: b(0:nx+1, 0:ny+1, layers)
@@ -784,12 +793,24 @@ subroutine state_derivative(dhdt, dudt, dvdt, h, u, v, depth, &
   ! Calculate Bernoulli potential
   if (RedGrav) then
     call evaluate_b_RedGrav(b, h, u, v, nx, ny, layers, g_vec)
+    if (debug_level .ge. 4) then
+      call write_output_3d(b, nx, ny, layers, 0, 0, &
+        n, 'snap.BP.')
+    end if
   else
     call evaluate_b_iso(b, h, u, v, nx, ny, layers, g_vec, depth)
+    if (debug_level .ge. 4) then
+      call write_output_3d(b, nx, ny, layers, 0, 0, &
+        n, 'snap.BP.')
+    end if
   end if
 
   ! Calculate relative vorticity
   call evaluate_zeta(zeta, u, v, nx, ny, layers, dx, dy)
+  if (debug_level .ge. 4) then
+    call write_output_3d(zeta, nx, ny, layers, 1, 1, &
+      n, 'snap.zeta.')
+  end if
 
   ! Calculate dhdt, dudt, dvdt at current time step
   call evaluate_dhdt(dhdt, h, u, v, ah, dx, dy, nx, ny, layers, &
@@ -812,7 +833,7 @@ end subroutine state_derivative
 subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
     dx, dy, wetmask, hfacW, hfacS, dt, &
     maxits, eps, rjac, freesurfFac, thickness_error, &
-    g_vec, nx, ny, layers, n, &
+    debug_level, g_vec, nx, ny, layers, n, &
      MPI_COMM_WORLD, myid, num_procs, ilower, iupper, &
      hypre_grid, hypre_A, ierr)
 
@@ -832,6 +853,7 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
   double precision, intent(in)    :: dt
   integer,          intent(in)    :: maxits
   double precision, intent(in)    :: eps, rjac, freesurfFac, thickness_error
+  integer,          intent(in)    :: debug_level
   double precision, intent(in)    :: g_vec(layers)
   integer,          intent(in)    :: nx, ny, layers, n
   integer,          intent(in)    :: MPI_COMM_WORLD
@@ -847,14 +869,37 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
   double precision :: vb(nx, ny+1)
   double precision :: etastar(0:nx+1, 0:ny+1)
 
+  character(10)    :: num
+
   ! Calculate the barotropic velocities
   call calc_baro_u(ub, unew, hnew, eta, freesurfFac, nx, ny, layers)
   call calc_baro_v(vb, vnew, hnew, eta, freesurfFac, nx, ny, layers)
+  
+  if (debug_level .ge. 4) then
+
+    write(num, '(i10.10)') n
+
+    ! Output the data to a file
+    open(unit=10, status='replace', file='output/'//'snap.ub.'//num, &
+        form='unformatted')
+    write(10) ub(1:nx+1, 1:ny)
+    close(10)
+
+    open(unit=10, status='replace', file='output/'//'snap.vb.'//num, &
+        form='unformatted')
+    write(10) vb(1:nx, 1:ny+1)
+    close(10)
+  end if
+
 
   ! Calculate divergence of ub and vb, and solve for the pressure
   ! field that removes it
   call calc_eta_star(ub, vb, eta, etastar, freesurfFac, nx, ny, dx, dy, dt)
   ! print *, maxval(abs(etastar))
+  if (debug_level .ge. 4) then
+    call write_output_2d(etastar, nx, ny, 0, 0, &
+      n, 'snap.eta_star.')
+  end if
 
   ! Prevent barotropic signals from bouncing around outside the
   ! wet region of the model.
@@ -870,6 +915,11 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
     ilower, iupper, etastar, &
     etanew, nx, ny, dt, maxits, eps, ierr)
 #endif
+
+  if (debug_level .ge. 4) then
+    call write_output_2d(etanew, nx, ny, 0, 0, &
+      n, 'snap.eta_new.')
+  end if
 
   etanew = etanew*wetmask
 
@@ -901,8 +951,9 @@ end subroutine barotropic_correction
 !> Write output if it's time
 
 subroutine maybe_dump_output(h, hav, u, uav, v, vav, eta, etaav, &
-    wind_x, wind_y, nx, ny, layers, &
-    n, nwrite, avwrite, RedGrav, DumpWind)
+        dudt, dvdt, dhdt, &
+        wind_x, wind_y, nx, ny, layers, &
+        n, nwrite, avwrite, RedGrav, DumpWind, debug_level)
   implicit none
 
   double precision, intent(in)    :: h(0:nx+1, 0:ny+1, layers)
@@ -913,16 +964,57 @@ subroutine maybe_dump_output(h, hav, u, uav, v, vav, eta, etaav, &
   double precision, intent(inout) :: vav(0:nx+1, 0:ny+1, layers)
   double precision, intent(in)    :: eta(0:nx+1, 0:ny+1)
   double precision, intent(inout) :: etaav(0:nx+1, 0:ny+1)
+  double precision, intent(in)    :: dudt(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)    :: dvdt(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)    :: dhdt(0:nx+1, 0:ny+1, layers)
   double precision, intent(in)    :: wind_x(0:nx+1, 0:ny+1)
   double precision, intent(in)    :: wind_y(0:nx+1, 0:ny+1)
   integer,          intent(in)    :: nx, ny, layers, n, nwrite, avwrite
   logical,          intent(in)    :: RedGrav, DumpWind
+  integer,          intent(in)    :: debug_level
+
+  logical       :: dump_output
+
 
   ! Write snapshot to file?
   if (mod(n-1, nwrite) .eq. 0) then
+    dump_output = .TRUE.
+  else if (debug_level .ge. 4) then
+    dump_output = .TRUE.
+  else
+    dump_output = .FALSE.
+  end if
 
-    call write_output(h, u, v, eta, wind_x, wind_y, &
-        nx, ny, layers, n, RedGrav, DumpWind, 'snap')
+  if (dump_output) then 
+    
+    call write_output_3d(h, nx, ny, layers, 0, 0, &
+    n, 'snap.h.')
+    call write_output_3d(u, nx, ny, layers, 1, 0, &
+    n, 'snap.u.')
+    call write_output_3d(v, nx, ny, layers, 0, 1, &
+    n, 'snap.v.')
+
+
+    if (.not. RedGrav) then
+      call write_output_2d(eta, nx, ny, 0, 0, &
+        n, 'snap.eta.')
+    end if
+
+    if (DumpWind .eqv. .true.) then
+      call write_output_2d(wind_x, nx, ny, 1, 0, &
+        n, 'wind_x.')
+      call write_output_2d(wind_y, nx, ny, 0, 1, &
+        n, 'wind_y.')
+    end if
+
+    if (debug_level .ge. 1) then
+      call write_output_3d(dhdt, nx, ny, layers, 0, 0, &
+        n, 'debug.dhdt.')
+      call write_output_3d(dudt, nx, ny, layers, 1, 0, &
+        n, 'debug.dudt.')
+      call write_output_3d(dvdt, nx, ny, layers, 0, 1, &
+        n, 'debug.dvdt.')
+    end if
 
     ! Check if there are NaNs in the data
     call break_if_NaN(h, nx, ny, layers, n)
@@ -943,8 +1035,18 @@ subroutine maybe_dump_output(h, hav, u, uav, v, vav, eta, etaav, &
       etaav = etaav/real(avwrite)
     end if
 
-    call write_output(hav, uav, vav, etaav, wind_x, wind_y, &
-        nx, ny, layers, n, RedGrav, .false., 'av')
+    call write_output_3d(hav, nx, ny, layers, 0, 0, &
+    n, 'av.h.')
+    call write_output_3d(uav, nx, ny, layers, 1, 0, &
+    n, 'av.u.')
+    call write_output_3d(vav, nx, ny, layers, 0, 1, &
+    n, 'av.v.')
+
+
+    if (.not. RedGrav) then
+      call write_output_2d(etaav, nx, ny, 0, 0, &
+        n, 'av.eta.')
+    end if
 
     ! Check if there are NaNs in the data
     call break_if_NaN(h, nx, ny, layers, n)
@@ -2257,58 +2359,54 @@ subroutine wrap_fields_2D(array, nx, ny)
 end subroutine wrap_fields_2D
 
 !-----------------------------------------------------------------
-!> Write snapshot output
+!> Write snapshot output of 3d field
 
-subroutine write_output(h, u, v, eta, wind_x, wind_y, &
-    nx, ny, layers, n, RedGrav, DumpWind, name)
+subroutine write_output_3d(array, nx, ny, layers, xstep, ystep, &
+    n, name)
   implicit none
 
-  double precision, intent(in) :: h(0:nx+1, 0:ny+1, layers)
-  double precision, intent(in) :: u(0:nx+1, 0:ny+1, layers)
-  double precision, intent(in) :: v(0:nx+1, 0:ny+1, layers)
-  double precision, intent(in) :: eta(0:nx+1, 0:ny+1)
-  double precision, intent(in) :: wind_x(0:nx+1, 0:ny+1)
-  double precision, intent(in) :: wind_y(0:nx+1, 0:ny+1)
-  integer, intent(in) :: nx, ny, layers, n
-  logical, intent(in) :: RedGrav, DumpWind
-  character(*), intent(in) :: name
+  double precision, intent(in) :: array(0:nx+1, 0:ny+1, layers)
+  integer,          intent(in) :: nx, ny, layers, xstep, ystep
+  integer,          intent(in) :: n
+  character(*),     intent(in) :: name
 
-  character(10) :: num
+  character(10)  :: num
 
   write(num, '(i10.10)') n
 
   ! Output the data to a file
-  open(unit=10, status='replace', file='output/'//name//'.h.'//num, &
+  open(unit=10, status='replace', file='output/'//name//num, &
       form='unformatted')
-  write(10) h(1:nx, 1:ny, :)
+  write(10) array(1:nx+xstep, 1:ny+ystep, :)
   close(10)
-  open(unit=10, status='replace', file='output/'//name//'.u.'//num, &
-      form='unformatted')
-  write(10) u(1:nx+1, 1:ny, :)
-  close(10)
-  open(unit=10, status='replace', file='output/'//name//'.v.'//num, &
-      form='unformatted')
-  write(10) v(1:nx, 1:ny+1, :)
-  close(10)
-  if (.not. RedGrav) then
-    open(unit=10, status='replace', file='output/'//name//'.eta.'//num, &
-        form='unformatted')
-    write(10) eta(1:nx, 1:ny)
-    close(10)
-  end if
 
-  if (DumpWind .eqv. .true.) then
-    open(unit=10, status='replace', file='output/wind_x.'//num, &
-        form='unformatted')
-    write(10) wind_x(1:nx+1, 1:ny)
-    close(10)
-    open(unit=10, status='replace', file='output/wind_y.'//num, &
-        form='unformatted')
-    write(10) wind_y(1:nx, 1:ny+1)
-    close(10)
-  end if
   return
-end subroutine write_output
+end subroutine write_output_3d
+
+!-----------------------------------------------------------------
+!> Write snapshot output of 2d field
+
+subroutine write_output_2d(array, nx, ny, xstep, ystep, &
+    n, name)
+  implicit none
+
+  double precision, intent(in) :: array(0:nx+1, 0:ny+1)
+  integer,          intent(in) :: nx, ny, xstep, ystep
+  integer,          intent(in) :: n
+  character(*),     intent(in) :: name
+
+  character(10)  :: num
+  
+  write(num, '(i10.10)') n
+
+  ! Output the data to a file
+  open(unit=10, status='replace', file='output/'//name//num, &
+      form='unformatted')
+  write(10) array(1:nx+xstep, 1:ny+ystep)
+  close(10)
+
+  return
+end subroutine write_output_2d
 
 !-----------------------------------------------------------------
 !> finalise MPI and then stop the model
