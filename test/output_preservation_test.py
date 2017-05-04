@@ -114,7 +114,7 @@ def test_gaussian_bump():
         assert_outputs_close(10, 10, 2, 2e-13)
         assert_volume_conservation(10, 10, 2, 1e-5)
 
-def test_gaussian_bump_degug_test():
+def test_gaussian_bump_debug_test():
     xlen = 1e6
     ylen = 1e6
     with working_directory(p.join(self_path, "beta_plane_bump_debug_test")):
