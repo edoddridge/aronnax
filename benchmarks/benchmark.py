@@ -65,8 +65,8 @@ def benchmark_gaussian_bump_red_grav(grid_points):
 def benchmark_gaussian_bump_save(grid_points):
     run_time_O1 = np.zeros(len(grid_points))
     run_time_Ofast = np.zeros(len(grid_points))
-    run_time_hypre_test = np.zeros(len(grid_points))
-    run_time_hypre = np.zeros(len(grid_points))
+    # run_time_hypre_test = np.zeros(len(grid_points))
+    # run_time_hypre = np.zeros(len(grid_points))
 
     def bump(X, Y):
         return 500. + 20*np.exp(-((6e5-X)**2 + (5e5-Y)**2)/(2*1e5**2))
@@ -82,44 +82,45 @@ def benchmark_gaussian_bump_save(grid_points):
             run_time_Ofast[counter] = aro.simulate(
                 exe=aro_exec, initHfile=[bump, lambda X, Y: 2000. - bump(X, Y)], nx=nx, ny=nx)
 
-        aro_exec = "aronnax_external_solver_test"
-        for counter, nx in enumerate(grid_points[:9]):
-            run_time_hypre_test[counter] = aro.simulate(
-                exe=aro_exec, initHfile=[bump, lambda X, Y: 2000. - bump(X, Y)], nx=nx, ny=nx)
+        # aro_exec = "aronnax_external_solver_test"
+        # for counter, nx in enumerate(grid_points[:9]):
+        #     run_time_hypre_test[counter] = aro.simulate(
+        #         exe=aro_exec, initHfile=[bump, lambda X, Y: 2000. - bump(X, Y)], nx=nx, ny=nx)
 
-        aro_exec = "aronnax_external_solver"
-        for counter, nx in enumerate(grid_points[:9]):
-            run_time_hypre[counter] = aro.simulate(
-                exe=aro_exec, initHfile=[bump, lambda X, Y: 2000. - bump(X, Y)], nx=nx, ny=nx)
+        # aro_exec = "aronnax_external_solver"
+        # for counter, nx in enumerate(grid_points[:9]):
+        #     run_time_hypre[counter] = aro.simulate(
+        #         exe=aro_exec, initHfile=[bump, lambda X, Y: 2000. - bump(X, Y)], nx=nx, ny=nx)
 
         with open("times.pkl", "w") as f:
-                pkl.dump((grid_points, run_time_O1, run_time_Ofast, 
-                          run_time_hypre_test, run_time_hypre), f)
+                pkl.dump((grid_points, run_time_O1, run_time_Ofast,
+                          # run_time_hypre_test, run_time_hypre
+                          ), f)
 
 
 
 def benchmark_gaussian_bump_plot():
     with working_directory(p.join(self_path, "beta_plane_bump")):
         with open("times.pkl", "r") as f:
-
-            (grid_points, run_time_O1, run_time_Ofast, 
-                      run_time_hypre_test, run_time_hypre) = pkl.load(f)
+            (grid_points, run_time_O1, run_time_Ofast,
+                      # run_time_hypre_test, run_time_hypre
+                      ) = pkl.load(f)
 
         plt.figure()
         plt.loglog(grid_points, run_time_O1*scale_factor,
             '-*', label='Aronnax run time -O1')
         plt.loglog(grid_points, run_time_Ofast*scale_factor,
             '-*', label='Aronnax run time -Ofast')
-        plt.loglog(grid_points, run_time_hypre_test*scale_factor,
-            '-*', label='Aronnax run time Hypre -O1')
-        plt.loglog(grid_points, run_time_hypre*scale_factor,
-            '-*', label='Aronnax run time Hypre -Ofast')
+        # plt.loglog(grid_points, run_time_hypre_test*scale_factor,
+        #     '-*', label='Aronnax run time Hypre -O1')
+        # plt.loglog(grid_points, run_time_hypre*scale_factor,
+        #     '-*', label='Aronnax run time Hypre -Ofast')
         scale = scale_factor * run_time_O1[3]/(grid_points[3]**3)
         plt.loglog(grid_points, scale*grid_points**3,
             ':', label='O(nx**3)', color='black', linewidth=0.5)
-        scale = scale_factor * run_time_hypre[3]/(grid_points[3]**2)
-        plt.loglog(grid_points, scale*grid_points**2,
-            ':', label='O(nx**2)', color='blue', linewidth=0.5)
+        # scale = scale_factor * run_time_hypre[3]/(grid_points[3]**2)
+        # plt.loglog(grid_points, scale*grid_points**2,
+        #     ':', label='O(nx**2)', color='blue', linewidth=0.5)
         plt.legend()
         plt.xlabel('Resolution (grid cells on one side)')
         plt.ylabel('Avg time per integration step (ms)')

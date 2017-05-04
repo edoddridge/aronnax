@@ -32,7 +32,7 @@ def simulate(work_dir=".", config_path="aronnax.conf", **options):
           in Fortran raw array format
 
     The process for a simulation is to
-    
+
         1. Compute the configuration
         2. Recompile the Fortran core if necessary
         3. Save the computed configuration in aronnax-merged.conf
@@ -103,6 +103,7 @@ section_map = {
     "eps"                  : "numerics",
     "freesurfFac"          : "numerics",
     "thickness_error"      : "numerics",
+    "debug_level"          : "numerics",
     "hmean"                : "model",
     "depthFile"            : "model",
     "H0"                   : "model",
@@ -243,7 +244,7 @@ def run_executable(config):
     if config.getboolean("executable", "valgrind") \
        or 'ARONNAX_TEST_VALGRIND_ALL' in os.environ:
         assert not config.getboolean("executable", "perf")
-        sub.check_call(["mpirun", "-np", "1", 
+        sub.check_call(["mpirun", "-np", "1",
             "valgrind", "--error-exitcode=5", p.join(root_path, core_name)],
             env=env)
     elif config.getboolean("executable", "perf"):

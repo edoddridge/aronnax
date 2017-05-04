@@ -1,3 +1,4 @@
+
 language: python
 python:
   - "2.7"
@@ -11,26 +12,31 @@ before_install:
   - sudo apt-get install gfortran
   - sudo apt-get install valgrind
   - sudo apt-get install libopenmpi-dev
+  - sudo apt-get install openmpi-bin
   - sudo apt-get install libhypre-dev
   - pip install scipy
   - pip install sphinx
   - pip install sphinx_rtd_theme
   - pip install recommonmark
   - pip install matplotlib
+  - pip install pytest-cov
+  - pip install codecov
   - pip install -e .
 
 install: 
 
 script:
   - mpif90 -Werror aronnax.f90 -cpp
-  - pytest
+  - pytest --cov=aronnax
 
 after_success:
+  - codecov
   - cd benchmarks
   - python benchmark.py
   - cd ../docs
   - make html
   - cd _build/html
+
 
 deploy:
   provider: pages

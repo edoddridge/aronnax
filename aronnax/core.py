@@ -25,7 +25,14 @@ class Grid(object):
         :param float x0: x value at lower left corner of domain
         :param float y0: y value at lower left corner of domain
 
-        :returns: Grid object containing x and y axes for tracer and velocity points."""
+
+        The initialisation call returns an object containing each of the input parameters as well as the following arrays:
+
+        - x: x locations of the tracer points
+        - y: y locations of the tracer points
+        - xp1: x locations of the u velocity points and vorticity points
+        - yp1: y locations of the v velocity points and vorticity points
+        """
 
     def __init__(self,nx,ny,layers,dx,dy,x0=0,y0=0):
         """Instantiate a grid object for Aronnax."""
@@ -42,6 +49,10 @@ class Grid(object):
         self.nx = nx
         self.ny = ny
         self.layers = layers
+
+        # Grid spacing
+        self.dx = dx
+        self.dy = dy
 
 @contextmanager
 def fortran_file(*args, **kwargs):
@@ -66,21 +77,36 @@ def interpret_raw_file(name, nx, ny, layers):
     # whereas Python (and all other programming languages I am aware
     # of) indexes in increasing order.
     file_part = p.basename(name)
-    dx = 0; dy = 0; layered = True
+    dx = 0; dy = 0;
+    if file_part.startswith("snap.BP"):
+        pass
+    if file_part.startswith("snap.eta"):
+        layers = 1
+    if file_part.startswith("snap.eta_new"):
+        layers = 1
+    if file_part.startswith("snap.eta_star"):
+        layers = 1
     if file_part.startswith("snap.h"):
         pass
     if file_part.startswith("snap.u"):
         dx = 1
+    if file_part.startswith("snap.ub"):
+        dx = 1
+        layers = 1
     if file_part.startswith("snap.v"):
         dy = 1
-    if file_part.startswith("snap.eta"):
-        layered = False
+    if file_part.startswith("snap.vb"):
+        dy = 1
+        layers = 1
+    if file_part.startswith("snap.zeta"):
+        dx = 1 
+        dy = 1   
     if file_part.startswith("wind_x"):
         dx = 1
-        layered = False
+        layers = 1
     if file_part.startswith("wind_y"):
         dy = 1
-        layered = False
+        layers = 1
     if file_part.startswith("av.h"):
         pass
     if file_part.startswith("av.u"):
@@ -88,24 +114,27 @@ def interpret_raw_file(name, nx, ny, layers):
     if file_part.startswith("av.v"):
         dy = 1
     if file_part.startswith("av.eta"):
-        layered = False
+        layers = 1
+    if file_part.startswith("debug.dhdt"):
+        pass
+    if file_part.startswith("debug.dudt"):
+        dx = 1
+    if file_part.startswith("debug.dvdt"):
+        dy = 1
     with fortran_file(name, 'r') as f:
-        if layered:
-            return f.read_reals(dtype=np.float64) \
+        return f.read_reals(dtype=np.float64) \
                     .reshape(layers, ny+dy, nx+dx).transpose()
-        else:
-            return f.read_reals(dtype=np.float64) \
-                    .reshape(ny+dy, nx+dx).transpose()
+
 
 ### General input construction helpers
 
 def tracer_point_variable_2d(grid, *h_funcs):
     X,Y = np.meshgrid(grid.x, grid.y)
     T_variable_2d = np.ones((grid.ny, grid.nx))
-    if isinstance(f, (int, long, float)):
-        T_variable_2d[:,:] = f
+    if isinstance(h_funcs, (int, long, float)):
+        T_variable_2d[:,:] = h_funcs
     else:
-        T_variable_2d[:,:] = f(X, Y)
+        T_variable_2d[:,:] = h_funcs(X, Y)
     return T_variable_2d
 
 def tracer_point_variable_3d(grid, *h_funcs):
@@ -134,14 +163,14 @@ def u_point_variable_3d(grid, func):
     assert grid.layers == len(func)
 
     for i, f in enumerate(func):
-        if isinstance(func, (int, long, float)):
+        if isinstance(f, (int, long, float)):
             u_variable_3d[i,:,:] = np.ones(grid.ny, grid.nx+1) * f
         else:
             u_variable_3d[i,:,:] = f(X, Y)
     return u_variable_3d
 
 def v_point_variable_2d(grid, func):
-    X,Y = np.meshgrid(grid.y, grid.xp1)
+    X,Y = np.meshgrid(grid.x, grid.yp1)
     if isinstance(func, (int, long, float)):
         v_varaible_2d = np.ones(grid.ny+1, grid.nx) * func
     else:
@@ -154,11 +183,26 @@ def v_point_variable_3d(grid, func):
     assert grid.layers == len(func)
     
     for i, f in enumerate(func):
-        if isinstance(func, (int, long, float)):
+        if isinstance(f, (int, long, float)):
             v_variable_3d[i,:,:] = np.ones(grid.ny, grid.nx) * f
         else:
             v_variable_3d[i,:,:] = f(X, Y)
     return v_variable_3d
+
+def time_series_variable(nTimeSteps, dt, func):
+    '''Input generator for a time series variable. If passed a function, then that function can depend on the number of timesteps, `nTimeSteps`, and the timestep, `dt`.'''
+
+    ts_variable = np.zeros((nTimeSteps))
+
+    # number of elements in `func` list should always be one
+    assert len(func) == 1
+
+    for i, f in enumerate(func):
+        if isinstance(f, (int, long, float)):
+            ts_variable[:] = np.ones(nTimeSteps) * f
+        else:
+            ts_variable[:] = f(nTimeSteps, dt)
+    return ts_variable
 
 ### Specific construction helpers
 
@@ -201,6 +245,7 @@ ok_generators = {
     'u_point_variable_3d': u_point_variable_3d,
     'v_point_variable_2d': v_point_variable_2d,
     'v_point_variable_3d': v_point_variable_3d,
+    'time_series_variable': time_series_variable,
     'beta_plane_f_u': beta_plane_f_u,
     'beta_plane_f_v': beta_plane_f_v,
     'f_plane_f_u': f_plane_f_u,
@@ -274,5 +319,9 @@ def interpret_requested_data(requested_data, shape, config):
             return v_point_variable_2d(grid, requested_data)
         if shape == "3dV":
             return v_point_variable_3d(grid, requested_data)
+        if shape == "time":
+            nTimeSteps = config.getint("numerics", "nTimeSteps")
+            dt = config.getfloat("numerics", "dt")
+            return time_series_variable(nTimeSteps, dt, requested_data)
         else:
             raise Exception("TODO implement custom generation for other input shapes")
