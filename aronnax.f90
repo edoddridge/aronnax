@@ -502,7 +502,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   if (.not. RedGrav) then
     ! Initialise arrays for pressure solver
     ! a = derivatives of the depth field
-      call derivatives_of_the_depth_field(a, depth, g_vec(1), dx, dy, nx, ny)
+      call calc_A_matrix(a, depth, g_vec(1), dx, dy, nx, ny)
 
 #ifndef useExtSolver
     ! Calculate the spectral radius of the grid for use by the
@@ -2148,7 +2148,7 @@ end subroutine apply_boundary_conditions
 ! ---------------------------------------------------------------------------
 !> Compute derivatives of the depth field for the pressure solver
 
-subroutine derivatives_of_the_depth_field(a, depth, g, dx, dy, nx, ny)
+subroutine calc_A_matrix(a, depth, g, dx, dy, nx, ny)
   implicit none
 
   double precision, intent(out) :: a(5, nx, ny)
@@ -2196,7 +2196,7 @@ subroutine derivatives_of_the_depth_field(a, depth, g, dx, dy, nx, ny)
   end do
 
   return
-end subroutine derivatives_of_the_depth_field
+end subroutine calc_A_matrix
 
 ! ---------------------------------------------------------------------------
 
