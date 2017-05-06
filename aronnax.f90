@@ -2163,19 +2163,6 @@ subroutine calc_A_matrix(a, depth, g, dx, dy, nx, ny, freesurfFac, dt)
       a(4,i,j) = g*0.5*(depth(i,j)+depth(i,j-1))/dy**2
     end do
   end do
-  do j = 1, ny
-    a(1, nx, j) = 0.0
-    a(3, 1, j) = 0.0
-  end do
-  do i = 1, nx
-    a(2, i, ny) = 0.0
-    a(4, i, 1) = 0.0
-  end do
-  do j = 1, ny
-    do i = 1, nx
-      a(5,i,j) = -a(1,i,j)-a(2,i,j)-a(3,i,j)-a(4,i,j) - freesurfFac/dt**2
-    end do
-  end do
 
   ! boundary conditions
   do j = 1, ny
