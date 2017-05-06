@@ -1596,7 +1596,6 @@ subroutine SOR_solver(a, etanew, etastar, freesurfFac, nx, ny, dt, &
           + a(3,i,j)*etanew(i-1,j) &
           + a(4,i,j)*etanew(i,j-1) &
           + a(5,i,j)*etanew(i,j)   &
-          - freesurfFac*etanew(i,j)/dt**2 &
           - rhs(i,j)
       norm0 = norm0 + abs(res(i,j))
       etanew(i,j) = etanew(i,j)-relax_param*res(i,j)/a(5,i,j)
@@ -1614,7 +1613,6 @@ subroutine SOR_solver(a, etanew, etastar, freesurfFac, nx, ny, dt, &
             + a(3,i,j)*etanew(i-1,j) &
             + a(4,i,j)*etanew(i,j-1) &
             + a(5,i,j)*etanew(i,j)   &
-            - freesurfFac*etanew(i,j)/dt**2 &
             - rhs(i,j)
         norm = norm + abs(res(i,j))
         etanew(i,j) = etanew(i,j)-relax_param*res(i,j)/(a(5,i,j))
@@ -2178,7 +2176,7 @@ subroutine calc_A_matrix(a, depth, g, dx, dy, nx, ny, freesurfFac, dt)
   end do
   do j = 1, ny
     do i = 1, nx
-      a(5,i,j) = -a(1,i,j)-a(2,i,j)-a(3,i,j)-a(4,i,j)
+      a(5,i,j) = -a(1,i,j)-a(2,i,j)-a(3,i,j)-a(4,i,j) - freesurfFac/dt**2
     end do
   end do
 
@@ -2191,9 +2189,10 @@ subroutine calc_A_matrix(a, depth, g, dx, dy, nx, ny, freesurfFac, dt)
     a(2, i, ny) = 0.0
     a(4, i, 1) = 0.0
   end do
+
   do j = 1, ny
     do i = 1, nx
-      a(5,i,j) = -a(1,i,j)-a(2,i,j)-a(3,i,j)-a(4,i,j)
+      a(5,i,j) = -a(1,i,j)-a(2,i,j)-a(3,i,j)-a(4,i,j) - freesurfFac/dt**2
     end do
   end do
 
