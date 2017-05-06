@@ -514,7 +514,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
 #else
     ! use the external pressure solver
     call create_Hypre_A_matrix(MPI_COMM_WORLD, hypre_grid, hypre_A, &
-          a, nx, ny, freesurfFac, dt, ierr)
+          a, nx, ny, ierr)
 #endif
 
     ! Check that the supplied free surface anomaly and layer
@@ -1667,7 +1667,7 @@ end subroutine create_Hypre_grid
 ! ---------------------------------------------------------------------------
 
 subroutine create_Hypre_A_matrix(MPI_COMM_WORLD, hypre_grid, hypre_A, &
-          a, nx, ny, freesurfFac, dt, ierr)
+          a, nx, ny, ierr)
   implicit none
 
   integer,          intent(in)  :: MPI_COMM_WORLD
@@ -1675,8 +1675,6 @@ subroutine create_Hypre_A_matrix(MPI_COMM_WORLD, hypre_grid, hypre_A, &
   integer*8,        intent(out) :: hypre_A
   double precision, intent(in)  :: a(5, nx, ny)
   integer,          intent(in)  :: nx, ny
-  double precision, intent(in)  :: freesurfFac
-  double precision, intent(in)  :: dt
   integer,          intent(out) :: ierr
 
   ! Hypre stencil for creating the A matrix
@@ -1719,7 +1717,7 @@ subroutine create_Hypre_A_matrix(MPI_COMM_WORLD, hypre_grid, hypre_A, &
 
       call HYPRE_StructMatrixSetValues(hypre_A, &
           indicies, 1, 0, &
-          a(5,i,j) - freesurfFac/dt**2, ierr)
+          a(5,i,j)
       call HYPRE_StructMatrixSetValues(hypre_A, &
           indicies, 1, 1, &
           a(3,i,j), ierr)
