@@ -1717,7 +1717,7 @@ subroutine create_Hypre_A_matrix(MPI_COMM_WORLD, hypre_grid, hypre_A, &
 
       call HYPRE_StructMatrixSetValues(hypre_A, &
           indicies, 1, 0, &
-          a(5,i,j)
+          a(5,i,j), ierr)
       call HYPRE_StructMatrixSetValues(hypre_A, &
           indicies, 1, 1, &
           a(3,i,j), ierr)
