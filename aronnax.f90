@@ -905,7 +905,7 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
   ! wet region of the model.
   ! etastar = etastar*wetmask
 #ifndef useExtSolver
-  call SOR_solver(a, etanew, etastar, freesurfFac, nx, ny, &
+  call SOR_solver(a, etanew, etastar, nx, ny, &
      dt, rjac, eps, maxits, n)
   ! print *, maxval(abs(etanew))
 #endif
@@ -1560,14 +1560,13 @@ end subroutine calc_eta_star
 !! Euler timestepping for the free surface anomaly, or for the surface
 !! pressure required to keep the barotropic flow nondivergent.
 
-subroutine SOR_solver(a, etanew, etastar, freesurfFac, nx, ny, dt, &
+subroutine SOR_solver(a, etanew, etastar, nx, ny, dt, &
     rjac, eps, maxits, n)
   implicit none
 
   double precision, intent(in)  :: a(5, nx, ny)
   double precision, intent(out) :: etanew(0:nx+1, 0:ny+1)
   double precision, intent(in)  :: etastar(0:nx+1, 0:ny+1)
-  double precision, intent(in)  :: freesurfFac
   integer, intent(in) :: nx, ny
   double precision, intent(in) :: dt
   double precision, intent(in) :: rjac, eps
