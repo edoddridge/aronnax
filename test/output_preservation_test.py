@@ -7,6 +7,8 @@ import glob
 
 import numpy as np
 
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 import aronnax as aro
@@ -134,7 +136,7 @@ def test_beta_plane_gyre_red_grav():
     with working_directory(p.join(self_path, "beta_plane_gyre_red_grav")):
         drv.simulate(zonalWindFile=wind, valgrind=False,
                      nx=10, ny=10, exe=test_executable, dx=xlen/10, dy=ylen/10)
-        assert_outputs_close(10, 10, 1, 2e-13)
+        assert_outputs_close(10, 10, 1, 4e-13)
         assert_volume_conservation(10, 10, 1, 1e-5)
 
 def test_beta_plane_gyre():
@@ -150,3 +152,17 @@ def test_beta_plane_gyre():
                      nx=10, ny=10, exe=test_executable, dx=xlen/10, dy=ylen/10)
         assert_outputs_close(10, 10, 2, 3e-12)
         assert_volume_conservation(10, 10, 2, 1e-5)
+
+def test_beta_plane_gyre_free_surf():
+    xlen = 1e6
+    ylen = 2e6
+    nx = 10; ny = 20
+    layers = 2
+    grid = aro.Grid(nx, ny, layers, xlen / nx, ylen / ny)
+    def wind(_, Y):
+        return 0.05 * (1 - np.cos(2*np.pi * Y/np.max(grid.y)))
+    with working_directory(p.join(self_path, "beta_plane_gyre_free_surf")):
+        drv.simulate(zonalWindFile=wind, valgrind=False,
+                     nx=nx, ny=ny, exe=test_executable, dx=xlen/nx, dy=ylen/ny)
+        assert_outputs_close(nx, ny, layers, 3e-12)
+        assert_volume_conservation(nx, ny, layers, 1e-5)

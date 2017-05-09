@@ -30,5 +30,43 @@ TODO:
 
 Momentum
 ==========================
-To do
+
+The verification suite runs an ensemble of simulations with different horizontal resolutions to assess the impact of resolution on the treatment of momentum within the model. These simulations are started from rest and a single grid point in the centre of the domain is subjected to a small wind forcing. The model is then integrated forward in time with all explicit viscosity and drag parameters set to zero. The difference between the simulated momentum and the expected momentum provides a measure of how well the model treats momentum.
+
+All of the simulations are integrated for one model year using the same value for :math:`\delta t`. This prevents variation due integrating for different amounts of model time or using different timesteps.
+
+Reduced gravity mode
++++++++++++++++++++++++++++++++++
+
+The magnitude of the error varies with :math:`\delta x`, suggesting it is likely due to truncation error - the error induced by solving a continuous set of equations on a discrete grid.
+
+.. figure:: error_by_resolution_semilogx_red_grav.png
+   :alt: momentum error as a function of grid size
+
+   Momentum error as a function grid size for simulations using the reduced gravity mode.
+
+The evolution of momentum in the 8 km resolution test simulation using reduced gravity physics.
+
+.. figure:: f_plane_momentum_test_red_grav.png
+   :alt: momentum evolution as a function of time
+
+   Momentum evolution as a function of time at 8 km resolution in the reduced gravity configuration. The two lines are indistinguishable.
+
+
+
+n-layer mode
++++++++++++++++++++++++++++++++++
+When running in the n-layer mode, the model exhibits substantially different behaviour. The momentum discrepancy is much larger and does not show substantial variation with :math:`\delta x`.
+
+.. figure:: error_by_resolution_semilogx_n_layer.png
+   :alt: momentum error as a function of grid size
+
+   Momentum error as a function grid size for simulations using the n-layer mode.
+
+The evolution of momentum in the 8 km resolution test simulation using n-layer physics. The simulated momentum increases linearly, as expected, but the slow is much too large - the model obtains more momentum from the wind forcing than expected.
+
+.. figure:: f_plane_momentum_test_n_layer.png
+   :alt: momentum evolution as a function of time
+
+   Momentum evolution as a function of time at 8 km resolution in the n-layer configuration.
 
