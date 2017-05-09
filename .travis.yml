@@ -22,7 +22,7 @@ before_install:
   - pip install pytest-cov
   - pip install codecov
   - cd lib/hypre/src
-  - configure
+  - ./configure
   - make install
   - cd ../../..
 
