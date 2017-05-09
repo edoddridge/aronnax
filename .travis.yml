@@ -21,13 +21,13 @@ before_install:
   - pip install matplotlib
   - pip install pytest-cov
   - pip install codecov
-  - pip install -e .
   - cd lib/hypre/src
   - configure
   - make install
   - cd ../../..
 
 install: 
+  - pip install -e .
 
 script:
   - mpif90 -Werror aronnax.f90 -cpp
