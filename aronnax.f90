@@ -502,7 +502,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   if (.not. RedGrav) then
     ! Initialise arrays for pressure solver
     ! a = derivatives of the depth field
-      call derivatives_of_the_depth_field(a, depth, g_vec(1), dx, dy, nx, ny)
+      call calc_A_matrix(a, depth, g_vec(1), dx, dy, nx, ny, freesurfFac, dt)
 
 #ifndef useExtSolver
     ! Calculate the spectral radius of the grid for use by the
@@ -514,7 +514,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
 #else
     ! use the external pressure solver
     call create_Hypre_A_matrix(MPI_COMM_WORLD, hypre_grid, hypre_A, &
-          a, nx, ny, freesurfFac, dt, ierr)
+          a, nx, ny, ierr)
 #endif
 
     ! Check that the supplied free surface anomaly and layer
@@ -907,7 +907,7 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
   ! wet region of the model.
   ! etastar = etastar*wetmask
 #ifndef useExtSolver
-  call SOR_solver(a, etanew, etastar, freesurfFac, nx, ny, &
+  call SOR_solver(a, etanew, etastar, nx, ny, &
      dt, rjac, eps, maxits, n)
   ! print *, maxval(abs(etanew))
 #endif
@@ -1562,14 +1562,13 @@ end subroutine calc_eta_star
 !! Euler timestepping for the free surface anomaly, or for the surface
 !! pressure required to keep the barotropic flow nondivergent.
 
-subroutine SOR_solver(a, etanew, etastar, freesurfFac, nx, ny, dt, &
+subroutine SOR_solver(a, etanew, etastar, nx, ny, dt, &
     rjac, eps, maxits, n)
   implicit none
 
   double precision, intent(in)  :: a(5, nx, ny)
   double precision, intent(out) :: etanew(0:nx+1, 0:ny+1)
   double precision, intent(in)  :: etastar(0:nx+1, 0:ny+1)
-  double precision, intent(in)  :: freesurfFac
   integer, intent(in) :: nx, ny
   double precision, intent(in) :: dt
   double precision, intent(in) :: rjac, eps
@@ -1598,7 +1597,6 @@ subroutine SOR_solver(a, etanew, etastar, freesurfFac, nx, ny, dt, &
           + a(3,i,j)*etanew(i-1,j) &
           + a(4,i,j)*etanew(i,j-1) &
           + a(5,i,j)*etanew(i,j)   &
-          - freesurfFac*etanew(i,j)/dt**2 &
           - rhs(i,j)
       norm0 = norm0 + abs(res(i,j))
       etanew(i,j) = etanew(i,j)-relax_param*res(i,j)/a(5,i,j)
@@ -1616,7 +1614,6 @@ subroutine SOR_solver(a, etanew, etastar, freesurfFac, nx, ny, dt, &
             + a(3,i,j)*etanew(i-1,j) &
             + a(4,i,j)*etanew(i,j-1) &
             + a(5,i,j)*etanew(i,j)   &
-            - freesurfFac*etanew(i,j)/dt**2 &
             - rhs(i,j)
         norm = norm + abs(res(i,j))
         etanew(i,j) = etanew(i,j)-relax_param*res(i,j)/(a(5,i,j))
@@ -1672,7 +1669,7 @@ end subroutine create_Hypre_grid
 ! ---------------------------------------------------------------------------
 
 subroutine create_Hypre_A_matrix(MPI_COMM_WORLD, hypre_grid, hypre_A, &
-          a, nx, ny, freesurfFac, dt, ierr)
+          a, nx, ny, ierr)
   implicit none
 
   integer,          intent(in)  :: MPI_COMM_WORLD
@@ -1680,8 +1677,6 @@ subroutine create_Hypre_A_matrix(MPI_COMM_WORLD, hypre_grid, hypre_A, &
   integer*8,        intent(out) :: hypre_A
   double precision, intent(in)  :: a(5, nx, ny)
   integer,          intent(in)  :: nx, ny
-  double precision, intent(in)  :: freesurfFac
-  double precision, intent(in)  :: dt
   integer,          intent(out) :: ierr
 
   ! Hypre stencil for creating the A matrix
@@ -1724,7 +1719,7 @@ subroutine create_Hypre_A_matrix(MPI_COMM_WORLD, hypre_grid, hypre_A, &
 
       call HYPRE_StructMatrixSetValues(hypre_A, &
           indicies, 1, 0, &
-          a(5,i,j) - freesurfFac/dt**2, ierr)
+          a(5,i,j), ierr)
       call HYPRE_StructMatrixSetValues(hypre_A, &
           indicies, 1, 1, &
           a(3,i,j), ierr)
@@ -2150,13 +2145,15 @@ end subroutine apply_boundary_conditions
 ! ---------------------------------------------------------------------------
 !> Compute derivatives of the depth field for the pressure solver
 
-subroutine derivatives_of_the_depth_field(a, depth, g, dx, dy, nx, ny)
+subroutine calc_A_matrix(a, depth, g, dx, dy, nx, ny, freesurfFac, dt)
   implicit none
 
   double precision, intent(out) :: a(5, nx, ny)
   double precision, intent(in)  :: depth(0:nx+1, 0:ny+1)
   double precision, intent(in)  :: g, dx, dy
-  integer, intent(in) :: nx, ny
+  integer, intent(in)           :: nx, ny
+  double precision, intent(in)  :: freesurfFac
+  double precision, intent(in)  :: dt
 
   integer i, j
 
@@ -2166,19 +2163,6 @@ subroutine derivatives_of_the_depth_field(a, depth, g, dx, dy, nx, ny)
       a(2,i,j) = g*0.5*(depth(i,j+1)+depth(i,j))/dy**2
       a(3,i,j) = g*0.5*(depth(i,j)+depth(i-1,j))/dx**2
       a(4,i,j) = g*0.5*(depth(i,j)+depth(i,j-1))/dy**2
-    end do
-  end do
-  do j = 1, ny
-    a(1, nx, j) = 0.0
-    a(3, 1, j) = 0.0
-  end do
-  do i = 1, nx
-    a(2, i, ny) = 0.0
-    a(4, i, 1) = 0.0
-  end do
-  do j = 1, ny
-    do i = 1, nx
-      a(5,i,j) = -a(1,i,j)-a(2,i,j)-a(3,i,j)-a(4,i,j)
     end do
   end do
 
@@ -2191,14 +2175,15 @@ subroutine derivatives_of_the_depth_field(a, depth, g, dx, dy, nx, ny)
     a(2, i, ny) = 0.0
     a(4, i, 1) = 0.0
   end do
+
   do j = 1, ny
     do i = 1, nx
-      a(5,i,j) = -a(1,i,j)-a(2,i,j)-a(3,i,j)-a(4,i,j)
+      a(5,i,j) = -a(1,i,j)-a(2,i,j)-a(3,i,j)-a(4,i,j) - freesurfFac/dt**2
     end do
   end do
 
   return
-end subroutine derivatives_of_the_depth_field
+end subroutine calc_A_matrix
 
 ! ---------------------------------------------------------------------------
 
