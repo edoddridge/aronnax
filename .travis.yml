@@ -13,7 +13,6 @@ before_install:
   - sudo apt-get install valgrind
   - sudo apt-get install libopenmpi-dev
   - sudo apt-get install openmpi-bin
-  - sudo apt-get install libhypre-dev
   - pip install scipy
   - pip install sphinx
   - pip install sphinx_rtd_theme
