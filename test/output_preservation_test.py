@@ -7,6 +7,8 @@ import glob
 
 import numpy as np
 
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 import aronnax as aro
@@ -134,7 +136,7 @@ def test_beta_plane_gyre_red_grav():
     with working_directory(p.join(self_path, "beta_plane_gyre_red_grav")):
         drv.simulate(zonalWindFile=wind, valgrind=False,
                      nx=10, ny=10, exe=test_executable, dx=xlen/10, dy=ylen/10)
-        assert_outputs_close(10, 10, 1, 2e-13)
+        assert_outputs_close(10, 10, 1, 4e-13)
         assert_volume_conservation(10, 10, 1, 1e-5)
 
 def test_beta_plane_gyre():
