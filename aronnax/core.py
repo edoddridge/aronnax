@@ -128,7 +128,7 @@ def interpret_raw_file(name, nx, ny, layers):
 
 ### General input construction helpers
 
-def tracer_point_variable_2d(grid, *h_funcs):
+def tracer_point_variable_2d(grid, h_funcs):
     X,Y = np.meshgrid(grid.x, grid.y)
     T_variable_2d = np.ones((grid.ny, grid.nx))
     if isinstance(h_funcs, (int, long, float)):
@@ -308,7 +308,7 @@ def interpret_requested_data(requested_data, shape, config):
                 return f.read_reals(dtype=np.float64)
     else:
         if shape == "2dT":
-            return tracer_point_variable_2d(grid, *requested_data)
+            return tracer_point_variable_2d(grid, requested_data)
         if shape == "3dT":
             return tracer_point_variable_3d(grid, *requested_data)
         if shape == "2dU":
