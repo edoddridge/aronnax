@@ -1885,6 +1885,10 @@ subroutine Ext_solver(MPI_COMM_WORLD, hypre_A, hypre_grid, num_procs, &
   ! call HYPRE_StructMatrixPrint(hypre_A, ierr)
 
   call HYPRE_StructPCGDestroy(hypre_solver, ierr)
+  call HYPRE_BoomerAMGDestroy(precond, ierr)
+  call HYPRE_StructVectorDestroy(hypre_x, ierr)
+  call HYPRE_StructVectorDestroy(hypre_b, ierr)
+
 #endif
 
   return
