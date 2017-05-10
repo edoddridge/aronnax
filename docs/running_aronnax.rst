@@ -37,3 +37,14 @@ The example file is reproduced here with comments describing the parameters and 
 
 .. warning::
     The configuration file shown above includes all of the possible input parameters and fields since it forms part of the documentation. IT WILL NOT WORK AS IS. To use it in an actual simulation the file will need to be modified either by giving values to the parameters that are currently unspecified, or deleting them from the file. If you wish to see a configuration file that corresponds to a successful simulation, look in any of the test, benchmark, or reproduction directories.
+
+debug_level
+-----------
+This parameter determines whether the model produces additional outputs. It should be set to an integer value greater than or equal to zero. The different values have the following effects:
+
+ - 0: no additional outputs. Output frequency controlled by `DumpFreq` and `AvFreq`
+ - 1: output tendencies at frequency given by `DumpFreq`
+ - 2: output tendencies and convergence diagnostics from the linear solve at frequency given by `DumpFreq` (not implemented)
+ - 3: output convergence diagnostics and tendencies before and after applying some or all of sponges, barotropic correction, winds, and boundary conditions at frequency controlled by `DumpFreq` (not implemented)
+ - 4: dump all of the above fields every time step (mostly implemented)
+ - 5: dump everything every time step including the two initial RK4 steps (not implemented)
