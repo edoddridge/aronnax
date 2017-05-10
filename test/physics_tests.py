@@ -368,14 +368,14 @@ if __name__ == '__main__':
         grid_resolution = [3e3, 4e3, 5e3, 6e3, 7e3, 8e3, 9e3,
                             1e4, 2e4, 3e4, 4e4, 5e4, 6e4, 7e4, 8e4, 9e4,
                             1e5],
-                            integration_time = 1*365*86400)
+                            integration_time = 30*86400)
 
     truncation_error('n_layer', aro_exec = "aronnax_core",
         nx = 50, ny = 50, 
         grid_resolution = [3e3, 6e3, 9e3,
                             1e4, 5e4,
                             1e5],
-                            integration_time = 90*86400)
+                            integration_time = 2*86400)
 
     # run two experiments again to produce temporal evolution curves
     f_plane_wind_test('red_grav', aro_exec="aronnax_core", 
