@@ -77,7 +77,7 @@ The y component of the normalised wind stress field is shown on the left, and th
    :width: 62%
 
 
-After integrating for 40 model years these inputs produce a steady seasonal cyclein velocity and layer thickness. A snap shot is shown on the left, while a time series of the maximum thickness is shown on the right.
+After integrating for 40 model years these inputs produce a steady seasonal cycle in velocity and layer thickness. A snap shot is shown on the left, while a time series of the maximum thickness is shown on the right.
 
 .. image:: ../reproductions/Davis_et_al_2014/control_final_five/figures/state_0000155089.png
    :width: 37%
