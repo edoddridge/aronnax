@@ -8,7 +8,7 @@ as a reduced gravity model with n + 1/2 layers, or with n layers and
 variable bathymetry.
 
 Aronnax is
-- [Easy to install](https://github.com/edoddridge/aronnax#install)
+- [Easy to install](https://edoddridge.github.io/aronnax/installation.html)
   on a laptop or a compute node, including without
   administrative privileges.
 - Easy to configure.  All parameters, including grid size, are
@@ -31,9 +31,6 @@ Aronnax is
   main integration loop is a multi-core Fortran program, wrapped in
   Python for convenient use.
 
-# Install
-
-todo
 
 # Get Involved
 
