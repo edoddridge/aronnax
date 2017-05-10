@@ -11,7 +11,7 @@ Aronnax can be run as either a reduced gravity model with n + 1/2 layers, or wit
 
 Aronnax is
 
-- `Easy to install <https://github.com/edoddridge/aronnax#install>`_
+- `Easy to install <installation.html>`_
   on a laptop or a compute node, including without
   administrative privileges.
 
