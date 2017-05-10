@@ -41,12 +41,12 @@ Aronnax is
    :maxdepth: 2
    :caption: Contents:
 
-   examples
    aronnax_model
    installation
    input_generation
    running_aronnax
    output_helpers
+   examples
    verification
    benchmarks
 
