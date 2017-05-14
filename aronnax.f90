@@ -263,13 +263,7 @@ program aronnax
   call read_input_fileV(spongeVfile, spongeV, 0.d0, nx, ny, layers)
   call read_input_fileH_2D(wetMaskFile, wetmask, 1.d0, nx, ny)
 
-  ! For now enforce wetmask to have zeros around the edge.
-  wetmask(0, :) = 0d0
-  wetmask(nx+1, :) = 0d0
-  wetmask(:, 0) = 0d0
-  wetmask(:, ny+1) = 0d0
-  ! TODO, this will change one day when the model can do periodic
-  ! boundary conditions.
+
 
   call model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
       dt, au, ar, botDrag, ah, slip, hmin, nTimeSteps, dumpFreq, avFreq, &
