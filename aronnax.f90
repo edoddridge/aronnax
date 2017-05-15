@@ -196,7 +196,7 @@ program aronnax
 
 #ifdef useExtSolver
   call create_Hypre_grid(MPI_COMM_WORLD, hypre_grid, ilower, iupper, &
-          num_procs, myid, ierr)
+          num_procs, myid, nx, ny, ierr)
 #endif
 
 
@@ -1643,7 +1643,7 @@ end subroutine SOR_solver
 ! ---------------------------------------------------------------------------
 
 subroutine create_Hypre_grid(MPI_COMM_WORLD, hypre_grid, ilower, iupper, &
-          num_procs, myid, ierr)
+          num_procs, myid, nx, ny, ierr)
   implicit none
 
   integer,   intent(in)  :: MPI_COMM_WORLD
@@ -1652,6 +1652,8 @@ subroutine create_Hypre_grid(MPI_COMM_WORLD, hypre_grid, ilower, iupper, &
   integer,   intent(in)  :: iupper(0:num_procs-1,2)
   integer,   intent(in)  :: num_procs
   integer,   intent(in)  :: myid
+  integer,   intent(in)  :: nx
+  integer,   intent(in)  :: ny
   integer,   intent(out)  :: ierr
 
 #ifdef useExtSolver
@@ -1660,6 +1662,8 @@ subroutine create_Hypre_grid(MPI_COMM_WORLD, hypre_grid, ilower, iupper, &
   !do i = 0, num_procs-1
   call HYPRE_StructGridSetExtents(hypre_grid, ilower(myid,:),iupper(myid,:), ierr)
   !end do
+
+  call HYPRE_StructGridSetPeriodic(hypre_grid, [nx, ny], ierr)
 
   call HYPRE_StructGridAssemble(hypre_grid, ierr)
 #endif
