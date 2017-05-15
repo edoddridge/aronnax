@@ -1125,6 +1125,9 @@ subroutine evaluate_b_iso(b, h, u, v, nx, ny, layers, g_vec, depth)
     end do
   end do
 
+  call wrap_fields_3D(b, nx, ny, layers)
+
+
   return
 end subroutine evaluate_b_iso
 
@@ -1170,6 +1173,8 @@ subroutine evaluate_b_RedGrav(b, h, u, v, nx, ny, layers, gr)
     end do
   end do
 
+  call wrap_fields_3D(b, nx, ny, layers)
+
   return
 end subroutine evaluate_b_RedGrav
 
@@ -1196,6 +1201,8 @@ subroutine evaluate_zeta(zeta, u, v, nx, ny, layers, dx, dy)
       end do
     end do
   end do
+
+  call wrap_fields_3D(zeta, nx, ny, layers)
 
   return
 end subroutine evaluate_zeta
