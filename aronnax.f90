@@ -233,16 +233,6 @@ program aronnax
   call read_input_fileV(initVfile, v, 0.d0, nx, ny, layers)
   call read_input_fileH(initHfile, h, hmean, nx, ny, layers)
 
-  if (.not. RedGrav) then
-    call read_input_fileH_2D(depthFile, depth, H0, nx, ny)
-    call read_input_fileH_2D(initEtaFile, eta, 0.d0, nx, ny)
-    ! Check that depth is positive - it must be greater than zero
-    if (minval(depth) .lt. 0) then
-      write(17, "(A)") "Depths must be positive."
-      call clean_stop(0, .FALSE.)
-    end if
-  end if
-
   call read_input_fileU(fUfile, fu, 0.d0, nx, ny, 1)
   call read_input_fileV(fVfile, fv, 0.d0, nx, ny, 1)
 
@@ -263,6 +253,15 @@ program aronnax
   call read_input_fileV(spongeVfile, spongeV, 0.d0, nx, ny, layers)
   call read_input_fileH_2D(wetMaskFile, wetmask, 1.d0, nx, ny)
 
+  if (.not. RedGrav) then
+    call read_input_fileH_2D(depthFile, depth, H0, nx, ny)
+    call read_input_fileH_2D(initEtaFile, eta, 0.d0, nx, ny)
+    ! Check that depth is positive - it must be greater than zero
+    if (minval(depth) .lt. 0) then
+      write(17, "(A)") "Depths must be positive."
+      call clean_stop(0, .FALSE.)
+    end if
+  end if
 
 
   call model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
@@ -649,6 +648,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
         spongeUTimeScale, spongeU, &
         spongeVTimeScale, spongeV, &
         nx, ny, layers, n, debug_level)
+
 
     ! Use dh/dt, du/dt and dv/dt to step h, u and v forward in time with
     ! the Adams-Bashforth third order linear multistep method
@@ -2200,6 +2200,8 @@ subroutine read_input_fileH(name, array, default, nx, ny, layers)
 
   double precision array_small(nx, ny, layers)
   integer k
+
+
 
   if (name.ne.'') then
     open(unit=10, form='unformatted', file=name)
