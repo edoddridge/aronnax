@@ -496,7 +496,8 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   if (.not. RedGrav) then
     ! Initialise arrays for pressure solver
     ! a = derivatives of the depth field
-      call calc_A_matrix(a, depth, g_vec(1), dx, dy, nx, ny, freesurfFac, dt)
+      call calc_A_matrix(a, depth, g_vec(1), dx, dy, nx, ny, freesurfFac, dt, &
+          hfacW, hfacE, hfacS, hfacN)
 
 #ifndef useExtSolver
     ! Calculate the spectral radius of the grid for use by the
@@ -2152,7 +2153,8 @@ end subroutine apply_boundary_conditions
 ! ---------------------------------------------------------------------------
 !> Compute derivatives of the depth field for the pressure solver
 
-subroutine calc_A_matrix(a, depth, g, dx, dy, nx, ny, freesurfFac, dt)
+subroutine calc_A_matrix(a, depth, g, dx, dy, nx, ny, freesurfFac, dt, &
+          hfacW, hfacE, hfacS, hfacN)
   implicit none
 
   double precision, intent(out) :: a(5, nx, ny)
@@ -2161,26 +2163,20 @@ subroutine calc_A_matrix(a, depth, g, dx, dy, nx, ny, freesurfFac, dt)
   integer, intent(in)           :: nx, ny
   double precision, intent(in)  :: freesurfFac
   double precision, intent(in)  :: dt
+  double precision, intent(in)  :: hfacW(0:nx+1, 0:ny+1)
+  double precision, intent(in)  :: hfacE(0:nx+1, 0:ny+1)
+  double precision, intent(in)  :: hfacN(0:nx+1, 0:ny+1)
+  double precision, intent(in)  :: hfacS(0:nx+1, 0:ny+1)
 
   integer i, j
 
   do j = 1, ny
     do i = 1, nx
-      a(1,i,j) = g*0.5*(depth(i+1,j)+depth(i,j))/dx**2
-      a(2,i,j) = g*0.5*(depth(i,j+1)+depth(i,j))/dy**2
-      a(3,i,j) = g*0.5*(depth(i,j)+depth(i-1,j))/dx**2
-      a(4,i,j) = g*0.5*(depth(i,j)+depth(i,j-1))/dy**2
+      a(1,i,j) = g*0.5*(depth(i+1,j)+depth(i,j))*hfacE(i,j)/dx**2
+      a(2,i,j) = g*0.5*(depth(i,j+1)+depth(i,j))*hfacN(i,j)/dy**2
+      a(3,i,j) = g*0.5*(depth(i,j)+depth(i-1,j))*hfacW(i,j)/dx**2
+      a(4,i,j) = g*0.5*(depth(i,j)+depth(i,j-1))*hfacS(i,j)/dy**2
     end do
-  end do
-
-  ! boundary conditions
-  do j = 1, ny
-    a(1, nx, j) = 0.0
-    a(3, 1, j) = 0.0
-  end do
-  do i = 1, nx
-    a(2, i, ny) = 0.0
-    a(4, i, 1) = 0.0
   end do
 
   do j = 1, ny
