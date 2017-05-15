@@ -50,3 +50,6 @@ def test_periodic_BC_Hypre():
                      dumpFreq=10000)
         opt.assert_outputs_close(nx, ny, layers, 3e-12)
         opt.assert_volume_conservation(nx, ny, layers, 3e-5)
+
+if __name__ == '__main__':
+    test_periodic_BC_Hypre()
