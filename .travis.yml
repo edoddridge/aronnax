@@ -31,9 +31,11 @@ install:
 script:
   - mpif90 -Werror aronnax.f90 -cpp
   - pytest --cov=aronnax
+  - codecov
+  - python test/periodic_BC_Hypre.py
+  - codecov
 
 after_success:
-  - codecov
   - cd reproductions
   - python run_davis_et_al_2014.py
   - python plot_Davis_et_al_2014.py
