@@ -128,30 +128,30 @@ def test_gaussian_bump_debug_test():
 def test_beta_plane_gyre_red_grav():
     xlen = 1e6
     ylen = 2e6
-    nx = 10; ny = 10
+    nx = 10; ny = 20
     layers = 1
     grid = aro.Grid(nx, ny, layers, xlen / nx, ylen / ny)
     def wind(_, Y):
         return 0.05 * (1 - np.cos(2*np.pi * Y/np.max(grid.y)))
     with working_directory(p.join(self_path, "beta_plane_gyre_red_grav")):
         drv.simulate(zonalWindFile=wind, valgrind=False,
-                     nx=10, ny=10, exe=test_executable, dx=xlen/10, dy=ylen/10)
-        assert_outputs_close(10, 10, 1, 4e-13)
-        assert_volume_conservation(10, 10, 1, 1e-5)
+                     nx=nx, ny=ny, exe=test_executable, dx=xlen/nx, dy=ylen/ny)
+        assert_outputs_close(nx, ny, layers, 4e-13)
+        assert_volume_conservation(nx, ny, layers, 1e-5)
 
 def test_beta_plane_gyre():
     xlen = 1e6
     ylen = 2e6
     nx = 10; ny = 10
-    layers = 1
+    layers = 2
     grid = aro.Grid(nx, ny, layers, xlen / nx, ylen / ny)
     def wind(_, Y):
         return 0.05 * (1 - np.cos(2*np.pi * Y/np.max(grid.y)))
     with working_directory(p.join(self_path, "beta_plane_gyre")):
         drv.simulate(zonalWindFile=wind, valgrind=False,
-                     nx=10, ny=10, exe=test_executable, dx=xlen/10, dy=ylen/10)
-        assert_outputs_close(10, 10, 2, 3e-12)
-        assert_volume_conservation(10, 10, 2, 1e-5)
+                     nx=nx, ny=ny, exe="aronnax_test", dx=xlen/nx, dy=ylen/ny)
+        assert_outputs_close(nx, ny, layers, 3e-12)
+        assert_volume_conservation(nx, ny, layers, 1e-5)
 
 def test_beta_plane_gyre_free_surf():
     xlen = 1e6
