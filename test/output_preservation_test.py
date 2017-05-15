@@ -166,3 +166,68 @@ def test_beta_plane_gyre_free_surf():
                      nx=nx, ny=ny, exe=test_executable, dx=xlen/nx, dy=ylen/ny)
         assert_outputs_close(nx, ny, layers, 3e-12)
         assert_volume_conservation(nx, ny, layers, 1e-5)
+
+def test_periodic_BC():
+    nx = 50
+    ny = 20
+    layers = 2
+
+    dx = 5e4
+    dy = 5e4
+
+    grid = aro.Grid(nx, ny, layers, dx, dy)
+
+    rho0 = 1035
+
+    def wetmask(X, Y):
+        mask = np.ones(X.shape, dtype=np.float64)
+        return mask
+
+    def eta(X, Y):
+        return 0. + 1.*np.exp(-((6e5-X)**2 + (5e5-Y)**2)/(2*1e5**2))
+
+    with working_directory(p.join(self_path, "periodic_BC")):
+        drv.simulate(initHfile=[500.,500.],
+                     nx=nx, ny=ny, layers=layers, dx=dx, dy=dy,
+                     exe="aronnax_external_solver_test",
+                     wetMaskFile=wetmask, 
+                     fUfile=-1e-4,
+                     fVfile=-1e-4,
+                     initEtaFile=eta,
+                     depthFile=1000., nTimeSteps=801,
+                     dumpFreq=10000)
+        assert_outputs_close(nx, ny, layers, 3e-12)
+        assert_volume_conservation(nx, ny, layers, 3e-5)
+
+def test_periodic_BC_red_grav():
+    nx = 50
+    ny = 20
+    layers = 2
+
+    dx = 5e4
+    dy = 5e4
+
+    grid = aro.Grid(nx, ny, layers, dx, dy)
+
+    rho0 = 1035
+
+    def wetmask(X, Y):
+        mask = np.ones(X.shape, dtype=np.float64)
+        return mask
+
+    def layer_1(X, Y):
+        return 500. + 300*np.exp(-((6e5-X)**2 + (6e5-Y)**2)/(2*1e5**2))
+
+    def layer_2(X, Y):
+        return 1000. - layer_1(X, Y)
+
+    with working_directory(p.join(self_path, "periodic_BC_red_grav")):
+        drv.simulate(initHfile=[layer_1, layer_2],
+                     nx=nx, ny=ny, layers=layers, dx=dx, dy=dy,
+                     exe=test_executable, wetMaskFile=wetmask, 
+                     fUfile=-1e-4,
+                     fVfile=-1e-4,
+                     nTimeSteps=801,
+                     dumpFreq=10000)
+        assert_outputs_close(nx, ny, layers, 3e-12)
+        assert_volume_conservation(nx, ny, layers, 1e-5)
