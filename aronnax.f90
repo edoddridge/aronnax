@@ -196,7 +196,7 @@ program aronnax
 
 #ifdef useExtSolver
   call create_Hypre_grid(MPI_COMM_WORLD, hypre_grid, ilower, iupper, &
-          num_procs, myid, ierr)
+          num_procs, myid, nx, ny, ierr)
 #endif
 
 
@@ -233,16 +233,6 @@ program aronnax
   call read_input_fileV(initVfile, v, 0.d0, nx, ny, layers)
   call read_input_fileH(initHfile, h, hmean, nx, ny, layers)
 
-  if (.not. RedGrav) then
-    call read_input_fileH_2D(depthFile, depth, H0, nx, ny)
-    call read_input_fileH_2D(initEtaFile, eta, 0.d0, nx, ny)
-    ! Check that depth is positive - it must be greater than zero
-    if (minval(depth) .lt. 0) then
-      write(17, "(A)") "Depths must be positive."
-      call clean_stop(0, .FALSE.)
-    end if
-  end if
-
   call read_input_fileU(fUfile, fu, 0.d0, nx, ny, 1)
   call read_input_fileV(fVfile, fv, 0.d0, nx, ny, 1)
 
@@ -263,13 +253,16 @@ program aronnax
   call read_input_fileV(spongeVfile, spongeV, 0.d0, nx, ny, layers)
   call read_input_fileH_2D(wetMaskFile, wetmask, 1.d0, nx, ny)
 
-  ! For now enforce wetmask to have zeros around the edge.
-  wetmask(0, :) = 0d0
-  wetmask(nx+1, :) = 0d0
-  wetmask(:, 0) = 0d0
-  wetmask(:, ny+1) = 0d0
-  ! TODO, this will change one day when the model can do periodic
-  ! boundary conditions.
+  if (.not. RedGrav) then
+    call read_input_fileH_2D(depthFile, depth, H0, nx, ny)
+    call read_input_fileH_2D(initEtaFile, eta, 0.d0, nx, ny)
+    ! Check that depth is positive - it must be greater than zero
+    if (minval(depth) .lt. 0) then
+      write(17, "(A)") "Depths must be positive."
+      call clean_stop(0, .FALSE.)
+    end if
+  end if
+
 
   call model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
       dt, au, ar, botDrag, ah, slip, hmin, nTimeSteps, dumpFreq, avFreq, &
@@ -502,7 +495,8 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   if (.not. RedGrav) then
     ! Initialise arrays for pressure solver
     ! a = derivatives of the depth field
-      call calc_A_matrix(a, depth, g_vec(1), dx, dy, nx, ny, freesurfFac, dt)
+      call calc_A_matrix(a, depth, g_vec(1), dx, dy, nx, ny, freesurfFac, dt, &
+          hfacW, hfacE, hfacS, hfacN)
 
 #ifndef useExtSolver
     ! Calculate the spectral radius of the grid for use by the
@@ -654,6 +648,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
         spongeUTimeScale, spongeU, &
         spongeVTimeScale, spongeV, &
         nx, ny, layers, n, debug_level)
+
 
     ! Use dh/dt, du/dt and dv/dt to step h, u and v forward in time with
     ! the Adams-Bashforth third order linear multistep method
@@ -1131,6 +1126,9 @@ subroutine evaluate_b_iso(b, h, u, v, nx, ny, layers, g_vec, depth)
     end do
   end do
 
+  call wrap_fields_3D(b, nx, ny, layers)
+
+
   return
 end subroutine evaluate_b_iso
 
@@ -1176,6 +1174,8 @@ subroutine evaluate_b_RedGrav(b, h, u, v, nx, ny, layers, gr)
     end do
   end do
 
+  call wrap_fields_3D(b, nx, ny, layers)
+
   return
 end subroutine evaluate_b_RedGrav
 
@@ -1202,6 +1202,8 @@ subroutine evaluate_zeta(zeta, u, v, nx, ny, layers, dx, dy)
       end do
     end do
   end do
+
+  call wrap_fields_3D(zeta, nx, ny, layers)
 
   return
 end subroutine evaluate_zeta
@@ -1642,7 +1644,7 @@ end subroutine SOR_solver
 ! ---------------------------------------------------------------------------
 
 subroutine create_Hypre_grid(MPI_COMM_WORLD, hypre_grid, ilower, iupper, &
-          num_procs, myid, ierr)
+          num_procs, myid, nx, ny, ierr)
   implicit none
 
   integer,   intent(in)  :: MPI_COMM_WORLD
@@ -1651,6 +1653,8 @@ subroutine create_Hypre_grid(MPI_COMM_WORLD, hypre_grid, ilower, iupper, &
   integer,   intent(in)  :: iupper(0:num_procs-1,2)
   integer,   intent(in)  :: num_procs
   integer,   intent(in)  :: myid
+  integer,   intent(in)  :: nx
+  integer,   intent(in)  :: ny
   integer,   intent(out)  :: ierr
 
 #ifdef useExtSolver
@@ -1659,6 +1663,8 @@ subroutine create_Hypre_grid(MPI_COMM_WORLD, hypre_grid, ilower, iupper, &
   !do i = 0, num_procs-1
   call HYPRE_StructGridSetExtents(hypre_grid, ilower(myid,:),iupper(myid,:), ierr)
   !end do
+
+  call HYPRE_StructGridSetPeriodic(hypre_grid, [nx, ny], ierr)
 
   call HYPRE_StructGridAssemble(hypre_grid, ierr)
 #endif
@@ -2147,7 +2153,8 @@ end subroutine apply_boundary_conditions
 ! ---------------------------------------------------------------------------
 !> Compute derivatives of the depth field for the pressure solver
 
-subroutine calc_A_matrix(a, depth, g, dx, dy, nx, ny, freesurfFac, dt)
+subroutine calc_A_matrix(a, depth, g, dx, dy, nx, ny, freesurfFac, dt, &
+          hfacW, hfacE, hfacS, hfacN)
   implicit none
 
   double precision, intent(out) :: a(5, nx, ny)
@@ -2156,26 +2163,20 @@ subroutine calc_A_matrix(a, depth, g, dx, dy, nx, ny, freesurfFac, dt)
   integer, intent(in)           :: nx, ny
   double precision, intent(in)  :: freesurfFac
   double precision, intent(in)  :: dt
+  double precision, intent(in)  :: hfacW(0:nx+1, 0:ny+1)
+  double precision, intent(in)  :: hfacE(0:nx+1, 0:ny+1)
+  double precision, intent(in)  :: hfacN(0:nx+1, 0:ny+1)
+  double precision, intent(in)  :: hfacS(0:nx+1, 0:ny+1)
 
   integer i, j
 
   do j = 1, ny
     do i = 1, nx
-      a(1,i,j) = g*0.5*(depth(i+1,j)+depth(i,j))/dx**2
-      a(2,i,j) = g*0.5*(depth(i,j+1)+depth(i,j))/dy**2
-      a(3,i,j) = g*0.5*(depth(i,j)+depth(i-1,j))/dx**2
-      a(4,i,j) = g*0.5*(depth(i,j)+depth(i,j-1))/dy**2
+      a(1,i,j) = g*0.5*(depth(i+1,j)+depth(i,j))*hfacE(i,j)/dx**2
+      a(2,i,j) = g*0.5*(depth(i,j+1)+depth(i,j))*hfacN(i,j)/dy**2
+      a(3,i,j) = g*0.5*(depth(i,j)+depth(i-1,j))*hfacW(i,j)/dx**2
+      a(4,i,j) = g*0.5*(depth(i,j)+depth(i,j-1))*hfacS(i,j)/dy**2
     end do
-  end do
-
-  ! boundary conditions
-  do j = 1, ny
-    a(1, nx, j) = 0.0
-    a(3, 1, j) = 0.0
-  end do
-  do i = 1, nx
-    a(2, i, ny) = 0.0
-    a(4, i, 1) = 0.0
   end do
 
   do j = 1, ny
@@ -2199,6 +2200,8 @@ subroutine read_input_fileH(name, array, default, nx, ny, layers)
 
   double precision array_small(nx, ny, layers)
   integer k
+
+
 
   if (name.ne.'') then
     open(unit=10, form='unformatted', file=name)
