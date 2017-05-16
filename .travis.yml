@@ -35,8 +35,6 @@ script:
   - codecov
   - python test/periodic_BC_Hypre.py
   - codecov
-
-after_success:
   - cd reproductions
   - python run_davis_et_al_2014.py
   - python plot_Davis_et_al_2014.py
@@ -44,6 +42,8 @@ after_success:
   - python benchmark.py
   - cd ../test
   - python physics_tests.py
+
+after_success:
   - cd ../docs
   - make html
   - cd _build/html
