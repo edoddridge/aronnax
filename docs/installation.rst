@@ -9,7 +9,7 @@ While we aspire for the installation process for Aronnax to be as simple as :cod
 
 Dependencies
 ============
-Aronnax depends on several external libraries, namely, make, gfortran, and mpi. This means you will need a working installation of each of these. In particular, Aronnax will need the :bash:`mpif90` command to work in order for it to compile its Fortran core.
+Aronnax depends on several external libraries, namely, make, gfortran >= 4.7.4, and mpi. This means you will need a working installation of each of these. In particular, Aronnax will need the :bash:`mpif90` command to work in order for it to compile its Fortran core.
 
 Aronnax also depends on numpy and scipy.
 

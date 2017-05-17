@@ -338,108 +338,75 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   ! Whether to write computed wind in the output
   logical,          intent(in) :: DumpWind
 
-  double precision, dimension(:,:,:), allocatable :: dhdt
-  double precision, dimension(:,:,:), allocatable :: dhdtold
-  double precision, dimension(:,:,:), allocatable :: dhdtveryold
-  double precision, dimension(:,:,:), allocatable :: hnew
+  double precision :: dhdt(0:nx+1, 0:ny+1, layers)
+  double precision :: dhdtold(0:nx+1, 0:ny+1, layers)
+  double precision :: dhdtveryold(0:nx+1, 0:ny+1, layers)
+  double precision :: hnew(0:nx+1, 0:ny+1, layers)
   ! for initialisation
-  double precision, dimension(:,:,:), allocatable :: hhalf
+  double precision :: hhalf(0:nx+1, 0:ny+1, layers)
   ! for saving average fields
-  double precision, dimension(:,:,:), allocatable :: hav
+  double precision :: hav(0:nx+1, 0:ny+1, layers)
 
-  double precision, dimension(:,:,:), allocatable :: dudt
-  double precision, dimension(:,:,:), allocatable :: dudtold
-  double precision, dimension(:,:,:), allocatable :: dudtveryold
-  double precision, dimension(:,:,:), allocatable :: unew
+  double precision :: dudt(0:nx+1, 0:ny+1, layers)
+  double precision :: dudtold(0:nx+1, 0:ny+1, layers)
+  double precision :: dudtveryold(0:nx+1, 0:ny+1, layers)
+  double precision :: unew(0:nx+1, 0:ny+1, layers)
   ! for initialisation
-  double precision, dimension(:,:,:), allocatable :: uhalf
+  double precision :: uhalf(0:nx+1, 0:ny+1, layers)
   ! for saving average fields
-  double precision, dimension(:,:,:), allocatable :: uav
+  double precision :: uav(0:nx+1, 0:ny+1, layers)
 
-  double precision, dimension(:,:,:), allocatable :: dvdt
-  double precision, dimension(:,:,:), allocatable :: dvdtold
-  double precision, dimension(:,:,:), allocatable :: dvdtveryold
-  double precision, dimension(:,:,:), allocatable :: vnew
+  double precision :: dvdt(0:nx+1, 0:ny+1, layers)
+  double precision :: dvdtold(0:nx+1, 0:ny+1, layers)
+  double precision :: dvdtveryold(0:nx+1, 0:ny+1, layers)
+  double precision :: vnew(0:nx+1, 0:ny+1, layers)
   ! for initialisation
-  double precision, dimension(:,:,:), allocatable :: vhalf
+  double precision :: vhalf(0:nx+1, 0:ny+1, layers)
   ! for saving average fields
-  double precision, dimension(:,:,:), allocatable :: vav
+  double precision :: vav(0:nx+1, 0:ny+1, layers)
 
-  double precision, dimension(:,:),   allocatable :: etanew
+  double precision :: etanew(0:nx+1, 0:ny+1)
   ! for saving average fields
-  double precision, dimension(:,:),   allocatable :: etaav
+  double precision :: etaav(0:nx+1, 0:ny+1)
 
   ! Pressure solver variables
-  double precision, dimension(:,:,:), allocatable :: a
+  double precision :: a(5, nx, ny)
 
   ! Geometry
-  double precision, dimension(:,:),   allocatable :: hfacW
-  double precision, dimension(:,:),   allocatable :: hfacE
-  double precision, dimension(:,:),   allocatable :: hfacN
-  double precision, dimension(:,:),   allocatable :: hfacS
+  double precision :: hfacW(0:nx+1, 0:ny+1)
+  double precision :: hfacE(0:nx+1, 0:ny+1)
+  double precision :: hfacN(0:nx+1, 0:ny+1)
+  double precision :: hfacS(0:nx+1, 0:ny+1)
 
   ! Numerics
   double precision :: pi
   integer :: nwrite, avwrite
   double precision :: rjac
+
   ! External solver variables
-  integer   :: offsets(2,5)
-  integer :: i, j ! loop variables
-  double precision, dimension(:), allocatable :: values
-  integer   :: indicies(2)
-  integer*8 :: hypre_grid
-  integer*8 :: stencil
-  integer*8 :: hypre_A
-  integer :: ilower(0:num_procs-1,2), iupper(0:num_procs-1,2)
-  integer :: ierr
-  integer :: MPI_COMM_WORLD
-  integer :: myid
-  integer :: num_procs
+  integer          :: offsets(2,5)
+  integer          :: i, j ! loop variables
+  double precision :: values(nx * ny)
+  integer          :: indicies(2)
+  integer*8        :: hypre_grid
+  integer*8        :: stencil
+  integer*8        :: hypre_A
+  integer          :: ilower(0:num_procs-1,2), iupper(0:num_procs-1,2)
+  integer          :: ierr
+  integer          :: MPI_COMM_WORLD
+  integer          :: myid
+  integer          :: num_procs
 
   ! Time step loop variable
   integer :: n
 
   ! Wind
-  double precision, dimension(:,:),   allocatable :: wind_x
-  double precision, dimension(:,:),   allocatable :: wind_y
+  double precision :: wind_x(0:nx+1, 0:ny+1)
+  double precision :: wind_y(0:nx+1, 0:ny+1)
 
   ! Time
   integer*8 :: start_time, last_report_time, cur_time
 
-  allocate(dhdt(0:nx+1, 0:ny+1, layers))
-  allocate(dhdtold(0:nx+1, 0:ny+1, layers))
-  allocate(dhdtveryold(0:nx+1, 0:ny+1, layers))
-  allocate(hnew(0:nx+1, 0:ny+1, layers))
-  allocate(hhalf(0:nx+1, 0:ny+1, layers))
-  allocate(hav(0:nx+1, 0:ny+1, layers))
-
-  allocate(dudt(0:nx+1, 0:ny+1, layers))
-  allocate(dudtold(0:nx+1, 0:ny+1, layers))
-  allocate(dudtveryold(0:nx+1, 0:ny+1, layers))
-  allocate(unew(0:nx+1, 0:ny+1, layers))
-  allocate(uhalf(0:nx+1, 0:ny+1, layers))
-  allocate(uav(0:nx+1, 0:ny+1, layers))
-
-  allocate(dvdt(0:nx+1, 0:ny+1, layers))
-  allocate(dvdtold(0:nx+1, 0:ny+1, layers))
-  allocate(dvdtveryold(0:nx+1, 0:ny+1, layers))
-  allocate(vnew(0:nx+1, 0:ny+1, layers))
-  allocate(vhalf(0:nx+1, 0:ny+1, layers))
-  allocate(vav(0:nx+1, 0:ny+1, layers))
-
-  allocate(etanew(0:nx+1, 0:ny+1))
-  allocate(etaav(0:nx+1, 0:ny+1))
-
-  allocate(a(5, nx, ny))
-
-
-  allocate(hfacW(0:nx+1, 0:ny+1))
-  allocate(hfacE(0:nx+1, 0:ny+1))
-  allocate(hfacN(0:nx+1, 0:ny+1))
-  allocate(hfacS(0:nx+1, 0:ny+1))
-
-  allocate(wind_x(0:nx+1, 0:ny+1))
-  allocate(wind_y(0:nx+1, 0:ny+1))
 
   start_time = time()
   if (RedGrav) then
