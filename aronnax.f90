@@ -875,7 +875,7 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
 #endif
 
 #ifdef useExtSolver
-  call Ext_solver(MPI_COMM_WORLD, hypre_A, hypre_grid, num_procs, &
+  call Ext_solver(MPI_COMM_WORLD, hypre_A, hypre_grid, myid, num_procs, &
     ilower, iupper, etastar, &
     etanew, nx, ny, dt, maxits, eps, ierr)
 #endif
@@ -1719,7 +1719,7 @@ end subroutine create_Hypre_A_matrix
 
 ! ---------------------------------------------------------------------------
 
-subroutine Ext_solver(MPI_COMM_WORLD, hypre_A, hypre_grid, num_procs, &
+subroutine Ext_solver(MPI_COMM_WORLD, hypre_A, hypre_grid, myid, num_procs, &
     ilower, iupper, etastar, &
     etanew, nx, ny, dt, maxits, eps, ierr)
   implicit none
@@ -1727,6 +1727,7 @@ subroutine Ext_solver(MPI_COMM_WORLD, hypre_A, hypre_grid, num_procs, &
   integer,          intent(in)  :: MPI_COMM_WORLD
   integer*8,        intent(in)  :: hypre_A
   integer*8,        intent(in)  :: hypre_grid
+  integer,          intent(in)  :: myid
   integer,          intent(in)  :: num_procs
   integer,          intent(in)  :: ilower(0:num_procs-1,2)
   integer,          intent(in)  :: iupper(0:num_procs-1,2)
