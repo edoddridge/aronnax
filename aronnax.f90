@@ -1767,11 +1767,11 @@ subroutine Ext_solver(MPI_COMM_WORLD, hypre_A, hypre_grid, myid, num_procs, &
   call HYPRE_StructVectorInitialize(hypre_b, ierr)
 
   ! set rhs values (vector b)
-  do j = 1, ny ! loop over every grid point
-    do i = 1, nx
+  do j = ilower(myid,2), iupper(myid,2) ! loop over every grid point
+    do i = ilower(myid,1), iupper(myid,1)
   ! the 2D array is being laid out like
   ! [x1y1, x2y1, x3y1, x1y2, x2y2, x3y2, x1y3, x2y3, x3y3]
-    values( ((j-1)*nx + i) ) = -etastar(i,j)/dt**2
+    values( ((j-1)*nx_tile + i) ) = -etastar(i,j)/dt**2
     end do
   end do
 
