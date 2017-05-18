@@ -1744,7 +1744,17 @@ subroutine Ext_solver(MPI_COMM_WORLD, hypre_A, hypre_grid, myid, num_procs, &
   integer*8        :: hypre_x
   integer*8        :: hypre_solver
   integer*8        :: precond
-  double precision :: values(nx * ny)
+  double precision, dimension(:),     allocatable :: values
+
+  integer :: nx_tile, ny_tile
+
+  nx_tile = iupper(myid,1)-ilower(myid,1) + 1
+  ny_tile = iupper(myid,2)-ilower(myid,2) + 1
+
+  allocate(values(nx_tile*ny_tile))
+  ! just nx*ny for the tile this processor owns
+
+
   ! A currently unused variable that can be used to
   ! print information from the solver - see comments below.
 !  double precision :: hypre_out(2)
