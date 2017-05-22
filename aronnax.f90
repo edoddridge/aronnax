@@ -1847,9 +1847,9 @@ subroutine Ext_solver(MPI_COMM_WORLD, hypre_A, hypre_grid, myid, num_procs, &
   call HYPRE_StructVectorGetBoxValues(hypre_x, &
     ilower(myid,:), iupper(myid,:), values, ierr)
 
-  do j = 1, ny! loop over every grid point
-    do i = 1, nx
-    etanew(i,j) = values( ((j-1)*nx + i) )
+  do j = ilower(myid,2), iupper(myid,2) ! loop over every grid point
+    do i = ilower(myid,1), iupper(myid,1)
+    etanew(i,j) = values( ((j-1)*nx_tile + i) )
     end do
   end do
 
