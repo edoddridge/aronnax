@@ -128,14 +128,18 @@ def interpret_raw_file(name, nx, ny, layers):
 
 ### General input construction helpers
 
-def tracer_point_variable_2d(grid, h_funcs):
+def tracer_point_variable(grid, field_layers, *h_funcs):
     X,Y = np.meshgrid(grid.x, grid.y)
-    T_variable_2d = np.ones((grid.ny, grid.nx))
-    if isinstance(h_funcs, (int, long, float)):
-        T_variable_2d[:,:] = h_funcs
-    else:
-        T_variable_2d[:,:] = h_funcs(X, Y)
-    return T_variable_2d
+    T_variable = np.ones((field_layers, grid.ny, grid.nx))
+
+    assert field_layers == len(h_funcs)
+
+    for i, f in enumerate(h_funcs):
+        if isinstance(f, (int, long, float)):
+            T_variable[i,:,:] = f
+        else:
+            T_variable[i,:,:] = f(X, Y)
+    return T_variable
 
 def tracer_point_variable_3d(grid, *h_funcs):
     X,Y = np.meshgrid(grid.x, grid.y)
@@ -206,28 +210,33 @@ def time_series_variable(nTimeSteps, dt, func):
 
 ### Specific construction helpers
 
-def f_plane_f_u(grid, coeff):
+def f_plane_f_u(grid, field_layers, coeff):
     """Define an f-plane approximation to the Coriolis force (u location)."""
+    assert field_layers == 1
     return np.ones((grid.nx+1, grid.ny), dtype=np.float64) * coeff
 
-def f_plane_f_v(grid, coeff):
+def f_plane_f_v(grid, field_layers, coeff):
     """Define an f-plane approximation to the Coriolis force (v location)."""
+    assert field_layers == 1
     return np.ones((grid.nx, grid.ny+1), dtype=np.float64) * coeff
 
-def beta_plane_f_u(grid, f0, beta):
+def beta_plane_f_u(grid, field_layers, f0, beta):
     """Define a beta-plane approximation to the Coriolis force (u location)."""
+    assert field_layers == 1
     _, Y = np.meshgrid(grid.xp1, grid.y)
     fu = f0 + Y*beta
     return fu
 
-def beta_plane_f_v(grid, f0, beta):
+def beta_plane_f_v(grid, field_layers, f0, beta):
     """Define a beta-plane approximation to the Coriolis force (v location)."""
+    assert field_layers == 1
     _, Y = np.meshgrid(grid.x, grid.yp1)
     fv = f0 + Y*beta
     return fv
 
-def rectangular_pool(grid):
+def rectangular_pool(grid, field_layers):
     """The wet mask file for a maximal rectangular pool."""
+    assert field_layers == 1
     nx = grid.nx; ny = grid.ny
     wetmask = np.ones((nx, ny), dtype=np.float64)
     wetmask[ 0, :] = 0
@@ -239,8 +248,7 @@ def rectangular_pool(grid):
 specifier_rx = re.compile(r':(.*):(.*)')
 
 ok_generators = {
-    'tracer_point_variable_2d': tracer_point_variable_2d,
-    'tracer_point_variable_3d': tracer_point_variable_3d,
+    'tracer_point_variable': tracer_point_variable,
     'u_point_variable_2d': u_point_variable_2d,
     'u_point_variable_3d': u_point_variable_3d,
     'v_point_variable_2d': v_point_variable_2d,
@@ -297,20 +305,20 @@ def interpret_requested_data(requested_data, shape, config):
     grid = Grid(config.getint("grid", "nx"), config.getint("grid", "ny"),
                 config.getint("grid", "layers"),
                 config.getfloat("grid", "dx"), config.getfloat("grid", "dy"))
+    field_layers = find_field_layers(shape, grid)
+
     if isinstance(requested_data, basestring):
         candidate = interpret_data_specifier(requested_data)
         if candidate is not None:
             (func, args) = candidate
-            return func(grid, *args)
+            return func(grid, field_layers, *args)
         else:
             # Assume Fortran file name
             with fortran_file(requested_data, 'r') as f:
                 return f.read_reals(dtype=np.float64)
     else:
-        if shape == "2dT":
-            return tracer_point_variable_2d(grid, requested_data)
-        if shape == "3dT":
-            return tracer_point_variable_3d(grid, *requested_data)
+        if shape == "2dT" or shape == "3dT":
+            return tracer_point_variable(grid, field_layers, *requested_data)
         if shape == "2dU":
             return u_point_variable_2d(grid, requested_data)
         if shape == "3dU":
@@ -325,3 +333,19 @@ def interpret_requested_data(requested_data, shape, config):
             return time_series_variable(nTimeSteps, dt, requested_data)
         else:
             raise Exception("TODO implement custom generation for other input shapes")
+
+def find_field_layers(shape, grid):
+    """Given a particular field shape, return how many layers it should have."""
+
+    if shape == "2dT":
+        return 1
+    if shape == "3dT":
+        return grid.layers
+    if shape == "2dU":
+        return 1
+    if shape == "3dU":
+        return grid.layers
+    if shape == "2dV":
+        return 1
+    if shape == "3dV":
+        return grid.layers

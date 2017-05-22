@@ -192,7 +192,7 @@ def test_periodic_BC_red_grav():
     with working_directory(p.join(self_path, "periodic_BC_red_grav")):
         drv.simulate(initHfile=[layer_1, layer_2],
                      nx=nx, ny=ny, layers=layers, dx=dx, dy=dy,
-                     exe=test_executable, wetMaskFile=wetmask, 
+                     exe=test_executable, wetMaskFile=[wetmask], 
                      fUfile=-1e-4,
                      fVfile=-1e-4,
                      nTimeSteps=801,
