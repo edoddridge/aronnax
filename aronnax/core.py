@@ -153,13 +153,18 @@ def tracer_point_variable_3d(grid, *h_funcs):
             T_variable_3d[i,:,:] = f(X, Y)
     return T_variable_3d
 
-def u_point_variable_2d(grid, func):
+def u_point_variable(grid, field_layers, *funcs):
     X,Y = np.meshgrid(grid.xp1, grid.y)
-    if isinstance(func, (int, long, float)):
-        u_variable_2d = np.ones((grid.ny, grid.nx+1)) * func
-    else:
-        u_variable_2d = func(X, Y)
-    return u_variable_2d
+    u_variable = np.ones((field_layers, grid.ny, grid.nx+1))
+
+    assert field_layers == len(funcs)
+
+    for i, f in enumerate(funcs):
+        if isinstance(f, (int, long, float)):
+            u_variable[i,:,:] = f
+        else:
+            u_variable[i,:,:] = f(X, Y)
+    return u_variable
 
 def u_point_variable_3d(grid, func):
     X,Y = np.meshgrid(grid.xp1, grid.y)
@@ -172,6 +177,19 @@ def u_point_variable_3d(grid, func):
         else:
             u_variable_3d[i,:,:] = f(X, Y)
     return u_variable_3d
+
+def v_point_variable(grid, field_layers, *funcs):
+    X,Y = np.meshgrid(grid.x, grid.yp1)
+    v_variable = np.ones((field_layers, grid.ny+1, grid.nx))
+
+    assert field_layers == len(funcs)
+
+    for i, f in enumerate(funcs):
+        if isinstance(f, (int, long, float)):
+            v_variable[i,:,:] = f
+        else:
+            v_variable[i,:,:] = f(X, Y)
+    return v_variable
 
 def v_point_variable_2d(grid, func):
     X,Y = np.meshgrid(grid.x, grid.yp1)
@@ -249,9 +267,8 @@ specifier_rx = re.compile(r':(.*):(.*)')
 
 ok_generators = {
     'tracer_point_variable': tracer_point_variable,
-    'u_point_variable_2d': u_point_variable_2d,
-    'u_point_variable_3d': u_point_variable_3d,
-    'v_point_variable_2d': v_point_variable_2d,
+    'u_point_variable': u_point_variable,
+    'v_point_variable': v_point_variable,
     'v_point_variable_3d': v_point_variable_3d,
     'time_series_variable': time_series_variable,
     'beta_plane_f_u': beta_plane_f_u,
@@ -319,14 +336,10 @@ def interpret_requested_data(requested_data, shape, config):
     else:
         if shape == "2dT" or shape == "3dT":
             return tracer_point_variable(grid, field_layers, *requested_data)
-        if shape == "2dU":
-            return u_point_variable_2d(grid, requested_data)
-        if shape == "3dU":
-            return u_point_variable_3d(grid, requested_data)
-        if shape == "2dV":
-            return v_point_variable_2d(grid, requested_data)
-        if shape == "3dV":
-            return v_point_variable_3d(grid, requested_data)
+        if shape == "2dU" or shape == "3dU":
+            return u_point_variable(grid, field_layers, *requested_data)
+        if shape == "2dV" or shape == "3dV":
+            return v_point_variable(grid, field_layers, *requested_data)
         if shape == "time":
             nTimeSteps = config.getint("numerics", "nTimeSteps")
             dt = config.getfloat("numerics", "dt")
