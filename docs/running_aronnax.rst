@@ -16,7 +16,7 @@ As described above, it is possible to define functions that can be passed to `ar
           return 0.05 * (1 - np.cos(2*np.pi * Y/np.max(grid.y)))
 
       with working_directory(p.join(self_path, "beta_plane_gyre_red_grav")):
-          drv.simulate(zonalWindFile=wind,
+          drv.simulate(zonalWindFile=[wind],
                        nx=10, ny=10, exe="aronnax_test", dx=xlen/10, dy=ylen/10)
 
 .. warning::
@@ -48,3 +48,7 @@ This parameter determines whether the model produces additional outputs. It shou
  - 3: output convergence diagnostics and tendencies before and after applying some or all of sponges, barotropic correction, winds, and boundary conditions at frequency controlled by `DumpFreq` (not implemented)
  - 4: dump all of the above fields every time step (mostly implemented)
  - 5: dump everything every time step including the two initial RK4 steps (not implemented)
+
+wetMaskFile
+-----------
+The wetmask defines which grid points within the computational domain contain fluid. The wetmask is defined on the tracer points, and a value of 1 defines fluid, while a value of 0 defines land. The domain is doubly periodic in `x` and `y` by default. To produce a closed domain the wetmaks should be set to 0 along the edges of the domain. To close the domain it is sufficient to place a strip of land along either the northern or southern boundary and either the western or eastern boundary. You may find it conceptually easier to close both edges.

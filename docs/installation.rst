@@ -19,7 +19,7 @@ Installation instructions
 
  #. Clone the repository to a local directory
 
-    - :bash:`git clone https://github.com/edoddridge/aronnax.git`
+    - :bash:`git clone --recursive https://github.com/edoddridge/aronnax.git`
 
  #. Compile Hypre
 
