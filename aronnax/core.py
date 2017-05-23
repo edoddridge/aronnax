@@ -128,13 +128,13 @@ def interpret_raw_file(name, nx, ny, layers):
 
 ### General input construction helpers
 
-def tracer_point_variable(grid, field_layers, *h_funcs):
+def tracer_point_variable(grid, field_layers, *funcs):
     X,Y = np.meshgrid(grid.x, grid.y)
     T_variable = np.ones((field_layers, grid.ny, grid.nx))
 
-    assert field_layers == len(h_funcs)
+    assert field_layers == len(funcs)
 
-    for i, f in enumerate(h_funcs):
+    for i, f in enumerate(funcs):
         if isinstance(f, (int, long, float)):
             T_variable[i,:,:] = f
         else:
