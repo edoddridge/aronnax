@@ -129,6 +129,7 @@ def interpret_raw_file(name, nx, ny, layers):
 ### General input construction helpers
 
 def tracer_point_variable(grid, field_layers, *funcs):
+    """Input generator for a variable at the tracer location of the grid. If passed a function, then that function can depend only on `X` and `Y`."""
     X,Y = np.meshgrid(grid.x, grid.y)
     T_variable = np.ones((field_layers, grid.ny, grid.nx))
 
@@ -142,6 +143,7 @@ def tracer_point_variable(grid, field_layers, *funcs):
     return T_variable
 
 def u_point_variable(grid, field_layers, *funcs):
+    """Input generator for a variable at the u location of the grid. If passed a function, then that function can depend only on `X` and `Y`."""
     X,Y = np.meshgrid(grid.xp1, grid.y)
     u_variable = np.ones((field_layers, grid.ny, grid.nx+1))
 
@@ -155,6 +157,7 @@ def u_point_variable(grid, field_layers, *funcs):
     return u_variable
 
 def v_point_variable(grid, field_layers, *funcs):
+    """Input generator for a variable at the v location of the grid. If passed a function, then that function can depend only on `X` and `Y`."""
     X,Y = np.meshgrid(grid.x, grid.yp1)
     v_variable = np.ones((field_layers, grid.ny+1, grid.nx))
 
