@@ -141,18 +141,6 @@ def tracer_point_variable(grid, field_layers, *funcs):
             T_variable[i,:,:] = f(X, Y)
     return T_variable
 
-def tracer_point_variable_3d(grid, *h_funcs):
-    X,Y = np.meshgrid(grid.x, grid.y)
-    T_variable_3d = np.ones((grid.layers, grid.ny, grid.nx))
-    assert grid.layers == len(h_funcs)
-
-    for i, f in enumerate(h_funcs):
-        if isinstance(f, (int, long, float)):
-            T_variable_3d[i,:,:] = f
-        else:
-            T_variable_3d[i,:,:] = f(X, Y)
-    return T_variable_3d
-
 def u_point_variable(grid, field_layers, *funcs):
     X,Y = np.meshgrid(grid.xp1, grid.y)
     u_variable = np.ones((field_layers, grid.ny, grid.nx+1))
@@ -166,18 +154,6 @@ def u_point_variable(grid, field_layers, *funcs):
             u_variable[i,:,:] = f(X, Y)
     return u_variable
 
-def u_point_variable_3d(grid, func):
-    X,Y = np.meshgrid(grid.xp1, grid.y)
-    u_variable_3d = np.ones((grid.layers, grid.ny, grid.nx+1))
-    assert grid.layers == len(func)
-
-    for i, f in enumerate(func):
-        if isinstance(f, (int, long, float)):
-            u_variable_3d[i,:,:] = np.ones((grid.ny, grid.nx+1)) * f
-        else:
-            u_variable_3d[i,:,:] = f(X, Y)
-    return u_variable_3d
-
 def v_point_variable(grid, field_layers, *funcs):
     X,Y = np.meshgrid(grid.x, grid.yp1)
     v_variable = np.ones((field_layers, grid.ny+1, grid.nx))
@@ -190,26 +166,6 @@ def v_point_variable(grid, field_layers, *funcs):
         else:
             v_variable[i,:,:] = f(X, Y)
     return v_variable
-
-def v_point_variable_2d(grid, func):
-    X,Y = np.meshgrid(grid.x, grid.yp1)
-    if isinstance(func, (int, long, float)):
-        v_varaible_2d = np.ones((grid.ny+1, grid.nx)) * func
-    else:
-        v_varaible_2d = func(X, Y)
-    return v_varaible_2d
-
-def v_point_variable_3d(grid, func):
-    X,Y = np.meshgrid(grid.x, grid.yp1)
-    v_variable_3d = np.ones((grid.layers, grid.ny+1, grid.nx))
-    assert grid.layers == len(func)
-    
-    for i, f in enumerate(func):
-        if isinstance(f, (int, long, float)):
-            v_variable_3d[i,:,:] = np.ones((grid.ny, grid.nx)) * f
-        else:
-            v_variable_3d[i,:,:] = f(X, Y)
-    return v_variable_3d
 
 def time_series_variable(nTimeSteps, dt, func):
     '''Input generator for a time series variable. If passed a function, then that function can depend on the number of timesteps, `nTimeSteps`, and the timestep, `dt`.'''
@@ -269,7 +225,6 @@ ok_generators = {
     'tracer_point_variable': tracer_point_variable,
     'u_point_variable': u_point_variable,
     'v_point_variable': v_point_variable,
-    'v_point_variable_3d': v_point_variable_3d,
     'time_series_variable': time_series_variable,
     'beta_plane_f_u': beta_plane_f_u,
     'beta_plane_f_v': beta_plane_f_v,
