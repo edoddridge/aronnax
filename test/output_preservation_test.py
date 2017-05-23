@@ -134,7 +134,7 @@ def test_beta_plane_gyre_red_grav():
     def wind(_, Y):
         return 0.05 * (1 - np.cos(2*np.pi * Y/np.max(grid.y)))
     with working_directory(p.join(self_path, "beta_plane_gyre_red_grav")):
-        drv.simulate(zonalWindFile=wind, valgrind=False,
+        drv.simulate(zonalWindFile=[wind], valgrind=False,
                      nx=nx, ny=ny, exe=test_executable, dx=xlen/nx, dy=ylen/ny)
         assert_outputs_close(nx, ny, layers, 4e-13)
         assert_volume_conservation(nx, ny, layers, 1e-5)
@@ -148,7 +148,7 @@ def test_beta_plane_gyre():
     def wind(_, Y):
         return 0.05 * (1 - np.cos(2*np.pi * Y/np.max(grid.y)))
     with working_directory(p.join(self_path, "beta_plane_gyre")):
-        drv.simulate(zonalWindFile=wind, valgrind=False,
+        drv.simulate(zonalWindFile=[wind], valgrind=False,
                      nx=nx, ny=ny, exe="aronnax_test", dx=xlen/nx, dy=ylen/ny)
         assert_outputs_close(nx, ny, layers, 3e-12)
         assert_volume_conservation(nx, ny, layers, 1e-5)
@@ -162,7 +162,7 @@ def test_beta_plane_gyre_free_surf():
     def wind(_, Y):
         return 0.05 * (1 - np.cos(2*np.pi * Y/np.max(grid.y)))
     with working_directory(p.join(self_path, "beta_plane_gyre_free_surf")):
-        drv.simulate(zonalWindFile=wind, valgrind=False,
+        drv.simulate(zonalWindFile=[wind], valgrind=False,
                      nx=nx, ny=ny, exe=test_executable, dx=xlen/nx, dy=ylen/ny)
         assert_outputs_close(nx, ny, layers, 3e-12)
         assert_volume_conservation(nx, ny, layers, 1e-5)
@@ -192,9 +192,9 @@ def test_periodic_BC_red_grav():
     with working_directory(p.join(self_path, "periodic_BC_red_grav")):
         drv.simulate(initHfile=[layer_1, layer_2],
                      nx=nx, ny=ny, layers=layers, dx=dx, dy=dy,
-                     exe=test_executable, wetMaskFile=wetmask, 
-                     fUfile=-1e-4,
-                     fVfile=-1e-4,
+                     exe=test_executable, wetMaskFile=[wetmask], 
+                     fUfile=[-1e-4],
+                     fVfile=[-1e-4],
                      nTimeSteps=801,
                      dumpFreq=10000)
         assert_outputs_close(nx, ny, layers, 3e-12)

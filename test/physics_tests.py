@@ -210,7 +210,7 @@ def f_plane_wind_test(physics, aro_exec, nx, ny, dx, dy, dt, nTimeSteps):
 
     with opt.working_directory(p.join(self_path, "physics_tests/f_plane_{0}_wind".format(physics))):
         drv.simulate(initHfile=[400.],
-            zonalWindFile=wind_x, meridionalWindFile=wind_y, valgrind=False,
+            zonalWindFile=[wind_x], meridionalWindFile=[wind_y], valgrind=False,
                      nx=nx, ny=ny, exe=aro_exec, dx=dx, dy=dy, 
                      dt=dt, dumpFreq=int(dt*nTimeSteps/50), nTimeSteps=nTimeSteps)
 
