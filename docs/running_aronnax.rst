@@ -16,7 +16,7 @@ As described above, it is possible to define functions that can be passed to `ar
           return 0.05 * (1 - np.cos(2*np.pi * Y/np.max(grid.y)))
 
       with working_directory(p.join(self_path, "beta_plane_gyre_red_grav")):
-          drv.simulate(zonalWindFile=wind,
+          drv.simulate(zonalWindFile=[wind],
                        nx=10, ny=10, exe="aronnax_test", dx=xlen/10, dy=ylen/10)
 
 .. warning::
