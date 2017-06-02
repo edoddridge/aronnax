@@ -35,6 +35,10 @@ Installation instructions
       
       - :bash:`make install`
 
+    - move back to root directory of the repository
+
+      - :bash:`cd ../../../`
+
  #. install Aronnax
    
     - :code:`pip install -e .`
