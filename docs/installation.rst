@@ -41,7 +41,7 @@ Installation instructions
 
  #. install Aronnax
    
-    - :code:`pip install -e .`
+    - :code:`pip install -e ./`
 
 Aronnax is now installed and ready to use. To verify that everything is working, you may wish to run the test suite. Do this by executing :code:`pytest` in the base directory of the repository. This requires that the pytest module is installed.
 
