@@ -21,6 +21,10 @@ Installation instructions
 
     - :bash:`git clone --recursive https://github.com/edoddridge/aronnax.git`
 
+ #. Move into the base directory of the repository
+
+    - :bash:`cd aronnax`
+
  #. Compile Hypre
 
     - move to the directory 'lib/hypre/src'
