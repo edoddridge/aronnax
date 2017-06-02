@@ -21,6 +21,10 @@ Installation instructions
 
     - :bash:`git clone --recursive https://github.com/edoddridge/aronnax.git`
 
+ #. Move into the base directory of the repository
+
+    - :bash:`cd aronnax`
+
  #. Compile Hypre
 
     - move to the directory 'lib/hypre/src'
@@ -35,9 +39,13 @@ Installation instructions
       
       - :bash:`make install`
 
+    - move back to root directory of the repository
+
+      - :bash:`cd ../../../`
+
  #. install Aronnax
    
-    - :code:`pip install -e .`
+    - :code:`pip install -e ./`
 
 Aronnax is now installed and ready to use. To verify that everything is working, you may wish to run the test suite. Do this by executing :code:`pytest` in the base directory of the repository. This requires that the pytest module is installed.
 
