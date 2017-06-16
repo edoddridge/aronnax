@@ -1,0 +1,5 @@
+input/
+output/
+figures/
+run_finished.txt
+layer thickness dropped below hmin.txt

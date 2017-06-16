@@ -14,6 +14,7 @@ before_install:
   - sudo apt-get install valgrind
   - sudo apt-get install libopenmpi-dev
   - sudo apt-get install openmpi-bin
+  - sudo apt-get install imagemagick
   - pip install scipy
   - pip install sphinx
   - pip install sphinx_rtd_theme
@@ -42,6 +43,8 @@ script:
   - python benchmark.py
   - cd ../test
   - python physics_tests.py
+  - cd ../examples
+  - python run_examples.py
 
 after_success:
   - cd ../docs

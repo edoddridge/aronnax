@@ -6,7 +6,7 @@ In the following sections we present some simplified examples and use Aronnax to
 Canonical examples
 ===================
 
-These simulations use simple domains and and inputs. They show some of the features available in Aronnax
+These simulations use simple domains and and inputs. They highlight some of the features available in Aronnax and can be found in the `examples/` folder. To run these simulations locally change into the `examples/` directory and execute `python run_examples.py` in the terminal.
 
 
 Gaussian bump on a :math:`\beta`-plane
@@ -16,14 +16,28 @@ This example is initialised with a Gaussian bump in the layer thickness field. T
 
 1 + 1/2 layers
 +++++++++++++++
-to do:
-- add animated gif of the output
+
+.. figure:: ../examples/reduced_gravity/beta_plane_bump/figures/animation.gif
+   :width: 75%
+   :align: center
+   :alt: animation of 1.5 layer example initialised with a Gaussian bump
+
+   Evolution of a Gaussian bump on a 1.5 layer :math:`\beta`-plane.
 
 
 2 layers
 +++++++++++
-to do:
-- add animated gif of the output
+
+The upper layer of a two-layer simulation with a flat bottom. This looks very similar to the 1.5 layer simulation.
+
+.. figure:: ../examples/n_layer/beta_plane_bump/figures/animation.gif
+   :width: 75%
+   :align: center
+   :alt: animation of 2 layer example initialised with a Gaussian bump
+
+   Evolution of a Gaussian bump on a 2 layer :math:`\beta`-plane.
+
+
 
 
 Twin gyre on a :math:`\beta`-plane
@@ -31,13 +45,31 @@ Twin gyre on a :math:`\beta`-plane
 
 1 + 1/2 layers
 +++++++++++++++
-to do:
-- add animated gif of the output
+
+This example simulates a twin-gyre on a :math:`\beta`-plane with 1 active layer above a quiescent abyss. This simulation runs for almost 140 days of model time, and clearly shows the development of the two gyres and inertial recirculations at the inter-gyre boundary.
+
+.. figure:: ../examples/reduced_gravity/beta_plane_gyre/figures/animation.gif
+   :width: 75%
+   :align: center
+   :alt: animation of twin-gyre on a 1.5 layer beta-plane
+
+   Evolution of a twin-gyre on a 1.5 layer :math:`\beta`-plane.
+
+
 
 2 layers
 +++++++++++
-to do:
-- add animated gif of the output
+
+This is also a twin-gyre simulation, but because the n-layer physics is more computationally demanding, this simulation is only run for one week of model time. 
+
+.. figure:: ../examples/n_layer/beta_plane_gyre/figures/animation.gif
+   :width: 75%
+   :align: center
+   :alt: animation of twin-gyre on a 2 layer beta-plane
+
+   Evolution of a twin-gyre on a 2 layer :math:`\beta`-plane.
+
+
 
 Reproducing published results
 ===============================
