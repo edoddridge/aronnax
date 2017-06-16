@@ -6,7 +6,7 @@ In the following sections we present some simplified examples and use Aronnax to
 Canonical examples
 ===================
 
-These simulations use simple domains and and inputs. They show some of the features available in Aronnax
+These simulations use simple domains and and inputs. They highlight some of the features available in Aronnax and can be found in the `examples/` folder. To run these simulations locally change into the `examples/` directory and execute `python run_examples.py` in the terminal.
 
 
 Gaussian bump on a :math:`\beta`-plane
