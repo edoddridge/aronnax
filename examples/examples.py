@@ -136,6 +136,11 @@ def plt_output(grid, colour_lim=2):
             bbox_inches='tight')
         plt.close()
 
+    try:
+        sub.check_call(["convert", "-delay", "30", "-loop", "0", "*.png", "animated.gif"])
+    except:
+        print "failed to make animation"
+
 
 if __name__ == '__main__':
     beta_plane_bump_red_grav()
