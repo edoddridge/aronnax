@@ -137,7 +137,7 @@ def plt_output(grid, colour_lim=2):
         plt.close()
 
     try:
-        sub.check_call(["convert", "-delay", "30", "-loop", "0", "*.png", "animated.gif"])
+        sub.check_call(["convert", "-delay", "30", "-loop", "0", "*.png", "animation.gif"])
     except:
         print "failed to make animation"
 
