@@ -123,7 +123,8 @@ def plt_output(grid, colour_lim=2):
 
         plt.figure()
         CS = plt.contour(X,Y,np.transpose(h[:,:,0]),colors='k')
-        plt.clabel(CS, inline=1, fontsize=10)
+        plt.clabel(CS, inline=1, inline_spacing=17,
+         fontsize=10, fmt=r'%3.0f')
         X,Y = np.meshgrid(grid.x/1e3, grid.yp1/1e3)
 
         plt.pcolormesh(X,Y,np.transpose(v[:,:,0])*100., cmap='RdBu_r'
