@@ -101,9 +101,12 @@ def beta_plane_gyre_n_layer():
         drv.simulate(zonalWindFile=[wind],
                      exe=executable,
                      nx=nx, ny=ny, layers=layers,
-                     dx=xlen/nx, dy=ylen/ny)
+                     dx=xlen/nx, dy=ylen/ny,
+                     # nTimeSteps = 20001, dumpFreq = 6e5, avFreq = 48e5
+                     # uncomment previous line to reproduce simulation shown in manual
+                     )
         with working_directory("figures"):
-            plt_output(grid)
+            plt_output(grid, colour_lim=20)
 
 def plt_output(grid, colour_lim=2):
     h_files = sorted(glob.glob("../output/snap.h.*"))
