@@ -53,9 +53,8 @@ def benchmark_gaussian_bump_red_grav_plot():
         plt.xlabel('Resolution (grid cells on one side)')
         plt.ylabel('Avg time per integration step (ms)')
         plt.title('Runtime scaling of a 1.5-layer Aronnax simulation on a square grid')
-        plt.savefig('beta_plane_bump_red_grav scaling.png', dpi=150)
-        filename = p.join(root_path, 'docs/beta_plane_bump_red_grav_scaling.png')
-        plt.savefig(filename, dpi=150)
+        plt.savefig('beta_plane_bump_red_grav_scaling.png', dpi=150)
+
 
 def benchmark_gaussian_bump_red_grav(grid_points):
     benchmark_gaussian_bump_red_grav_save(grid_points)
@@ -112,9 +111,9 @@ def benchmark_gaussian_bump_plot():
         plt.loglog(grid_points, run_time_Ofast*scale_factor,
             '-*', label='Aronnax run time -Ofast')
         plt.loglog(grid_points, run_time_hypre_test*scale_factor,
-            '-*', label='Aronnax run time Hypre -O1')
+            '-o', label='Aronnax run time Hypre -O1')
         plt.loglog(grid_points, run_time_hypre*scale_factor,
-            '-*', label='Aronnax run time Hypre -Ofast')
+            '-o', label='Aronnax run time Hypre -Ofast')
         scale = scale_factor * run_time_O1[3]/(grid_points[3]**3)
         plt.loglog(grid_points, scale*grid_points**3,
             ':', label='O(nx**3)', color='black', linewidth=0.5)
@@ -125,9 +124,7 @@ def benchmark_gaussian_bump_plot():
         plt.xlabel('Resolution (grid cells on one side)')
         plt.ylabel('Avg time per integration step (ms)')
         plt.title('Runtime scaling of a 2-layer Aronnax simulation\nwith bathymetry on a square grid')
-        plt.savefig('beta_plane_bump scaling.png', dpi=150)
-        filename = p.join(root_path, 'docs/beta_plane_bump_scaling.png')
-        plt.savefig(filename, dpi=150)
+        plt.savefig('beta_plane_bump_scaling.png', dpi=150)
 
 
 def benchmark_gaussian_bump(grid_points):

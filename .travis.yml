@@ -11,7 +11,6 @@ branches:
 
 before_install: 
   - sudo apt-get install gfortran
-  - sudo apt-get install valgrind
   - sudo apt-get install libopenmpi-dev
   - sudo apt-get install openmpi-bin
   - sudo apt-get install imagemagick
@@ -36,25 +35,3 @@ script:
   - codecov
   - python test/periodic_BC_Hypre.py
   - codecov
-  - cd reproductions
-  - python run_davis_et_al_2014.py
-  - python plot_Davis_et_al_2014.py
-  - cd ../benchmarks
-  - python benchmark.py
-  - cd ../test
-  - python physics_tests.py
-  - cd ../examples
-  - python run_examples.py
-
-after_success:
-  - cd ../docs
-  - make html
-  - cd _build/html
-
-
-deploy:
-  provider: pages
-  skip_cleanup: true
-  github_token: $GH_token # Set in travis-ci.org dashboard
-  on:
-    branch: master

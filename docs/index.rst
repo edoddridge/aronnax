@@ -38,6 +38,7 @@ Aronnax is
   Python for convenient use.
 
 .. toctree::
+   :numbered: 2
    :maxdepth: 2
    :caption: Contents:
 
