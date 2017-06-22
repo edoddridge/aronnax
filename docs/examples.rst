@@ -17,10 +17,10 @@ This example is initialised with a Gaussian bump in the layer thickness field. T
 1 + 1/2 layers
 +++++++++++++++
 
-.. figure:: ../examples/reduced_gravity/beta_plane_bump/figures/animation.gif
+.. figure:: ../examples/reduced_gravity/beta_plane_bump/figures/red-grav-bump.*
    :width: 75%
    :align: center
-   :alt: animation of 1.5 layer example initialised with a Gaussian bump
+   :alt: 1.5 layer example initialised with a Gaussian bump
 
    Evolution of a Gaussian bump on a 1.5 layer :math:`\beta`-plane.
 
@@ -30,10 +30,10 @@ This example is initialised with a Gaussian bump in the layer thickness field. T
 
 The upper layer of a two-layer simulation with a flat bottom. This looks very similar to the 1.5 layer simulation.
 
-.. figure:: ../examples/n_layer/beta_plane_bump/figures/animation.gif
+.. figure:: ../examples/n_layer/beta_plane_bump/figures/n-layer-bump.*
    :width: 75%
    :align: center
-   :alt: animation of 2 layer example initialised with a Gaussian bump
+   :alt: 2 layer example initialised with a Gaussian bump
 
    Evolution of a Gaussian bump on a 2 layer :math:`\beta`-plane.
 
@@ -48,10 +48,10 @@ Twin gyre on a :math:`\beta`-plane
 
 This example simulates a twin-gyre on a :math:`\beta`-plane with 1 active layer above a quiescent abyss. This simulation runs for almost 140 days of model time, and clearly shows the development of the two gyres and inertial recirculations at the inter-gyre boundary.
 
-.. figure:: ../examples/reduced_gravity/beta_plane_gyre/figures/animation.gif
+.. figure:: ../examples/reduced_gravity/beta_plane_gyre/figures/red-grav-twin-gyre.*
    :width: 75%
    :align: center
-   :alt: animation of twin-gyre on a 1.5 layer beta-plane
+   :alt: twin-gyre on a 1.5 layer beta-plane
 
    Evolution of a twin-gyre on a 1.5 layer :math:`\beta`-plane.
 
@@ -62,10 +62,10 @@ This example simulates a twin-gyre on a :math:`\beta`-plane with 1 active layer 
 
 This is also a twin-gyre simulation, but because the n-layer physics is more computationally demanding, this simulation is only run for one week of model time. 
 
-.. figure:: ../examples/n_layer/beta_plane_gyre/figures/animation.gif
+.. figure:: ../examples/n_layer/beta_plane_gyre/figures/n-layer-twin-gyre.*
    :width: 75%
    :align: center
-   :alt: animation of twin-gyre on a 2 layer beta-plane
+   :alt: twin-gyre on a 2 layer beta-plane
 
    Evolution of a twin-gyre on a 2 layer :math:`\beta`-plane.
 
