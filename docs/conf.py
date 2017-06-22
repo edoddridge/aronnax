@@ -82,6 +82,16 @@ pygments_style = 'sphinx'
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
 
+# number figures
+numfig = True
+
+# number figures within section
+numfig_secnum_depth = 1
+
+math_number_all = True
+
+numfig_format = {'figure': 'Figure %s', 'table': 'Table %s', 'code-block': 'Code %s', 'section': 'Section %s'}
+
 # source_parsers = {
 #     '.md': 'recommonmark.parser.CommonMarkParser',
 # }
