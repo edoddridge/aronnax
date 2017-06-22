@@ -45,7 +45,7 @@ def beta_plane_bump_red_grav():
                      nx=nx, ny=ny,
                      dx=xlen/nx, dy=ylen/ny)
         with working_directory("figures"):
-            plt_output(grid)
+            plt_output(grid, 'red-grav-bump')
 
 def beta_plane_bump_n_layer():
     print "Running n-layer beta-plane bump example"
@@ -62,7 +62,7 @@ def beta_plane_bump_n_layer():
                      nx=nx, ny=ny,
                      dx=xlen/nx, dy=ylen/ny)
         with working_directory("figures"):
-            plt_output(grid)
+            plt_output(grid, 'n-layer-bump')
 
 def beta_plane_gyre_red_grav():
     print "Running reduced gravity beta-plane gyre example"
@@ -83,7 +83,7 @@ def beta_plane_gyre_red_grav():
                      dx=xlen/nx, dy=ylen/ny,
                      exe=executable)
         with working_directory("figures"):
-            plt_output(grid, colour_lim=20)
+            plt_output(grid, 'red-grav-twin-gyre', colour_lim=20)
 
 def beta_plane_gyre_n_layer():
     print "Running n-layer beta-plane gyre example"
@@ -106,9 +106,9 @@ def beta_plane_gyre_n_layer():
                      # uncomment previous line to reproduce simulation shown in manual
                      )
         with working_directory("figures"):
-            plt_output(grid, colour_lim=20)
+            plt_output(grid, 'n-layer-twin-gyre', colour_lim=20)
 
-def plt_output(grid, colour_lim=2):
+def plt_output(grid, sim_name, colour_lim=2):
     h_files = sorted(glob.glob("../output/snap.h.*"))
     v_files = sorted(glob.glob("../output/snap.v.*"))
 
@@ -138,10 +138,13 @@ def plt_output(grid, colour_lim=2):
 
         plt.savefig('state_{0}.png'.format(v_files[i][-10:]), dpi=150,
             bbox_inches='tight')
+        if i==len(v_files)-1:
+            plt.savefig('{0}.pdf'.format(sim_name), dpi=150,
+                bbox_inches='tight')
         plt.close()
 
     try:
-        sub.check_call(["convert", "-delay", "30", "-loop", "0", "*.png", "animation.gif"])
+        sub.check_call(["convert", "-delay", "30", "-loop", "0", "state_*.png", "{0}.gif".format(sim_name)])
     except:
         print "failed to make animation"
 
