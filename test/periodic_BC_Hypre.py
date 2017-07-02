@@ -42,11 +42,11 @@ def test_periodic_BC_Hypre():
         drv.simulate(initHfile=[500.,500.],
                      nx=nx, ny=ny, layers=layers, dx=dx, dy=dy,
                      exe="aronnax_external_solver_test",
-                     wetMaskFile=wetmask, 
-                     fUfile=-1e-4,
-                     fVfile=-1e-4,
-                     initEtaFile=eta,
-                     depthFile=1000., nTimeSteps=801,
+                     wetMaskFile=[wetmask],
+                     fUfile=[-1e-4],
+                     fVfile=[-1e-4],
+                     initEtaFile=[eta],
+                     depthFile=[1000.], nTimeSteps=801,
                      dumpFreq=10000)
         opt.assert_outputs_close(nx, ny, layers, 3e-12)
         opt.assert_volume_conservation(nx, ny, layers, 3e-5)

@@ -128,66 +128,47 @@ def interpret_raw_file(name, nx, ny, layers):
 
 ### General input construction helpers
 
-def tracer_point_variable_2d(grid, h_funcs):
+def tracer_point_variable(grid, field_layers, *funcs):
+    """Input generator for a variable at the tracer location of the grid. If passed a function, then that function can depend only on `X` and `Y`."""
     X,Y = np.meshgrid(grid.x, grid.y)
-    T_variable_2d = np.ones((grid.ny, grid.nx))
-    if isinstance(h_funcs, (int, long, float)):
-        T_variable_2d[:,:] = h_funcs
-    else:
-        T_variable_2d[:,:] = h_funcs(X, Y)
-    return T_variable_2d
+    T_variable = np.ones((field_layers, grid.ny, grid.nx))
 
-def tracer_point_variable_3d(grid, *h_funcs):
-    X,Y = np.meshgrid(grid.x, grid.y)
-    T_variable_3d = np.ones((grid.layers, grid.ny, grid.nx))
-    assert grid.layers == len(h_funcs)
+    assert field_layers == len(funcs)
 
-    for i, f in enumerate(h_funcs):
+    for i, f in enumerate(funcs):
         if isinstance(f, (int, long, float)):
-            T_variable_3d[i,:,:] = f
+            T_variable[i,:,:] = f
         else:
-            T_variable_3d[i,:,:] = f(X, Y)
-    return T_variable_3d
+            T_variable[i,:,:] = f(X, Y)
+    return T_variable
 
-def u_point_variable_2d(grid, func):
+def u_point_variable(grid, field_layers, *funcs):
+    """Input generator for a variable at the u location of the grid. If passed a function, then that function can depend only on `X` and `Y`."""
     X,Y = np.meshgrid(grid.xp1, grid.y)
-    if isinstance(func, (int, long, float)):
-        u_variable_2d = np.ones((grid.ny, grid.nx+1)) * func
-    else:
-        u_variable_2d = func(X, Y)
-    return u_variable_2d
+    u_variable = np.ones((field_layers, grid.ny, grid.nx+1))
 
-def u_point_variable_3d(grid, func):
-    X,Y = np.meshgrid(grid.xp1, grid.y)
-    u_variable_3d = np.ones((grid.layers, grid.ny, grid.nx+1))
-    assert grid.layers == len(func)
+    assert field_layers == len(funcs)
 
-    for i, f in enumerate(func):
+    for i, f in enumerate(funcs):
         if isinstance(f, (int, long, float)):
-            u_variable_3d[i,:,:] = np.ones((grid.ny, grid.nx+1)) * f
+            u_variable[i,:,:] = f
         else:
-            u_variable_3d[i,:,:] = f(X, Y)
-    return u_variable_3d
+            u_variable[i,:,:] = f(X, Y)
+    return u_variable
 
-def v_point_variable_2d(grid, func):
+def v_point_variable(grid, field_layers, *funcs):
+    """Input generator for a variable at the v location of the grid. If passed a function, then that function can depend only on `X` and `Y`."""
     X,Y = np.meshgrid(grid.x, grid.yp1)
-    if isinstance(func, (int, long, float)):
-        v_varaible_2d = np.ones((grid.ny+1, grid.nx)) * func
-    else:
-        v_varaible_2d = func(X, Y)
-    return v_varaible_2d
+    v_variable = np.ones((field_layers, grid.ny+1, grid.nx))
 
-def v_point_variable_3d(grid, func):
-    X,Y = np.meshgrid(grid.x, grid.yp1)
-    v_variable_3d = np.ones((grid.layers, grid.ny+1, grid.nx))
-    assert grid.layers == len(func)
-    
-    for i, f in enumerate(func):
+    assert field_layers == len(funcs)
+
+    for i, f in enumerate(funcs):
         if isinstance(f, (int, long, float)):
-            v_variable_3d[i,:,:] = np.ones((grid.ny, grid.nx)) * f
+            v_variable[i,:,:] = f
         else:
-            v_variable_3d[i,:,:] = f(X, Y)
-    return v_variable_3d
+            v_variable[i,:,:] = f(X, Y)
+    return v_variable
 
 def time_series_variable(nTimeSteps, dt, func):
     '''Input generator for a time series variable. If passed a function, then that function can depend on the number of timesteps, `nTimeSteps`, and the timestep, `dt`.'''
@@ -206,28 +187,33 @@ def time_series_variable(nTimeSteps, dt, func):
 
 ### Specific construction helpers
 
-def f_plane_f_u(grid, coeff):
+def f_plane_f_u(grid, field_layers, coeff):
     """Define an f-plane approximation to the Coriolis force (u location)."""
+    assert field_layers == 1
     return np.ones((grid.nx+1, grid.ny), dtype=np.float64) * coeff
 
-def f_plane_f_v(grid, coeff):
+def f_plane_f_v(grid, field_layers, coeff):
     """Define an f-plane approximation to the Coriolis force (v location)."""
+    assert field_layers == 1
     return np.ones((grid.nx, grid.ny+1), dtype=np.float64) * coeff
 
-def beta_plane_f_u(grid, f0, beta):
+def beta_plane_f_u(grid, field_layers, f0, beta):
     """Define a beta-plane approximation to the Coriolis force (u location)."""
+    assert field_layers == 1
     _, Y = np.meshgrid(grid.xp1, grid.y)
     fu = f0 + Y*beta
     return fu
 
-def beta_plane_f_v(grid, f0, beta):
+def beta_plane_f_v(grid, field_layers, f0, beta):
     """Define a beta-plane approximation to the Coriolis force (v location)."""
+    assert field_layers == 1
     _, Y = np.meshgrid(grid.x, grid.yp1)
     fv = f0 + Y*beta
     return fv
 
-def rectangular_pool(grid):
+def rectangular_pool(grid, field_layers):
     """The wet mask file for a maximal rectangular pool."""
+    assert field_layers == 1
     nx = grid.nx; ny = grid.ny
     wetmask = np.ones((nx, ny), dtype=np.float64)
     wetmask[ 0, :] = 0
@@ -239,12 +225,9 @@ def rectangular_pool(grid):
 specifier_rx = re.compile(r':(.*):(.*)')
 
 ok_generators = {
-    'tracer_point_variable_2d': tracer_point_variable_2d,
-    'tracer_point_variable_3d': tracer_point_variable_3d,
-    'u_point_variable_2d': u_point_variable_2d,
-    'u_point_variable_3d': u_point_variable_3d,
-    'v_point_variable_2d': v_point_variable_2d,
-    'v_point_variable_3d': v_point_variable_3d,
+    'tracer_point_variable': tracer_point_variable,
+    'u_point_variable': u_point_variable,
+    'v_point_variable': v_point_variable,
     'time_series_variable': time_series_variable,
     'beta_plane_f_u': beta_plane_f_u,
     'beta_plane_f_v': beta_plane_f_v,
@@ -297,31 +280,43 @@ def interpret_requested_data(requested_data, shape, config):
     grid = Grid(config.getint("grid", "nx"), config.getint("grid", "ny"),
                 config.getint("grid", "layers"),
                 config.getfloat("grid", "dx"), config.getfloat("grid", "dy"))
+    field_layers = find_field_layers(shape, grid)
+
     if isinstance(requested_data, basestring):
         candidate = interpret_data_specifier(requested_data)
         if candidate is not None:
             (func, args) = candidate
-            return func(grid, *args)
+            return func(grid, field_layers, *args)
         else:
             # Assume Fortran file name
             with fortran_file(requested_data, 'r') as f:
                 return f.read_reals(dtype=np.float64)
     else:
-        if shape == "2dT":
-            return tracer_point_variable_2d(grid, requested_data)
-        if shape == "3dT":
-            return tracer_point_variable_3d(grid, *requested_data)
-        if shape == "2dU":
-            return u_point_variable_2d(grid, requested_data)
-        if shape == "3dU":
-            return u_point_variable_3d(grid, requested_data)
-        if shape == "2dV":
-            return v_point_variable_2d(grid, requested_data)
-        if shape == "3dV":
-            return v_point_variable_3d(grid, requested_data)
+        if shape == "2dT" or shape == "3dT":
+            return tracer_point_variable(grid, field_layers, *requested_data)
+        if shape == "2dU" or shape == "3dU":
+            return u_point_variable(grid, field_layers, *requested_data)
+        if shape == "2dV" or shape == "3dV":
+            return v_point_variable(grid, field_layers, *requested_data)
         if shape == "time":
             nTimeSteps = config.getint("numerics", "nTimeSteps")
             dt = config.getfloat("numerics", "dt")
             return time_series_variable(nTimeSteps, dt, requested_data)
         else:
             raise Exception("TODO implement custom generation for other input shapes")
+
+def find_field_layers(shape, grid):
+    """Given a particular field shape, return how many layers it should have."""
+
+    if shape == "2dT":
+        return 1
+    if shape == "3dT":
+        return grid.layers
+    if shape == "2dU":
+        return 1
+    if shape == "3dU":
+        return grid.layers
+    if shape == "2dV":
+        return 1
+    if shape == "3dV":
+        return grid.layers

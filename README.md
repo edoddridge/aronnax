@@ -8,23 +8,23 @@ as a reduced gravity model with n + 1/2 layers, or with n layers and
 variable bathymetry.
 
 Aronnax is
-- [Easy to install](https://edoddridge.github.io/aronnax/installation.html)
+- [Easy to install](http://aronnax.readthedocs.io/en/latest/installation.html)
   on a laptop or a compute node, including without
   administrative privileges.
 - Easy to configure.  All parameters, including grid size, are
   specified at runtime in a simple configuration file.
-- [Easy to use](https://edoddridge.github.io/aronnax/examples.html).
+- [Easy to use](http://aronnax.readthedocs.io/en/latest/examples.html).
   Aronnax can be controlled programmatically as a Python library.
 - Easy to learn and understand, with extensive [online
-  documentation](https://edoddridge.github.io/aronnax/), including a
+  documentation](http://aronnax.readthedocs.io/en/latest/index.html), including a
   complete description of [the
-  physics](https://edoddridge.github.io/aronnax/about_aronnax.html#the-physics)
+  physics](http://aronnax.readthedocs.io/en/latest/aronnax_model.html#the-physics)
   and [the
-  numerics](https://edoddridge.github.io/aronnax/about_aronnax.html#discretisation).
-- [Verified](https://edoddridge.github.io/aronnax/verification.html).
-  Aronnax successfully [reproduces published results](https://edoddridge.github.io/aronnax/examples.html#reproducing-published-results) from
+  numerics](http://aronnax.readthedocs.io/en/latest/aronnax_model.html#numerical-algorithm).
+- [Verified](http://aronnax.readthedocs.io/en/latest/verification.html).
+  Aronnax successfully [reproduces published results](http://aronnax.readthedocs.io/en/latest/examples.html#reproducing-published-results) from
   idealised models appearing in the literature.
-- [Fast](https://edoddridge.github.io/aronnax/benchmarks.html).  The
+- [Fast](http://aronnax.readthedocs.io/en/latest/benchmarks.html).  The
   main integration loop is a multi-core Fortran program, wrapped in
   Python for convenient use.
 

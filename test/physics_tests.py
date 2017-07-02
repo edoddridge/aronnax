@@ -210,7 +210,7 @@ def f_plane_wind_test(physics, aro_exec, nx, ny, dx, dy, dt, nTimeSteps):
 
     with opt.working_directory(p.join(self_path, "physics_tests/f_plane_{0}_wind".format(physics))):
         drv.simulate(initHfile=[400.],
-            zonalWindFile=wind_x, meridionalWindFile=wind_y, valgrind=False,
+            zonalWindFile=[wind_x], meridionalWindFile=[wind_y], valgrind=False,
                      nx=nx, ny=ny, exe=aro_exec, dx=dx, dy=dy, 
                      dt=dt, dumpFreq=int(dt*nTimeSteps/50), nTimeSteps=nTimeSteps)
 
@@ -278,9 +278,6 @@ def f_plane_wind_test(physics, aro_exec, nx, ny, dx, dy, dt, nTimeSteps):
         plt.xlabel('Time (months)')
         plt.ylabel('Momentum')
         plt.savefig('f_plane_momentum_test.png', dpi=150)
-        filename = p.join(root_path, 
-            'docs/f_plane_momentum_test_{0}.png'.format(physics))
-        plt.savefig(filename, dpi=150, bbox_inchs='tight')
         plt.close()
 
         plt.figure()
@@ -348,9 +345,6 @@ def truncation_error(physics, aro_exec, nx, ny, grid_resolution, integration_tim
         plt.ylabel('Percentage error')
         plt.xlabel('Horizontal grid spacing (m)')
         plt.savefig('error_by_resolution_semilogx.png',dpi=100)
-        filename = p.join(root_path, 
-            'docs/error_by_resolution_semilogx_{0}.png'.format(physics))
-        plt.savefig(filename, dpi=150, bbox_inchs='tight')
         plt.close()
 
         plt.figure()

@@ -17,15 +17,26 @@ The grid object contains the axes for variables on tracer points, both velocity 
 
 Inputs
 ==========
-Aronnax includes a number of helper functions for generating input fields.
-These can be called with numerical arguments (generating very simple input fields)
-directly from the aronnax.conf file, using the syntax `:generator_name:arg1,arg2,...,argn`.
 
-.. autofunction:: aronnax.tracer_point_variable_3d
+Custom generator functions
++++++++++++++++++++++++++++
+The use of custom input generator functions, described in more detail below, allows the model to be passed user defined functions of `X` and `Y`, or layerwise constant values for the input fields.
 
-.. autofunction:: aronnax.u_point_variable_3d
+Aronnax will evaluate the user defined functions or constants to create the input fields, and save these fields to the 'input' folder in the format required by the Fortran core.
 
-.. autofunction:: aronnax.v_point_variable_3d
+
+The generator functions can be called either directly from the aronnax.conf file, using the syntax `:generator_name:arg1,arg2,...,argn`, or they can be included in the call to :meth:`aronnax.driver.simulate` using the syntax `field_name=[arg1, arg2, ..., argn]`. 
+
+If they are used from the configuration file then the arguments must be numerical (generating very simple layerwise constant value input fields). If the generator functions are included in the call to :meth:`aronnax.driver.simulate`, then the arguments may be either numerical or functions, but must be passed as a list. That is, they must be wrapped in square brackets [], even if that list has only one element. Aronnax will check that the length of the list equals the number of layers the field is expected to have and will throw an error if they are not equal.
+
+
+Generic generator functions 
+----------------------------
+.. autofunction:: aronnax.tracer_point_variable
+
+.. autofunction:: aronnax.u_point_variable
+
+.. autofunction:: aronnax.v_point_variable
 
 .. autofunction:: aronnax.time_series_variable
 
@@ -33,7 +44,7 @@ directly from the aronnax.conf file, using the syntax `:generator_name:arg1,arg2
 
 
 Coriolis fields
-++++++++++++++++
+----------------
 
 .. autofunction:: aronnax.f_plane_f_u
 
@@ -45,11 +56,8 @@ Coriolis fields
 
 
 Domain shape
-+++++++++++++
+-------------
 
 .. autofunction:: aronnax.rectangular_pool
 
 
-Custom generator functions
-+++++++++++++++++++++++++++
-The use of custom input generator functions, described in more detail in <running_aronnax.html>, allows the model to be passed user defined functions of `X` and `Y`, created from a `numpy.meshgrid` call on the appropriate axes, evaluate them to create the input fields, and save these fields to the 'input' folder in the format required by the Fortran core.
