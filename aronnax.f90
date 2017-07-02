@@ -875,7 +875,7 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
 #endif
 
 #ifdef useExtSolver
-  call Ext_solver(MPI_COMM_WORLD, hypre_A, hypre_grid, num_procs, &
+  call Ext_solver(MPI_COMM_WORLD, hypre_A, hypre_grid, myid, num_procs, &
     ilower, iupper, etastar, &
     etanew, nx, ny, dt, maxits, eps, ierr)
 #endif
@@ -1719,7 +1719,7 @@ end subroutine create_Hypre_A_matrix
 
 ! ---------------------------------------------------------------------------
 
-subroutine Ext_solver(MPI_COMM_WORLD, hypre_A, hypre_grid, num_procs, &
+subroutine Ext_solver(MPI_COMM_WORLD, hypre_A, hypre_grid, myid, num_procs, &
     ilower, iupper, etastar, &
     etanew, nx, ny, dt, maxits, eps, ierr)
   implicit none
@@ -1727,6 +1727,7 @@ subroutine Ext_solver(MPI_COMM_WORLD, hypre_A, hypre_grid, num_procs, &
   integer,          intent(in)  :: MPI_COMM_WORLD
   integer*8,        intent(in)  :: hypre_A
   integer*8,        intent(in)  :: hypre_grid
+  integer,          intent(in)  :: myid
   integer,          intent(in)  :: num_procs
   integer,          intent(in)  :: ilower(0:num_procs-1,2)
   integer,          intent(in)  :: iupper(0:num_procs-1,2)
@@ -1743,7 +1744,17 @@ subroutine Ext_solver(MPI_COMM_WORLD, hypre_A, hypre_grid, num_procs, &
   integer*8        :: hypre_x
   integer*8        :: hypre_solver
   integer*8        :: precond
-  double precision :: values(nx * ny)
+  double precision, dimension(:),     allocatable :: values
+
+  integer :: nx_tile, ny_tile
+
+  nx_tile = iupper(myid,1)-ilower(myid,1) + 1
+  ny_tile = iupper(myid,2)-ilower(myid,2) + 1
+
+  allocate(values(nx_tile*ny_tile))
+  ! just nx*ny for the tile this processor owns
+
+
   ! A currently unused variable that can be used to
   ! print information from the solver - see comments below.
 !  double precision :: hypre_out(2)
@@ -1756,18 +1767,16 @@ subroutine Ext_solver(MPI_COMM_WORLD, hypre_A, hypre_grid, num_procs, &
   call HYPRE_StructVectorInitialize(hypre_b, ierr)
 
   ! set rhs values (vector b)
-  do j = 1, ny ! loop over every grid point
-    do i = 1, nx
+  do j = ilower(myid,2), iupper(myid,2) ! loop over every grid point
+    do i = ilower(myid,1), iupper(myid,1)
   ! the 2D array is being laid out like
   ! [x1y1, x2y1, x3y1, x1y2, x2y2, x3y2, x1y3, x2y3, x3y3]
-    values( ((j-1)*nx + i) ) = -etastar(i,j)/dt**2
+    values( ((j-1)*nx_tile + i) ) = -etastar(i,j)/dt**2
     end do
   end do
 
-  do i = 0, num_procs-1
-    call HYPRE_StructVectorSetBoxValues(hypre_b, &
-      ilower(i,:), iupper(i,:), values, ierr)
-  end do
+  call HYPRE_StructVectorSetBoxValues(hypre_b, &
+    ilower(myid,:), iupper(myid,:), values, ierr)
 
   call HYPRE_StructVectorAssemble(hypre_b, ierr)
 
@@ -1775,10 +1784,8 @@ subroutine Ext_solver(MPI_COMM_WORLD, hypre_A, hypre_grid, num_procs, &
   call HYPRE_StructVectorCreate(MPI_COMM_WORLD, hypre_grid, hypre_x, ierr)
   call HYPRE_StructVectorInitialize(hypre_x, ierr)
 
-  do i = 0, num_procs-1
-    call HYPRE_StructVectorSetBoxValues(hypre_x, &
-      ilower(i,:), iupper(i,:), values, ierr)
-  end do
+  call HYPRE_StructVectorSetBoxValues(hypre_x, &
+    ilower(myid,:), iupper(myid,:), values, ierr)
 
   call HYPRE_StructVectorAssemble(hypre_x, ierr)
 
@@ -1837,14 +1844,12 @@ subroutine Ext_solver(MPI_COMM_WORLD, hypre_A, hypre_grid, num_procs, &
   !   hypre_out(2), ierr)
   ! print *, 'final residual norm = ', hypre_out(2)
 
-  do i = 0, num_procs-1
-    call HYPRE_StructVectorGetBoxValues(hypre_x, &
-      ilower(i,:), iupper(i,:), values, ierr)
-  end do
+  call HYPRE_StructVectorGetBoxValues(hypre_x, &
+    ilower(myid,:), iupper(myid,:), values, ierr)
 
-  do j = 1, ny! loop over every grid point
-    do i = 1, nx
-    etanew(i,j) = values( ((j-1)*nx + i) )
+  do j = ilower(myid,2), iupper(myid,2) ! loop over every grid point
+    do i = ilower(myid,1), iupper(myid,1)
+    etanew(i,j) = values( ((j-1)*nx_tile + i) )
     end do
   end do
 
