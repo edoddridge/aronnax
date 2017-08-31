@@ -46,6 +46,10 @@ This parameter determines whether the model produces additional outputs. It shou
  - 4: dump all of the above fields every time step (mostly implemented)
  - 5: dump everything every time step including the two initial RK4 steps (not implemented)
 
+niter0
+------
+This parameter allows a simulation to be restarted from the given timestep. It requires that the appropriate files are in the 'checkpoints' directory. All parameters, except for the number of grid points in the domain, may be altered when restarting a simulation. This is intended for breaking long simulations into shorter, more manageable chunks, and for running perturbation experiments. 
+
 wetMaskFile
 -----------
 The wetmask defines which grid points within the computational domain contain fluid. The wetmask is defined on the tracer points, and a value of 1 defines fluid, while a value of 0 defines land. The domain is doubly periodic in `x` and `y` by default. To produce a closed domain the wetmaks should be set to 0 along the edges of the domain. To close the domain it is sufficient to place a strip of land along either the northern or southern boundary and either the western or eastern boundary. You may find it conceptually easier to close both edges.
