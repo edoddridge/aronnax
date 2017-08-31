@@ -1084,31 +1084,35 @@ subroutine maybe_dump_output(h, hav, u, uav, v, vav, eta, etaav, &
     ! OK
   else if (mod(n-1, avwrite) .eq. 0) then
 
-    hav = hav/real(avwrite)
-    uav = uav/real(avwrite)
-    vav = vav/real(avwrite)
-    if (.not. RedGrav) then
-      etaav = etaav/real(avwrite)
+    if (n .eq. 1) then
+      ! pass, since dumping averages after first timestep isn't helpful
+    else 
+      hav = hav/real(avwrite)
+      uav = uav/real(avwrite)
+      vav = vav/real(avwrite)
+      if (.not. RedGrav) then
+        etaav = etaav/real(avwrite)
+      end if
+
+      call write_output_3d(hav, nx, ny, layers, 0, 0, &
+      n, 'output/av.h.')
+      call write_output_3d(uav, nx, ny, layers, 1, 0, &
+      n, 'output/av.u.')
+      call write_output_3d(vav, nx, ny, layers, 0, 1, &
+      n, 'output/av.v.')
+
+
+      if (.not. RedGrav) then
+        call write_output_2d(etaav, nx, ny, 0, 0, &
+          n, 'output/av.eta.')
+      end if
+
+      ! Check if there are NaNs in the data
+      call break_if_NaN(h, nx, ny, layers, n)
+      ! call break_if_NaN(u, nx, ny, layers, n)
+      ! call break_if_NaN(v, nx, ny, layers, n)
     end if
-
-    call write_output_3d(hav, nx, ny, layers, 0, 0, &
-    n, 'output/av.h.')
-    call write_output_3d(uav, nx, ny, layers, 1, 0, &
-    n, 'output/av.u.')
-    call write_output_3d(vav, nx, ny, layers, 0, 1, &
-    n, 'output/av.v.')
-
-
-    if (.not. RedGrav) then
-      call write_output_2d(etaav, nx, ny, 0, 0, &
-        n, 'output/av.eta.')
-    end if
-
-    ! Check if there are NaNs in the data
-    call break_if_NaN(h, nx, ny, layers, n)
-    ! call break_if_NaN(u, nx, ny, layers, n)
-    ! call break_if_NaN(v, nx, ny, layers, n)
-
+    
     ! Reset average quantities
     hav = 0.0
     uav = 0.0
