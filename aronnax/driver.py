@@ -59,7 +59,7 @@ def simulate(work_dir=".", config_path="aronnax.conf", **options):
         # XXX Try to avoid overwriting the input configuration
         with open('aronnax-merged.conf', 'w') as f:
             config.write(f)
-        sub.check_call(["rm", "-rf", "output/"])
+        # sub.check_call(["rm", "-rf", "output/"])
         sub.check_call(["mkdir", "-p", "output/"])
         sub.check_call(["mkdir", "-p", "checkpoints/"])
         with working_directory("input"):

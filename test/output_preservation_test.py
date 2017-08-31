@@ -123,9 +123,9 @@ def test_gaussian_bump_continuation():
         drv.simulate(initHfile=[bump, lambda X, Y: 2000. - bump(X, Y)],
                      nx=10, ny=10, exe=test_executable, 
                      dx=xlen/10, dy=ylen/10,
-                     niter0=401)
-        # assert_outputs_close(10, 10, 2, 2e-13)
-        # assert_volume_conservation(10, 10, 2, 1e-5)
+                     niter0=201, nTimeSteps=200)
+        assert_outputs_close(10, 10, 2, 2e-13)
+        assert_volume_conservation(10, 10, 2, 1e-5)
 
 def test_gaussian_bump_debug_test():
     xlen = 1e6
