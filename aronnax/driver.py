@@ -95,6 +95,7 @@ section_map = {
     "botDrag"              : "numerics",
     "dt"                   : "numerics",
     "slip"                 : "numerics",
+    "niter0"               : "numerics",
     "nTimeSteps"           : "numerics",
     "dumpFreq"             : "numerics",
     "avFreq"               : "numerics",
