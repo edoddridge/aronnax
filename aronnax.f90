@@ -644,12 +644,12 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
     read(10) dvdtveryold
     close(10)
 
-
     if (.not. RedGrav) then
       open(unit=10, form='unformatted', file='checkpoints/eta.'//num)
       read(10) eta
       close(10)
     end if
+
   end if
 
   ! Now the model is ready to start.
@@ -772,6 +772,16 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   cur_time = time()
   print "(A, I0, A, I0, A)", "Run finished at time step ", &
       n, ", in ", cur_time - start_time, " seconds."
+
+  ! save checkpoint at end of every simulation
+  call maybe_dump_output(h, hav, u, uav, v, vav, eta, etaav, &
+      dudt, dvdt, dhdt, &
+      dudtold, dvdtold, dhdtold, &
+      dudtveryold, dvdtveryold, dhdtveryold, &
+      wind_x, wind_y, nx, ny, layers, &
+      n, n, n, n-1, &
+      RedGrav, DumpWind, 0)
+
   return
 end subroutine model_run
 
