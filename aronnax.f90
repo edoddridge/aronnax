@@ -767,13 +767,13 @@ subroutine state_derivative(dhdt, dudt, dvdt, h, u, v, depth, &
     call evaluate_b_RedGrav(b, h, u, v, nx, ny, layers, g_vec)
     if (debug_level .ge. 4) then
       call write_output_3d(b, nx, ny, layers, 0, 0, &
-        n, 'snap.BP.')
+        n, 'output/snap.BP.')
     end if
   else
     call evaluate_b_iso(b, h, u, v, nx, ny, layers, g_vec, depth)
     if (debug_level .ge. 4) then
       call write_output_3d(b, nx, ny, layers, 0, 0, &
-        n, 'snap.BP.')
+        n, 'output/snap.BP.')
     end if
   end if
 
@@ -781,7 +781,7 @@ subroutine state_derivative(dhdt, dudt, dvdt, h, u, v, depth, &
   call evaluate_zeta(zeta, u, v, nx, ny, layers, dx, dy)
   if (debug_level .ge. 4) then
     call write_output_3d(zeta, nx, ny, layers, 1, 1, &
-      n, 'snap.zeta.')
+      n, 'output/snap.zeta.')
   end if
 
   ! Calculate dhdt, dudt, dvdt at current time step
@@ -870,7 +870,7 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
   ! print *, maxval(abs(etastar))
   if (debug_level .ge. 4) then
     call write_output_2d(etastar, nx, ny, 0, 0, &
-      n, 'snap.eta_star.')
+      n, 'output/snap.eta_star.')
   end if
 
   ! Prevent barotropic signals from bouncing around outside the
@@ -890,7 +890,7 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
 
   if (debug_level .ge. 4) then
     call write_output_2d(etanew, nx, ny, 0, 0, &
-      n, 'snap.eta_new.')
+      n, 'output/snap.eta_new.')
   end if
 
   etanew = etanew*wetmask
@@ -960,32 +960,32 @@ subroutine maybe_dump_output(h, hav, u, uav, v, vav, eta, etaav, &
   if (dump_output) then 
     
     call write_output_3d(h, nx, ny, layers, 0, 0, &
-    n, 'snap.h.')
+    n, 'output/snap.h.')
     call write_output_3d(u, nx, ny, layers, 1, 0, &
-    n, 'snap.u.')
+    n, 'output/snap.u.')
     call write_output_3d(v, nx, ny, layers, 0, 1, &
-    n, 'snap.v.')
+    n, 'output/snap.v.')
 
 
     if (.not. RedGrav) then
       call write_output_2d(eta, nx, ny, 0, 0, &
-        n, 'snap.eta.')
+        n, 'output/snap.eta.')
     end if
 
     if (DumpWind .eqv. .true.) then
       call write_output_2d(wind_x, nx, ny, 1, 0, &
-        n, 'wind_x.')
+        n, 'output/wind_x.')
       call write_output_2d(wind_y, nx, ny, 0, 1, &
-        n, 'wind_y.')
+        n, 'output/wind_y.')
     end if
 
     if (debug_level .ge. 1) then
       call write_output_3d(dhdt, nx, ny, layers, 0, 0, &
-        n, 'debug.dhdt.')
+        n, 'output/debug.dhdt.')
       call write_output_3d(dudt, nx, ny, layers, 1, 0, &
-        n, 'debug.dudt.')
+        n, 'output/debug.dudt.')
       call write_output_3d(dvdt, nx, ny, layers, 0, 1, &
-        n, 'debug.dvdt.')
+        n, 'output/debug.dvdt.')
     end if
 
     ! Check if there are NaNs in the data
@@ -1008,16 +1008,16 @@ subroutine maybe_dump_output(h, hav, u, uav, v, vav, eta, etaav, &
     end if
 
     call write_output_3d(hav, nx, ny, layers, 0, 0, &
-    n, 'av.h.')
+    n, 'output/av.h.')
     call write_output_3d(uav, nx, ny, layers, 1, 0, &
-    n, 'av.u.')
+    n, 'output/av.u.')
     call write_output_3d(vav, nx, ny, layers, 0, 1, &
-    n, 'av.v.')
+    n, 'output/av.v.')
 
 
     if (.not. RedGrav) then
       call write_output_2d(etaav, nx, ny, 0, 0, &
-        n, 'av.eta.')
+        n, 'output/av.eta.')
     end if
 
     ! Check if there are NaNs in the data
@@ -1035,6 +1035,8 @@ subroutine maybe_dump_output(h, hav, u, uav, v, vav, eta, etaav, &
     ! h2av = 0.0
 
   end if
+
+
 
   return
 end subroutine maybe_dump_output
@@ -2347,7 +2349,7 @@ subroutine write_output_3d(array, nx, ny, layers, xstep, ystep, &
   write(num, '(i10.10)') n
 
   ! Output the data to a file
-  open(unit=10, status='replace', file='output/'//name//num, &
+  open(unit=10, status='replace', file=name//num, &
       form='unformatted')
   write(10) array(1:nx+xstep, 1:ny+ystep, :)
   close(10)
@@ -2372,7 +2374,7 @@ subroutine write_output_2d(array, nx, ny, xstep, ystep, &
   write(num, '(i10.10)') n
 
   ! Output the data to a file
-  open(unit=10, status='replace', file='output/'//name//num, &
+  open(unit=10, status='replace', file=name//num, &
       form='unformatted')
   write(10) array(1:nx+xstep, 1:ny+ystep)
   close(10)
