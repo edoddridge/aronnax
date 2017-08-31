@@ -61,6 +61,7 @@ def simulate(work_dir=".", config_path="aronnax.conf", **options):
             config.write(f)
         sub.check_call(["rm", "-rf", "output/"])
         sub.check_call(["mkdir", "-p", "output/"])
+        sub.check_call(["mkdir", "-p", "checkpoints/"])
         with working_directory("input"):
             generate_input_data_files(config)
         generate_parameters_file(config)
