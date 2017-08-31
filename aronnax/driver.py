@@ -98,6 +98,7 @@ section_map = {
     "nTimeSteps"           : "numerics",
     "dumpFreq"             : "numerics",
     "avFreq"               : "numerics",
+    "checkpointFreq"       : "numerics",
     "hmin"                 : "numerics",
     "maxits"               : "numerics",
     "eps"                  : "numerics",

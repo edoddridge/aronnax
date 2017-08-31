@@ -156,6 +156,7 @@ program aronnax
   read(unit=8, nml=EXTERNAL_FORCING)
   close(unit=8)
 
+
   ! optionally include the MPI code for parallel runs with external
   ! pressure solver
   call MPI_INIT(ierr)
@@ -688,11 +689,9 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
     ! Now have new fields in main arrays and old fields in very old arrays
 
     call maybe_dump_output(h, hav, u, uav, v, vav, eta, etaav, &
-        dudt, dvdt, dhdt, &
-        wind_x, wind_y, nx, ny, layers, &
-        n, nwrite, avwrite, RedGrav, DumpWind, debug_level)
-
-    ! save a checkpoint?
+        dudt, dvdt, dhdt, wind_x, wind_y, nx, ny, layers, &
+        n, nwrite, avwrite, checkpointwrite, &
+        RedGrav, DumpWind, debug_level)
 
 
     cur_time = time()
@@ -925,7 +924,8 @@ end subroutine barotropic_correction
 subroutine maybe_dump_output(h, hav, u, uav, v, vav, eta, etaav, &
         dudt, dvdt, dhdt, &
         wind_x, wind_y, nx, ny, layers, &
-        n, nwrite, avwrite, RedGrav, DumpWind, debug_level)
+        n, nwrite, avwrite, checkpointwrite, &
+        RedGrav, DumpWind, debug_level)
   implicit none
 
   double precision, intent(in)    :: h(0:nx+1, 0:ny+1, layers)
@@ -941,7 +941,8 @@ subroutine maybe_dump_output(h, hav, u, uav, v, vav, eta, etaav, &
   double precision, intent(in)    :: dhdt(0:nx+1, 0:ny+1, layers)
   double precision, intent(in)    :: wind_x(0:nx+1, 0:ny+1)
   double precision, intent(in)    :: wind_y(0:nx+1, 0:ny+1)
-  integer,          intent(in)    :: nx, ny, layers, n, nwrite, avwrite
+  integer,          intent(in)    :: nx, ny, layers, n
+  integer,          intent(in)    :: nwrite, avwrite, checkpointwrite
   logical,          intent(in)    :: RedGrav, DumpWind
   integer,          intent(in)    :: debug_level
 
@@ -1036,7 +1037,28 @@ subroutine maybe_dump_output(h, hav, u, uav, v, vav, eta, etaav, &
 
   end if
 
+  ! save a checkpoint?
+  if (checkpointwrite .eq. 0) then
+    ! not saving checkpoints, so move on
+  else if (mod(n-1, checkpointwrite) .eq. 0) then
+    call write_output_3d(h, nx, ny, layers, 0, 0, &
+    n, 'checkpoints/h.')
+    call write_output_3d(u, nx, ny, layers, 1, 0, &
+    n, 'checkpoints/u.')
+    call write_output_3d(v, nx, ny, layers, 0, 1, &
+    n, 'checkpoints/v.')
+    call write_output_3d(dhdt, nx, ny, layers, 0, 0, &
+      n, 'checkpoints/dhdt.')
+    call write_output_3d(dudt, nx, ny, layers, 1, 0, &
+      n, 'checkpoints/dudt.')
+    call write_output_3d(dvdt, nx, ny, layers, 0, 1, &
+      n, 'checkpoints/dvdt.')
+    if (.not. RedGrav) then
+      call write_output_2d(eta, nx, ny, 0, 0, &
+        n, 'checkpoints/eta.')
+    end if
 
+  end if
 
   return
 end subroutine maybe_dump_output
