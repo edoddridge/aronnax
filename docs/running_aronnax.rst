@@ -19,9 +19,6 @@ As described above, it is possible to define functions that can be passed to `ar
           drv.simulate(zonalWindFile=[wind],
                        nx=10, ny=10, exe="aronnax_test", dx=xlen/10, dy=ylen/10)
 
-.. warning::
-    Running Aronnax in a directory that contains outputs from a previous simulation will result in those outputs being overwritten. The model does not currently check if the  output directory is empty.
-
 
 Parameters
 ===========
