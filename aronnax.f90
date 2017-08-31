@@ -67,7 +67,7 @@ program aronnax
   double precision :: ah(layerwise_input_length)
   double precision :: slip, hmin
   integer nTimeSteps
-  double precision :: dumpFreq, avFreq
+  double precision :: dumpFreq, avFreq, checkpointFreq
   double precision, dimension(:),     allocatable :: zeros
   integer maxits
   double precision :: eps, freesurfFac, thickness_error
@@ -122,8 +122,8 @@ program aronnax
   ! then hide the long unsightly code there.
 
   namelist /NUMERICS/ au, ah, ar, botDrag, dt, slip, nTimeSteps, &
-      dumpFreq, avFreq, hmin, maxits, freesurfFac, eps, &
-      thickness_error, debug_level
+      dumpFreq, avFreq, checkpointFreq, hmin, maxits, freesurfFac, & 
+      eps, thickness_error, debug_level
 
   namelist /MODEL/ hmean, depthFile, H0, RedGrav
 
@@ -266,7 +266,8 @@ program aronnax
 
   call model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
       dt, au, ar, botDrag, ah, slip, hmin, nTimeSteps, dumpFreq, avFreq, &
-      maxits, eps, freesurfFac, thickness_error, debug_level, g_vec, rho0, &
+      checkpointFreq, maxits, eps, freesurfFac, thickness_error, &
+      debug_level, g_vec, rho0, &
       base_wind_x, base_wind_y, wind_mag_time_series, &
       spongeHTimeScale, spongeUTimeScale, spongeVTimeScale, &
       spongeH, spongeU, spongeV, &
@@ -283,7 +284,8 @@ end program aronnax
 
 subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
     dt, au, ar, botDrag, ah, slip, hmin, nTimeSteps, dumpFreq, avFreq, &
-    maxits, eps, freesurfFac, thickness_error, debug_level, g_vec, rho0, &
+    checkpointFreq, maxits, eps, freesurfFac, thickness_error, &
+    debug_level, g_vec, rho0, &
     base_wind_x, base_wind_y, wind_mag_time_series, &
     spongeHTimeScale, spongeUTimeScale, spongeVTimeScale, &
     spongeH, spongeU, spongeV, &
@@ -313,7 +315,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   double precision, intent(in) :: ah(layers)
   double precision, intent(in) :: slip, hmin
   integer,          intent(in) :: nTimeSteps
-  double precision, intent(in) :: dumpFreq, avFreq
+  double precision, intent(in) :: dumpFreq, avFreq, checkpointFreq
   integer,          intent(in) :: maxits
   double precision, intent(in) :: eps, freesurfFac, thickness_error
   integer,          intent(in) :: debug_level
@@ -380,8 +382,10 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
 
   ! Numerics
   double precision :: pi
-  integer :: nwrite, avwrite
   double precision :: rjac
+
+  ! dumping output
+  integer :: nwrite, avwrite, checkpointwrite
 
   ! External solver variables
   integer          :: offsets(2,5)
@@ -432,6 +436,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
 
   nwrite = int(dumpFreq/dt)
   avwrite = int(avFreq/dt)
+  checkpointwrite = int(checkpointFreq/dt)
 
   ! Pi, the constant
   pi = 3.1415926535897932384
@@ -686,6 +691,9 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
         dudt, dvdt, dhdt, &
         wind_x, wind_y, nx, ny, layers, &
         n, nwrite, avwrite, RedGrav, DumpWind, debug_level)
+
+    ! save a checkpoint?
+
 
     cur_time = time()
     if (cur_time - last_report_time > 3) then
