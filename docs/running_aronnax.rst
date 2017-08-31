@@ -19,9 +19,6 @@ As described above, it is possible to define functions that can be passed to `ar
           drv.simulate(zonalWindFile=[wind],
                        nx=10, ny=10, exe="aronnax_test", dx=xlen/10, dy=ylen/10)
 
-.. warning::
-    Running Aronnax in a directory that contains outputs from a previous simulation will result in those outputs being overwritten. The model does not currently check if the  output directory is empty.
-
 
 Parameters
 ===========
@@ -48,6 +45,10 @@ This parameter determines whether the model produces additional outputs. It shou
  - 3: output convergence diagnostics and tendencies before and after applying some or all of sponges, barotropic correction, winds, and boundary conditions at frequency controlled by `DumpFreq` (not implemented)
  - 4: dump all of the above fields every time step (mostly implemented)
  - 5: dump everything every time step including the two initial RK4 steps (not implemented)
+
+niter0
+------
+This parameter allows a simulation to be restarted from the given timestep. It requires that the appropriate files are in the 'checkpoints' directory. All parameters, except for the number of grid points in the domain, may be altered when restarting a simulation. This is intended for breaking long simulations into shorter, more manageable chunks, and for running perturbation experiments. 
 
 wetMaskFile
 -----------

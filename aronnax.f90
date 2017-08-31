@@ -66,8 +66,8 @@ program aronnax
   double precision :: au, ar, botDrag
   double precision :: ah(layerwise_input_length)
   double precision :: slip, hmin
-  integer nTimeSteps
-  double precision :: dumpFreq, avFreq
+  integer          :: niter0, nTimeSteps
+  double precision :: dumpFreq, avFreq, checkpointFreq
   double precision, dimension(:),     allocatable :: zeros
   integer maxits
   double precision :: eps, freesurfFac, thickness_error
@@ -121,9 +121,10 @@ program aronnax
   ! TODO Possibly wait until the model is split into multiple files,
   ! then hide the long unsightly code there.
 
-  namelist /NUMERICS/ au, ah, ar, botDrag, dt, slip, nTimeSteps, &
-      dumpFreq, avFreq, hmin, maxits, freesurfFac, eps, &
-      thickness_error, debug_level
+  namelist /NUMERICS/ au, ah, ar, botDrag, dt, slip, &
+      niter0, nTimeSteps, &
+      dumpFreq, avFreq, checkpointFreq, hmin, maxits, freesurfFac, & 
+      eps, thickness_error, debug_level
 
   namelist /MODEL/ hmean, depthFile, H0, RedGrav
 
@@ -143,6 +144,7 @@ program aronnax
 
   ! Set default values here
   debug_level = 0
+  niter0 = 0
 
   
   open(unit=8, file="parameters.in", status='OLD', recl=80)
@@ -155,6 +157,7 @@ program aronnax
   read(unit=8, nml=INITIAL_CONDITIONS)
   read(unit=8, nml=EXTERNAL_FORCING)
   close(unit=8)
+
 
   ! optionally include the MPI code for parallel runs with external
   ! pressure solver
@@ -265,8 +268,10 @@ program aronnax
 
 
   call model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
-      dt, au, ar, botDrag, ah, slip, hmin, nTimeSteps, dumpFreq, avFreq, &
-      maxits, eps, freesurfFac, thickness_error, debug_level, g_vec, rho0, &
+      dt, au, ar, botDrag, ah, slip, hmin, niter0, nTimeSteps, &
+      dumpFreq, avFreq, &
+      checkpointFreq, maxits, eps, freesurfFac, thickness_error, &
+      debug_level, g_vec, rho0, &
       base_wind_x, base_wind_y, wind_mag_time_series, &
       spongeHTimeScale, spongeUTimeScale, spongeVTimeScale, &
       spongeH, spongeU, spongeV, &
@@ -282,8 +287,10 @@ end program aronnax
 !> Run the model
 
 subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
-    dt, au, ar, botDrag, ah, slip, hmin, nTimeSteps, dumpFreq, avFreq, &
-    maxits, eps, freesurfFac, thickness_error, debug_level, g_vec, rho0, &
+    dt, au, ar, botDrag, ah, slip, hmin, niter0, nTimeSteps, &
+    dumpFreq, avFreq, &
+    checkpointFreq, maxits, eps, freesurfFac, thickness_error, &
+    debug_level, g_vec, rho0, &
     base_wind_x, base_wind_y, wind_mag_time_series, &
     spongeHTimeScale, spongeUTimeScale, spongeVTimeScale, &
     spongeH, spongeU, spongeV, &
@@ -312,8 +319,8 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   double precision, intent(in) :: dt, au, ar, botDrag
   double precision, intent(in) :: ah(layers)
   double precision, intent(in) :: slip, hmin
-  integer,          intent(in) :: nTimeSteps
-  double precision, intent(in) :: dumpFreq, avFreq
+  integer,          intent(in) :: niter0, nTimeSteps
+  double precision, intent(in) :: dumpFreq, avFreq, checkpointFreq
   integer,          intent(in) :: maxits
   double precision, intent(in) :: eps, freesurfFac, thickness_error
   integer,          intent(in) :: debug_level
@@ -380,8 +387,10 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
 
   ! Numerics
   double precision :: pi
-  integer :: nwrite, avwrite
   double precision :: rjac
+
+  ! dumping output
+  integer :: nwrite, avwrite, checkpointwrite
 
   ! External solver variables
   integer          :: offsets(2,5)
@@ -406,6 +415,9 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
 
   ! Time
   integer*8 :: start_time, last_report_time, cur_time
+
+  ! dummy variable for loading checkpoints
+  character(10)    :: num
 
 
   start_time = time()
@@ -432,9 +444,11 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
 
   nwrite = int(dumpFreq/dt)
   avwrite = int(avFreq/dt)
+  checkpointwrite = int(checkpointFreq/dt)
 
   ! Pi, the constant
   pi = 3.1415926535897932384
+
 
   ! Initialize wind fields
   wind_x = base_wind_x*wind_mag_time_series(1)
@@ -489,100 +503,154 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !!!  Initialisation of the model STARTS HERE                            !!!
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  !
-  ! Do two initial time steps with Runge-Kutta second-order.
-  ! These initialisation steps do NOT use or update the free surface.
-  !
-  ! ------------------------- negative 2 time step --------------------------
-  ! Code to work out dhdtveryold, dudtveryold and dvdtveryold
-  n = 0
-  
-  call state_derivative(dhdtveryold, dudtveryold, dvdtveryold, &
-      h, u, v, depth, &
-      dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
-      au, ar, botDrag, ah, slip, &
-      RedGrav, g_vec, rho0, wind_x, wind_y, &
-      spongeHTimeScale, spongeH, &
-      spongeUTimeScale, spongeU, &
-      spongeVTimeScale, spongeV, &
-      nx, ny, layers, n, debug_level)
+  if (niter0 .eq. 0) then
+    ! Do two initial time steps with Runge-Kutta second-order.
+    ! These initialisation steps do NOT use or update the free surface.
+    !
+    ! ------------------------- negative 2 time step --------------------------
+    ! Code to work out dhdtveryold, dudtveryold and dvdtveryold
+    n = 0
+    
+    call state_derivative(dhdtveryold, dudtveryold, dvdtveryold, &
+        h, u, v, depth, &
+        dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
+        au, ar, botDrag, ah, slip, &
+        RedGrav, g_vec, rho0, wind_x, wind_y, &
+        spongeHTimeScale, spongeH, &
+        spongeUTimeScale, spongeU, &
+        spongeVTimeScale, spongeV, &
+        nx, ny, layers, n, debug_level)
 
-  ! Calculate the values at half the time interval with Forward Euler
-  hhalf = h+0.5d0*dt*dhdtveryold
-  uhalf = u+0.5d0*dt*dudtveryold
-  vhalf = v+0.5d0*dt*dvdtveryold
+    ! Calculate the values at half the time interval with Forward Euler
+    hhalf = h+0.5d0*dt*dhdtveryold
+    uhalf = u+0.5d0*dt*dudtveryold
+    vhalf = v+0.5d0*dt*dvdtveryold
 
-  call state_derivative(dhdtveryold, dudtveryold, dvdtveryold, &
-      hhalf, uhalf, vhalf, depth, &
-      dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
-      au, ar, botDrag, ah, slip, &
-      RedGrav, g_vec, rho0, wind_x, wind_y, &
-      spongeHTimeScale, spongeH, &
-      spongeUTimeScale, spongeU, &
-      spongeVTimeScale, spongeV, &
-      nx, ny, layers, n, debug_level)
+    call state_derivative(dhdtveryold, dudtveryold, dvdtveryold, &
+        hhalf, uhalf, vhalf, depth, &
+        dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
+        au, ar, botDrag, ah, slip, &
+        RedGrav, g_vec, rho0, wind_x, wind_y, &
+        spongeHTimeScale, spongeH, &
+        spongeUTimeScale, spongeU, &
+        spongeVTimeScale, spongeV, &
+        nx, ny, layers, n, debug_level)
 
-  ! These are the values to be stored in the 'veryold' variables ready
-  ! to start the proper model run.
+    ! These are the values to be stored in the 'veryold' variables ready
+    ! to start the proper model run.
 
-  ! Calculate h, u, v with these tendencies
-  h = h + dt*dhdtveryold
-  u = u + dt*dudtveryold
-  v = v + dt*dvdtveryold
+    ! Calculate h, u, v with these tendencies
+    h = h + dt*dhdtveryold
+    u = u + dt*dudtveryold
+    v = v + dt*dvdtveryold
 
-  ! Apply the boundary conditions
-  call apply_boundary_conditions(u, hfacW, wetmask, nx, ny, layers)
-  call apply_boundary_conditions(v, hfacS, wetmask, nx, ny, layers)
+    ! Apply the boundary conditions
+    call apply_boundary_conditions(u, hfacW, wetmask, nx, ny, layers)
+    call apply_boundary_conditions(v, hfacS, wetmask, nx, ny, layers)
 
-  ! Wrap fields around for periodic simulations
-  call wrap_fields_3D(u, nx, ny, layers)
-  call wrap_fields_3D(v, nx, ny, layers)
-  call wrap_fields_3D(h, nx, ny, layers)
+    ! Wrap fields around for periodic simulations
+    call wrap_fields_3D(u, nx, ny, layers)
+    call wrap_fields_3D(v, nx, ny, layers)
+    call wrap_fields_3D(h, nx, ny, layers)
 
-  ! ------------------------- negative 1 time step --------------------------
-  ! Code to work out dhdtold, dudtold and dvdtold
+    ! ------------------------- negative 1 time step --------------------------
+    ! Code to work out dhdtold, dudtold and dvdtold
 
-  call state_derivative(dhdtold, dudtold, dvdtold, &
-      h, u, v, depth, &
-      dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
-      au, ar, botDrag, ah, slip, &
-      RedGrav, g_vec, rho0, wind_x, wind_y, &
-      spongeHTimeScale, spongeH, &
-      spongeUTimeScale, spongeU, &
-      spongeVTimeScale, spongeV, &
-      nx, ny, layers, n, debug_level)
+    call state_derivative(dhdtold, dudtold, dvdtold, &
+        h, u, v, depth, &
+        dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
+        au, ar, botDrag, ah, slip, &
+        RedGrav, g_vec, rho0, wind_x, wind_y, &
+        spongeHTimeScale, spongeH, &
+        spongeUTimeScale, spongeU, &
+        spongeVTimeScale, spongeV, &
+        nx, ny, layers, n, debug_level)
 
-  ! Calculate the values at half the time interval with Forward Euler
-  hhalf = h+0.5d0*dt*dhdtold
-  uhalf = u+0.5d0*dt*dudtold
-  vhalf = v+0.5d0*dt*dvdtold
+    ! Calculate the values at half the time interval with Forward Euler
+    hhalf = h+0.5d0*dt*dhdtold
+    uhalf = u+0.5d0*dt*dudtold
+    vhalf = v+0.5d0*dt*dvdtold
 
-  call state_derivative(dhdtold, dudtold, dvdtold, &
-      hhalf, uhalf, vhalf, depth, &
-      dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
-      au, ar, botDrag, ah, slip, &
-      RedGrav, g_vec, rho0, wind_x, wind_y, &
-      spongeHTimeScale, spongeH, &
-      spongeUTimeScale, spongeU, &
-      spongeVTimeScale, spongeV, &
-      nx, ny, layers, n, debug_level)
+    call state_derivative(dhdtold, dudtold, dvdtold, &
+        hhalf, uhalf, vhalf, depth, &
+        dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
+        au, ar, botDrag, ah, slip, &
+        RedGrav, g_vec, rho0, wind_x, wind_y, &
+        spongeHTimeScale, spongeH, &
+        spongeUTimeScale, spongeU, &
+        spongeVTimeScale, spongeV, &
+        nx, ny, layers, n, debug_level)
 
-  ! These are the values to be stored in the 'old' variables ready to start
-  ! the proper model run.
+    ! These are the values to be stored in the 'old' variables ready to start
+    ! the proper model run.
 
-  ! Calculate h, u, v with these tendencies
-  h = h + dt*dhdtold
-  u = u + dt*dudtold
-  v = v + dt*dvdtold
+    ! Calculate h, u, v with these tendencies
+    h = h + dt*dhdtold
+    u = u + dt*dudtold
+    v = v + dt*dvdtold
 
-  ! Apply the boundary conditions
-  call apply_boundary_conditions(u, hfacW, wetmask, nx, ny, layers)
-  call apply_boundary_conditions(v, hfacS, wetmask, nx, ny, layers)
+    ! Apply the boundary conditions
+    call apply_boundary_conditions(u, hfacW, wetmask, nx, ny, layers)
+    call apply_boundary_conditions(v, hfacS, wetmask, nx, ny, layers)
 
-  ! Wrap fields around for periodic simulations
-  call wrap_fields_3D(u, nx, ny, layers)
-  call wrap_fields_3D(v, nx, ny, layers)
-  call wrap_fields_3D(h, nx, ny, layers)
+    ! Wrap fields around for periodic simulations
+    call wrap_fields_3D(u, nx, ny, layers)
+    call wrap_fields_3D(v, nx, ny, layers)
+    call wrap_fields_3D(h, nx, ny, layers)
+
+  else if (niter0 .ne. 0) then
+    n = niter0
+
+    ! load in the state and derivative arrays
+    write(num, '(i10.10)') niter0
+
+    open(unit=10, form='unformatted', file='checkpoints/h.'//num)
+    read(10) h
+    close(10)
+    open(unit=10, form='unformatted', file='checkpoints/u.'//num)
+    read(10) u
+    close(10)
+    open(unit=10, form='unformatted', file='checkpoints/v.'//num)
+    read(10) v
+    close(10)
+
+    open(unit=10, form='unformatted', file='checkpoints/dhdt.'//num)
+    read(10) dhdt
+    close(10)
+    open(unit=10, form='unformatted', file='checkpoints/dudt.'//num)
+    read(10) dudt
+    close(10)
+    open(unit=10, form='unformatted', file='checkpoints/dvdt.'//num)
+    read(10) dvdt
+    close(10)
+
+    open(unit=10, form='unformatted', file='checkpoints/dhdtold.'//num)
+    read(10) dhdtold
+    close(10)
+    open(unit=10, form='unformatted', file='checkpoints/dudtold.'//num)
+    read(10) dudtold
+    close(10)
+    open(unit=10, form='unformatted', file='checkpoints/dvdtold.'//num)
+    read(10) dvdtold
+    close(10)
+
+    open(unit=10, form='unformatted', file='checkpoints/dhdtveryold.'//num)
+    read(10) dhdtveryold
+    close(10)
+    open(unit=10, form='unformatted', file='checkpoints/dudtveryold.'//num)
+    read(10) dudtveryold
+    close(10)
+    open(unit=10, form='unformatted', file='checkpoints/dvdtveryold.'//num)
+    read(10) dvdtveryold
+    close(10)
+
+    if (.not. RedGrav) then
+      open(unit=10, form='unformatted', file='checkpoints/eta.'//num)
+      read(10) eta
+      close(10)
+    end if
+
+  end if
 
   ! Now the model is ready to start.
   ! - We have h, u, v at the zeroth time step, and the tendencies at
@@ -602,10 +670,10 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   !!! MAIN LOOP OF THE MODEL STARTS HERE                                  !!!
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-  do n = 1, nTimeSteps
+  do n = niter0+1, niter0+nTimeSteps
 
-    wind_x = base_wind_x*wind_mag_time_series(n)
-    wind_y = base_wind_y*wind_mag_time_series(n)
+    wind_x = base_wind_x*wind_mag_time_series(n-niter0)
+    wind_y = base_wind_y*wind_mag_time_series(n-niter0)
 
     call state_derivative(dhdt, dudt, dvdt, h, u, v, depth, &
         dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
@@ -684,8 +752,12 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
 
     call maybe_dump_output(h, hav, u, uav, v, vav, eta, etaav, &
         dudt, dvdt, dhdt, &
+        dudtold, dvdtold, dhdtold, &
+        dudtveryold, dvdtveryold, dhdtveryold, &
         wind_x, wind_y, nx, ny, layers, &
-        n, nwrite, avwrite, RedGrav, DumpWind, debug_level)
+        n, nwrite, avwrite, checkpointwrite, &
+        RedGrav, DumpWind, debug_level)
+
 
     cur_time = time()
     if (cur_time - last_report_time > 3) then
@@ -700,6 +772,16 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   cur_time = time()
   print "(A, I0, A, I0, A)", "Run finished at time step ", &
       n, ", in ", cur_time - start_time, " seconds."
+
+  ! save checkpoint at end of every simulation
+  call maybe_dump_output(h, hav, u, uav, v, vav, eta, etaav, &
+      dudt, dvdt, dhdt, &
+      dudtold, dvdtold, dhdtold, &
+      dudtveryold, dvdtveryold, dhdtveryold, &
+      wind_x, wind_y, nx, ny, layers, &
+      n, n, n, n-1, &
+      RedGrav, DumpWind, 0)
+
   return
 end subroutine model_run
 
@@ -759,13 +841,13 @@ subroutine state_derivative(dhdt, dudt, dvdt, h, u, v, depth, &
     call evaluate_b_RedGrav(b, h, u, v, nx, ny, layers, g_vec)
     if (debug_level .ge. 4) then
       call write_output_3d(b, nx, ny, layers, 0, 0, &
-        n, 'snap.BP.')
+        n, 'output/snap.BP.')
     end if
   else
     call evaluate_b_iso(b, h, u, v, nx, ny, layers, g_vec, depth)
     if (debug_level .ge. 4) then
       call write_output_3d(b, nx, ny, layers, 0, 0, &
-        n, 'snap.BP.')
+        n, 'output/snap.BP.')
     end if
   end if
 
@@ -773,7 +855,7 @@ subroutine state_derivative(dhdt, dudt, dvdt, h, u, v, depth, &
   call evaluate_zeta(zeta, u, v, nx, ny, layers, dx, dy)
   if (debug_level .ge. 4) then
     call write_output_3d(zeta, nx, ny, layers, 1, 1, &
-      n, 'snap.zeta.')
+      n, 'output/snap.zeta.')
   end if
 
   ! Calculate dhdt, dudt, dvdt at current time step
@@ -862,7 +944,7 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
   ! print *, maxval(abs(etastar))
   if (debug_level .ge. 4) then
     call write_output_2d(etastar, nx, ny, 0, 0, &
-      n, 'snap.eta_star.')
+      n, 'output/snap.eta_star.')
   end if
 
   ! Prevent barotropic signals from bouncing around outside the
@@ -882,7 +964,7 @@ subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
 
   if (debug_level .ge. 4) then
     call write_output_2d(etanew, nx, ny, 0, 0, &
-      n, 'snap.eta_new.')
+      n, 'output/snap.eta_new.')
   end if
 
   etanew = etanew*wetmask
@@ -916,8 +998,11 @@ end subroutine barotropic_correction
 
 subroutine maybe_dump_output(h, hav, u, uav, v, vav, eta, etaav, &
         dudt, dvdt, dhdt, &
+        dudtold, dvdtold, dhdtold, &
+        dudtveryold, dvdtveryold, dhdtveryold, &
         wind_x, wind_y, nx, ny, layers, &
-        n, nwrite, avwrite, RedGrav, DumpWind, debug_level)
+        n, nwrite, avwrite, checkpointwrite, &
+        RedGrav, DumpWind, debug_level)
   implicit none
 
   double precision, intent(in)    :: h(0:nx+1, 0:ny+1, layers)
@@ -931,9 +1016,16 @@ subroutine maybe_dump_output(h, hav, u, uav, v, vav, eta, etaav, &
   double precision, intent(in)    :: dudt(0:nx+1, 0:ny+1, layers)
   double precision, intent(in)    :: dvdt(0:nx+1, 0:ny+1, layers)
   double precision, intent(in)    :: dhdt(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)    :: dudtold(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)    :: dvdtold(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)    :: dhdtold(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)    :: dudtveryold(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)    :: dvdtveryold(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)    :: dhdtveryold(0:nx+1, 0:ny+1, layers)
   double precision, intent(in)    :: wind_x(0:nx+1, 0:ny+1)
   double precision, intent(in)    :: wind_y(0:nx+1, 0:ny+1)
-  integer,          intent(in)    :: nx, ny, layers, n, nwrite, avwrite
+  integer,          intent(in)    :: nx, ny, layers, n
+  integer,          intent(in)    :: nwrite, avwrite, checkpointwrite
   logical,          intent(in)    :: RedGrav, DumpWind
   integer,          intent(in)    :: debug_level
 
@@ -952,32 +1044,32 @@ subroutine maybe_dump_output(h, hav, u, uav, v, vav, eta, etaav, &
   if (dump_output) then 
     
     call write_output_3d(h, nx, ny, layers, 0, 0, &
-    n, 'snap.h.')
+    n, 'output/snap.h.')
     call write_output_3d(u, nx, ny, layers, 1, 0, &
-    n, 'snap.u.')
+    n, 'output/snap.u.')
     call write_output_3d(v, nx, ny, layers, 0, 1, &
-    n, 'snap.v.')
+    n, 'output/snap.v.')
 
 
     if (.not. RedGrav) then
       call write_output_2d(eta, nx, ny, 0, 0, &
-        n, 'snap.eta.')
+        n, 'output/snap.eta.')
     end if
 
     if (DumpWind .eqv. .true.) then
       call write_output_2d(wind_x, nx, ny, 1, 0, &
-        n, 'wind_x.')
+        n, 'output/wind_x.')
       call write_output_2d(wind_y, nx, ny, 0, 1, &
-        n, 'wind_y.')
+        n, 'output/wind_y.')
     end if
 
     if (debug_level .ge. 1) then
       call write_output_3d(dhdt, nx, ny, layers, 0, 0, &
-        n, 'debug.dhdt.')
+        n, 'output/debug.dhdt.')
       call write_output_3d(dudt, nx, ny, layers, 1, 0, &
-        n, 'debug.dudt.')
+        n, 'output/debug.dudt.')
       call write_output_3d(dvdt, nx, ny, layers, 0, 1, &
-        n, 'debug.dvdt.')
+        n, 'output/debug.dvdt.')
     end if
 
     ! Check if there are NaNs in the data
@@ -1000,16 +1092,16 @@ subroutine maybe_dump_output(h, hav, u, uav, v, vav, eta, etaav, &
     end if
 
     call write_output_3d(hav, nx, ny, layers, 0, 0, &
-    n, 'av.h.')
+    n, 'output/av.h.')
     call write_output_3d(uav, nx, ny, layers, 1, 0, &
-    n, 'av.u.')
+    n, 'output/av.u.')
     call write_output_3d(vav, nx, ny, layers, 0, 1, &
-    n, 'av.v.')
+    n, 'output/av.v.')
 
 
     if (.not. RedGrav) then
       call write_output_2d(etaav, nx, ny, 0, 0, &
-        n, 'av.eta.')
+        n, 'output/av.eta.')
     end if
 
     ! Check if there are NaNs in the data
@@ -1025,6 +1117,45 @@ subroutine maybe_dump_output(h, hav, u, uav, v, vav, eta, etaav, &
       etaav = 0.0
     end if
     ! h2av = 0.0
+
+  end if
+
+  ! save a checkpoint?
+  if (checkpointwrite .eq. 0) then
+    ! not saving checkpoints, so move on
+  else if (mod(n-1, checkpointwrite) .eq. 0) then
+    call write_checkpoint_output(h, nx, ny, layers, &
+    n, 'checkpoints/h.')
+    call write_checkpoint_output(u, nx, ny, layers, &
+    n, 'checkpoints/u.')
+    call write_checkpoint_output(v, nx, ny, layers, &
+    n, 'checkpoints/v.')
+
+    call write_checkpoint_output(dhdt, nx, ny, layers, &
+      n, 'checkpoints/dhdt.')
+    call write_checkpoint_output(dudt, nx, ny, layers, &
+      n, 'checkpoints/dudt.')
+    call write_checkpoint_output(dvdt, nx, ny, layers, &
+      n, 'checkpoints/dvdt.')
+
+    call write_checkpoint_output(dhdtold, nx, ny, layers, &
+      n, 'checkpoints/dhdtold.')
+    call write_checkpoint_output(dudtold, nx, ny, layers, &
+      n, 'checkpoints/dudtold.')
+    call write_checkpoint_output(dvdtold, nx, ny, layers, &
+      n, 'checkpoints/dvdtold.')
+
+    call write_checkpoint_output(dhdtveryold, nx, ny, layers, &
+      n, 'checkpoints/dhdtveryold.')
+    call write_checkpoint_output(dudtveryold, nx, ny, layers, &
+      n, 'checkpoints/dudtveryold.')
+    call write_checkpoint_output(dvdtveryold, nx, ny, layers, &
+      n, 'checkpoints/dvdtveryold.')
+
+    if (.not. RedGrav) then
+      call write_checkpoint_output(eta, nx, ny, 1, &
+        n, 'checkpoints/eta.')
+    end if
 
   end if
 
@@ -2339,13 +2470,38 @@ subroutine write_output_3d(array, nx, ny, layers, xstep, ystep, &
   write(num, '(i10.10)') n
 
   ! Output the data to a file
-  open(unit=10, status='replace', file='output/'//name//num, &
+  open(unit=10, status='replace', file=name//num, &
       form='unformatted')
   write(10) array(1:nx+xstep, 1:ny+ystep, :)
   close(10)
 
   return
 end subroutine write_output_3d
+
+!-----------------------------------------------------------------
+!> Write snapshot output of 3d field
+
+subroutine write_checkpoint_output(array, nx, ny, layers, &
+    n, name)
+  implicit none
+
+  double precision, intent(in) :: array(0:nx+1, 0:ny+1, layers)
+  integer,          intent(in) :: nx, ny, layers
+  integer,          intent(in) :: n
+  character(*),     intent(in) :: name
+
+  character(10)  :: num
+
+  write(num, '(i10.10)') n
+
+  ! Output the data to a file
+  open(unit=10, status='replace', file=name//num, &
+      form='unformatted')
+  write(10) array
+  close(10)
+
+  return
+end subroutine write_checkpoint_output
 
 !-----------------------------------------------------------------
 !> Write snapshot output of 2d field
@@ -2364,7 +2520,7 @@ subroutine write_output_2d(array, nx, ny, xstep, ystep, &
   write(num, '(i10.10)') n
 
   ! Output the data to a file
-  open(unit=10, status='replace', file='output/'//name//num, &
+  open(unit=10, status='replace', file=name//num, &
       form='unformatted')
   write(10) array(1:nx+xstep, 1:ny+ystep)
   close(10)

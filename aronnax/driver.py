@@ -59,8 +59,9 @@ def simulate(work_dir=".", config_path="aronnax.conf", **options):
         # XXX Try to avoid overwriting the input configuration
         with open('aronnax-merged.conf', 'w') as f:
             config.write(f)
-        sub.check_call(["rm", "-rf", "output/"])
+        # sub.check_call(["rm", "-rf", "output/"])
         sub.check_call(["mkdir", "-p", "output/"])
+        sub.check_call(["mkdir", "-p", "checkpoints/"])
         with working_directory("input"):
             generate_input_data_files(config)
         generate_parameters_file(config)
@@ -94,9 +95,11 @@ section_map = {
     "botDrag"              : "numerics",
     "dt"                   : "numerics",
     "slip"                 : "numerics",
+    "niter0"               : "numerics",
     "nTimeSteps"           : "numerics",
     "dumpFreq"             : "numerics",
     "avFreq"               : "numerics",
+    "checkpointFreq"       : "numerics",
     "hmin"                 : "numerics",
     "maxits"               : "numerics",
     "eps"                  : "numerics",
