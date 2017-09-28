@@ -878,11 +878,11 @@ subroutine state_derivative(dhdt, dudt, dvdt, h, u, v, depth, &
   call evaluate_dhdt(dhdt, h, u, v, ah, dx, dy, nx, ny, layers, &
       spongeHTimeScale, spongeH, wetmask, RedGrav)
 
-  call evaluate_dudt(dudt, h, u, v, b, zeta, wind_x, fu, au, ar, slip, &
+  call evaluate_dudt(dudt, h, u, v, b, zeta, wind_x, wind_y, fu, au, ar, slip, &
       dx, dy, hfacN, hfacS, nx, ny, layers, rho0, RelativeWind, Cd, &
       spongeUTimeScale, spongeU, RedGrav, botDrag)
 
-  call evaluate_dvdt(dvdt, h, u, v, b, zeta, wind_y, fv, au, ar, slip, &
+  call evaluate_dvdt(dvdt, h, u, v, b, zeta, wind_x, wind_y, fv, au, ar, slip, &
       dx, dy, hfacW, hfacE, nx, ny, layers, rho0, RelativeWind, Cd, &
       spongeVTimeScale, spongeV, RedGrav, botDrag)
 
@@ -1434,7 +1434,7 @@ end subroutine evaluate_dhdt
 ! ---------------------------------------------------------------------------
 !> Calculate the tendency of zonal velocity for each of the active layers
 
-subroutine evaluate_dudt(dudt, h, u, v, b, zeta, wind_x, fu, &
+subroutine evaluate_dudt(dudt, h, u, v, b, zeta, wind_x, wind_y, fu, &
     au, ar, slip, dx, dy, hfacN, hfacS, nx, ny, layers, rho0, & 
     RelativeWind, Cd, spongeTimeScale, spongeU, RedGrav, botDrag)
   implicit none
@@ -1448,6 +1448,7 @@ subroutine evaluate_dudt(dudt, h, u, v, b, zeta, wind_x, fu, &
   double precision, intent(in)  :: b(0:nx+1, 0:ny+1, layers)
   double precision, intent(in)  :: zeta(0:nx+1, 0:ny+1, layers)
   double precision, intent(in)  :: wind_x(0:nx+1, 0:ny+1)
+  double precision, intent(in)  :: wind_y(0:nx+1, 0:ny+1)
   double precision, intent(in)  :: fu(0:nx+1, 0:ny+1)
   double precision, intent(in)  :: au, ar, slip, dx, dy
   double precision, intent(in)  :: hfacN(0:nx+1, 0:ny+1)
@@ -1480,7 +1481,15 @@ subroutine evaluate_dudt(dudt, h, u, v, b, zeta, wind_x, fu, &
             + spongeTimeScale(i,j,k)*(spongeU(i,j,k)-u(i,j,k)) ! forced relaxtion in the sponge regions
         if (k .eq. 1) then ! only have wind forcing on the top layer
           ! This will need refining in the event of allowing outcropping.
-          dudt(i,j,k) = dudt(i,j,k) + 2d0*wind_x(i,j)/(rho0*(h(i,j,k) + h(i-1,j,k))) ! wind forcing
+          ! apply wind forcing
+          if (RelativeWind) then 
+            dudt(i,j,k) = dudt(i,j,k) + (2d0*Cd* & 
+                 (wind_x(i,j) - u(i,j,k))* & 
+              sqrt((wind_x(i,j) - u(i,j,k))**2 + &
+                   (wind_y(i,j) - v(i,j,k))**2))/((h(i,j,k) + h(i-1,j,k)))
+          else 
+            dudt(i,j,k) = dudt(i,j,k) + 2d0*wind_x(i,j)/(rho0*(h(i,j,k) + h(i-1,j,k))) 
+          end if
         end if
         if (layers .gt. 1) then ! only evaluate vertical momentum diffusivity if more than 1 layer
           if (k .eq. 1) then ! adapt vertical momentum diffusivity for 2+ layer model -> top layer
@@ -1509,7 +1518,7 @@ end subroutine evaluate_dudt
 !> Calculate the tendency of meridional velocity for each of the
 !> active layers
 
-subroutine evaluate_dvdt(dvdt, h, u, v, b, zeta, wind_y, fv, &
+subroutine evaluate_dvdt(dvdt, h, u, v, b, zeta, wind_x, wind_y, fv, &
     au, ar, slip, dx, dy, hfacW, hfacE, nx, ny, layers, rho0, &
     RelativeWind, Cd, spongeTimeScale, spongeV, RedGrav, botDrag)
   implicit none
@@ -1522,6 +1531,7 @@ subroutine evaluate_dvdt(dvdt, h, u, v, b, zeta, wind_y, fv, &
   double precision, intent(in)  :: v(0:nx+1, 0:ny+1, layers)
   double precision, intent(in)  :: b(0:nx+1, 0:ny+1, layers)
   double precision, intent(in)  :: zeta(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: wind_x(0:nx+1, 0:ny+1)
   double precision, intent(in)  :: wind_y(0:nx+1, 0:ny+1)
   double precision, intent(in)  :: fv(0:nx+1, 0:ny+1)
   double precision, intent(in)  :: au, ar, slip
@@ -1557,7 +1567,15 @@ subroutine evaluate_dvdt(dvdt, h, u, v, b, zeta, wind_y, fv, &
             + spongeTimeScale(i,j,k)*(spongeV(i,j,k)-v(i,j,k)) ! forced relaxtion to vsponge (in the sponge regions)
         if (k .eq. 1) then ! only have wind forcing on the top layer
           ! This will need refining in the event of allowing outcropping.
-          dvdt(i,j,k) = dvdt(i,j,k) + 2d0*wind_y(i,j)/(rho0*(h(i,j,k) + h(i,j-1,k))) ! wind forcing
+          ! apply wind forcing
+          if (RelativeWind) then 
+            dvdt(i,j,k) = dvdt(i,j,k) + (2d0*Cd* & 
+                 (wind_y(i,j) - v(i,j,k))* & 
+              sqrt((wind_x(i,j) - u(i,j,k))**2 + &
+                   (wind_y(i,j) - v(i,j,k))**2))/((h(i,j,k) + h(i,j-1,k)))
+          else 
+            dvdt(i,j,k) = dvdt(i,j,k) + 2d0*wind_y(i,j)/(rho0*(h(i,j,k) + h(i,j-1,k))) 
+          end if
         end if
         if (layers .gt. 1) then ! only evaluate vertical momentum diffusivity if more than 1 layer
           if (k .eq. 1) then ! adapt vertical momentum diffusivity for 2+ layer model -> top layer
