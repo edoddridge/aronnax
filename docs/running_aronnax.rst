@@ -53,3 +53,7 @@ This parameter allows a simulation to be restarted from the given timestep. It r
 wetMaskFile
 -----------
 The wetmask defines which grid points within the computational domain contain fluid. The wetmask is defined on the tracer points, and a value of 1 defines fluid, while a value of 0 defines land. The domain is doubly periodic in `x` and `y` by default. To produce a closed domain the wetmaks should be set to 0 along the edges of the domain. To close the domain it is sufficient to place a strip of land along either the northern or southern boundary and either the western or eastern boundary. You may find it conceptually easier to close both edges.
+
+RelativeWind
+------------
+If this is false, then the wind input file is given in N m\ :sup:`--2`. If true, then the wind input file is in m s\ :sup:`--1` and a quadratic drag law is used to accelerate the fluid with `Cd` as the quadratic drag coefficient. 
