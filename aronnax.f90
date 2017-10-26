@@ -101,6 +101,8 @@ program aronnax
   ! Main input files
   character(60) :: initUfile, initVfile, initHfile, initEtaFile
   character(60) :: zonalWindFile, meridionalWindFile
+  logical :: RelativeWind
+  double precision :: Cd
 
   ! External pressure solver variables
   integer :: nProcX, nProcY
@@ -140,11 +142,13 @@ program aronnax
   namelist /INITIAL_CONDITIONS/ initUfile, initVfile, initHfile, initEtaFile
 
   namelist /EXTERNAL_FORCING/ zonalWindFile, meridionalWindFile, &
+      RelativeWind, Cd, &
       DumpWind, wind_mag_time_series_file
 
   ! Set default values here
   debug_level = 0
   niter0 = 0
+  RelativeWind = .FALSE.
 
   
   open(unit=8, file="parameters.in", status='OLD', recl=80)
@@ -276,6 +280,7 @@ program aronnax
       spongeHTimeScale, spongeUTimeScale, spongeVTimeScale, &
       spongeH, spongeU, spongeV, &
       nx, ny, layers, RedGrav, DumpWind, &
+      RelativeWind, Cd, &
       MPI_COMM_WORLD, myid, num_procs, ilower, iupper, &
       hypre_grid)
 
@@ -295,6 +300,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
     spongeHTimeScale, spongeUTimeScale, spongeVTimeScale, &
     spongeH, spongeU, spongeV, &
     nx, ny, layers, RedGrav, DumpWind, &
+    RelativeWind, Cd, &
     MPI_COMM_WORLD, myid, num_procs, ilower, iupper, &
     hypre_grid)
   implicit none
@@ -344,6 +350,8 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   logical,          intent(in) :: RedGrav
   ! Whether to write computed wind in the output
   logical,          intent(in) :: DumpWind
+  logical,          intent(in) :: RelativeWind
+  double precision,  intent(in) :: Cd
 
   double precision :: dhdt(0:nx+1, 0:ny+1, layers)
   double precision :: dhdtold(0:nx+1, 0:ny+1, layers)
@@ -516,6 +524,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
         dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
         au, ar, botDrag, ah, slip, &
         RedGrav, g_vec, rho0, wind_x, wind_y, &
+        RelativeWind, Cd, &
         spongeHTimeScale, spongeH, &
         spongeUTimeScale, spongeU, &
         spongeVTimeScale, spongeV, &
@@ -531,6 +540,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
         dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
         au, ar, botDrag, ah, slip, &
         RedGrav, g_vec, rho0, wind_x, wind_y, &
+        RelativeWind, Cd, &
         spongeHTimeScale, spongeH, &
         spongeUTimeScale, spongeU, &
         spongeVTimeScale, spongeV, &
@@ -561,6 +571,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
         dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
         au, ar, botDrag, ah, slip, &
         RedGrav, g_vec, rho0, wind_x, wind_y, &
+        RelativeWind, Cd, &
         spongeHTimeScale, spongeH, &
         spongeUTimeScale, spongeU, &
         spongeVTimeScale, spongeV, &
@@ -576,6 +587,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
         dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
         au, ar, botDrag, ah, slip, &
         RedGrav, g_vec, rho0, wind_x, wind_y, &
+        RelativeWind, Cd, &
         spongeHTimeScale, spongeH, &
         spongeUTimeScale, spongeU, &
         spongeVTimeScale, spongeV, &
@@ -679,6 +691,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
         dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
         au, ar, botDrag, ah, slip, &
         RedGrav, g_vec, rho0, wind_x, wind_y, &
+        RelativeWind, Cd, &
         spongeHTimeScale, spongeH, &
         spongeUTimeScale, spongeU, &
         spongeVTimeScale, spongeV, &
@@ -792,6 +805,7 @@ subroutine state_derivative(dhdt, dudt, dvdt, h, u, v, depth, &
     dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
     au, ar, botDrag, ah, slip, &
     RedGrav, g_vec, rho0, wind_x, wind_y, &
+    RelativeWind, Cd, &
     spongeHTimeScale, spongeH, &
     spongeUTimeScale, spongeU, &
     spongeVTimeScale, spongeV, &
@@ -816,11 +830,13 @@ subroutine state_derivative(dhdt, dudt, dvdt, h, u, v, depth, &
   double precision, intent(in) :: au, ar, botDrag
   double precision, intent(in) :: ah(layers)
   double precision, intent(in) :: slip
-  logical, intent(in) :: RedGrav
+  logical,          intent(in) :: RedGrav
   double precision, intent(in) :: g_vec(layers)
   double precision, intent(in) :: rho0
   double precision, intent(in) :: wind_x(0:nx+1, 0:ny+1)
   double precision, intent(in) :: wind_y(0:nx+1, 0:ny+1)
+  logical,          intent(in) :: RelativeWind
+  double precision, intent(in) :: Cd
   double precision, intent(in) :: spongeHTimeScale(0:nx+1, 0:ny+1, layers)
   double precision, intent(in) :: spongeH(0:nx+1, 0:ny+1, layers)
   double precision, intent(in) :: spongeUTimeScale(0:nx+1, 0:ny+1, layers)
@@ -862,12 +878,12 @@ subroutine state_derivative(dhdt, dudt, dvdt, h, u, v, depth, &
   call evaluate_dhdt(dhdt, h, u, v, ah, dx, dy, nx, ny, layers, &
       spongeHTimeScale, spongeH, wetmask, RedGrav)
 
-  call evaluate_dudt(dudt, h, u, v, b, zeta, wind_x, fu, au, ar, slip, &
-      dx, dy, hfacN, hfacS, nx, ny, layers, rho0, &
+  call evaluate_dudt(dudt, h, u, v, b, zeta, wind_x, wind_y, fu, au, ar, slip, &
+      dx, dy, hfacN, hfacS, nx, ny, layers, rho0, RelativeWind, Cd, &
       spongeUTimeScale, spongeU, RedGrav, botDrag)
 
-  call evaluate_dvdt(dvdt, h, u, v, b, zeta, wind_y, fv, au, ar, slip, &
-      dx, dy, hfacW, hfacE, nx, ny, layers, rho0, &
+  call evaluate_dvdt(dvdt, h, u, v, b, zeta, wind_x, wind_y, fv, au, ar, slip, &
+      dx, dy, hfacW, hfacE, nx, ny, layers, rho0, RelativeWind, Cd, &
       spongeVTimeScale, spongeV, RedGrav, botDrag)
 
   return
@@ -1418,9 +1434,9 @@ end subroutine evaluate_dhdt
 ! ---------------------------------------------------------------------------
 !> Calculate the tendency of zonal velocity for each of the active layers
 
-subroutine evaluate_dudt(dudt, h, u, v, b, zeta, wind_x, fu, &
-    au, ar, slip, dx, dy, hfacN, hfacS, nx, ny, layers, rho0, &
-    spongeTimeScale, spongeU, RedGrav, botDrag)
+subroutine evaluate_dudt(dudt, h, u, v, b, zeta, wind_x, wind_y, fu, &
+    au, ar, slip, dx, dy, hfacN, hfacS, nx, ny, layers, rho0, & 
+    RelativeWind, Cd, spongeTimeScale, spongeU, RedGrav, botDrag)
   implicit none
 
   ! dudt(i, j) is evaluated at the centre of the left edge of the grid
@@ -1432,12 +1448,15 @@ subroutine evaluate_dudt(dudt, h, u, v, b, zeta, wind_x, fu, &
   double precision, intent(in)  :: b(0:nx+1, 0:ny+1, layers)
   double precision, intent(in)  :: zeta(0:nx+1, 0:ny+1, layers)
   double precision, intent(in)  :: wind_x(0:nx+1, 0:ny+1)
+  double precision, intent(in)  :: wind_y(0:nx+1, 0:ny+1)
   double precision, intent(in)  :: fu(0:nx+1, 0:ny+1)
   double precision, intent(in)  :: au, ar, slip, dx, dy
   double precision, intent(in)  :: hfacN(0:nx+1, 0:ny+1)
   double precision, intent(in)  :: hfacS(0:nx+1, 0:ny+1)
   integer, intent(in) :: nx, ny, layers
   double precision, intent(in)  :: rho0
+  logical,          intent(in)  :: RelativeWind
+  double precision, intent(in)  :: Cd
   double precision, intent(in)  :: spongeTimeScale(0:nx+1, 0:ny+1, layers)
   double precision, intent(in)  :: spongeU(0:nx+1, 0:ny+1, layers)
   logical, intent(in) :: RedGrav
@@ -1462,7 +1481,15 @@ subroutine evaluate_dudt(dudt, h, u, v, b, zeta, wind_x, fu, &
             + spongeTimeScale(i,j,k)*(spongeU(i,j,k)-u(i,j,k)) ! forced relaxtion in the sponge regions
         if (k .eq. 1) then ! only have wind forcing on the top layer
           ! This will need refining in the event of allowing outcropping.
-          dudt(i,j,k) = dudt(i,j,k) + 2d0*wind_x(i,j)/(rho0*(h(i,j,k) + h(i-1,j,k))) ! wind forcing
+          ! apply wind forcing
+          if (RelativeWind) then 
+            dudt(i,j,k) = dudt(i,j,k) + (2d0*Cd* & 
+                 (wind_x(i,j) - u(i,j,k))* & 
+              sqrt((wind_x(i,j) - u(i,j,k))**2 + &
+                   (wind_y(i,j) - v(i,j,k))**2))/((h(i,j,k) + h(i-1,j,k)))
+          else 
+            dudt(i,j,k) = dudt(i,j,k) + 2d0*wind_x(i,j)/(rho0*(h(i,j,k) + h(i-1,j,k))) 
+          end if
         end if
         if (layers .gt. 1) then ! only evaluate vertical momentum diffusivity if more than 1 layer
           if (k .eq. 1) then ! adapt vertical momentum diffusivity for 2+ layer model -> top layer
@@ -1491,9 +1518,9 @@ end subroutine evaluate_dudt
 !> Calculate the tendency of meridional velocity for each of the
 !> active layers
 
-subroutine evaluate_dvdt(dvdt, h, u, v, b, zeta, wind_y, fv, &
+subroutine evaluate_dvdt(dvdt, h, u, v, b, zeta, wind_x, wind_y, fv, &
     au, ar, slip, dx, dy, hfacW, hfacE, nx, ny, layers, rho0, &
-    spongeTimeScale, spongeV, RedGrav, botDrag)
+    RelativeWind, Cd, spongeTimeScale, spongeV, RedGrav, botDrag)
   implicit none
 
   ! dvdt(i, j) is evaluated at the centre of the bottom edge of the
@@ -1504,6 +1531,7 @@ subroutine evaluate_dvdt(dvdt, h, u, v, b, zeta, wind_y, fv, &
   double precision, intent(in)  :: v(0:nx+1, 0:ny+1, layers)
   double precision, intent(in)  :: b(0:nx+1, 0:ny+1, layers)
   double precision, intent(in)  :: zeta(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: wind_x(0:nx+1, 0:ny+1)
   double precision, intent(in)  :: wind_y(0:nx+1, 0:ny+1)
   double precision, intent(in)  :: fv(0:nx+1, 0:ny+1)
   double precision, intent(in)  :: au, ar, slip
@@ -1512,6 +1540,8 @@ subroutine evaluate_dvdt(dvdt, h, u, v, b, zeta, wind_y, fv, &
   double precision, intent(in)  :: hfacE(0:nx+1, 0:ny+1)
   integer, intent(in) :: nx, ny, layers
   double precision, intent(in)  :: rho0
+  logical,          intent(in)  :: RelativeWind
+  double precision, intent(in)  :: Cd
   double precision, intent(in)  :: spongeTimeScale(0:nx+1, 0:ny+1, layers)
   double precision, intent(in)  :: spongeV(0:nx+1, 0:ny+1, layers)
   logical, intent(in) :: RedGrav
@@ -1537,7 +1567,15 @@ subroutine evaluate_dvdt(dvdt, h, u, v, b, zeta, wind_y, fv, &
             + spongeTimeScale(i,j,k)*(spongeV(i,j,k)-v(i,j,k)) ! forced relaxtion to vsponge (in the sponge regions)
         if (k .eq. 1) then ! only have wind forcing on the top layer
           ! This will need refining in the event of allowing outcropping.
-          dvdt(i,j,k) = dvdt(i,j,k) + 2d0*wind_y(i,j)/(rho0*(h(i,j,k) + h(i,j-1,k))) ! wind forcing
+          ! apply wind forcing
+          if (RelativeWind) then 
+            dvdt(i,j,k) = dvdt(i,j,k) + (2d0*Cd* & 
+                 (wind_y(i,j) - v(i,j,k))* & 
+              sqrt((wind_x(i,j) - u(i,j,k))**2 + &
+                   (wind_y(i,j) - v(i,j,k))**2))/((h(i,j,k) + h(i,j-1,k)))
+          else 
+            dvdt(i,j,k) = dvdt(i,j,k) + 2d0*wind_y(i,j)/(rho0*(h(i,j,k) + h(i,j-1,k))) 
+          end if
         end if
         if (layers .gt. 1) then ! only evaluate vertical momentum diffusivity if more than 1 layer
           if (k .eq. 1) then ! adapt vertical momentum diffusivity for 2+ layer model -> top layer

@@ -136,6 +136,8 @@ section_map = {
     "meridionalWindFile"   : "external_forcing",
     "DumpWind"             : "external_forcing",
     "wind_mag_time_series_file" : "external_forcing",
+    "RelativeWind"         : "external_forcing",
+    "Cd"                   : "external_forcing",
     "exe"                  : "executable",
     "valgrind"             : "executable",
     "perf"                 : "executable",
@@ -213,7 +215,7 @@ def fortran_option_string(section, name, config):
             return "'%s'" % (p.join("input", name + '.bin'),)
         else:
             return "''"
-    if name in ["RedGrav", "DumpWind"]:
+    if name in ["RedGrav", "DumpWind", "RelativeWind"]:
         if config.getboolean(section, name):
             return ".TRUE."
         else:
