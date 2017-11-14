@@ -67,7 +67,7 @@ program aronnax
   double precision :: ah(layerwise_input_length)
   double precision :: slip, hmin
   integer          :: niter0, nTimeSteps
-  double precision :: dumpFreq, avFreq, checkpointFreq
+  double precision :: dumpFreq, avFreq, checkpointFreq, diagFreq
   double precision, dimension(:),     allocatable :: zeros
   integer maxits
   double precision :: eps, freesurfFac, thickness_error
@@ -125,8 +125,8 @@ program aronnax
 
   namelist /NUMERICS/ au, ah, ar, botDrag, dt, slip, &
       niter0, nTimeSteps, &
-      dumpFreq, avFreq, checkpointFreq, hmin, maxits, freesurfFac, & 
-      eps, thickness_error, debug_level
+      dumpFreq, avFreq, checkpointFreq, diagFreq, hmin, maxits, & 
+      freesurfFac, eps, thickness_error, debug_level
 
   namelist /MODEL/ hmean, depthFile, H0, RedGrav
 
@@ -146,6 +146,7 @@ program aronnax
       DumpWind, wind_mag_time_series_file
 
   ! Set default values here
+  diagFreq = 0
   debug_level = 0
   niter0 = 0
   RelativeWind = .FALSE.
@@ -273,8 +274,8 @@ program aronnax
 
   call model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
       dt, au, ar, botDrag, ah, slip, hmin, niter0, nTimeSteps, &
-      dumpFreq, avFreq, &
-      checkpointFreq, maxits, eps, freesurfFac, thickness_error, &
+      dumpFreq, avFreq, checkpointFreq, diagFreq, &
+      maxits, eps, freesurfFac, thickness_error, &
       debug_level, g_vec, rho0, &
       base_wind_x, base_wind_y, wind_mag_time_series, &
       spongeHTimeScale, spongeUTimeScale, spongeVTimeScale, &
@@ -293,8 +294,8 @@ end program aronnax
 
 subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
     dt, au, ar, botDrag, ah, slip, hmin, niter0, nTimeSteps, &
-    dumpFreq, avFreq, &
-    checkpointFreq, maxits, eps, freesurfFac, thickness_error, &
+    dumpFreq, avFreq, checkpointFreq, diagFreq, &
+    maxits, eps, freesurfFac, thickness_error, &
     debug_level, g_vec, rho0, &
     base_wind_x, base_wind_y, wind_mag_time_series, &
     spongeHTimeScale, spongeUTimeScale, spongeVTimeScale, &
@@ -326,7 +327,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   double precision, intent(in) :: ah(layers)
   double precision, intent(in) :: slip, hmin
   integer,          intent(in) :: niter0, nTimeSteps
-  double precision, intent(in) :: dumpFreq, avFreq, checkpointFreq
+  double precision, intent(in) :: dumpFreq, avFreq, checkpointFreq, diagFreq
   integer,          intent(in) :: maxits
   double precision, intent(in) :: eps, freesurfFac, thickness_error
   integer,          intent(in) :: debug_level
@@ -398,7 +399,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   double precision :: rjac
 
   ! dumping output
-  integer :: nwrite, avwrite, checkpointwrite
+  integer :: nwrite, avwrite, checkpointwrite, diagwrite
 
   ! External solver variables
   integer          :: offsets(2,5)
@@ -453,14 +454,22 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   nwrite = int(dumpFreq/dt)
   avwrite = int(avFreq/dt)
   checkpointwrite = int(checkpointFreq/dt)
+  diagwrite = int(diagFreq/dt)
 
   ! Pi, the constant
   pi = 3.1415926535897932384
 
-
   ! Initialize wind fields
   wind_x = base_wind_x*wind_mag_time_series(1)
   wind_y = base_wind_y*wind_mag_time_series(1)
+
+  ! Initialise the diagnostic files
+  call create_diag_file(layers, 'output/diagnostic.h.csv', 'h', niter0)
+  call create_diag_file(layers, 'output/diagnostic.u.csv', 'u', niter0)
+  call create_diag_file(layers, 'output/diagnostic.v.csv', 'v', niter0)
+  if (.not. RedGrav) then
+    call create_diag_file(1, 'output/diagnostic.eta.csv', 'eta', niter0)
+  end if
 
   ! Initialise the average fields
   if (avwrite .ne. 0) then
@@ -768,7 +777,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
         dudtold, dvdtold, dhdtold, &
         dudtveryold, dvdtveryold, dhdtveryold, &
         wind_x, wind_y, nx, ny, layers, &
-        n, nwrite, avwrite, checkpointwrite, &
+        n, nwrite, avwrite, checkpointwrite, diagwrite, &
         RedGrav, DumpWind, debug_level)
 
 
@@ -792,7 +801,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
       dudtold, dvdtold, dhdtold, &
       dudtveryold, dvdtveryold, dhdtveryold, &
       wind_x, wind_y, nx, ny, layers, &
-      n, n, n, n-1, &
+      n, n, n, n-1, n, &
       RedGrav, DumpWind, 0)
 
   return
@@ -1017,7 +1026,7 @@ subroutine maybe_dump_output(h, hav, u, uav, v, vav, eta, etaav, &
         dudtold, dvdtold, dhdtold, &
         dudtveryold, dvdtveryold, dhdtveryold, &
         wind_x, wind_y, nx, ny, layers, &
-        n, nwrite, avwrite, checkpointwrite, &
+        n, nwrite, avwrite, checkpointwrite, diagwrite, &
         RedGrav, DumpWind, debug_level)
   implicit none
 
@@ -1041,7 +1050,7 @@ subroutine maybe_dump_output(h, hav, u, uav, v, vav, eta, etaav, &
   double precision, intent(in)    :: wind_x(0:nx+1, 0:ny+1)
   double precision, intent(in)    :: wind_y(0:nx+1, 0:ny+1)
   integer,          intent(in)    :: nx, ny, layers, n
-  integer,          intent(in)    :: nwrite, avwrite, checkpointwrite
+  integer,          intent(in)    :: nwrite, avwrite, checkpointwrite, diagwrite
   logical,          intent(in)    :: RedGrav, DumpWind
   integer,          intent(in)    :: debug_level
 
@@ -1177,6 +1186,17 @@ subroutine maybe_dump_output(h, hav, u, uav, v, vav, eta, etaav, &
         n, 'checkpoints/eta.')
     end if
 
+  end if
+
+  if (diagwrite .eq. 0) then
+    ! not saving diagnostics. Move one.
+  else if (mod(n-1, diagwrite) .eq. 0) then
+    call write_diag_output(h, nx, ny, layers, n, 'output/diagnostic.h.csv')
+    call write_diag_output(u, nx, ny, layers, n, 'output/diagnostic.u.csv')
+    call write_diag_output(v, nx, ny, layers, n, 'output/diagnostic.v.csv')
+    if (.not. RedGrav) then
+      call write_diag_output(eta, nx, ny, 1, n, 'output/diagnostic.eta.csv')
+    end if
   end if
 
   return
@@ -2569,6 +2589,104 @@ subroutine write_output_2d(array, nx, ny, xstep, ystep, &
 
   return
 end subroutine write_output_2d
+
+
+!-----------------------------------------------------------------
+!> create a diagnostics file
+
+subroutine create_diag_file(layers, filename, arrayname, niter0)
+  implicit none
+
+  integer,          intent(in) :: layers
+  character(*),     intent(in) :: filename
+  character(*),     intent(in) :: arrayname
+  integer,          intent(in) :: niter0
+
+  integer        :: k
+  logical        :: lex
+  character(2)   :: layer_number
+  character(17)   :: header((4*layers)+1)
+
+
+  ! prepare header for file
+  header(1) = 'timestep'
+  do k = 1, layers
+    write(layer_number, '(i2.2)') k
+    header(2+(4*(k-1))) = 'mean'//layer_number
+    header(3+(4*(k-1))) = 'max'//layer_number
+    header(4+(4*(k-1))) = 'min'//layer_number
+    header(5+(4*(k-1))) = 'std'//layer_number
+  end do
+
+  INQUIRE(file=filename, exist=lex)
+
+  if (niter0 .eq. 0) then
+    ! starting a nw run, intialise diagnostics files, but warn if 
+    ! they were already there
+    if (lex) then
+      print "(A)", &
+        "Starting a new run (niter0=0), but diagnostics file for "//arrayname//" already exists. Overwriting old file."
+    else if (.not. lex) then
+      print "(A)", &
+        "Diagnostics file for "//arrayname//" does not exist. Creating it now."
+    end if
+
+    open(unit=10, status='replace', file=filename, &
+      form='formatted')
+    write (10,'(*(G0.4,:,","))') header
+    close(10)
+
+  else if (niter0 .ne. 0) then
+    ! restarting from checkpoint, diagnostics file may or may not exist.
+    if (lex) then
+      print "(A)", &
+        "Diagnostics file for "//arrayname//" already exists. Appending to it."
+    else if (.not. lex) then
+      print "(A)", &
+        "Diagnostics file for "//arrayname//" does not exist. Creating it now."
+
+      open(unit=10, status='new', file=filename, &
+        form='formatted')
+      write (10,'(*(G0.4,:,","))') header
+      close(10)
+    end if
+  end if
+
+  return
+end subroutine create_diag_file
+
+!-----------------------------------------------------------------
+!> Save diagnostistics of given fields
+
+subroutine write_diag_output(array, nx, ny, layers, &
+    n, filename)
+  implicit none
+
+  double precision, intent(in) :: array(0:nx+1, 0:ny+1, layers)
+  integer,          intent(in) :: nx, ny, layers
+  integer,          intent(in) :: n
+  character(*),     intent(in) :: filename
+
+  double precision :: diag_out(4*layers)
+  integer          :: k
+
+  ! prepare data for file
+  do k = 1, layers
+    diag_out(1+(4*(k-1))) = sum(array(:,:,k))/dble(size(array(:,:,k))) ! mean
+    diag_out(2+(4*(k-1))) = maxval(array(:,:,k))
+    diag_out(3+(4*(k-1))) = minval(array(:,:,k))
+    diag_out(4+(4*(k-1))) = sqrt( sum( (array(:,:,k) - diag_out(1+(4*(k-1))))**2)/ &
+                          dble(size(array(:,:,k))))
+  end do
+
+  ! Output the data to a file
+  open(unit=10, status='old', file=filename, &
+      form='formatted', position='append')
+  write (10,'(i10.10, ",", *(G22.15,:,","))') n, diag_out
+  close(10)
+
+  return
+end subroutine write_diag_output
 
 !-----------------------------------------------------------------
 !> finalise MPI and then stop the model
