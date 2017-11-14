@@ -100,6 +100,7 @@ section_map = {
     "dumpFreq"             : "numerics",
     "avFreq"               : "numerics",
     "checkpointFreq"       : "numerics",
+    "diagFreq"             : "numerics",
     "hmin"                 : "numerics",
     "maxits"               : "numerics",
     "eps"                  : "numerics",
