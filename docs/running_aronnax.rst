@@ -20,6 +20,11 @@ As described above, it is possible to define functions that can be passed to `ar
                        nx=10, ny=10, exe="aronnax_test", dx=xlen/10, dy=ylen/10)
 
 
+.. warning::
+    Parameters cannot be set to 0 or 1 in the call to `drv.simulate` because the Python wrapper gets confused between numerical and logical variables, as described in https://github.com/edoddridge/aronnax/issues/132
+
+
+
 Parameters
 ===========
 Parameters can be passed to the model in two ways. Either they can be included in a file called `aronnax.conf` in the working directory, or they can be passed as keyword arguments to :meth:`aronnax.driver.simulate`. The main directory of the repository includes an example `aronnax.conf` file.
