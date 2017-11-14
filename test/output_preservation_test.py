@@ -30,11 +30,16 @@ scaled by the maximum value that occurs in the input."""
         return np.absolute(a1 - a2) / denom
 
 def assert_outputs_close(nx, ny, layers, rtol):
-    outfiles = sorted(os.listdir("output/"))
-    assert outfiles == sorted(os.listdir("good-output/"))
-    for outfile in outfiles:
-        ans = aro.interpret_raw_file(p.join("output/", outfile), nx, ny, layers)
-        good_ans = aro.interpret_raw_file(p.join("good-output/", outfile), nx, ny, layers)
+
+    # collct all files with a number in them (i.e. all outputs
+    # other than the diagnostic files)
+    outfiles = sorted(glob.glob("output/*.0*"))
+    good_outfiles = sorted(glob.glob("good-output/*.0*"))
+
+    # assert p.basename(outfiles) == p.basename(good_outfiles)
+    for i, outfile in enumerate(outfiles):
+        ans = aro.interpret_raw_file(outfile, nx, ny, layers)
+        good_ans = aro.interpret_raw_file(good_outfiles[i], nx, ny, layers)
         relerr = np.amax(array_relative_error(ans, good_ans))
         if (relerr >= rtol or np.isnan(relerr)):
             print outfile
@@ -72,6 +77,20 @@ def assert_volume_conservation(nx,ny,layers,rtol):
 
         assert np.abs((volume_0[k] - volume_final[k])/volume_0[k]) < rtol
 
+def assert_diagnostics_similar(variables, rtol):
+
+    diags = {variable:np.loadtxt('output/diagnostic.{}.csv'.format(variable),
+                delimiter=',', skiprows=1, usecols=(2,3,4)) for variable in variables}
+
+    diags_blessed = {variable:np.loadtxt('good-output/diagnostic.{}.csv'.format(
+        variable), delimiter=',', skiprows=1, usecols=(2,3,4)) for variable in variables}
+
+    for variable in variables:
+        # in case the diagnostic value is zero, add a very small number to it in
+        # the denominator.
+        assert np.max((diags[variable] - diags_blessed[variable])/
+            (diags[variable]+1e-10)) < rtol
+    
 
 ### The test cases themselves
 
@@ -85,6 +104,7 @@ def test_f_plane_red_grav():
             nx=10, ny=10, dx=xlen/10, dy=ylen/10)
         assert_outputs_close(10, 10, 1, 1e-15)
         assert_volume_conservation(10, 10, 1, 1e-5)
+        assert_diagnostics_similar(['h'], 1e-10)
 
 def test_f_plane():
     xlen = 1e6
@@ -94,6 +114,7 @@ def test_f_plane():
             nx=10, ny=10, dx=xlen/10, dy=ylen/10)
         assert_outputs_close(10, 10, 2, 1e-15)
         assert_volume_conservation(10, 10, 2, 1e-5)
+        assert_diagnostics_similar(['h'], 1e-10)
 
 def bump(X, Y):
     return 500. + 20*np.exp(-((6e5-X)**2 + (5e5-Y)**2)/(2*1e5**2))
@@ -106,6 +127,8 @@ def test_gaussian_bump_red_grav():
                      nx=10, ny=10, dx=xlen/10, dy=ylen/10)
         assert_outputs_close(10, 10, 1, 1.5e-13)
         assert_volume_conservation(10, 10, 1, 1e-5)
+        assert_diagnostics_similar(['h', 'u', 'v'], 1e-10)
+
 
 def test_gaussian_bump():
     xlen = 1e6
@@ -126,6 +149,7 @@ def test_gaussian_bump_continuation():
                      niter0=201, nTimeSteps=200)
         assert_outputs_close(10, 10, 2, 2e-13)
         assert_volume_conservation(10, 10, 2, 1e-5)
+        assert_diagnostics_similar(['h', 'u', 'v', 'eta'], 1e-10)
 
 def test_gaussian_bump_debug_test():
     xlen = 1e6
@@ -135,6 +159,7 @@ def test_gaussian_bump_debug_test():
                      nx=10, ny=10, exe=test_executable, dx=xlen/10, dy=ylen/10)
         assert_outputs_close(10, 10, 2, 2e-13)
         assert_volume_conservation(10, 10, 2, 1e-5)
+        assert_diagnostics_similar(['h', 'u', 'v', 'eta'], 1e-10)
 
 def test_beta_plane_gyre_red_grav():
     xlen = 1e6
@@ -149,6 +174,7 @@ def test_beta_plane_gyre_red_grav():
                      nx=nx, ny=ny, exe=test_executable, dx=xlen/nx, dy=ylen/ny)
         assert_outputs_close(nx, ny, layers, 4e-13)
         assert_volume_conservation(nx, ny, layers, 1e-5)
+        assert_diagnostics_similar(['h', 'u', 'v'], 1e-10)
 
 def test_beta_plane_gyre():
     xlen = 1e6
@@ -163,6 +189,7 @@ def test_beta_plane_gyre():
                      nx=nx, ny=ny, exe="aronnax_test", dx=xlen/nx, dy=ylen/ny)
         assert_outputs_close(nx, ny, layers, 3e-12)
         assert_volume_conservation(nx, ny, layers, 1e-5)
+        assert_diagnostics_similar(['h', 'u', 'v', 'eta'], 1e-10)
 
 def test_beta_plane_gyre_free_surf():
     xlen = 1e6
@@ -177,6 +204,7 @@ def test_beta_plane_gyre_free_surf():
                      nx=nx, ny=ny, exe=test_executable, dx=xlen/nx, dy=ylen/ny)
         assert_outputs_close(nx, ny, layers, 3e-12)
         assert_volume_conservation(nx, ny, layers, 1e-5)
+        assert_diagnostics_similar(['h', 'u', 'v', 'eta'], 1e-8)
 
 def test_periodic_BC_red_grav():
     nx = 50
@@ -210,6 +238,7 @@ def test_periodic_BC_red_grav():
                      dumpFreq=10000)
         assert_outputs_close(nx, ny, layers, 3e-12)
         assert_volume_conservation(nx, ny, layers, 1e-5)
+        assert_diagnostics_similar(['h', 'u', 'v'], 1e-10)
 
 
 def test_relative_wind():
@@ -258,3 +287,4 @@ def test_relative_wind():
                 nx=nx, ny=ny, dx=dx, dy=dy)
         assert_outputs_close(nx, ny, layers, 3e-12)
         assert_volume_conservation(nx, ny, layers, 1e-5)
+        assert_diagnostics_similar(['h', 'u', 'v'], 1e-10)
