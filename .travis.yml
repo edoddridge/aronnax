@@ -31,7 +31,7 @@ install:
 
 script:
   - mpif90 -Werror aronnax.f90 -cpp
-  - pytest --cov=aronnax
+  - pytest --cov=aronnax -k 'not Hypre'
   - codecov
-  - python test/periodic_BC_Hypre.py
+  - pytest --cov=aronnax -k 'Hypre'
   - codecov
