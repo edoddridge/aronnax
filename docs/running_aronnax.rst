@@ -23,7 +23,30 @@ As described above, it is possible to define functions that can be passed to `ar
 .. warning::
     Parameters cannot be set to 0 or 1 in the call to `drv.simulate` because the Python wrapper gets confused between numerical and logical variables, as described in https://github.com/edoddridge/aronnax/issues/132
 
+Executables
+===========
 
+Aronnax includes multiple targets for the Makefile. These produce executables intended either for testing or production runs. The different options for `exe` are discussed below. For a comparison on the execution speed of these executables see :ref:`benchmarking`.
+
+- `aronnax_core`
+
+  - Uses the internal Fortran code and aggressive compiler optimisation. This is the best executable to use for reduced gravity (:math:`n+1/2` layer) simulations. It may also be used for :math:`n` layer simulations but is considerably slower than `aronnax_external_solver` since it does not use the external Hypre library for the pressure solve.
+
+- `aronnax_test`
+  
+  - Uses the internal Fortran code and no compiler optimisations. This is the best executable to use for assessing code coverage when running tests. The Fortran error messages might be helpful.
+
+- `aronnax_prof`
+
+  - Executable intended solely for profiling the Fortran core. Unlikely to be of general use.
+
+- `aronnax_external_solver_test`
+
+  - Uses the external Hypre library to solve the matrix inversion in the :math:`n` layer mode. Uses no optimisations for the internal Fortran code and is intended for assessing code coverage when running tests.
+
+- `aronnax_external_solver`
+
+  - Uses the external Hypre library and aggressive compiler optimisations. This is the fastest executable to use in :math:`n` layer mode. It can also be used in :math:`n+1/2` layer mode, but there is no advantage over `aronnax_core`.
 
 Parameters
 ===========
