@@ -27,7 +27,27 @@ executable = "aronnax_external_solver"
 
 
 def bump(X, Y):
-    return 500. + 20*np.exp(-((6e5-X)**2 + (5e5-Y)**2)/(2*1e5**2))
+
+    iniH = 500. + 20*np.exp(-((6e5-X)**2 + (5e5-Y)**2)/(2*1e5**2))
+
+    plt.figure()
+    CS = plt.contour(X/1e3,Y/1e3,iniH, np.arange(490., 520, 2.), colors='k')
+    plt.clabel(CS, inline=1, inline_spacing=17,
+     fontsize=10, fmt=r'%3.0f')
+
+    im = plt.pcolormesh(X/1e3,Y/1e3, iniH, vmin = 500, vmax = 520)
+    im.set_edgecolor('face')
+    CB = plt.colorbar()
+    plt.title('Initial depth of upper layer (m)')
+    plt.axes().set_aspect('equal')
+    plt.xlabel('x coordinate (km)')
+    plt.ylabel('y coordinate (km)')
+
+    plt.savefig('initial_h_bump.png', bbox_inches='tight', dpi=200)
+
+    return iniH
+
+
 
 def beta_plane_bump_red_grav():
     print "Running reduced gravity beta-plane bump example"
@@ -74,7 +94,18 @@ def beta_plane_gyre_red_grav():
     grid = aro.Grid(nx, ny, layers, xlen / nx, ylen / ny)
 
     def wind(_, Y):
-        return 0.05 * (1 - np.cos(2*np.pi * Y/np.max(Y)))
+        
+        wind_forcing = 0.05 * (1 - np.cos(2*np.pi * Y/np.max(grid.y)))
+
+        plt.figure()
+        plt.plot(Y[:,1]/1e3, wind_forcing[:,1])
+        plt.xlabel('y coordinate (km)')
+        plt.ylabel('Wind forcing (N/m^2)')
+        plt.savefig('twin_gyre_wind_forcing.png', 
+            bbox_inches='tight', dpi=200)
+        plt.close()
+
+        return wind_forcing
 
     with working_directory(p.join(self_path,
                             "reduced_gravity/beta_plane_gyre")):
@@ -95,15 +126,26 @@ def beta_plane_gyre_n_layer():
     grid = aro.Grid(nx, ny, layers, xlen / nx, ylen / ny)
 
     def wind(_, Y):
-        return 0.05 * (1 - np.cos(2*np.pi * Y/np.max(grid.y)))
+        
+        wind_forcing = 0.05 * (1 - np.cos(2*np.pi * Y/np.max(grid.y)))
+
+        plt.figure()
+        plt.plot(Y[:,1]/1e3, wind_forcing[:,1])
+        plt.xlabel('Latitude (km)')
+        plt.ylabel('Wind forcing (N/m^2)')
+        plt.savefig('twin_gyre_wind_forcing.png', 
+            bbox_inches='tight', dpi=200)
+        plt.close()
+
+        return wind_forcing
 
     with working_directory(p.join(self_path, "n_layer/beta_plane_gyre")):
         drv.simulate(zonalWindFile=[wind],
                      exe=executable,
                      nx=nx, ny=ny, layers=layers,
                      dx=xlen/nx, dy=ylen/ny,
-                     # nTimeSteps = 20001, dumpFreq = 6e5, avFreq = 48e5
-                     # uncomment previous line to reproduce simulation shown in manual
+                     nTimeSteps = 20001, dumpFreq = 6e5, avFreq = 48e5
+                     # NB: this takes quite a long time to run.
                      )
         with working_directory("figures"):
             plt_output(grid, 'n-layer-twin-gyre', colour_lim=20)
@@ -127,8 +169,9 @@ def plt_output(grid, sim_name, colour_lim=2):
          fontsize=10, fmt=r'%3.0f')
         X,Y = np.meshgrid(grid.x/1e3, grid.yp1/1e3)
 
-        plt.pcolormesh(X,Y,np.transpose(v[:,:,0])*100., cmap='RdBu_r'
+        im = plt.pcolormesh(X,Y,np.transpose(v[:,:,0])*100., cmap='RdBu_r'
             ,vmin = -colour_lim, vmax = colour_lim)
+        im.set_edgecolor('face')
         CB = plt.colorbar()
         CB.set_label('y component of velocity (cm / s)')
         plt.axes().set_aspect('equal')
