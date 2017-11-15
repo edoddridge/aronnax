@@ -31,8 +31,10 @@ Aronnax is
 
 # Get Involved
 
-- TODO Contact email, and/or list?
 - Please report any bugs you come across in the [Github issue
+  tracker](https://github.com/edoddridge/aronnax/issues)
+
+- Feature requests should also be made through the [Github issue
   tracker](https://github.com/edoddridge/aronnax/issues)
 
 - We are happy to receive pull requests for new features or bug fixes;
