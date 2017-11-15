@@ -46,7 +46,7 @@ Aronnax is
    installation
    input_generation
    running_aronnax
-   output_helpers
+   output
    examples
    verification
    benchmarks
