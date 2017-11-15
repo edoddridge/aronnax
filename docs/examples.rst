@@ -12,7 +12,17 @@ These simulations use simple domains and and inputs. They highlight some of the 
 Gaussian bump on a :math:`\beta`-plane
 ----------------------------------------
 
-This example is initialised with a Gaussian bump in the layer thickness field. The momentum forcing is set to zero.
+This example is initialised with a Gaussian bump in the layer thickness field. The momentum forcing is set to zero. The initial thickness of the upper layer for both examples is shown in :numref:`fig_GbumpIC`.
+
+.. figure:: ../examples/reduced_gravity/beta_plane_bump/input/initial_h_bump.png
+   :width: 75%
+   :align: center
+   :alt: Initial condition for Gaussian bump examples
+   :name: fig_GbumpIC
+
+   Initial thickness of the upper layer for the Gaussian bump examples
+
+
 
 1 + 1/2 layers
 +++++++++++++++
@@ -43,6 +53,20 @@ The upper layer of a two-layer simulation with a flat bottom. This looks very si
 Twin gyre on a :math:`\beta`-plane
 -------------------------------------
 
+These two examples begin with closed rectangular domains that are initially at rest. The momentum forcing shown in :numref:`fig_twingyre_zonal_wind` is applied to the upper layer in both examples. Due to it's computational complexity the :math:`n` layer configuration takes substantially longer to run than the :math:`n+1/2` layer simulation.
+
+
+.. figure:: ../examples/reduced_gravity/beta_plane_gyre/input/twin_gyre_wind_forcing.png
+   :width: 75%
+   :align: center
+   :alt: zonal wind forcing for twin gyre simulations
+   :name: fig_twingyre_zonal_wind
+
+   Zonal wind forcing applied to twin gyre simulations.
+
+The twin gyre simulations are run on a 10 km resolution :math:`\beta`-plane with Coriolis parameters equivalent to the midlatitudes of the Northern Hemisphere. At these latitudes 10 km is an eddy resolving resolution, and we expect to see inertial recirculations and internal variability develop as the simulations spin up.
+
+
 1 + 1/2 layers
 +++++++++++++++
 
@@ -60,7 +84,7 @@ This example simulates a twin-gyre on a :math:`\beta`-plane with 1 active layer 
 2 layers
 +++++++++++
 
-This is also a twin-gyre simulation, but because the n-layer physics is more computationally demanding, this simulation is only run for one week of model time. 
+This is also a twin-gyre simulation, but is run with :math:`n` layer physics and a flat bottom. Once again the simulation runs for almost 140 model days and clearly shows the development of two gyres, western boundary currents, and inertial recirculation regions.
 
 .. figure:: ../examples/n_layer/beta_plane_gyre/figures/n-layer-twin-gyre.*
    :width: 75%

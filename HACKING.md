@@ -19,10 +19,8 @@ Summary of Fortran code style enforced:
   to clarify structure of long algebraic expressions).
 * Lines should have no trailing whitespace.
 * The last line in the file should have one newline, and no additional blank lines.
-* Lines should be < 80 characters wide, but I was not successful in
-  breaking all over-long lines. The remainder are predominantly line
-  comments that I did not wish to move off their line, not knowing
-  what exactly they referred to.
+* Lines should be < 80 characters wide. While some code currently violates 
+  this, new contributions are expected to conform.
 * Spell language keywords in lower case.
 * All subroutines should declare implicit none
 * All subroutines should declare all their arguments, in order of
@@ -38,3 +36,13 @@ Summary of Fortran code style enforced:
     element as one thing.)
 * The equal sign should be offset with spaces when it means
   assignment, and not offset when it means value for keyword argument.
+
+Summary of Python code style:
+
+* Indentation of four spaces.
+* Lines should have no trailing whitespace.
+* The last line in the file should have one newline, and no additional blank lines.
+* Commas should be followed by whitespace, as in written natural languages. 
+  * (Exception: array subscripts in dense algebraic expressions, as
+    they should be compact enough that the eye groups the array
+    element as one thing.)

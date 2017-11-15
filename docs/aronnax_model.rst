@@ -115,7 +115,7 @@ The choice of quiescent abyss or n-layer physics is made by a runtime parameter 
     
   
   - The no normal flow and tangential (no-slip or free-slip) boundary conditions are applied
-  - The layer thicnkesses are forced to be larger than a configurable minimum. This is for numerical stability and is probably only necessary for the layer receiving the wind forcing. (This is a limitation I would like to remove, it's what we are discussing in ticket [\#26](https://github.com/edoddridge/aronnax/issues/61)
+  - The layer thicnkesses are forced to be larger than a configurable minimum. This is for numerical stability and is probably only necessary for the layer receiving the wind forcing. This is discussed in ticket `#26 <https://github.com/edoddridge/aronnax/issues/26>`_
   - the arrays are shuffled to prepare for the next timestep.
 
 

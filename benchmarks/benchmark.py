@@ -43,9 +43,9 @@ def benchmark_gaussian_bump_red_grav_plot():
 
         plt.figure()
         plt.loglog(grid_points, run_time_O1*scale_factor,
-            '-*', label='Aronnax run time -O1')
+            '-*', label='aronnax_test')
         plt.loglog(grid_points, run_time_Ofast*scale_factor,
-            '-*', label='Aronnax run time -Ofast')
+            '-*', label='aronnax_core')
         scale = scale_factor * run_time_O1[-7]/(grid_points[-7]**2)
         plt.loglog(grid_points, scale*grid_points**2,
                    ':', label='O(nx**2)', color='black', linewidth=0.5)
@@ -107,13 +107,13 @@ def benchmark_gaussian_bump_plot():
 
         plt.figure()
         plt.loglog(grid_points, run_time_O1*scale_factor,
-            '-*', label='Aronnax run time -O1')
+            '-*', label='aronnax_test')
         plt.loglog(grid_points, run_time_Ofast*scale_factor,
-            '-*', label='Aronnax run time -Ofast')
+            '-*', label='aronnax_core')
         plt.loglog(grid_points, run_time_hypre_test*scale_factor,
-            '-o', label='Aronnax run time Hypre -O1')
+            '-o', label='aronnax_external_solver_test')
         plt.loglog(grid_points, run_time_hypre*scale_factor,
-            '-o', label='Aronnax run time Hypre -Ofast')
+            '-o', label='aronnax_external_solver')
         scale = scale_factor * run_time_O1[3]/(grid_points[3]**3)
         plt.loglog(grid_points, scale*grid_points**3,
             ':', label='O(nx**3)', color='black', linewidth=0.5)
