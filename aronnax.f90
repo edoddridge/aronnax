@@ -146,7 +146,10 @@ program aronnax
       DumpWind, wind_mag_time_series_file
 
   ! Set default values here
-  diagFreq = 0
+  dumpFreq = 0d0
+  avFreq = 0d0
+  checkpointFreq = 0d0
+  diagFreq = 0d0
   debug_level = 0
   niter0 = 0
   RelativeWind = .FALSE.
