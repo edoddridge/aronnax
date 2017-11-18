@@ -1,5 +1,7 @@
 [![Build Status](https://travis-ci.org/edoddridge/aronnax.svg?branch=master)](https://travis-ci.org/edoddridge/aronnax)
 [![codecov](https://codecov.io/gh/edoddridge/aronnax/branch/master/graph/badge.svg)](https://codecov.io/gh/edoddridge/aronnax)
+[![Documentation Status](http://readthedocs.org/projects/aronnax/badge/?version=latest)](http://aronnax.readthedocs.io/en/latest/?badge=latest)
+
 
 # Aronnax
 
@@ -25,7 +27,7 @@ Aronnax is
   Aronnax successfully [reproduces published results](http://aronnax.readthedocs.io/en/latest/examples.html#reproducing-published-results) from
   idealised models appearing in the literature.
 - [Fast](http://aronnax.readthedocs.io/en/latest/benchmarks.html).  The
-  main integration loop is a multi-core Fortran program, wrapped in
+  main integration loop is a Fortran program, wrapped in
   Python for convenient use.
 
 
