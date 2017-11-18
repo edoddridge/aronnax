@@ -54,20 +54,20 @@ in which :math:`g^{'}` is the reduced gravity given by :math:`{g(\rho_{2} - \rho
 This can be rewritten in terms of the Bernoulli Potential to give,
 
 .. math::
-    \label{eqn:momentum_Bernoulli_form}
     \frac{\partial\mathbf{v_{n}}}{\partial t} - (f+\zeta_{n}) \times v_{n} + \nabla \Pi_{n} + = \kappa \nabla^{2}v_{n} + \frac{\mathbf{F_{n}}}{\rho_{0}}
+    :name: eqn_momentum_Bernoulli_form
 
 where :math:`\Pi_{n}` is the Bernoulli potential, :math:`\left(\mathbf{v_{n}}\cdot\mathbf{v_{n}}\right)/2 + p/\rho_{0}`, and :math:`p` is the hydrostatic pressure. In this form the non-linearity from the material derivative has been moved into the Bernoulli Potential and the vorticity term. 
 
 
-
-The model can be used in either reduced gravity mode, with a quiescent abyss, or in n-layer mode with bathymetry. In the n-layer case the model can either be run with a rigid lid, or with a free surface. In simulations with a free surface the following equation is also solved
+The model can be used in either reduced gravity mode, with a quiescent abyss, or in n-layer mode with bathymetry. In the n-layer case the model can either be run with a rigid lid, or with a free surface. In n-layer simulations the following equation is also solved
 
 .. math::
-    \label{eqn:}
+    :name:eqn
     \frac{\partial \eta}{\partial t} + \mathbf{\nabla} \cdot (H \mathbf{V}) = 0,
 
-where :math:`H` is the depth from the free-surface to the bathymetry, and :math:`V` is the vertically averaged flow, the barotropic flow. With a rigid lid, the model solves an analogous equation, but it is just for the pressure field to keep the vertically integrated horizontal flow divergence free - the result is not carried from one timestep to the next.
+where :math:`\eta` is the free surface height, :math:`H` is the depth from the free-surface to the bathymetry, and :math:`V` is the vertically averaged flow, the barotropic flow. With a rigid lid :math:`\eta` represents the pressure field required to keep the vertically integrated horizontal flow divergence free - the result is not carried from one timestep to the next.
+
 
 
 Discretisation
