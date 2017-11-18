@@ -27,7 +27,7 @@ Aronnax is
   Aronnax successfully [reproduces published results](http://aronnax.readthedocs.io/en/latest/examples.html#reproducing-published-results) from
   idealised models appearing in the literature.
 - [Fast](http://aronnax.readthedocs.io/en/latest/benchmarks.html).  The
-  main integration loop is a multi-core Fortran program, wrapped in
+  main integration loop is a Fortran program, wrapped in
   Python for convenient use.
 
 
