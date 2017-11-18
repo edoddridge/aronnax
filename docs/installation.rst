@@ -9,10 +9,27 @@ While we aspire for the installation process for Aronnax to be as simple as :cod
 
 Dependencies
 ============
-Aronnax depends on several external libraries, namely, make, gfortran >= 4.7.4, and mpi. This means you will need a working installation of each of these. In particular, Aronnax will need the :bash:`mpif90` command to work in order for it to compile its Fortran core.
 
-Aronnax also depends on numpy and scipy.
+Aronnax depends on several external libraries. 
 
+The Python components of Aronnax depend on 
+
+| :bash:`numpy`
+| :bash:`scipy`
+|
+
+We recommend installing these with your favourite package manager before installing Aronnax.
+
+Additionally, the Fortran core requires
+
+| :bash:`make`
+| :bash:`gfortran >= 4.7.4`
+| :bash:`mpi`
+| 
+
+In particular, Aronnax will need the :bash:`mpif90` command in order for it to compile its Fortran core. You will need to manually ensure that you have a working installation of each of these.
+
+In addition to these dependencies, the automated tests also depend on :bash:`pytest` and :bash:`matplotlib`.
 
 Installation instructions
 =========================
@@ -47,5 +64,8 @@ Installation instructions
    
     - :code:`pip install -e ./`
 
-Aronnax is now installed and ready to use. To verify that everything is working, you may wish to run the test suite. Do this by executing :code:`pytest` in the base directory of the repository. This requires that the pytest module is installed.
+Aronnax is now installed and ready to use. To verify that everything is working, you may wish to run the test suite. Do this by executing :code:`pytest` in the base directory of the repository. This requires that the :bash:`pytest` module is installed.
 
+
+.. note:: 
+    Installing in HPC environments: If your cluster requires programs to be compiled on the compute cores, then you will need to perform step 3 on the compute cores.
