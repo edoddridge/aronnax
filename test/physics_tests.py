@@ -19,6 +19,8 @@ import sys
 sys.path.append(p.join(root_path, 'test'))
 import output_preservation_test as opt
 
+import subprocess as sub
+
 
 
 def f_plane_init_u_test(physics, aro_exec, dt):
@@ -57,11 +59,18 @@ def f_plane_init_u_test(physics, aro_exec, dt):
             plt.savefig('init_v.png')
         return init_v
 
+    def dbl_periodic_wetmask(X, Y):
+        return np.ones(X.shape,dtype=np.float64)
 
     with working_directory(p.join(self_path, "physics_tests/f_plane_{0}_init_u".format(physics))):
+
+        sub.check_call(["rm", "-rf", "output/"])
         drv.simulate(initHfile=[400.], 
-            initUfile=[init_U], initVfile=[init_V], valgrind=False,
-                     nx=nx, ny=ny, exe="aronnax_test", dx=dx, dy=dy)
+            initUfile=[init_U],
+            # initVfile=[init_V], valgrind=False,
+            wetMaskFile=[dbl_periodic_wetmask],
+                     nx=nx, ny=ny, exe=aro_exec, dx=dx, dy=dy,
+                     nTimeSteps=40000)
 
         hfiles = sorted(glob.glob("output/snap.h.*"))
         ufiles = sorted(glob.glob("output/snap.u.*"))
@@ -207,11 +216,17 @@ def f_plane_wind_test(physics, aro_exec, nx, ny, dx, dy, dt, nTimeSteps):
             plt.close()
         return wind_y
 
+    def dbl_periodic_wetmask(X, Y):
+        return np.ones(X.shape,dtype=np.float64)
+
 
     with opt.working_directory(p.join(self_path, "physics_tests/f_plane_{0}_wind".format(physics))):
+
+        sub.check_call(["rm", "-rf", "output/"])
         drv.simulate(initHfile=[400.],
             zonalWindFile=[wind_x], meridionalWindFile=[wind_y], valgrind=False,
                      nx=nx, ny=ny, exe=aro_exec, dx=dx, dy=dy, 
+                     wetMaskFile=[dbl_periodic_wetmask],
                      dt=dt, dumpFreq=int(dt*nTimeSteps/50), nTimeSteps=nTimeSteps)
 
 
