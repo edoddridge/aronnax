@@ -40,6 +40,7 @@ def f_plane_init_u_test(physics, aro_exec, dt):
     def init_U(X, Y, *arg):
         init_u = np.zeros(Y.shape,dtype=np.float64)
         init_u[int(grid.nx/2),int(grid.ny/2)] = 3e-5
+        init_u[:,:] = 3e-5
 
         if not arg:
             plt.figure()
@@ -51,6 +52,7 @@ def f_plane_init_u_test(physics, aro_exec, dt):
     def init_V(X, Y, *arg):
         init_v = np.zeros(X.shape,dtype=np.float64)
         init_v[int(nx/2),int(ny/2)] = 3e-5
+        init_v[:,:] = 3e-5
 
         if not arg:
             plt.figure()
@@ -107,10 +109,10 @@ def f_plane_init_u_test(physics, aro_exec, dt):
             # plt.savefig('h.{0}.png'.format(ufile[-10:]),dpi=150)
             # plt.close()
 
-            energy[counter] = (dx * dy * rho0 * (np.sum(np.absolute(h * (u[1:,...]**2 + u[:-1,...]**2)/4.)/2.) + np.sum(np.absolute(h * (v[:,1:,:]**2 + v[:,:-1,:]**2)/4.)/2.)) +  
+            energy[counter] = nx * ny * (dx * dy * rho0 * (np.sum(np.absolute(h * (u[1:,...]**2 + u[:-1,...]**2)/4.)/2.) + np.sum(np.absolute(h * (v[:,1:,:]**2 + v[:,:-1,:]**2)/4.)/2.)) +  
               dx * dy * rho0 * 0.01 * np.sum(np.absolute(h - 400.)))
 
-            momentum[counter] = dx * dy * rho0 * (np.sum(np.absolute(h * (u[1:,...] + u[:-1,...])/2.)) + np.sum(np.absolute(h * (v[:,1:,:] + v[:,:-1,:])/2.)))
+            momentum[counter] = nx * ny * dx * dy * rho0 * (np.sum(np.absolute(h * (u[1:,...] + u[:-1,...])/2.)) + np.sum(np.absolute(h * (v[:,1:,:] + v[:,:-1,:])/2.)))
 
             volume[counter] = np.sum(h)
 
@@ -123,14 +125,14 @@ def f_plane_init_u_test(physics, aro_exec, dt):
         opt.assert_volume_conservation(nx, ny, layers, 1e-9)
 
         X, Y = np.meshgrid(grid.xp1, grid.y)
-        init_u = init_U(X, Y, True)
+        init_u = aro.interpret_raw_file(ufiles[1], nx, ny, layers) #init_U(X, Y, True)
 
         X, Y = np.meshgrid(grid.x, grid.yp1)
-        init_v = init_V(X, Y, True)
+        init_v = aro.interpret_raw_file(vfiles[1], nx, ny, layers) #init_V(X, Y, True)
 
-        energy_expected[:] = 2. * (dx * dy * rho0 * np.sum(np.absolute(400. * ((init_u[1:,...] + init_u[:-1,...])**2)/4.)/2.))
+        energy_expected[:] = nx * ny * (dx * dy * rho0 * (np.sum(np.absolute(400. * (init_u[1:,...]**2 + init_u[:-1,...]**2)/4.)/2.) + np.sum(np.absolute(400. * (init_v[:,1:,:]**2 + init_v[:,:-1,:]**2)/4.)/2.)) )
 
-        momentum_expected[:] = 2. * dx * dy * rho0 * (np.sum(np.absolute(400. * (init_u[1:,...] + init_u[:-1,...])/2.)))
+        momentum_expected[:] = nx * ny * dx * dy * rho0 * (np.sum(np.absolute(h * (init_u[1:,...] + init_u[:-1,...])/2.)) + np.sum(np.absolute(h * (init_v[:,1:,:] + init_v[:,:-1,:])/2.)))
 
         # print momentum[0]/momentum_expected[0]
 
@@ -336,7 +338,7 @@ def truncation_error(physics, aro_exec, nx, ny, grid_resolution, integration_tim
 
     if isinstance(grid_resolution, (int, long, float)):
         dx = grid_resolution
-        dt = 300. #np.min([dx/10., 1000.])
+        dt = 30. #np.min([dx/10., 1000.])
 
         nTimeSteps = int(integration_time/dt)
 
@@ -346,7 +348,7 @@ def truncation_error(physics, aro_exec, nx, ny, grid_resolution, integration_tim
         error = np.zeros(len(grid_resolution))
 
         for i, dx in enumerate(grid_resolution):
-            dt = 300. #np.min([dx/10., 300.])
+            dt = 30. #np.min([dx/10., 300.])
 
             nTimeSteps = int(integration_time/dt)
 
@@ -379,23 +381,24 @@ if __name__ == '__main__':
                             1e5],
                             integration_time = 30*86400)
 
-    truncation_error('n_layer', aro_exec = "aronnax_core",
+    truncation_error('n_layer', aro_exec = "aronnax_external_solver",
         nx = 50, ny = 50, 
         grid_resolution = [3e3, 6e3, 9e3,
                             1e4, 5e4,
-                            1e5],
-                            integration_time = 2*86400)
+                            1e5, 5e5,
+                            1e6],
+                            integration_time = 3*86400)
 
     # run two experiments again to produce temporal evolution curves
     f_plane_wind_test('red_grav', aro_exec="aronnax_core", 
-                nx=50, ny=50, dx=8e3, dy=8e3, dt=300., nTimeSteps=105120)
-    f_plane_wind_test('n_layer', aro_exec="aronnax_core", 
-                nx=50, ny=50, dx=8e3, dy=8e3, dt=300., nTimeSteps=1051)
+                nx=50, ny=50, dx=8e3, dy=8e3, dt=30., nTimeSteps=105120)
+    f_plane_wind_test('n_layer', aro_exec="aronnax_external_solver", 
+                nx=50, ny=50, dx=8e3, dy=8e3, dt=30., nTimeSteps=10512)
 
     #f_plane_wind_test('red_grav', aro_exec = "aronnax_core",
     #    nx = 200, ny = 200, dt = 600.)
     #f_plane_wind_test('n_layer', aro_exec = "aronnax_external_solver",
     #    nx = 50, ny = 50, dt = 100.)
 
-    # f_plane_init_u_test('red_grav', aro_exec = "aronnax_core", dt = 600.)
-    #f_plane_init_u_test('n_layer', aro_exec = "aronnax_external_solver", dt = 100.)
+    f_plane_init_u_test('red_grav', aro_exec = "aronnax_core", dt = 50.)
+    f_plane_init_u_test('n_layer', aro_exec = "aronnax_external_solver", dt = 50.)
