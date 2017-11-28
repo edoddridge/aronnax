@@ -7,25 +7,24 @@ Aronnax includes a number of diagnostic test to verify that the numerical core i
 Conservation of volume
 ========================
 
-The use of sponge regions affects volume conservation in both global and layerwise sense, depending on the configuration. The following table shows when global or layerwise volume conservation can be expected.
+The test suite checks for volume conservation on each of the test simulations. The extent to which volume is conserved depends on the numerical accuracy of your simulation: large timesteps and coarse grids will reduce the accuracy of the simulation, and hence may affect volume conservation. Additionally, the use of sponge regions can affect both global and layerwise volume conservation, depending on the configuration. :numref:`tab_volume_conservation` shows when global or layerwise volume conservation can be expected.
 
+.. table:: When to expect volume conservation
+    :name: tab_volume_conservation
 
-+------------------+-----------------+----------------------+
-| Physics          | Sponge regions? | Volume conservation  |
-+------------------+-----------------+----------+-----------+
-|                  |                 |  Global  | Layerwise |
-+==================+=================+==========+===========+
-| n-layer          |       Yes       |  Yes     | No        |
-+------------------+-----------------+----------+-----------+
-| n-layer          |       No        |  Yes     | Yes       |
-+------------------+-----------------+----------+-----------+
-| n + 1/2 layer    |       Yes       |  No      | No        |
-+------------------+-----------------+----------+-----------+
-| n + 1/2 layer    |       No        |  Yes     | Yes       |
-+------------------+-----------------+----------+-----------+
-
-TODO:
-- Add graphs of layerwise/global volume in simulations with(out) sponges
+    +------------------+-----------------+----------------------+
+    | Physics          | Sponge regions? | Volume conservation  |
+    +------------------+-----------------+----------+-----------+
+    |                  |                 |  Global  | Layerwise |
+    +==================+=================+==========+===========+
+    | n-layer          |       Yes       |  Yes     | No        |
+    +------------------+-----------------+----------+-----------+
+    | n-layer          |       No        |  Yes     | Yes       |
+    +------------------+-----------------+----------+-----------+
+    | n + 1/2 layer    |       Yes       |  No      | No        |
+    +------------------+-----------------+----------+-----------+
+    | n + 1/2 layer    |       No        |  Yes     | Yes       |
+    +------------------+-----------------+----------+-----------+
 
 
 Momentum forcing
