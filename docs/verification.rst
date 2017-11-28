@@ -62,7 +62,7 @@ When running in the n-layer mode the momentum discrepancy is much larger and exh
 
    Momentum error as a function grid size for simulations using the n-layer mode.
 
-The evolution of momentum in the 8 km resolution test simulation using n-layer physics. The simulated momentum increases linearly, as expected, but the slope is much too large - the model obtains more momentum from the wind forcing than expected.
+The evolution of momentum in the 8 km resolution test simulation using n-layer physics. The simulated momentum increases linearly, as expected, but the slope is much too large - the model obtains more momentum from the wind forcing than expected. This is undesirable, and is discussed in `issue #100 <https://github.com/edoddridge/aronnax/issues/100>`_.
 
 .. figure:: ../test/physics_tests/f_plane_n_layer_wind/f_plane_momentum_test.png
    :alt: momentum evolution as a function of time
