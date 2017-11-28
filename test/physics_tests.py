@@ -140,15 +140,15 @@ def f_plane_init_u_test(physics, aro_exec, dt):
         plt.figure()
         #plt.plot(model_iteration, energy_expected, '-o', alpha=0.5,
         #        label='Expected energy')
-        plt.plot(model_iteration, energy, '-', alpha=1,
-                label='simulated energy')
+        plt.plot(model_iteration*dt/(86400), energy, '-', alpha=1,
+                label='Simulated energy')
         plt.legend()
-        plt.xlabel('time step')
-        plt.ylabel('energy')
+        plt.xlabel('Time (days)')
+        plt.ylabel('Energy')
         plt.savefig('f_plane_energy_test.png', dpi=150)
 
         plt.figure()
-        plt.plot(model_iteration,energy/energy_expected)
+        plt.plot(model_iteration*dt/(86400),energy/energy_expected)
         plt.xlabel('timestep')
         plt.ylabel('simulated/expected')
         plt.savefig('energy_ratio.png')
@@ -162,11 +162,11 @@ def f_plane_init_u_test(physics, aro_exec, dt):
         plt.close()
 
         plt.figure()
-        plt.plot(model_iteration, momentum, '-', alpha=1,
-                label='simulated momentum')
+        plt.plot(model_iteration*dt/(86400), momentum, '-', alpha=1,
+                label='Simulated momentum')
         plt.legend()
-        plt.xlabel('time step')
-        plt.ylabel('momentum')
+        plt.xlabel('Time (days)')
+        plt.ylabel('Momentum')
         plt.savefig('f_plane_momentum_test.png', dpi=150)
 
         plt.figure()
@@ -177,9 +177,9 @@ def f_plane_init_u_test(physics, aro_exec, dt):
         plt.close()
 
         plt.figure()
-        plt.plot(model_iteration,
+        plt.plot(model_iteration*dt/(86400),
             100.*(momentum - momentum_expected)/momentum_expected)
-        plt.xlabel('timestep')
+        plt.xlabel('Time (days)')
         plt.ylabel('percent error')
         plt.ylim(-20,80)
         plt.savefig('momentum_percent_error.png')
@@ -290,7 +290,7 @@ def f_plane_wind_test(physics, aro_exec, nx, ny, dx, dy, dt, nTimeSteps):
         plt.plot(model_iteration*dt/(30*86400), momentum_expected, '-', alpha=1,
                 label='Expected momentum')
         plt.plot(model_iteration*dt/(30*86400), momentum, '-', alpha=1,
-                label='simulated momentum')
+                label='Simulated momentum')
         plt.legend()
         plt.xlabel('Time (months)')
         plt.ylabel('Momentum')
