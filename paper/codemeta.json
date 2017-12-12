@@ -1,0 +1,30 @@
+{
+  "@context": "https://raw.githubusercontent.com/codemeta/codemeta/master/codemeta.jsonld",
+  "@type": "Code",
+  "author": [
+    {
+      "@id": "https://orcid.org/0000-0002-6097-5729",
+      "@type": "Person",
+      "email": "ewd@mit.edu",
+      "name": "Ed Doddridge",
+      "affiliation": "MIT"
+    },
+    {
+      "@id": "",
+      "@type": "Person",
+      "email": "axch@mit.edu",
+      "name": "Alexey Radul",
+      "affiliation": "MIT"
+    }
+  ],
+  "identifier": "",
+  "codeRepository": "https://github.com/edoddridge/aronnax",
+  "datePublished": "2017-11-18",
+  "dateModified": "2017-11-18",
+  "dateCreated": "2017-11-18",
+  "description": "An idealised isopycnal ocean circulation model.",
+  "keywords": "ocean model, python, geophysical fluid dynamics",
+  "license": "MIT",
+  "title": "Aronnax",
+  "version": "v0.1"
+}
