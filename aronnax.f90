@@ -64,7 +64,7 @@ program aronnax
   ! Numerics
   double precision :: dt
   double precision :: au, ar, botDrag
-  double precision :: ah(layerwise_input_length)
+  double precision :: kh(layerwise_input_length)
   double precision :: slip, hmin
   integer          :: niter0, nTimeSteps
   double precision :: dumpFreq, avFreq, checkpointFreq, diagFreq
@@ -123,7 +123,7 @@ program aronnax
   ! TODO Possibly wait until the model is split into multiple files,
   ! then hide the long unsightly code there.
 
-  namelist /NUMERICS/ au, ah, ar, botDrag, dt, slip, &
+  namelist /NUMERICS/ au, kh, ar, botDrag, dt, slip, &
       niter0, nTimeSteps, &
       dumpFreq, avFreq, checkpointFreq, diagFreq, hmin, maxits, & 
       freesurfFac, eps, thickness_error, debug_level
@@ -276,7 +276,7 @@ program aronnax
 
 
   call model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
-      dt, au, ar, botDrag, ah, slip, hmin, niter0, nTimeSteps, &
+      dt, au, ar, botDrag, kh, slip, hmin, niter0, nTimeSteps, &
       dumpFreq, avFreq, checkpointFreq, diagFreq, &
       maxits, eps, freesurfFac, thickness_error, &
       debug_level, g_vec, rho0, &
@@ -296,7 +296,7 @@ end program aronnax
 !> Run the model
 
 subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
-    dt, au, ar, botDrag, ah, slip, hmin, niter0, nTimeSteps, &
+    dt, au, ar, botDrag, kh, slip, hmin, niter0, nTimeSteps, &
     dumpFreq, avFreq, checkpointFreq, diagFreq, &
     maxits, eps, freesurfFac, thickness_error, &
     debug_level, g_vec, rho0, &
@@ -327,7 +327,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   double precision, intent(in) :: fv(0:nx+1, 0:ny+1)
   ! Numerics
   double precision, intent(in) :: dt, au, ar, botDrag
-  double precision, intent(in) :: ah(layers)
+  double precision, intent(in) :: kh(layers)
   double precision, intent(in) :: slip, hmin
   integer,          intent(in) :: niter0, nTimeSteps
   double precision, intent(in) :: dumpFreq, avFreq, checkpointFreq, diagFreq
@@ -534,7 +534,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
     call state_derivative(dhdtveryold, dudtveryold, dvdtveryold, &
         h, u, v, depth, &
         dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
-        au, ar, botDrag, ah, slip, &
+        au, ar, botDrag, kh, slip, &
         RedGrav, g_vec, rho0, wind_x, wind_y, &
         RelativeWind, Cd, &
         spongeHTimeScale, spongeH, &
@@ -550,7 +550,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
     call state_derivative(dhdtveryold, dudtveryold, dvdtveryold, &
         hhalf, uhalf, vhalf, depth, &
         dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
-        au, ar, botDrag, ah, slip, &
+        au, ar, botDrag, kh, slip, &
         RedGrav, g_vec, rho0, wind_x, wind_y, &
         RelativeWind, Cd, &
         spongeHTimeScale, spongeH, &
@@ -581,7 +581,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
     call state_derivative(dhdtold, dudtold, dvdtold, &
         h, u, v, depth, &
         dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
-        au, ar, botDrag, ah, slip, &
+        au, ar, botDrag, kh, slip, &
         RedGrav, g_vec, rho0, wind_x, wind_y, &
         RelativeWind, Cd, &
         spongeHTimeScale, spongeH, &
@@ -597,7 +597,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
     call state_derivative(dhdtold, dudtold, dvdtold, &
         hhalf, uhalf, vhalf, depth, &
         dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
-        au, ar, botDrag, ah, slip, &
+        au, ar, botDrag, kh, slip, &
         RedGrav, g_vec, rho0, wind_x, wind_y, &
         RelativeWind, Cd, &
         spongeHTimeScale, spongeH, &
@@ -701,7 +701,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
 
     call state_derivative(dhdt, dudt, dvdt, h, u, v, depth, &
         dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
-        au, ar, botDrag, ah, slip, &
+        au, ar, botDrag, kh, slip, &
         RedGrav, g_vec, rho0, wind_x, wind_y, &
         RelativeWind, Cd, &
         spongeHTimeScale, spongeH, &
@@ -815,7 +815,7 @@ end subroutine model_run
 
 subroutine state_derivative(dhdt, dudt, dvdt, h, u, v, depth, &
     dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
-    au, ar, botDrag, ah, slip, &
+    au, ar, botDrag, kh, slip, &
     RedGrav, g_vec, rho0, wind_x, wind_y, &
     RelativeWind, Cd, &
     spongeHTimeScale, spongeH, &
@@ -840,7 +840,7 @@ subroutine state_derivative(dhdt, dudt, dvdt, h, u, v, depth, &
   double precision, intent(in) :: fu(0:nx+1, 0:ny+1)
   double precision, intent(in) :: fv(0:nx+1, 0:ny+1)
   double precision, intent(in) :: au, ar, botDrag
-  double precision, intent(in) :: ah(layers)
+  double precision, intent(in) :: kh(layers)
   double precision, intent(in) :: slip
   logical,          intent(in) :: RedGrav
   double precision, intent(in) :: g_vec(layers)
@@ -887,7 +887,7 @@ subroutine state_derivative(dhdt, dudt, dvdt, h, u, v, depth, &
   end if
 
   ! Calculate dhdt, dudt, dvdt at current time step
-  call evaluate_dhdt(dhdt, h, u, v, ah, dx, dy, nx, ny, layers, &
+  call evaluate_dhdt(dhdt, h, u, v, kh, dx, dy, nx, ny, layers, &
       spongeHTimeScale, spongeH, wetmask, RedGrav)
 
   call evaluate_dudt(dudt, h, u, v, b, zeta, wind_x, wind_y, fu, au, ar, slip, &
@@ -1352,7 +1352,7 @@ end subroutine evaluate_zeta
 ! ---------------------------------------------------------------------------
 !> Calculate the tendency of layer thickness for each of the active layers
 !! dh/dt is in the centre of each grid point.
-subroutine evaluate_dhdt(dhdt, h, u, v, ah, dx, dy, nx, ny, layers, &
+subroutine evaluate_dhdt(dhdt, h, u, v, kh, dx, dy, nx, ny, layers, &
     spongeTimeScale, spongeH, wetmask, RedGrav)
   implicit none
 
@@ -1361,7 +1361,7 @@ subroutine evaluate_dhdt(dhdt, h, u, v, ah, dx, dy, nx, ny, layers, &
   double precision, intent(in)  :: h(0:nx+1, 0:ny+1, layers)
   double precision, intent(in)  :: u(0:nx+1, 0:ny+1, layers)
   double precision, intent(in)  :: v(0:nx+1, 0:ny+1, layers)
-  double precision, intent(in)  :: ah(layers)
+  double precision, intent(in)  :: kh(layers)
   double precision, intent(in)  :: dx, dy
   integer, intent(in) :: nx, ny, layers
   double precision, intent(in)  :: spongeTimeScale(0:nx+1, 0:ny+1, layers)
@@ -1384,13 +1384,13 @@ subroutine evaluate_dhdt(dhdt, h, u, v, ah, dx, dy, nx, ny, layers, &
     do j = 1, ny
       do i = 1, nx
         dhdt_GM(i,j,k) = &
-            ah(k)*(h(i+1,j,k)*wetmask(i+1,j)    &
+            kh(k)*(h(i+1,j,k)*wetmask(i+1,j)    &
               + (1d0 - wetmask(i+1,j))*h(i,j,k) & ! reflect around boundary
               + h(i-1,j,k)*wetmask(i-1,j)       &
               + (1d0 - wetmask(i-1,j))*h(i,j,k) & ! refelct around boundary
               - 2*h(i,j,k))/(dx*dx)             & ! x-component
 
-            + ah(k)*(h(i,j+1,k)*wetmask(i,j+1) &
+            + kh(k)*(h(i,j+1,k)*wetmask(i,j+1) &
               + (1d0 - wetmask(i,j+1))*h(i,j,k) & ! reflect value around boundary
               + h(i,j-1,k)*wetmask(i,j-1)       &
               + (1d0 - wetmask(i,j-1))*h(i,j,k) & ! reflect value around boundary
@@ -1407,13 +1407,13 @@ subroutine evaluate_dhdt(dhdt, h, u, v, ah, dx, dy, nx, ny, layers, &
     do j = 1, ny
       do i = 1, nx
         dhdt_GM(i,j,layers) = &
-            ah(layers)*(h(i+1,j,layers)*wetmask(i+1,j)   &
+            kh(layers)*(h(i+1,j,layers)*wetmask(i+1,j)   &
               + (1d0 - wetmask(i+1,j))*h(i,j,layers)     & ! boundary
               + h(i-1,j,layers)*wetmask(i-1,j)           &
               + (1d0 - wetmask(i-1,j))*h(i,j,layers)     & ! boundary
               - 2*h(i,j,layers))/(dx*dx)                 & ! x-component
 
-            + ah(layers)*(h(i,j+1,layers)*wetmask(i,j+1) &
+            + kh(layers)*(h(i,j+1,layers)*wetmask(i,j+1) &
               + (1d0 - wetmask(i,j+1))*h(i,j,layers)     & ! reflect value around boundary
               + h(i,j-1,layers)*wetmask(i,j-1)           &
               + (1d0 - wetmask(i,j-1))*h(i,j,layers)     & ! reflect value around boundary
