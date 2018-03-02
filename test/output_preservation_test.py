@@ -362,7 +362,7 @@ def test_vertical_thickness_diffusion():
         assert np.max(abs(simuated_h_evo[:,1] - expected_h_evo)) < 0.0005
 
 
-def test_vertical_thickness_diffusion_3_layers():
+def test_vertical_thickness_diffusion_Hypre_3_layers():
     nx = 2
     ny = 2
     layers = 3
