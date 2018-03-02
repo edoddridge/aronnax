@@ -90,8 +90,9 @@ sections = ["executable", "numerics", "model", "pressure_solver", "sponge",
 
 section_map = {
     "au"                   : "numerics",
-    "kh"                   : "numerics",
     "ar"                   : "numerics",
+    "kh"                   : "numerics",
+    "kv"                   : "numerics",
     "botDrag"              : "numerics",
     "dt"                   : "numerics",
     "slip"                 : "numerics",

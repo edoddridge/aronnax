@@ -64,7 +64,7 @@ program aronnax
   ! Numerics
   double precision :: dt
   double precision :: au, ar, botDrag
-  double precision :: kh(layerwise_input_length)
+  double precision :: kh(layerwise_input_length), kv
   double precision :: slip, hmin
   integer          :: niter0, nTimeSteps
   double precision :: dumpFreq, avFreq, checkpointFreq, diagFreq
@@ -123,7 +123,7 @@ program aronnax
   ! TODO Possibly wait until the model is split into multiple files,
   ! then hide the long unsightly code there.
 
-  namelist /NUMERICS/ au, kh, ar, botDrag, dt, slip, &
+  namelist /NUMERICS/ au, kh, kv, ar, botDrag, dt, slip, &
       niter0, nTimeSteps, &
       dumpFreq, avFreq, checkpointFreq, diagFreq, hmin, maxits, & 
       freesurfFac, eps, thickness_error, debug_level
@@ -153,6 +153,11 @@ program aronnax
   debug_level = 0
   niter0 = 0
   RelativeWind = .FALSE.
+
+  au = 0d0
+  ar = 0d0
+  kh = 0d0
+  kv = 0d0
 
   
   open(unit=8, file="parameters.in", status='OLD', recl=80)
@@ -276,7 +281,7 @@ program aronnax
 
 
   call model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
-      dt, au, ar, botDrag, kh, slip, hmin, niter0, nTimeSteps, &
+      dt, au, ar, botDrag, kh, kv, slip, hmin, niter0, nTimeSteps, &
       dumpFreq, avFreq, checkpointFreq, diagFreq, &
       maxits, eps, freesurfFac, thickness_error, &
       debug_level, g_vec, rho0, &
@@ -296,7 +301,7 @@ end program aronnax
 !> Run the model
 
 subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
-    dt, au, ar, botDrag, kh, slip, hmin, niter0, nTimeSteps, &
+    dt, au, ar, botDrag, kh, kv, slip, hmin, niter0, nTimeSteps, &
     dumpFreq, avFreq, checkpointFreq, diagFreq, &
     maxits, eps, freesurfFac, thickness_error, &
     debug_level, g_vec, rho0, &
@@ -327,7 +332,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   double precision, intent(in) :: fv(0:nx+1, 0:ny+1)
   ! Numerics
   double precision, intent(in) :: dt, au, ar, botDrag
-  double precision, intent(in) :: kh(layers)
+  double precision, intent(in) :: kh(layers), kv
   double precision, intent(in) :: slip, hmin
   integer,          intent(in) :: niter0, nTimeSteps
   double precision, intent(in) :: dumpFreq, avFreq, checkpointFreq, diagFreq
@@ -534,7 +539,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
     call state_derivative(dhdtveryold, dudtveryold, dvdtveryold, &
         h, u, v, depth, &
         dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
-        au, ar, botDrag, kh, slip, &
+        au, ar, botDrag, kh, kv, slip, &
         RedGrav, g_vec, rho0, wind_x, wind_y, &
         RelativeWind, Cd, &
         spongeHTimeScale, spongeH, &
@@ -550,7 +555,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
     call state_derivative(dhdtveryold, dudtveryold, dvdtveryold, &
         hhalf, uhalf, vhalf, depth, &
         dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
-        au, ar, botDrag, kh, slip, &
+        au, ar, botDrag, kh, kv, slip, &
         RedGrav, g_vec, rho0, wind_x, wind_y, &
         RelativeWind, Cd, &
         spongeHTimeScale, spongeH, &
@@ -581,7 +586,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
     call state_derivative(dhdtold, dudtold, dvdtold, &
         h, u, v, depth, &
         dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
-        au, ar, botDrag, kh, slip, &
+        au, ar, botDrag, kh, kv, slip, &
         RedGrav, g_vec, rho0, wind_x, wind_y, &
         RelativeWind, Cd, &
         spongeHTimeScale, spongeH, &
@@ -597,7 +602,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
     call state_derivative(dhdtold, dudtold, dvdtold, &
         hhalf, uhalf, vhalf, depth, &
         dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
-        au, ar, botDrag, kh, slip, &
+        au, ar, botDrag, kh, kv, slip, &
         RedGrav, g_vec, rho0, wind_x, wind_y, &
         RelativeWind, Cd, &
         spongeHTimeScale, spongeH, &
@@ -701,7 +706,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
 
     call state_derivative(dhdt, dudt, dvdt, h, u, v, depth, &
         dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
-        au, ar, botDrag, kh, slip, &
+        au, ar, botDrag, kh, kv, slip, &
         RedGrav, g_vec, rho0, wind_x, wind_y, &
         RelativeWind, Cd, &
         spongeHTimeScale, spongeH, &
@@ -815,7 +820,7 @@ end subroutine model_run
 
 subroutine state_derivative(dhdt, dudt, dvdt, h, u, v, depth, &
     dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
-    au, ar, botDrag, kh, slip, &
+    au, ar, botDrag, kh, kv, slip, &
     RedGrav, g_vec, rho0, wind_x, wind_y, &
     RelativeWind, Cd, &
     spongeHTimeScale, spongeH, &
@@ -840,7 +845,7 @@ subroutine state_derivative(dhdt, dudt, dvdt, h, u, v, depth, &
   double precision, intent(in) :: fu(0:nx+1, 0:ny+1)
   double precision, intent(in) :: fv(0:nx+1, 0:ny+1)
   double precision, intent(in) :: au, ar, botDrag
-  double precision, intent(in) :: kh(layers)
+  double precision, intent(in) :: kh(layers), kv
   double precision, intent(in) :: slip
   logical,          intent(in) :: RedGrav
   double precision, intent(in) :: g_vec(layers)
@@ -887,7 +892,7 @@ subroutine state_derivative(dhdt, dudt, dvdt, h, u, v, depth, &
   end if
 
   ! Calculate dhdt, dudt, dvdt at current time step
-  call evaluate_dhdt(dhdt, h, u, v, kh, dx, dy, nx, ny, layers, &
+  call evaluate_dhdt(dhdt, h, u, v, kh, kv, dx, dy, nx, ny, layers, &
       spongeHTimeScale, spongeH, wetmask, RedGrav)
 
   call evaluate_dudt(dudt, h, u, v, b, zeta, wind_x, wind_y, fu, au, ar, slip, &
@@ -1352,7 +1357,7 @@ end subroutine evaluate_zeta
 ! ---------------------------------------------------------------------------
 !> Calculate the tendency of layer thickness for each of the active layers
 !! dh/dt is in the centre of each grid point.
-subroutine evaluate_dhdt(dhdt, h, u, v, kh, dx, dy, nx, ny, layers, &
+subroutine evaluate_dhdt(dhdt, h, u, v, kh, kv, dx, dy, nx, ny, layers, &
     spongeTimeScale, spongeH, wetmask, RedGrav)
   implicit none
 
@@ -1361,7 +1366,7 @@ subroutine evaluate_dhdt(dhdt, h, u, v, kh, dx, dy, nx, ny, layers, &
   double precision, intent(in)  :: h(0:nx+1, 0:ny+1, layers)
   double precision, intent(in)  :: u(0:nx+1, 0:ny+1, layers)
   double precision, intent(in)  :: v(0:nx+1, 0:ny+1, layers)
-  double precision, intent(in)  :: kh(layers)
+  double precision, intent(in)  :: kh(layers), kv
   double precision, intent(in)  :: dx, dy
   integer, intent(in) :: nx, ny, layers
   double precision, intent(in)  :: spongeTimeScale(0:nx+1, 0:ny+1, layers)
@@ -1374,12 +1379,16 @@ subroutine evaluate_dhdt(dhdt, h, u, v, kh, dx, dy, nx, ny, layers, &
   ! McWilliams in a z coordinate model)
   double precision dhdt_GM(0:nx+1, 0:ny+1, layers)
 
+  ! Thickness tendency due to vertical diffusion of mass
+  double precision dhdt_vert_diff(0:nx+1, 0:ny+1, layers)
+
   ! Calculate tendency due to thickness diffusion (equivalent
   ! to GM in z coordinate model with the same diffusivity).
   dhdt_GM = 0d0
+  dhdt_vert_diff = 0d0
 
   ! Loop through all layers except lowest and calculate
-  ! thickness tendency due to diffusive mass fluxes
+  ! thickness tendency due to horizontal diffusive mass fluxes
   do k = 1, layers-1
     do j = 1, ny
       do i = 1, nx
@@ -1394,10 +1403,11 @@ subroutine evaluate_dhdt(dhdt, h, u, v, kh, dx, dy, nx, ny, layers, &
               + (1d0 - wetmask(i,j+1))*h(i,j,k) & ! reflect value around boundary
               + h(i,j-1,k)*wetmask(i,j-1)       &
               + (1d0 - wetmask(i,j-1))*h(i,j,k) & ! reflect value around boundary
-              - 2*h(i,j,k))/(dy*dy) ! y-component horizontal diffusion
+              - 2*h(i,j,k))/(dy*dy)               ! y-component horizontal diffusion
       end do
     end do
   end do
+
 
   ! Now do the lowest active layer, k = layers. If using reduced
   ! gravity physics, this is unconstrained and calculated as above. If
@@ -1426,6 +1436,34 @@ subroutine evaluate_dhdt(dhdt, h, u, v, kh, dx, dy, nx, ny, layers, &
     dhdt_GM(:,:,layers) = -sum(dhdt_GM(:,:,:layers-1), 3)
   end if
 
+  ! calculate vertical diffusive mass fluxes
+  ! only evaluate vertical mass diff flux if more than 1 layer, or reduced gravity
+  if (layers .eq. 1) then
+    if (RedGrav) then
+      do j = 1, ny
+        do i = 1, nx
+          dhdt_vert_diff(i,j,1) = kv/h(i,j,1)
+        end do
+      end do
+    end if
+  else if (layers .gt. 1) then
+    ! if more than one layer, need to have multiple fluxes
+    do k = 1, layers
+      do j = 1, ny
+        do i = 1, nx
+          if (k .eq. 1) then ! in top layer
+            dhdt_vert_diff(i,j,k) = kv/h(i,j,k) - kv/h(i,j,k+1)
+          else if (k .eq. layers) then ! bottom layer
+            dhdt_vert_diff(i,j,k) = kv/h(i,j,k) - kv/h(i,j,k-1)
+          else ! mid layer/s
+            dhdt_vert_diff(i,j,k) = 2d0*kv/h(i,j,k) -  &
+                kv/h(i,j,k-1) - kv/h(i,j,k+1)
+          end if
+        end do
+      end do
+    end do
+  end if
+
   ! Now add this to the thickness tendency due to the flow field and
   ! sponge regions
   dhdt = 0d0
@@ -1435,6 +1473,7 @@ subroutine evaluate_dhdt(dhdt, h, u, v, kh, dx, dy, nx, ny, layers, &
       do i = 1, nx
         dhdt(i,j,k) = &
             dhdt_GM(i,j,k) & ! horizontal thickness diffusion
+            + dhdt_vert_diff(i,j,k) & ! vetical thickness diffusion 
             - ((h(i,j,k)+h(i+1,j,k))*u(i+1,j,k) &
                - (h(i-1,j,k)+h(i,j,k))*u(i,j,k))/(dx*2d0) & ! d(hu)/dx
             - ((h(i,j,k)+h(i,j+1,k))*v(i,j+1,k) &

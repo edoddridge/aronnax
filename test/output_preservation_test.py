@@ -320,3 +320,95 @@ def test_periodic_BC_Hypre():
                      dumpFreq=10000)
         assert_outputs_close(nx, ny, layers, 3e-12)
         assert_volume_conservation(nx, ny, layers, 3e-5)
+
+def test_vertical_thickness_diffusion():
+    nx = 2
+    ny = 2
+
+    dx = 1e4
+    dy = 1e4
+
+    grid = aro.Grid(nx, ny, 1, dx, dy)
+
+    kv = 1e-5
+    initH = 10.
+
+    def wetmask(X, Y):
+        mask = np.ones(X.shape, dtype=np.float64)
+        return mask
+
+    # 2 years
+    dt = 200.
+    nTimeSteps = int(0.25*365*86400/dt)
+    diagFreq = nTimeSteps*dt/50.
+
+
+    with working_directory(p.join(self_path, "vertical_diffusion")):
+        drv.simulate(initHfile=[initH],
+                     nx=nx, ny=ny, dx=dx, dy=dy,
+                     exe="aronnax_test",
+                     wetMaskFile=[wetmask],
+                     fUfile=[-1e-4],
+                     fVfile=[-1e-4],
+                     kv=kv,
+                     dt=dt,
+                     nTimeSteps=nTimeSteps,
+                     diagFreq=diagFreq,
+                     dumpFreq=1e9)
+
+        simuated_h_evo = np.loadtxt('output/diagnostic.h.csv',
+                delimiter=',', skiprows=1, usecols=(0,2))
+        expected_h_evo = np.sqrt(simuated_h_evo[:,0]*dt*kv*2. + initH**2)
+        assert np.max(abs(simuated_h_evo[:,1] - expected_h_evo)) < 0.0005
+
+
+def test_vertical_thickness_diffusion_3_layers():
+    nx = 2
+    ny = 2
+    layers = 3
+
+    dx = 1e4
+    dy = 1e4
+
+    grid = aro.Grid(nx, ny, layers, dx, dy)
+
+    kv = 1e-5
+    initH = [10., 100., 10.]
+
+    def wetmask(X, Y):
+        mask = np.ones(X.shape, dtype=np.float64)
+        return mask
+
+    # 2 years
+    dt = 200.
+    nTimeSteps = int(0.25*365*86400/dt)
+    diagFreq = nTimeSteps*dt/50.
+
+
+    with working_directory(p.join(self_path, "vertical_diffusion")):
+        drv.simulate(initHfile=[10., 100., 10.],
+                     nx=nx, ny=ny, dx=dx, dy=dy,
+                     layers=3,
+                     exe="aronnax_external_solver_test",
+                     wetMaskFile=[wetmask],
+                     depthFile=[120.],
+                     fUfile=[-1e-4],
+                     fVfile=[-1e-4],
+                     kv=kv,
+                     dt=dt,
+                     nTimeSteps=nTimeSteps,
+                     diagFreq=diagFreq,
+                     dumpFreq=1e9,
+                     RedGrav=0)
+
+        simuated_h_evo = np.loadtxt('output/diagnostic.h.csv',
+                delimiter=',', skiprows=1, usecols=(0,2,6,10))
+        expected_h_evo = np.sqrt(simuated_h_evo[:,0]*dt*kv*2. + initH[0]**2)
+
+        # plt.plot(simuated_h_evo[:,0]*dt, expected_h_evo, label='expected')
+        # plt.plot(simuated_h_evo[:,0]*dt, simuated_h_evo[:,1], label='simulated top')
+        # plt.plot(simuated_h_evo[:,0]*dt, simuated_h_evo[:,2], label='simulated mid')
+        # plt.plot(simuated_h_evo[:,0]*dt, simuated_h_evo[:,3], label='simulated bottom')
+        # plt.legend()
+        # plt.savefig('h_evo.pdf')
+        assert np.max(abs(simuated_h_evo[:,1] - simuated_h_evo[:,3])) < 0.0005
