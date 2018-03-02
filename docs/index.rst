@@ -47,6 +47,7 @@ Aronnax is
    examples
    verification
    benchmarks
+   development
 
 
 Indices and tables
