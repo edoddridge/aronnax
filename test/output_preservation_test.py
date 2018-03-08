@@ -60,6 +60,13 @@ def assert_outputs_close(nx, ny, layers, rtol):
             plt.savefig('blessed_output.png')
             plt.close()
 
+            plt.figure()
+            plt.pcolormesh(ans[:,:,0] - good_ans[:,:,0], cmap='RdBu_r')
+            plt.colorbar()
+            plt.title('current - blessed')
+            plt.savefig('difference.png')
+            plt.close()
+
         assert relerr < rtol
 
 def assert_volume_conservation(nx,ny,layers,rtol):
