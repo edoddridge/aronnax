@@ -1377,15 +1377,77 @@ subroutine evaluate_dhdt(dhdt, h, u, v, kh, kv, dx, dy, nx, ny, layers, &
   integer i, j, k
   ! Thickness tendency due to thickness diffusion (equivalent to Gent
   ! McWilliams in a z coordinate model)
-  double precision dhdt_GM(0:nx+1, 0:ny+1, layers)
+  double precision dhdt_kh(0:nx+1, 0:ny+1, layers)
 
   ! Thickness tendency due to vertical diffusion of mass
-  double precision dhdt_vert_diff(0:nx+1, 0:ny+1, layers)
+  double precision dhdt_kv(0:nx+1, 0:ny+1, layers)
+
+  ! Thickness tendency due to thickness advection
+  double precision dhdt_advec(0:nx+1, 0:ny+1, layers)
+
+  ! Calculate tendency due to thickness diffusion (equivalent
+  ! to GM in z coordinate model with the same diffusivity).
+  dhdt_kh = 0d0
+
+  call dhdt_hor_diff(dhdt_kh, h, kh, dx, dy, nx, ny, layers, &
+    wetmask, RedGrav)
+
+  ! Calculate thickness tendency due to vertical diffusion
+  dhdt_kv = 0d0
+  call dhdt_vert_diff(dhdt_kv, h, kv, nx, ny, layers, RedGrav)
+
+
+  ! Calculate the thickness tendency due to the flow field
+  dhdt_advec = 0d0
+
+  call h_advec_1st_centered(dhdt_advec, h, u, v, dx, dy, nx, ny, layers)
+
+  ! Now add these together, along with the sponge contribution
+  dhdt = 0d0
+
+  do k = 1, layers
+    do j = 1, ny
+      do i = 1, nx
+        dhdt(i,j,k) = &
+            dhdt_kh(i,j,k) & ! horizontal thickness diffusion
+            + dhdt_kv(i,j,k) & ! vetical thickness diffusion 
+            + dhdt_advec(i,j,k) & ! thickness advection
+            + spongeTimeScale(i,j,k)*(spongeH(i,j,k)-h(i,j,k)) ! forced relaxtion in the sponge regions.
+      end do
+    end do
+  end do
+
+  ! Make sure the dynamics are only happening in the wet grid points.
+  do k = 1, layers
+    dhdt(:, :, k) = dhdt(:, :, k) * wetmask
+  end do
+
+  call wrap_fields_3D(dhdt, nx, ny, layers)
+
+  return
+end subroutine evaluate_dhdt
+
+! ---------------------------------------------------------------------------
+!> Calculate the tendency of layer thickness for each of the active layers
+!! due to horizontal thickness diffusion
+subroutine dhdt_hor_diff(dhdt_GM, h, kh, dx, dy, nx, ny, layers, &
+    wetmask, RedGrav)
+  implicit none
+
+  ! dhdt is evaluated at the centre of the grid box
+  double precision, intent(out) :: dhdt_GM(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: h(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: kh(layers)
+  double precision, intent(in)  :: dx, dy
+  integer, intent(in) :: nx, ny, layers
+  double precision, intent(in)  :: wetmask(0:nx+1, 0:ny+1)
+  logical, intent(in) :: RedGrav
+
+  integer i, j, k
 
   ! Calculate tendency due to thickness diffusion (equivalent
   ! to GM in z coordinate model with the same diffusivity).
   dhdt_GM = 0d0
-  dhdt_vert_diff = 0d0
 
   ! Loop through all layers except lowest and calculate
   ! thickness tendency due to horizontal diffusive mass fluxes
@@ -1436,13 +1498,33 @@ subroutine evaluate_dhdt(dhdt, h, u, v, kh, kv, dx, dy, nx, ny, layers, &
     dhdt_GM(:,:,layers) = -sum(dhdt_GM(:,:,:layers-1), 3)
   end if
 
+  return
+end subroutine dhdt_hor_diff
+
+! ---------------------------------------------------------------------------
+!> Calculate the tendency of layer thickness for each of the active layers
+!! due to vertical thickness diffusion
+subroutine dhdt_vert_diff(dhdt_kv, h, kv, nx, ny, layers, RedGrav)
+  implicit none
+
+  ! dhdt is evaluated at the centre of the grid box
+  double precision, intent(out) :: dhdt_kv(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: h(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: kv
+  integer, intent(in) :: nx, ny, layers
+  logical, intent(in) :: RedGrav
+
+  integer i, j, k
+
+  dhdt_kv = 0d0
+
   ! calculate vertical diffusive mass fluxes
   ! only evaluate vertical mass diff flux if more than 1 layer, or reduced gravity
   if (layers .eq. 1) then
     if (RedGrav) then
       do j = 1, ny
         do i = 1, nx
-          dhdt_vert_diff(i,j,1) = kv/h(i,j,1)
+          dhdt_kv(i,j,1) = kv/h(i,j,1)
         end do
       end do
     end if
@@ -1452,11 +1534,11 @@ subroutine evaluate_dhdt(dhdt, h, u, v, kh, kv, dx, dy, nx, ny, layers, &
       do j = 1, ny
         do i = 1, nx
           if (k .eq. 1) then ! in top layer
-            dhdt_vert_diff(i,j,k) = kv/h(i,j,k) - kv/h(i,j,k+1)
+            dhdt_kv(i,j,k) = kv/h(i,j,k) - kv/h(i,j,k+1)
           else if (k .eq. layers) then ! bottom layer
-            dhdt_vert_diff(i,j,k) = kv/h(i,j,k) - kv/h(i,j,k-1)
+            dhdt_kv(i,j,k) = kv/h(i,j,k) - kv/h(i,j,k-1)
           else ! mid layer/s
-            dhdt_vert_diff(i,j,k) = 2d0*kv/h(i,j,k) -  &
+            dhdt_kv(i,j,k) = 2d0*kv/h(i,j,k) -  &
                 kv/h(i,j,k-1) - kv/h(i,j,k+1)
           end if
         end do
@@ -1464,34 +1546,42 @@ subroutine evaluate_dhdt(dhdt, h, u, v, kh, kv, dx, dy, nx, ny, layers, &
     end do
   end if
 
-  ! Now add this to the thickness tendency due to the flow field and
-  ! sponge regions
-  dhdt = 0d0
+  return
+end subroutine dhdt_vert_diff
+
+! ---------------------------------------------------------------------------
+!> Use a first-order centered advection scheme to calculate the advctive
+!! thickness tendency
+
+subroutine h_advec_1st_centered(dhdt_advec, h, u, v, dx, dy, nx, ny, layers)
+  implicit none
+
+  ! dhdt is evaluated at the centre of the grid box
+  double precision, intent(out) :: dhdt_advec(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: h(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: u(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: v(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: dx, dy
+  integer, intent(in) :: nx, ny, layers
+
+  integer i, j, k
+
+  dhdt_advec = 0d0
 
   do k = 1, layers
     do j = 1, ny
       do i = 1, nx
-        dhdt(i,j,k) = &
-            dhdt_GM(i,j,k) & ! horizontal thickness diffusion
-            + dhdt_vert_diff(i,j,k) & ! vetical thickness diffusion 
+        dhdt_advec(i,j,k) = & 
             - ((h(i,j,k)+h(i+1,j,k))*u(i+1,j,k) &
-               - (h(i-1,j,k)+h(i,j,k))*u(i,j,k))/(dx*2d0) & ! d(hu)/dx
+             - (h(i-1,j,k)+h(i,j,k))*u(i,j,k))/(dx*2d0) & ! d(hu)/dx
             - ((h(i,j,k)+h(i,j+1,k))*v(i,j+1,k) &
-              - (h(i,j-1,k)+h(i,j,k))*v(i,j,k))/(dy*2d0)  & ! d(hv)/dy
-            + spongeTimeScale(i,j,k)*(spongeH(i,j,k)-h(i,j,k)) ! forced relaxtion in the sponge regions.
+             - (h(i,j-1,k)+h(i,j,k))*v(i,j,k))/(dy*2d0)   ! d(hv)/dy
       end do
     end do
   end do
 
-  ! Make sure the dynamics are only happening in the wet grid points.
-  do k = 1, layers
-    dhdt(:, :, k) = dhdt(:, :, k) * wetmask
-  end do
-
-  call wrap_fields_3D(dhdt, nx, ny, layers)
-
   return
-end subroutine evaluate_dhdt
+end subroutine h_advec_1st_centered
 
 ! ---------------------------------------------------------------------------
 !> Calculate the tendency of zonal velocity for each of the active layers
