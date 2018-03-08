@@ -108,6 +108,7 @@ section_map = {
     "freesurfFac"          : "numerics",
     "thickness_error"      : "numerics",
     "debug_level"          : "numerics",
+    "hAdvecScheme"         : "numerics",
     "hmean"                : "model",
     "depthFile"            : "model",
     "H0"                   : "model",
