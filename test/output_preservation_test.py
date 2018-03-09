@@ -60,6 +60,13 @@ def assert_outputs_close(nx, ny, layers, rtol):
             plt.savefig('blessed_output.png')
             plt.close()
 
+            plt.figure()
+            plt.pcolormesh(ans[:,:,0] - good_ans[:,:,0], cmap='RdBu_r')
+            plt.colorbar()
+            plt.title('current - blessed')
+            plt.savefig('difference.png')
+            plt.close()
+
         assert relerr < rtol
 
 def assert_volume_conservation(nx,ny,layers,rtol):
@@ -286,6 +293,54 @@ def test_relative_wind():
                 exe=test_executable, wetMaskFile=[wetmask],
                 nx=nx, ny=ny, dx=dx, dy=dy)
         assert_outputs_close(nx, ny, layers, 3e-12)
+        assert_volume_conservation(nx, ny, layers, 1e-5)
+        assert_diagnostics_similar(['h', 'u', 'v'], 1e-10)
+
+def test_relative_wind_upwind_advection():
+    nx = 320
+    ny = 320
+    layers = 1
+    xlen = 1280e3
+    ylen = 1280e3
+    dx = xlen / nx
+    dy = ylen / ny
+
+    grid = aro.Grid(nx, ny, layers, dx, dy)
+
+    def wetmask(X, Y):
+        # water everywhere, doubly periodic
+        wetmask = np.ones(X.shape, dtype=np.float64)
+        return wetmask
+
+
+    def wind_x(X, Y):
+        rMx=300e3     # radius of circle where Max wind stress
+        r = np.sqrt((Y-640e3)**2 + (X-640e3)**2)
+        theta = np.arctan2(Y-640e3, X-640e3)
+        tau = np.sin(np.pi*r/rMx/2.)
+        tau_x = tau*np.sin(theta)
+        tau_x[r>2.*rMx] = 0
+
+        return tau_x
+
+    def wind_y(X, Y):
+        rMx=300e3     # radius of circle where Max wind stress
+        r = np.sqrt((Y-640e3)**2 + (X-640e3)**2)
+        theta = np.arctan2(Y-640e3, X-640e3)
+        tau = np.sin(np.pi*r/rMx/2.)
+        tau_y = -tau*np.cos(theta)
+        tau_y[r>2.*rMx] = 0
+        return tau_y
+
+    with working_directory(p.join(self_path, 
+        "relative_wind")):
+        drv.simulate(
+                initHfile=[400],
+                zonalWindFile=[wind_x], meridionalWindFile=[wind_y],
+                wind_mag_time_series_file=[0.08],
+                exe=test_executable, wetMaskFile=[wetmask],
+                nx=nx, ny=ny, dx=dx, dy=dy, hAdvecScheme=2)
+        assert_outputs_close(nx, ny, layers, 3e-11)
         assert_volume_conservation(nx, ny, layers, 1e-5)
         assert_diagnostics_similar(['h', 'u', 'v'], 1e-10)
 

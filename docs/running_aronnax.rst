@@ -87,3 +87,10 @@ The wetmask defines which grid points within the computational domain contain fl
 RelativeWind
 ------------
 If this is false, then the wind input file is given in N m\ :sup:`--2`. If true, then the wind input file is in m s\ :sup:`--1` and a quadratic drag law is used to accelerate the fluid with `Cd` as the quadratic drag coefficient. 
+
+hAdvecScheme
+------------
+`hAdvecScheme` is an integer that selects the advection scheme used for thickness in the continuity equation. Currently two options are implemented:
+
+- `hAdvecScheme` = 1 (default) uses a first-order centered stencil
+- `hAdvecScheme` = 2 uses a first-order upwind stencil

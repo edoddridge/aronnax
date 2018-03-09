@@ -72,6 +72,7 @@ program aronnax
   integer maxits
   double precision :: eps, freesurfFac, thickness_error
   integer          :: debug_level
+  integer          :: hAdvecScheme
   ! Model
   double precision :: hmean(layerwise_input_length)
   ! Switch for using n + 1/2 layer physics, or using n layer physics
@@ -124,7 +125,7 @@ program aronnax
   ! then hide the long unsightly code there.
 
   namelist /NUMERICS/ au, kh, kv, ar, botDrag, dt, slip, &
-      niter0, nTimeSteps, &
+      niter0, nTimeSteps, hAdvecScheme, &
       dumpFreq, avFreq, checkpointFreq, diagFreq, hmin, maxits, & 
       freesurfFac, eps, thickness_error, debug_level
 
@@ -153,6 +154,7 @@ program aronnax
   debug_level = 0
   niter0 = 0
   RelativeWind = .FALSE.
+  hAdvecScheme = 1
 
   au = 0d0
   ar = 0d0
@@ -288,7 +290,7 @@ program aronnax
       base_wind_x, base_wind_y, wind_mag_time_series, &
       spongeHTimeScale, spongeUTimeScale, spongeVTimeScale, &
       spongeH, spongeU, spongeV, &
-      nx, ny, layers, RedGrav, DumpWind, &
+      nx, ny, layers, RedGrav, hAdvecScheme, DumpWind, &
       RelativeWind, Cd, &
       MPI_COMM_WORLD, myid, num_procs, ilower, iupper, &
       hypre_grid)
@@ -308,7 +310,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
     base_wind_x, base_wind_y, wind_mag_time_series, &
     spongeHTimeScale, spongeUTimeScale, spongeVTimeScale, &
     spongeH, spongeU, spongeV, &
-    nx, ny, layers, RedGrav, DumpWind, &
+    nx, ny, layers, RedGrav, hAdvecScheme, DumpWind, &
     RelativeWind, Cd, &
     MPI_COMM_WORLD, myid, num_procs, ilower, iupper, &
     hypre_grid)
@@ -357,6 +359,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
   integer,          intent(in) :: nx, ny, layers
   ! Reduced gravity vs n-layer physics
   logical,          intent(in) :: RedGrav
+  integer,          intent(in) :: hAdvecScheme
   ! Whether to write computed wind in the output
   logical,          intent(in) :: DumpWind
   logical,          intent(in) :: RelativeWind
@@ -540,7 +543,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
         h, u, v, depth, &
         dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
         au, ar, botDrag, kh, kv, slip, &
-        RedGrav, g_vec, rho0, wind_x, wind_y, &
+        RedGrav, hAdvecScheme, g_vec, rho0, wind_x, wind_y, &
         RelativeWind, Cd, &
         spongeHTimeScale, spongeH, &
         spongeUTimeScale, spongeU, &
@@ -556,7 +559,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
         hhalf, uhalf, vhalf, depth, &
         dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
         au, ar, botDrag, kh, kv, slip, &
-        RedGrav, g_vec, rho0, wind_x, wind_y, &
+        RedGrav, hAdvecScheme, g_vec, rho0, wind_x, wind_y, &
         RelativeWind, Cd, &
         spongeHTimeScale, spongeH, &
         spongeUTimeScale, spongeU, &
@@ -587,7 +590,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
         h, u, v, depth, &
         dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
         au, ar, botDrag, kh, kv, slip, &
-        RedGrav, g_vec, rho0, wind_x, wind_y, &
+        RedGrav, hAdvecScheme, g_vec, rho0, wind_x, wind_y, &
         RelativeWind, Cd, &
         spongeHTimeScale, spongeH, &
         spongeUTimeScale, spongeU, &
@@ -603,7 +606,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
         hhalf, uhalf, vhalf, depth, &
         dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
         au, ar, botDrag, kh, kv, slip, &
-        RedGrav, g_vec, rho0, wind_x, wind_y, &
+        RedGrav, hAdvecScheme, g_vec, rho0, wind_x, wind_y, &
         RelativeWind, Cd, &
         spongeHTimeScale, spongeH, &
         spongeUTimeScale, spongeU, &
@@ -707,7 +710,7 @@ subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
     call state_derivative(dhdt, dudt, dvdt, h, u, v, depth, &
         dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
         au, ar, botDrag, kh, kv, slip, &
-        RedGrav, g_vec, rho0, wind_x, wind_y, &
+        RedGrav, hAdvecScheme, g_vec, rho0, wind_x, wind_y, &
         RelativeWind, Cd, &
         spongeHTimeScale, spongeH, &
         spongeUTimeScale, spongeU, &
@@ -821,7 +824,7 @@ end subroutine model_run
 subroutine state_derivative(dhdt, dudt, dvdt, h, u, v, depth, &
     dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
     au, ar, botDrag, kh, kv, slip, &
-    RedGrav, g_vec, rho0, wind_x, wind_y, &
+    RedGrav, hAdvecScheme, g_vec, rho0, wind_x, wind_y, &
     RelativeWind, Cd, &
     spongeHTimeScale, spongeH, &
     spongeUTimeScale, spongeU, &
@@ -848,6 +851,7 @@ subroutine state_derivative(dhdt, dudt, dvdt, h, u, v, depth, &
   double precision, intent(in) :: kh(layers), kv
   double precision, intent(in) :: slip
   logical,          intent(in) :: RedGrav
+  integer,          intent(in) :: hAdvecScheme
   double precision, intent(in) :: g_vec(layers)
   double precision, intent(in) :: rho0
   double precision, intent(in) :: wind_x(0:nx+1, 0:ny+1)
@@ -893,7 +897,7 @@ subroutine state_derivative(dhdt, dudt, dvdt, h, u, v, depth, &
 
   ! Calculate dhdt, dudt, dvdt at current time step
   call evaluate_dhdt(dhdt, h, u, v, kh, kv, dx, dy, nx, ny, layers, &
-      spongeHTimeScale, spongeH, wetmask, RedGrav)
+      spongeHTimeScale, spongeH, wetmask, RedGrav, hAdvecScheme, n)
 
   call evaluate_dudt(dudt, h, u, v, b, zeta, wind_x, wind_y, fu, au, ar, slip, &
       dx, dy, hfacN, hfacS, nx, ny, layers, rho0, RelativeWind, Cd, &
@@ -1358,7 +1362,7 @@ end subroutine evaluate_zeta
 !> Calculate the tendency of layer thickness for each of the active layers
 !! dh/dt is in the centre of each grid point.
 subroutine evaluate_dhdt(dhdt, h, u, v, kh, kv, dx, dy, nx, ny, layers, &
-    spongeTimeScale, spongeH, wetmask, RedGrav)
+    spongeTimeScale, spongeH, wetmask, RedGrav, hAdvecScheme, n)
   implicit none
 
   ! dhdt is evaluated at the centre of the grid box
@@ -1373,19 +1377,91 @@ subroutine evaluate_dhdt(dhdt, h, u, v, kh, kv, dx, dy, nx, ny, layers, &
   double precision, intent(in)  :: spongeH(0:nx+1, 0:ny+1, layers)
   double precision, intent(in)  :: wetmask(0:nx+1, 0:ny+1)
   logical, intent(in) :: RedGrav
+  integer, intent(in) :: hAdvecScheme
+  integer, intent(in) :: n
 
   integer i, j, k
   ! Thickness tendency due to thickness diffusion (equivalent to Gent
   ! McWilliams in a z coordinate model)
-  double precision dhdt_GM(0:nx+1, 0:ny+1, layers)
+  double precision dhdt_kh(0:nx+1, 0:ny+1, layers)
 
   ! Thickness tendency due to vertical diffusion of mass
-  double precision dhdt_vert_diff(0:nx+1, 0:ny+1, layers)
+  double precision dhdt_kv(0:nx+1, 0:ny+1, layers)
+
+  ! Thickness tendency due to thickness advection
+  double precision dhdt_advec(0:nx+1, 0:ny+1, layers)
+
+  ! Calculate tendency due to thickness diffusion (equivalent
+  ! to GM in z coordinate model with the same diffusivity).
+  dhdt_kh = 0d0
+
+  call dhdt_hor_diff(dhdt_kh, h, kh, dx, dy, nx, ny, layers, &
+    wetmask, RedGrav)
+
+  ! Calculate thickness tendency due to vertical diffusion
+  dhdt_kv = 0d0
+  call dhdt_vert_diff(dhdt_kv, h, kv, nx, ny, layers, RedGrav)
+
+
+  ! Calculate the thickness tendency due to the flow field
+  dhdt_advec = 0d0
+
+  if (hAdvecScheme .eq. 1) then
+    ! first-order centered
+    call h_advec_1_centered(dhdt_advec, h, u, v, dx, dy, nx, ny, layers)
+  else if (hAdvecScheme .eq. 2) then
+    ! first-order upwind
+    call h_advec_1_upwind(dhdt_advec, h, u, v, dx, dy, nx, ny, layers)
+  else
+    call clean_stop(n, .FALSE.)
+  end if
+
+  ! Now add these together, along with the sponge contribution
+  dhdt = 0d0
+
+  do k = 1, layers
+    do j = 1, ny
+      do i = 1, nx
+        dhdt(i,j,k) = &
+            dhdt_kh(i,j,k) & ! horizontal thickness diffusion
+            + dhdt_kv(i,j,k) & ! vetical thickness diffusion 
+            + dhdt_advec(i,j,k) & ! thickness advection
+            + spongeTimeScale(i,j,k)*(spongeH(i,j,k)-h(i,j,k)) ! forced relaxtion in the sponge regions.
+      end do
+    end do
+  end do
+
+  ! Make sure the dynamics are only happening in the wet grid points.
+  do k = 1, layers
+    dhdt(:, :, k) = dhdt(:, :, k) * wetmask
+  end do
+
+  call wrap_fields_3D(dhdt, nx, ny, layers)
+
+  return
+end subroutine evaluate_dhdt
+
+! ---------------------------------------------------------------------------
+!> Calculate the tendency of layer thickness for each of the active layers
+!! due to horizontal thickness diffusion
+subroutine dhdt_hor_diff(dhdt_GM, h, kh, dx, dy, nx, ny, layers, &
+    wetmask, RedGrav)
+  implicit none
+
+  ! dhdt is evaluated at the centre of the grid box
+  double precision, intent(out) :: dhdt_GM(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: h(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: kh(layers)
+  double precision, intent(in)  :: dx, dy
+  integer, intent(in) :: nx, ny, layers
+  double precision, intent(in)  :: wetmask(0:nx+1, 0:ny+1)
+  logical, intent(in) :: RedGrav
+
+  integer i, j, k
 
   ! Calculate tendency due to thickness diffusion (equivalent
   ! to GM in z coordinate model with the same diffusivity).
   dhdt_GM = 0d0
-  dhdt_vert_diff = 0d0
 
   ! Loop through all layers except lowest and calculate
   ! thickness tendency due to horizontal diffusive mass fluxes
@@ -1436,13 +1512,33 @@ subroutine evaluate_dhdt(dhdt, h, u, v, kh, kv, dx, dy, nx, ny, layers, &
     dhdt_GM(:,:,layers) = -sum(dhdt_GM(:,:,:layers-1), 3)
   end if
 
+  return
+end subroutine dhdt_hor_diff
+
+! ---------------------------------------------------------------------------
+!> Calculate the tendency of layer thickness for each of the active layers
+!! due to vertical thickness diffusion
+subroutine dhdt_vert_diff(dhdt_kv, h, kv, nx, ny, layers, RedGrav)
+  implicit none
+
+  ! dhdt is evaluated at the centre of the grid box
+  double precision, intent(out) :: dhdt_kv(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: h(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: kv
+  integer, intent(in) :: nx, ny, layers
+  logical, intent(in) :: RedGrav
+
+  integer i, j, k
+
+  dhdt_kv = 0d0
+
   ! calculate vertical diffusive mass fluxes
   ! only evaluate vertical mass diff flux if more than 1 layer, or reduced gravity
   if (layers .eq. 1) then
     if (RedGrav) then
       do j = 1, ny
         do i = 1, nx
-          dhdt_vert_diff(i,j,1) = kv/h(i,j,1)
+          dhdt_kv(i,j,1) = kv/h(i,j,1)
         end do
       end do
     end if
@@ -1452,11 +1548,11 @@ subroutine evaluate_dhdt(dhdt, h, u, v, kh, kv, dx, dy, nx, ny, layers, &
       do j = 1, ny
         do i = 1, nx
           if (k .eq. 1) then ! in top layer
-            dhdt_vert_diff(i,j,k) = kv/h(i,j,k) - kv/h(i,j,k+1)
+            dhdt_kv(i,j,k) = kv/h(i,j,k) - kv/h(i,j,k+1)
           else if (k .eq. layers) then ! bottom layer
-            dhdt_vert_diff(i,j,k) = kv/h(i,j,k) - kv/h(i,j,k-1)
+            dhdt_kv(i,j,k) = kv/h(i,j,k) - kv/h(i,j,k-1)
           else ! mid layer/s
-            dhdt_vert_diff(i,j,k) = 2d0*kv/h(i,j,k) -  &
+            dhdt_kv(i,j,k) = 2d0*kv/h(i,j,k) -  &
                 kv/h(i,j,k-1) - kv/h(i,j,k+1)
           end if
         end do
@@ -1464,34 +1560,89 @@ subroutine evaluate_dhdt(dhdt, h, u, v, kh, kv, dx, dy, nx, ny, layers, &
     end do
   end if
 
-  ! Now add this to the thickness tendency due to the flow field and
-  ! sponge regions
-  dhdt = 0d0
+  return
+end subroutine dhdt_vert_diff
+
+! ---------------------------------------------------------------------------
+!> Use a first-order centered advection scheme to calculate the advctive
+!! thickness tendency
+
+subroutine h_advec_1_centered(dhdt_advec, h, u, v, dx, dy, nx, ny, layers)
+  implicit none
+
+  ! dhdt is evaluated at the centre of the grid box
+  double precision, intent(out) :: dhdt_advec(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: h(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: u(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: v(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: dx, dy
+  integer, intent(in) :: nx, ny, layers
+
+  integer i, j, k
+
+  dhdt_advec = 0d0
 
   do k = 1, layers
     do j = 1, ny
       do i = 1, nx
-        dhdt(i,j,k) = &
-            dhdt_GM(i,j,k) & ! horizontal thickness diffusion
-            + dhdt_vert_diff(i,j,k) & ! vetical thickness diffusion 
+        dhdt_advec(i,j,k) = & 
             - ((h(i,j,k)+h(i+1,j,k))*u(i+1,j,k) &
-               - (h(i-1,j,k)+h(i,j,k))*u(i,j,k))/(dx*2d0) & ! d(hu)/dx
+             - (h(i-1,j,k)+h(i,j,k))*u(i,j,k))/(dx*2d0) & ! d(hu)/dx
             - ((h(i,j,k)+h(i,j+1,k))*v(i,j+1,k) &
-              - (h(i,j-1,k)+h(i,j,k))*v(i,j,k))/(dy*2d0)  & ! d(hv)/dy
-            + spongeTimeScale(i,j,k)*(spongeH(i,j,k)-h(i,j,k)) ! forced relaxtion in the sponge regions.
+             - (h(i,j-1,k)+h(i,j,k))*v(i,j,k))/(dy*2d0)   ! d(hv)/dy
       end do
     end do
   end do
 
-  ! Make sure the dynamics are only happening in the wet grid points.
+  return
+end subroutine h_advec_1_centered
+
+! ---------------------------------------------------------------------------
+!> Use a first-order upwind advection scheme to calculate the advctive
+!! thickness tendency
+
+subroutine h_advec_1_upwind(dhdt_advec, h, u, v, dx, dy, nx, ny, layers)
+  implicit none
+
+  ! dhdt is evaluated at the centre of the grid box
+  double precision, intent(out) :: dhdt_advec(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: h(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: u(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: v(0:nx+1, 0:ny+1, layers)
+  double precision, intent(in)  :: dx, dy
+  integer, intent(in) :: nx, ny, layers
+
+  integer i, j, k
+
+  dhdt_advec = 0d0
+
   do k = 1, layers
-    dhdt(:, :, k) = dhdt(:, :, k) * wetmask
+    do j = 1, ny
+      do i = 1, nx
+        dhdt_advec(i,j,k) = &
+            ! d(hu)/dx
+            ! u(i+1,j,k) point
+            - ( h(i+1,j,k)*(u(i+1,j,k) - abs(u(i+1,j,k)))/2d0 & ! u < 0
+              + h(i,j,k)*(u(i+1,j,k)   + abs(u(i+1,j,k)))/2d0 & ! u > 0
+              ! u(i,j,k) point
+              - (h(i,j,k)*(u(i,j,k)   - abs(u(i,j,k)))/2d0 & ! u < 0
+                + h(i-1,j,k)*(u(i,j,k) + abs(u(i,j,k)))/2d0) & ! u > 0
+              )/dx &
+
+            ! d(hv)/dx
+            ! v(i,j+1,k) point
+            - ( h(i,j+1,k)*(v(i,j+1,k) - abs(v(i,j+1,k)))/2d0 & ! v < 0
+              + h(i,j,k)*(v(i,j+1,k)   + abs(v(i,j+1,k)))/2d0 & ! v > 0
+              ! v(i,j,k) point
+              - ( h(i,j,k)*(v(i,j,k)   - abs(v(i,j,k)))/2d0 & ! v < 0
+                + h(i,j-1,k)*(v(i,j,k) + abs(v(i,j,k)))/2d0) & ! v > 0
+              )/dy
+      end do
+    end do
   end do
 
-  call wrap_fields_3D(dhdt, nx, ny, layers)
-
   return
-end subroutine evaluate_dhdt
+end subroutine h_advec_1_upwind
 
 ! ---------------------------------------------------------------------------
 !> Calculate the tendency of zonal velocity for each of the active layers
