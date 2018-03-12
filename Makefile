@@ -5,7 +5,7 @@ LIBS      = -L$(HYPRE_DIR)/lib -lHYPRE -lm
 
 src_dir = src/
 
-TEST_OPTS = -g -fprofile-arcs -ftest-coverage -O1 -fcheck=all -ffpe-trap=invalid,zero,overflow,underflow -Wuninitialized
+TEST_OPTS = -g -fprofile-arcs -ftest-coverage -O1 -fcheck=all -ffpe-trap=invalid,zero,overflow,underflow -Wuninitialized -Werror
 
 CORE_OPTS = -g -Ofast -fno-stack-arrays
 
