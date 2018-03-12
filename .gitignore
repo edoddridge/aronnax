@@ -2,6 +2,11 @@
 __pycache__/
 *.py[cod]
 *$py.class
+*.gcno
+*.gcda
+*.o
+*.mod
+*.dSYM
 
 
 # The Aronnax executable
