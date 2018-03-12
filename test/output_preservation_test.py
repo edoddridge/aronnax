@@ -37,37 +37,39 @@ def assert_outputs_close(nx, ny, layers, rtol):
     good_outfiles = sorted(glob.glob("good-output/*.0*"))
 
     # assert p.basename(outfiles) == p.basename(good_outfiles)
+    test_passes = True
     for i, outfile in enumerate(outfiles):
         ans = aro.interpret_raw_file(outfile, nx, ny, layers)
         good_ans = aro.interpret_raw_file(good_outfiles[i], nx, ny, layers)
         relerr = np.amax(array_relative_error(ans, good_ans))
         if (relerr >= rtol or np.isnan(relerr)):
-            print outfile
-            print ans
-            print good_ans
+            print "test failed at " + outfile
+            # print ans
+            # print good_ans
+            test_passes = False
 
             plt.figure()
             plt.pcolormesh(ans[:,:,0])
             plt.colorbar()
             plt.title(outfile)
-            plt.savefig('current_output.png')
+            plt.savefig('current_output_{0}.png'.format(outfile[12:]))
             plt.close()
 
             plt.figure()
             plt.pcolormesh(good_ans[:,:,0])
             plt.colorbar()
             plt.title(outfile)
-            plt.savefig('blessed_output.png')
+            plt.savefig('blessed_output_{0}.png'.format(outfile[12:]))
             plt.close()
 
             plt.figure()
             plt.pcolormesh(ans[:,:,0] - good_ans[:,:,0], cmap='RdBu_r')
             plt.colorbar()
-            plt.title('current - blessed')
-            plt.savefig('difference.png')
+            plt.title('current - blessed at {0}'.format(outfile[12:]))
+            plt.savefig('difference_{0}.png'.format(outfile[12:]))
             plt.close()
 
-        assert relerr < rtol
+    assert test_passes
 
 def assert_volume_conservation(nx,ny,layers,rtol):
     hfiles = sorted(glob.glob("output/snap.h.*"))
