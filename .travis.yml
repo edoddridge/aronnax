@@ -30,7 +30,6 @@ install:
   - pip install -e .
 
 script:
-  - mpif90 -Werror aronnax.f90 -cpp
   - pytest --cov=aronnax -k 'not Hypre'
   - codecov
   - pytest --cov=aronnax -k 'Hypre'
