@@ -20,8 +20,8 @@ module model_main
       base_wind_x, base_wind_y, wind_mag_time_series, &
       spongeHTimeScale, spongeUTimeScale, spongeVTimeScale, &
       spongeH, spongeU, spongeV, &
-      nx, ny, layers, RedGrav, hAdvecScheme, DumpWind, &
-      RelativeWind, Cd, &
+      nx, ny, layers, RedGrav, hAdvecScheme, TS_algorithm, AB_order, &
+      DumpWind, RelativeWind, Cd, &
       MPI_COMM_WORLD, myid, num_procs, ilower, iupper, &
       hypre_grid)
     implicit none
@@ -70,28 +70,24 @@ module model_main
     ! Reduced gravity vs n-layer physics
     logical,          intent(in) :: RedGrav
     integer,          intent(in) :: hAdvecScheme
+    integer,          intent(in) :: TS_algorithm
+    integer,          intent(in) :: AB_order
     ! Whether to write computed wind in the output
     logical,          intent(in) :: DumpWind
     logical,          intent(in) :: RelativeWind
     double precision,  intent(in) :: Cd
 
-    double precision :: dhdt(0:nx+1, 0:ny+1, layers)
-    double precision :: dhdtold(0:nx+1, 0:ny+1, layers)
-    double precision :: dhdtveryold(0:nx+1, 0:ny+1, layers)
+    double precision :: dhdt(0:nx+1, 0:ny+1, layers, AB_order)
     double precision :: h_new(0:nx+1, 0:ny+1, layers)
     ! for saving average fields
     double precision :: hav(0:nx+1, 0:ny+1, layers)
 
-    double precision :: dudt(0:nx+1, 0:ny+1, layers)
-    double precision :: dudtold(0:nx+1, 0:ny+1, layers)
-    double precision :: dudtveryold(0:nx+1, 0:ny+1, layers)
+    double precision :: dudt(0:nx+1, 0:ny+1, layers, AB_order)
     double precision :: u_new(0:nx+1, 0:ny+1, layers)
     ! for saving average fields
     double precision :: uav(0:nx+1, 0:ny+1, layers)
 
-    double precision :: dvdt(0:nx+1, 0:ny+1, layers)
-    double precision :: dvdtold(0:nx+1, 0:ny+1, layers)
-    double precision :: dvdtveryold(0:nx+1, 0:ny+1, layers)
+    double precision :: dvdt(0:nx+1, 0:ny+1, layers, AB_order)
     double precision :: v_new(0:nx+1, 0:ny+1, layers)
     ! for saving average fields
     double precision :: vav(0:nx+1, 0:ny+1, layers)
@@ -139,9 +135,6 @@ module model_main
 
     ! Time
     integer*8 :: start_time, last_report_time, cur_time
-
-    ! dummy variable for loading checkpoints
-    character(10)    :: num
 
 
     start_time = time()
@@ -236,102 +229,23 @@ module model_main
     !!!  Initialisation of the model STARTS HERE                            !!!
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     if (niter0 .eq. 0) then
-      ! Do two initial time steps with Runge-Kutta second-order.
-      ! These initialisation steps do NOT use or update the free surface.
-      !
-      ! ------------------------- negative 2 time step --------------------------
-      ! Code to work out dhdtveryold, dudtveryold and dvdtveryold
+
       n = 0
-      
-      call RK2(h_new, u_new, v_new, dhdtveryold, dudtveryold, dvdtveryold, &
-          h, u, v, depth, &
+      call initialise_tendencies(dhdt, dudt, dvdt, h, u, v, depth, &
           dx, dy, dt, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
           au, ar, botDrag, kh, kv, slip, &
-          RedGrav, hAdvecScheme, g_vec, rho0, wind_x, wind_y, &
+          RedGrav, hAdvecScheme, AB_order, g_vec, rho0, wind_x, wind_y, &
           RelativeWind, Cd, &
           spongeHTimeScale, spongeH, &
           spongeUTimeScale, spongeU, &
           spongeVTimeScale, spongeV, &
-          nx, ny, layers, n, debug_level)
-
-      ! Shuffle arrays: new -> present
-      ! Height and velocity fields
-      h = h_new
-      u = u_new
-      v = v_new
-
-
-      ! ------------------------- negative 1 time step --------------------------
-      ! Code to work out dhdtold, dudtold and dvdtold
-
-      call RK2(h_new, u_new, v_new, dhdtold, dudtold, dvdtold, &
-          h, u, v, depth, &
-          dx, dy, dt, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
-          au, ar, botDrag, kh, kv, slip, &
-          RedGrav, hAdvecScheme, g_vec, rho0, wind_x, wind_y, &
-          RelativeWind, Cd, &
-          spongeHTimeScale, spongeH, &
-          spongeUTimeScale, spongeU, &
-          spongeVTimeScale, spongeV, &
-          nx, ny, layers, n, debug_level)
-
-      ! Shuffle arrays: new -> present
-      ! Height and velocity fields
-      h = h_new
-      u = u_new
-      v = v_new
+          nx, ny, layers, debug_level)
 
     else if (niter0 .ne. 0) then
       n = niter0
 
-      ! load in the state and derivative arrays
-      write(num, '(i10.10)') niter0
-
-      open(unit=10, form='unformatted', file='checkpoints/h.'//num)
-      read(10) h
-      close(10)
-      open(unit=10, form='unformatted', file='checkpoints/u.'//num)
-      read(10) u
-      close(10)
-      open(unit=10, form='unformatted', file='checkpoints/v.'//num)
-      read(10) v
-      close(10)
-
-      open(unit=10, form='unformatted', file='checkpoints/dhdt.'//num)
-      read(10) dhdt
-      close(10)
-      open(unit=10, form='unformatted', file='checkpoints/dudt.'//num)
-      read(10) dudt
-      close(10)
-      open(unit=10, form='unformatted', file='checkpoints/dvdt.'//num)
-      read(10) dvdt
-      close(10)
-
-      open(unit=10, form='unformatted', file='checkpoints/dhdtold.'//num)
-      read(10) dhdtold
-      close(10)
-      open(unit=10, form='unformatted', file='checkpoints/dudtold.'//num)
-      read(10) dudtold
-      close(10)
-      open(unit=10, form='unformatted', file='checkpoints/dvdtold.'//num)
-      read(10) dvdtold
-      close(10)
-
-      open(unit=10, form='unformatted', file='checkpoints/dhdtveryold.'//num)
-      read(10) dhdtveryold
-      close(10)
-      open(unit=10, form='unformatted', file='checkpoints/dudtveryold.'//num)
-      read(10) dudtveryold
-      close(10)
-      open(unit=10, form='unformatted', file='checkpoints/dvdtveryold.'//num)
-      read(10) dvdtveryold
-      close(10)
-
-      if (.not. RedGrav) then
-        open(unit=10, form='unformatted', file='checkpoints/eta.'//num)
-        read(10) eta
-        close(10)
-      end if
+      call load_checkpoint_files(dhdt, dudt, dvdt, h, u, v, eta, &
+            RedGrav, niter0, nx, ny, layers, AB_order)
 
     end if
 
@@ -358,23 +272,17 @@ module model_main
       wind_x = base_wind_x*wind_mag_time_series(n-niter0)
       wind_y = base_wind_y*wind_mag_time_series(n-niter0)
 
-      call state_derivative(dhdt, dudt, dvdt, h, u, v, depth, &
-          dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
+      call timestep(h_new, u_new, v_new, dhdt, dudt, dvdt, &
+          h, u, v, depth, &
+          dx, dy, dt, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
           au, ar, botDrag, kh, kv, slip, &
-          RedGrav, hAdvecScheme, g_vec, rho0, wind_x, wind_y, &
+          RedGrav, hAdvecScheme, TS_algorithm, AB_order, &
+          g_vec, rho0, wind_x, wind_y, &
           RelativeWind, Cd, &
           spongeHTimeScale, spongeH, &
           spongeUTimeScale, spongeU, &
           spongeVTimeScale, spongeV, &
           nx, ny, layers, n, debug_level)
-
-
-      ! Use dh/dt, du/dt and dv/dt to step h, u and v forward in time with
-      ! the Adams-Bashforth third order linear multistep method
-
-      u_new = u + dt*(23d0*dudt - 16d0*dudtold + 5d0*dudtveryold)/12d0
-      v_new = v + dt*(23d0*dvdt - 16d0*dvdtold + 5d0*dvdtveryold)/12d0
-      h_new = h + dt*(23d0*dhdt - 16d0*dhdtold + 5d0*dhdtveryold)/12d0
 
       ! Apply the boundary conditions
       call apply_boundary_conditions(u_new, hfacW, wetmask, nx, ny, layers)
@@ -403,6 +311,10 @@ module model_main
         call wrap_fields_2D(etanew, nx, ny)
       end if    
 
+      ! Apply the boundary conditions
+      call apply_boundary_conditions(u_new, hfacW, wetmask, nx, ny, layers)
+      call apply_boundary_conditions(v_new, hfacS, wetmask, nx, ny, layers)
+
       ! Accumulate average fields
       if (avwrite .ne. 0) then
         hav = hav + h_new
@@ -422,22 +334,8 @@ module model_main
         eta = etanew
       end if
 
-      ! Tendencies (old -> very old)
-      dhdtveryold = dhdtold
-      dudtveryold = dudtold
-      dvdtveryold = dvdtold
-
-      ! Tendencies (current -> old)
-      dudtold = dudt
-      dvdtold = dvdt
-      dhdtold = dhdt
-
-      ! Now have new fields in main arrays and old fields in very old arrays
-
       call maybe_dump_output(h, hav, u, uav, v, vav, eta, etaav, &
-          dudt, dvdt, dhdt, &
-          dudtold, dvdtold, dhdtold, &
-          dudtveryold, dvdtveryold, dhdtveryold, &
+          dudt, dvdt, dhdt, AB_order, &
           wind_x, wind_y, nx, ny, layers, &
           n, nwrite, avwrite, checkpointwrite, diagwrite, &
           RedGrav, DumpWind, debug_level)
@@ -459,9 +357,7 @@ module model_main
 
     ! save checkpoint at end of every simulation
     call maybe_dump_output(h, hav, u, uav, v, vav, eta, etaav, &
-        dudt, dvdt, dhdt, &
-        dudtold, dvdtold, dhdtold, &
-        dudtveryold, dvdtveryold, dhdtveryold, &
+        dudt, dvdt, dhdt, AB_order, &
         wind_x, wind_y, nx, ny, layers, &
         n, n, n, n-1, n, &
         RedGrav, DumpWind, 0)

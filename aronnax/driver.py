@@ -109,6 +109,7 @@ section_map = {
     "thickness_error"      : "numerics",
     "debug_level"          : "numerics",
     "hAdvecScheme"         : "numerics",
+    "TS_algorithm"         : "numerics",
     "hmean"                : "model",
     "depthFile"            : "model",
     "H0"                   : "model",
