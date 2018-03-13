@@ -3,6 +3,7 @@ module model_main
   use boundaries
   use barotropic_mode
   use state_deriv
+  use time_stepping
   use enforce_thickness
   implicit none
 
@@ -77,27 +78,21 @@ module model_main
     double precision :: dhdt(0:nx+1, 0:ny+1, layers)
     double precision :: dhdtold(0:nx+1, 0:ny+1, layers)
     double precision :: dhdtveryold(0:nx+1, 0:ny+1, layers)
-    double precision :: hnew(0:nx+1, 0:ny+1, layers)
-    ! for initialisation
-    double precision :: hhalf(0:nx+1, 0:ny+1, layers)
+    double precision :: h_new(0:nx+1, 0:ny+1, layers)
     ! for saving average fields
     double precision :: hav(0:nx+1, 0:ny+1, layers)
 
     double precision :: dudt(0:nx+1, 0:ny+1, layers)
     double precision :: dudtold(0:nx+1, 0:ny+1, layers)
     double precision :: dudtveryold(0:nx+1, 0:ny+1, layers)
-    double precision :: unew(0:nx+1, 0:ny+1, layers)
-    ! for initialisation
-    double precision :: uhalf(0:nx+1, 0:ny+1, layers)
+    double precision :: u_new(0:nx+1, 0:ny+1, layers)
     ! for saving average fields
     double precision :: uav(0:nx+1, 0:ny+1, layers)
 
     double precision :: dvdt(0:nx+1, 0:ny+1, layers)
     double precision :: dvdtold(0:nx+1, 0:ny+1, layers)
     double precision :: dvdtveryold(0:nx+1, 0:ny+1, layers)
-    double precision :: vnew(0:nx+1, 0:ny+1, layers)
-    ! for initialisation
-    double precision :: vhalf(0:nx+1, 0:ny+1, layers)
+    double precision :: v_new(0:nx+1, 0:ny+1, layers)
     ! for saving average fields
     double precision :: vav(0:nx+1, 0:ny+1, layers)
 
@@ -248,9 +243,9 @@ module model_main
       ! Code to work out dhdtveryold, dudtveryold and dvdtveryold
       n = 0
       
-      call state_derivative(dhdtveryold, dudtveryold, dvdtveryold, &
+      call RK2(h_new, u_new, v_new, dhdtveryold, dudtveryold, dvdtveryold, &
           h, u, v, depth, &
-          dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
+          dx, dy, dt, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
           au, ar, botDrag, kh, kv, slip, &
           RedGrav, hAdvecScheme, g_vec, rho0, wind_x, wind_y, &
           RelativeWind, Cd, &
@@ -259,45 +254,19 @@ module model_main
           spongeVTimeScale, spongeV, &
           nx, ny, layers, n, debug_level)
 
-      ! Calculate the values at half the time interval with Forward Euler
-      hhalf = h+0.5d0*dt*dhdtveryold
-      uhalf = u+0.5d0*dt*dudtveryold
-      vhalf = v+0.5d0*dt*dvdtveryold
+      ! Shuffle arrays: new -> present
+      ! Height and velocity fields
+      h = h_new
+      u = u_new
+      v = v_new
 
-      call state_derivative(dhdtveryold, dudtveryold, dvdtveryold, &
-          hhalf, uhalf, vhalf, depth, &
-          dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
-          au, ar, botDrag, kh, kv, slip, &
-          RedGrav, hAdvecScheme, g_vec, rho0, wind_x, wind_y, &
-          RelativeWind, Cd, &
-          spongeHTimeScale, spongeH, &
-          spongeUTimeScale, spongeU, &
-          spongeVTimeScale, spongeV, &
-          nx, ny, layers, n, debug_level)
-
-      ! These are the values to be stored in the 'veryold' variables ready
-      ! to start the proper model run.
-
-      ! Calculate h, u, v with these tendencies
-      h = h + dt*dhdtveryold
-      u = u + dt*dudtveryold
-      v = v + dt*dvdtveryold
-
-      ! Apply the boundary conditions
-      call apply_boundary_conditions(u, hfacW, wetmask, nx, ny, layers)
-      call apply_boundary_conditions(v, hfacS, wetmask, nx, ny, layers)
-
-      ! Wrap fields around for periodic simulations
-      call wrap_fields_3D(u, nx, ny, layers)
-      call wrap_fields_3D(v, nx, ny, layers)
-      call wrap_fields_3D(h, nx, ny, layers)
 
       ! ------------------------- negative 1 time step --------------------------
       ! Code to work out dhdtold, dudtold and dvdtold
 
-      call state_derivative(dhdtold, dudtold, dvdtold, &
+      call RK2(h_new, u_new, v_new, dhdtold, dudtold, dvdtold, &
           h, u, v, depth, &
-          dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
+          dx, dy, dt, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
           au, ar, botDrag, kh, kv, slip, &
           RedGrav, hAdvecScheme, g_vec, rho0, wind_x, wind_y, &
           RelativeWind, Cd, &
@@ -306,38 +275,11 @@ module model_main
           spongeVTimeScale, spongeV, &
           nx, ny, layers, n, debug_level)
 
-      ! Calculate the values at half the time interval with Forward Euler
-      hhalf = h+0.5d0*dt*dhdtold
-      uhalf = u+0.5d0*dt*dudtold
-      vhalf = v+0.5d0*dt*dvdtold
-
-      call state_derivative(dhdtold, dudtold, dvdtold, &
-          hhalf, uhalf, vhalf, depth, &
-          dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
-          au, ar, botDrag, kh, kv, slip, &
-          RedGrav, hAdvecScheme, g_vec, rho0, wind_x, wind_y, &
-          RelativeWind, Cd, &
-          spongeHTimeScale, spongeH, &
-          spongeUTimeScale, spongeU, &
-          spongeVTimeScale, spongeV, &
-          nx, ny, layers, n, debug_level)
-
-      ! These are the values to be stored in the 'old' variables ready to start
-      ! the proper model run.
-
-      ! Calculate h, u, v with these tendencies
-      h = h + dt*dhdtold
-      u = u + dt*dudtold
-      v = v + dt*dvdtold
-
-      ! Apply the boundary conditions
-      call apply_boundary_conditions(u, hfacW, wetmask, nx, ny, layers)
-      call apply_boundary_conditions(v, hfacS, wetmask, nx, ny, layers)
-
-      ! Wrap fields around for periodic simulations
-      call wrap_fields_3D(u, nx, ny, layers)
-      call wrap_fields_3D(v, nx, ny, layers)
-      call wrap_fields_3D(h, nx, ny, layers)
+      ! Shuffle arrays: new -> present
+      ! Height and velocity fields
+      h = h_new
+      u = u_new
+      v = v_new
 
     else if (niter0 .ne. 0) then
       n = niter0
@@ -430,17 +372,17 @@ module model_main
       ! Use dh/dt, du/dt and dv/dt to step h, u and v forward in time with
       ! the Adams-Bashforth third order linear multistep method
 
-      unew = u + dt*(23d0*dudt - 16d0*dudtold + 5d0*dudtveryold)/12d0
-      vnew = v + dt*(23d0*dvdt - 16d0*dvdtold + 5d0*dvdtveryold)/12d0
-      hnew = h + dt*(23d0*dhdt - 16d0*dhdtold + 5d0*dhdtveryold)/12d0
+      u_new = u + dt*(23d0*dudt - 16d0*dudtold + 5d0*dudtveryold)/12d0
+      v_new = v + dt*(23d0*dvdt - 16d0*dvdtold + 5d0*dvdtveryold)/12d0
+      h_new = h + dt*(23d0*dhdt - 16d0*dhdtold + 5d0*dhdtveryold)/12d0
 
       ! Apply the boundary conditions
-      call apply_boundary_conditions(unew, hfacW, wetmask, nx, ny, layers)
-      call apply_boundary_conditions(vnew, hfacS, wetmask, nx, ny, layers)
+      call apply_boundary_conditions(u_new, hfacW, wetmask, nx, ny, layers)
+      call apply_boundary_conditions(v_new, hfacS, wetmask, nx, ny, layers)
 
       ! Do the isopycnal layer physics
       if (.not. RedGrav) then
-        call barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
+        call barotropic_correction(h_new, u_new, v_new, eta, etanew, depth, a, &
             dx, dy, wetmask, hfacW, hfacS, dt, &
             maxits, eps, rjac, freesurfFac, thickness_error, &
             debug_level, g_vec, nx, ny, layers, n, &
@@ -451,21 +393,21 @@ module model_main
 
 
       ! Stop layers from getting too thin
-      call enforce_minimum_layer_thickness(hnew, hmin, nx, ny, layers, n)
+      call enforce_minimum_layer_thickness(h_new, hmin, nx, ny, layers, n)
 
       ! Wrap fields around for periodic simulations
-      call wrap_fields_3D(unew, nx, ny, layers)
-      call wrap_fields_3D(vnew, nx, ny, layers)
-      call wrap_fields_3D(hnew, nx, ny, layers)
+      call wrap_fields_3D(u_new, nx, ny, layers)
+      call wrap_fields_3D(v_new, nx, ny, layers)
+      call wrap_fields_3D(h_new, nx, ny, layers)
       if (.not. RedGrav) then
         call wrap_fields_2D(etanew, nx, ny)
       end if    
 
       ! Accumulate average fields
       if (avwrite .ne. 0) then
-        hav = hav + hnew
-        uav = uav + unew
-        vav = vav + vnew
+        hav = hav + h_new
+        uav = uav + u_new
+        vav = vav + v_new
         if (.not. RedGrav) then
           etaav = eta + etanew
         end if
@@ -473,9 +415,9 @@ module model_main
 
       ! Shuffle arrays: old -> very old,  present -> old, new -> present
       ! Height and velocity fields
-      h = hnew
-      u = unew
-      v = vnew
+      h = h_new
+      u = u_new
+      v = v_new
       if (.not. RedGrav) then
         eta = etanew
       end if
