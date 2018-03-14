@@ -94,3 +94,16 @@ hAdvecScheme
 
 - `hAdvecScheme` = 1 (default) uses a first-order centered stencil
 - `hAdvecScheme` = 2 uses a first-order upwind stencil
+
+TS_algorithm
+------------
+`TS_algorithm` is an integer that selects the timestepping algorithm used by the model. The default behaviour is to use a third-order Adams-Bashforth scheme (`TS_algorithm` = 3), with the initialisation performed by a second-order Runge-Kutta method (`TS_algorithm = 12).
+
+ - TS_algorithm = 1:  Forward Euler
+ - TS_algorithm = 2: Second-order Adams-Bashfort
+ - TS_algorithm = 3: Third-order Adams-Bashfort (default)
+ - TS_algorithm = 4: Fourth-order Adams-Bashfort
+ - TS_algorithm = 5: Fifth-order Adams-Bashfort
+ - TS_algorithm = 12: Second-order Runge-Kutta
+ - TS_algorithm = 13: Third-order Runge-Kutta (not implemented)
+ - TS_algorithm = 14: Fourth-order Runge-Kutta (not implemented)
