@@ -9,9 +9,7 @@ module io
   !> Write output if it's time
 
   subroutine maybe_dump_output(h, hav, u, uav, v, vav, eta, etaav, &
-          dudt, dvdt, dhdt, &
-          dudtold, dvdtold, dhdtold, &
-          dudtveryold, dvdtveryold, dhdtveryold, &
+          dudt, dvdt, dhdt, AB_order, &
           wind_x, wind_y, nx, ny, layers, &
           n, nwrite, avwrite, checkpointwrite, diagwrite, &
           RedGrav, DumpWind, debug_level)
@@ -25,15 +23,10 @@ module io
     double precision, intent(inout) :: vav(0:nx+1, 0:ny+1, layers)
     double precision, intent(in)    :: eta(0:nx+1, 0:ny+1)
     double precision, intent(inout) :: etaav(0:nx+1, 0:ny+1)
-    double precision, intent(in)    :: dudt(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)    :: dvdt(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)    :: dhdt(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)    :: dudtold(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)    :: dvdtold(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)    :: dhdtold(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)    :: dudtveryold(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)    :: dvdtveryold(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)    :: dhdtveryold(0:nx+1, 0:ny+1, layers)
+    double precision, intent(in)    :: dudt(0:nx+1, 0:ny+1, layers, AB_order)
+    double precision, intent(in)    :: dvdt(0:nx+1, 0:ny+1, layers, AB_order)
+    double precision, intent(in)    :: dhdt(0:nx+1, 0:ny+1, layers, AB_order)
+    integer,          intent(in)    :: AB_order
     double precision, intent(in)    :: wind_x(0:nx+1, 0:ny+1)
     double precision, intent(in)    :: wind_y(0:nx+1, 0:ny+1)
     integer,          intent(in)    :: nx, ny, layers, n
@@ -76,11 +69,11 @@ module io
       end if
 
       if (debug_level .ge. 1) then
-        call write_output_3d(dhdt, nx, ny, layers, 0, 0, &
+        call write_output_3d(dhdt(:,:,:,1), nx, ny, layers, 0, 0, &
           n, 'output/debug.dhdt.')
-        call write_output_3d(dudt, nx, ny, layers, 1, 0, &
+        call write_output_3d(dudt(:,:,:,1), nx, ny, layers, 1, 0, &
           n, 'output/debug.dudt.')
-        call write_output_3d(dvdt, nx, ny, layers, 0, 1, &
+        call write_output_3d(dvdt(:,:,:,1), nx, ny, layers, 0, 1, &
           n, 'output/debug.dvdt.')
       end if
 
@@ -140,36 +133,22 @@ module io
     if (checkpointwrite .eq. 0) then
       ! not saving checkpoints, so move on
     else if (mod(n-1, checkpointwrite) .eq. 0) then
-      call write_checkpoint_output(h, nx, ny, layers, &
+      call write_checkpoint_output(h, nx, ny, layers, 1, &
       n, 'checkpoints/h.')
-      call write_checkpoint_output(u, nx, ny, layers, &
+      call write_checkpoint_output(u, nx, ny, layers, 1, &
       n, 'checkpoints/u.')
-      call write_checkpoint_output(v, nx, ny, layers, &
+      call write_checkpoint_output(v, nx, ny, layers, 1, &
       n, 'checkpoints/v.')
 
-      call write_checkpoint_output(dhdt, nx, ny, layers, &
+      call write_checkpoint_output(dhdt, nx, ny, layers, AB_order, &
         n, 'checkpoints/dhdt.')
-      call write_checkpoint_output(dudt, nx, ny, layers, &
+      call write_checkpoint_output(dudt, nx, ny, layers, AB_order, &
         n, 'checkpoints/dudt.')
-      call write_checkpoint_output(dvdt, nx, ny, layers, &
+      call write_checkpoint_output(dvdt, nx, ny, layers, AB_order, &
         n, 'checkpoints/dvdt.')
 
-      call write_checkpoint_output(dhdtold, nx, ny, layers, &
-        n, 'checkpoints/dhdtold.')
-      call write_checkpoint_output(dudtold, nx, ny, layers, &
-        n, 'checkpoints/dudtold.')
-      call write_checkpoint_output(dvdtold, nx, ny, layers, &
-        n, 'checkpoints/dvdtold.')
-
-      call write_checkpoint_output(dhdtveryold, nx, ny, layers, &
-        n, 'checkpoints/dhdtveryold.')
-      call write_checkpoint_output(dudtveryold, nx, ny, layers, &
-        n, 'checkpoints/dudtveryold.')
-      call write_checkpoint_output(dvdtveryold, nx, ny, layers, &
-        n, 'checkpoints/dvdtveryold.')
-
       if (.not. RedGrav) then
-        call write_checkpoint_output(eta, nx, ny, 1, &
+        call write_checkpoint_output(eta, nx, ny, 1, 1, &
           n, 'checkpoints/eta.')
       end if
 
@@ -343,12 +322,12 @@ module io
   !-----------------------------------------------------------------
   !> Write snapshot output of 3d field
 
-  subroutine write_checkpoint_output(array, nx, ny, layers, &
+  subroutine write_checkpoint_output(array, nx, ny, layers, AB_order, &
       n, name)
     implicit none
 
-    double precision, intent(in) :: array(0:nx+1, 0:ny+1, layers)
-    integer,          intent(in) :: nx, ny, layers
+    double precision, intent(in) :: array(0:nx+1, 0:ny+1, layers, AB_order)
+    integer,          intent(in) :: nx, ny, layers, AB_order
     integer,          intent(in) :: n
     character(*),     intent(in) :: name
 
@@ -364,6 +343,58 @@ module io
 
     return
   end subroutine write_checkpoint_output
+
+  ! ---------------------------------------------------------------------------
+  !> Load in checkpoint files when restarting a simulation
+
+  subroutine load_checkpoint_files(dhdt, dudt, dvdt, h, u, v, eta, &
+            RedGrav, niter0, nx, ny, layers, AB_order)
+
+    double precision, intent(out) :: dhdt(0:nx+1, 0:ny+1, layers, AB_order)
+    double precision, intent(out) :: dudt(0:nx+1, 0:ny+1, layers, AB_order)
+    double precision, intent(out) :: dvdt(0:nx+1, 0:ny+1, layers, AB_order)
+    double precision, intent(out) :: h(0:nx+1, 0:ny+1, layers)
+    double precision, intent(out) :: u(0:nx+1, 0:ny+1, layers)
+    double precision, intent(out) :: v(0:nx+1, 0:ny+1, layers)
+    double precision, intent(out) :: eta(0:nx+1, 0:ny+1)
+    logical,          intent(in)  :: RedGrav
+    integer,          intent(in) :: niter0
+    integer,          intent(in) :: nx, ny, layers, AB_order
+
+    ! dummy variable for loading checkpoints
+    character(10)    :: num
+
+    ! load in the state and derivative arrays
+    write(num, '(i10.10)') niter0
+
+    open(unit=10, form='unformatted', file='checkpoints/h.'//num)
+    read(10) h
+    close(10)
+    open(unit=10, form='unformatted', file='checkpoints/u.'//num)
+    read(10) u
+    close(10)
+    open(unit=10, form='unformatted', file='checkpoints/v.'//num)
+    read(10) v
+    close(10)
+
+    open(unit=10, form='unformatted', file='checkpoints/dhdt.'//num)
+    read(10) dhdt
+    close(10)
+    open(unit=10, form='unformatted', file='checkpoints/dudt.'//num)
+    read(10) dudt
+    close(10)
+    open(unit=10, form='unformatted', file='checkpoints/dvdt.'//num)
+    read(10) dvdt
+    close(10)
+
+    if (.not. RedGrav) then
+      open(unit=10, form='unformatted', file='checkpoints/eta.'//num)
+      read(10) eta
+      close(10)
+    end if
+
+  end subroutine load_checkpoint_files
+
 
   !-----------------------------------------------------------------
   !> Write snapshot output of 2d field

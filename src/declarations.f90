@@ -40,6 +40,9 @@ module declarations
   double precision :: eps, freesurfFac, thickness_error
   integer          :: debug_level
   integer          :: hAdvecScheme
+  integer          :: TS_algorithm
+  integer          :: AB_order
+
   ! Model
   double precision :: hmean(layerwise_input_length)
   ! Switch for using n + 1/2 layer physics, or using n layer physics

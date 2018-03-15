@@ -43,7 +43,7 @@ program aronnax
   ! then hide the long unsightly code there.
 
   namelist /NUMERICS/ au, kh, kv, ar, botDrag, dt, slip, &
-      niter0, nTimeSteps, hAdvecScheme, &
+      niter0, nTimeSteps, hAdvecScheme, TS_algorithm, &
       dumpFreq, avFreq, checkpointFreq, diagFreq, hmin, maxits, & 
       freesurfFac, eps, thickness_error, debug_level
 
@@ -65,7 +65,8 @@ program aronnax
       DumpWind, wind_mag_time_series_file
 
   ! Set default values here
-  ! io defualt frequencis
+
+  ! io default frequencies
   dumpFreq = 1d9
   avFreq = 0d0
   checkpointFreq = 0d0
@@ -80,8 +81,11 @@ program aronnax
   ! use N/m^2
   RelativeWind = .FALSE.
 
-  ! use first-order centered differencing
+  ! use first-order centred differencing
   hAdvecScheme = 1
+
+  ! use third-order AB time stepping
+  TS_algorithm = 3
 
   ! No viscosity or diffusion
   au = 0d0
@@ -100,6 +104,11 @@ program aronnax
   read(unit=8, nml=INITIAL_CONDITIONS)
   read(unit=8, nml=EXTERNAL_FORCING)
   close(unit=8)
+
+
+  ! set timestepping order for linear multi-step methods
+  ! based on TS_algorithm
+  call set_AB_order(TS_algorithm, AB_order)
 
 
   ! optionally include the MPI code for parallel runs with external
@@ -218,8 +227,8 @@ program aronnax
       base_wind_x, base_wind_y, wind_mag_time_series, &
       spongeHTimeScale, spongeUTimeScale, spongeVTimeScale, &
       spongeH, spongeU, spongeV, &
-      nx, ny, layers, RedGrav, hAdvecScheme, DumpWind, &
-      RelativeWind, Cd, &
+      nx, ny, layers, RedGrav, hAdvecScheme, TS_algorithm, AB_order, &
+      DumpWind, RelativeWind, Cd, &
       MPI_COMM_WORLD, myid, num_procs, ilower, iupper, &
       hypre_grid)
 
