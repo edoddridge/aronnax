@@ -68,6 +68,7 @@ module time_stepping
           nx, ny, layers, debug_level)
     implicit none
 
+    integer,          intent(in)  :: AB_order
     double precision, intent(out) :: dhdt(0:nx+1, 0:ny+1, layers, AB_order)
     double precision, intent(out) :: dudt(0:nx+1, 0:ny+1, layers, AB_order)
     double precision, intent(out) :: dvdt(0:nx+1, 0:ny+1, layers, AB_order)
@@ -88,7 +89,6 @@ module time_stepping
     double precision, intent(in) :: slip
     logical,          intent(in) :: RedGrav
     integer,          intent(in) :: hAdvecScheme
-    integer,          intent(in) :: AB_order
     double precision, intent(in) :: g_vec(layers)
     double precision, intent(in) :: rho0
     double precision, intent(in) :: wind_x(0:nx+1, 0:ny+1)
@@ -167,6 +167,7 @@ module time_stepping
     implicit none
 
 
+    integer,          intent(in)    :: hAdvecScheme, TS_algorithm, AB_order
     double precision, intent(out)   :: h_new(0:nx+1, 0:ny+1, layers)
     double precision, intent(out)   :: u_new(0:nx+1, 0:ny+1, layers)
     double precision, intent(out)   :: v_new(0:nx+1, 0:ny+1, layers)
@@ -189,7 +190,6 @@ module time_stepping
     double precision, intent(in)    :: kh(layers), kv
     double precision, intent(in)    :: slip
     logical,          intent(in)    :: RedGrav
-    integer,          intent(in)    :: hAdvecScheme, TS_algorithm, AB_order
     double precision, intent(in)    :: g_vec(layers)
     double precision, intent(in)    :: rho0
     double precision, intent(in)    :: wind_x(0:nx+1, 0:ny+1)

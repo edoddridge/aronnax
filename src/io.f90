@@ -15,6 +15,7 @@ module io
           RedGrav, DumpWind, debug_level)
     implicit none
 
+    integer,          intent(in)    :: AB_order
     double precision, intent(in)    :: h(0:nx+1, 0:ny+1, layers)
     double precision, intent(inout) :: hav(0:nx+1, 0:ny+1, layers)
     double precision, intent(in)    :: u(0:nx+1, 0:ny+1, layers)
@@ -26,7 +27,6 @@ module io
     double precision, intent(in)    :: dudt(0:nx+1, 0:ny+1, layers, AB_order)
     double precision, intent(in)    :: dvdt(0:nx+1, 0:ny+1, layers, AB_order)
     double precision, intent(in)    :: dhdt(0:nx+1, 0:ny+1, layers, AB_order)
-    integer,          intent(in)    :: AB_order
     double precision, intent(in)    :: wind_x(0:nx+1, 0:ny+1)
     double precision, intent(in)    :: wind_y(0:nx+1, 0:ny+1)
     integer,          intent(in)    :: nx, ny, layers, n
@@ -326,8 +326,8 @@ module io
       n, name)
     implicit none
 
-    double precision, intent(in) :: array(0:nx+1, 0:ny+1, layers, AB_order)
     integer,          intent(in) :: nx, ny, layers, AB_order
+    double precision, intent(in) :: array(0:nx+1, 0:ny+1, layers, AB_order)
     integer,          intent(in) :: n
     character(*),     intent(in) :: name
 
@@ -350,6 +350,7 @@ module io
   subroutine load_checkpoint_files(dhdt, dudt, dvdt, h, u, v, eta, &
             RedGrav, niter0, nx, ny, layers, AB_order)
 
+    integer,          intent(in)  :: nx, ny, layers, AB_order
     double precision, intent(out) :: dhdt(0:nx+1, 0:ny+1, layers, AB_order)
     double precision, intent(out) :: dudt(0:nx+1, 0:ny+1, layers, AB_order)
     double precision, intent(out) :: dvdt(0:nx+1, 0:ny+1, layers, AB_order)
@@ -358,8 +359,7 @@ module io
     double precision, intent(out) :: v(0:nx+1, 0:ny+1, layers)
     double precision, intent(out) :: eta(0:nx+1, 0:ny+1)
     logical,          intent(in)  :: RedGrav
-    integer,          intent(in) :: niter0
-    integer,          intent(in) :: nx, ny, layers, AB_order
+    integer,          intent(in)  :: niter0
 
     ! dummy variable for loading checkpoints
     character(10)    :: num

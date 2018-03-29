@@ -137,7 +137,8 @@ module model_main
     integer*8 :: start_time, last_report_time, cur_time
 
 
-    start_time = time()
+    call TIME(start_time)
+
     if (RedGrav) then
       print "(A, I0, A, I0, A, I0, A, I0, A)", &
           "Running a reduced-gravity configuration of size ", &
@@ -255,7 +256,7 @@ module model_main
     ! - The model then solves for the tendencies at the current step
     !   before solving for the fields at the next time step.
 
-    cur_time = time()
+    call TIME(cur_time)
     if (cur_time - start_time .eq. 1) then
       print "(A)", "Initialized in 1 second."
     else
@@ -341,7 +342,7 @@ module model_main
           RedGrav, DumpWind, debug_level)
 
 
-      cur_time = time()
+      call TIME(cur_time)
       if (cur_time - last_report_time > 3) then
         ! Three seconds passed since last report
         last_report_time = cur_time
@@ -351,7 +352,7 @@ module model_main
 
     end do
 
-    cur_time = time()
+    call TIME(cur_time)
     print "(A, I0, A, I0, A)", "Run finished at time step ", &
         n, ", in ", cur_time - start_time, " seconds."
 
