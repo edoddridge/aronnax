@@ -6,7 +6,7 @@ Benchmarking
 Aronnax runs in two different modes. These two modes have
 substantially different runtimes due to the equations being solved.
 
-These benchmarks are run on a single processor.
+These benchmarks are run on a single processor and can be reproduced by running the `benchmark.py` script in the `benchmarks/` directory.
 
 
 Reduced gravity mode
