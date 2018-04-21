@@ -16,6 +16,7 @@ before_install:
   - sudo apt-get install openmpi-bin
   - sudo apt-get install imagemagick
   - pip install scipy
+  - pip install future
   - pip install sphinx
   - pip install sphinx_rtd_theme
   - pip install recommonmark

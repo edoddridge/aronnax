@@ -11,7 +11,7 @@ from contextlib import contextmanager
 import os.path as p
 import re
 
-from builtins import str
+from six import string_types
 from builtins import int
 
 import numpy as np
@@ -285,7 +285,7 @@ def interpret_requested_data(requested_data, shape, config):
                 config.getfloat("grid", "dx"), config.getfloat("grid", "dy"))
     field_layers = find_field_layers(shape, grid)
 
-    if isinstance(requested_data, str):
+    if isinstance(requested_data, string_types):
         candidate = interpret_data_specifier(requested_data)
         if candidate is not None:
             (func, args) = candidate
