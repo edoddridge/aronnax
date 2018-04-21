@@ -1,8 +1,14 @@
-import ConfigParser as par
+try:
+    import configparser as par
+except ImportError:
+    import ConfigParser as par
+
 import os
 import os.path as p
 import subprocess as sub
 import time
+
+from future.utils import iteritems
 
 from aronnax.core import fortran_file
 from aronnax.core import interpret_requested_data
@@ -151,7 +157,7 @@ def merge_config(config, options):
     """Merge the options given in the `options` dict into the RawConfigParser instance `config`.
 
     Mutates the given config instance."""
-    for k, v in options.iteritems():
+    for k, v in iteritems(options):
         if k in section_map:
             section = section_map[k]
             if not config.has_section(section):
@@ -192,7 +198,7 @@ def is_file_name_option(name):
     return name.endswith("File") or name.endswith("file")
 
 def generate_input_data_files(config):
-    for name, section in section_map.iteritems():
+    for name, section in iteritems(section_map):
         if not is_file_name_option(name):
             continue
         if not config.has_option(section, name):
@@ -238,7 +244,7 @@ def generate_parameters_file(config):
             f.write(' &')
             f.write(section.upper())
             f.write('\n')
-            for (name, section1) in section_map.iteritems():
+            for (name, section1) in iteritems(section_map):
                 if section1 != section: continue
                 val = fortran_option_string(section, name, config)
                 if val is not None:

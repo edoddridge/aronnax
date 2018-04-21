@@ -11,6 +11,8 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+from builtins import range
+
 import aronnax as aro
 import aronnax.driver as drv
 from aronnax.utils import working_directory
@@ -43,7 +45,7 @@ def assert_outputs_close(nx, ny, layers, rtol):
         good_ans = aro.interpret_raw_file(good_outfiles[i], nx, ny, layers)
         relerr = np.amax(array_relative_error(ans, good_ans))
         if (relerr >= rtol or np.isnan(relerr)):
-            print "test failed at " + outfile
+            print('test failed at {0}'.format(outfile))
             # print ans
             # print good_ans
             test_passes = False
@@ -80,7 +82,7 @@ def assert_volume_conservation(nx,ny,layers,rtol):
     volume_0 = np.zeros((layers))
     volume_final = np.zeros((layers))
 
-    for k in xrange(layers):
+    for k in range(layers):
         volume_0[k] = np.sum(h_0[:,:,k])
         volume_final[k] = np.sum(h_final[:,:,k])
 
