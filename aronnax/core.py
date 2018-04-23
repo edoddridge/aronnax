@@ -11,6 +11,9 @@ from contextlib import contextmanager
 import os.path as p
 import re
 
+from six import string_types
+from builtins import int
+
 import numpy as np
 from scipy.io import FortranFile
 
@@ -136,7 +139,7 @@ def tracer_point_variable(grid, field_layers, *funcs):
     assert field_layers == len(funcs)
 
     for i, f in enumerate(funcs):
-        if isinstance(f, (int, long, float)):
+        if isinstance(f, (int, float)):
             T_variable[i,:,:] = f
         else:
             T_variable[i,:,:] = f(X, Y)
@@ -150,7 +153,7 @@ def u_point_variable(grid, field_layers, *funcs):
     assert field_layers == len(funcs)
 
     for i, f in enumerate(funcs):
-        if isinstance(f, (int, long, float)):
+        if isinstance(f, (int, float)):
             u_variable[i,:,:] = f
         else:
             u_variable[i,:,:] = f(X, Y)
@@ -164,7 +167,7 @@ def v_point_variable(grid, field_layers, *funcs):
     assert field_layers == len(funcs)
 
     for i, f in enumerate(funcs):
-        if isinstance(f, (int, long, float)):
+        if isinstance(f, (int, float)):
             v_variable[i,:,:] = f
         else:
             v_variable[i,:,:] = f(X, Y)
@@ -179,7 +182,7 @@ def time_series_variable(nTimeSteps, dt, func):
     assert len(func) == 1
 
     for i, f in enumerate(func):
-        if isinstance(f, (int, long, float)):
+        if isinstance(f, (int, float)):
             ts_variable[:] = np.ones(nTimeSteps) * f
         else:
             ts_variable[:] = f(nTimeSteps, dt)
@@ -282,7 +285,7 @@ def interpret_requested_data(requested_data, shape, config):
                 config.getfloat("grid", "dx"), config.getfloat("grid", "dy"))
     field_layers = find_field_layers(shape, grid)
 
-    if isinstance(requested_data, basestring):
+    if isinstance(requested_data, string_types):
         candidate = interpret_data_specifier(requested_data)
         if candidate is not None:
             (func, args) = candidate

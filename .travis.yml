@@ -2,6 +2,7 @@
 language: python
 python:
   - "2.7"
+  - "3.6"
 
 dist: trusty
 sudo: required
@@ -15,6 +16,7 @@ before_install:
   - sudo apt-get install openmpi-bin
   - sudo apt-get install imagemagick
   - pip install scipy
+  - pip install future
   - pip install sphinx
   - pip install sphinx_rtd_theme
   - pip install recommonmark

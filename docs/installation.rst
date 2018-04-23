@@ -10,7 +10,7 @@ While we aspire for the installation process for Aronnax to be as simple as :cod
 Dependencies
 ============
 
-Aronnax depends on several external libraries. 
+Aronnax is tested with Python 2.7 and 3.6, and depends on several external libraries. 
 
 The Python components of Aronnax depend on 
 
