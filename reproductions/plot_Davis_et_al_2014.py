@@ -2,6 +2,7 @@ import os
 import os.path as p
 
 import glob
+from builtins import range
 
 import numpy as np
 import matplotlib
@@ -30,7 +31,7 @@ def plt_h_cross_section(simulation=None):
     h_final = aro.interpret_raw_file(h_files[-1],102,182,1,)
 
     plt.figure()
-    for i in xrange(100,160):
+    for i in range(100,160):
         plt.plot(h_final[:,i,0])
     plt.savefig('{0}figures/h_final.png'.format(simulation))
     plt.close()
@@ -41,7 +42,7 @@ def plt_state(simulation=None):
 
     h_max = np.zeros(len(h_files))
 
-    for i in xrange(len(v_files)):
+    for i in range(len(v_files)):
         h = aro.interpret_raw_file(h_files[i], 102, 182, 1)
         h_max[i] = np.max(h)
 
@@ -85,7 +86,7 @@ def plot_channel_transport(simulation=None):
 
     transport = np.zeros(len(h_files))
 
-    for i in xrange(len(v_files)):
+    for i in range(len(v_files)):
         h = aro.interpret_raw_file(h_files[i], 102, 182, 1)
         v = aro.interpret_raw_file(v_files[i], 102, 182, 1)
 

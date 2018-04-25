@@ -1,4 +1,4 @@
-import cPickle as pkl
+import pickle as pkl
 import os.path as p
 import sys
 
@@ -33,12 +33,12 @@ def benchmark_gaussian_bump_red_grav_save(grid_points):
             run_time_Ofast[counter] = aro.simulate(
                 exe=aro_exec, initHfile=[bump], nx=nx, ny=nx)
 
-        with open("times.pkl", "w") as f:
+        with open("times.pkl", "wb") as f:
             pkl.dump((grid_points, run_time_O1, run_time_Ofast), f)
 
 def benchmark_gaussian_bump_red_grav_plot():
     with working_directory(p.join(self_path, "beta_plane_bump_red_grav")):
-        with open("times.pkl", "r") as f:
+        with open("times.pkl", "rb") as f:
             (grid_points, run_time_O1, run_time_Ofast) = pkl.load(f)
 
         plt.figure()
@@ -91,7 +91,7 @@ def benchmark_gaussian_bump_save(grid_points):
             run_time_hypre[counter] = aro.simulate(
                 exe=aro_exec, initHfile=[bump, lambda X, Y: 2000. - bump(X, Y)], nx=nx, ny=nx)
 
-        with open("times.pkl", "w") as f:
+        with open("times.pkl", "wb") as f:
                 pkl.dump((grid_points, run_time_O1, run_time_Ofast,
                           run_time_hypre_test, run_time_hypre
                           ), f)
@@ -100,7 +100,7 @@ def benchmark_gaussian_bump_save(grid_points):
 
 def benchmark_gaussian_bump_plot():
     with working_directory(p.join(self_path, "beta_plane_bump")):
-        with open("times.pkl", "r") as f:
+        with open("times.pkl", "rb") as f:
             (grid_points, run_time_O1, run_time_Ofast,
                       run_time_hypre_test, run_time_hypre
                       ) = pkl.load(f)
