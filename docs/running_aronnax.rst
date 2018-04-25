@@ -97,7 +97,7 @@ hAdvecScheme
 
 TS_algorithm
 ------------
-`TS_algorithm` is an integer that selects the timestepping algorithm used by the model. The default behaviour is to use a third-order Adams-Bashforth scheme (`TS_algorithm` = 3), with the initialisation performed by a second-order Runge-Kutta method (`TS_algorithm = 12).
+`TS_algorithm` is an integer that selects the timestepping algorithm used by the model. The default behaviour is to use a third-order Adams-Bashforth scheme (`TS_algorithm` = 3), with the initialisation performed by a second-order Runge-Kutta method (`TS_algorithm` = 12).
 
  - TS_algorithm = 1:  Forward Euler
  - TS_algorithm = 2: Second-order Adams-Bashfort
