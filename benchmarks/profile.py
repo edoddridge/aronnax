@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import os.path as p
 import sys
 
@@ -36,17 +38,17 @@ def main():
         else:
             nx = int(arg)
     if red_grav:
-        print "Profiling a reduced gravity configuration" \
-            + " of size %dx%dx1 by 502 time steps." % (nx, nx)
+        print("Profiling a reduced gravity configuration" \
+                    + " of size %dx%dx1 by 502 time steps." % (nx, nx))
         do_red_grav(nx, aro_build, perf)
         outpath = p.join(self_path, "beta_plane_bump_red_grav", "gmon.out")
     else:
-        print "Profiling an n-layer configuration" \
-            + " of size %dx%dx2 by 502 time steps." % (nx, nx)
+        print("Profiling an n-layer configuration" \
+                    + " of size %dx%dx2 by 502 time steps." % (nx, nx))
         do_n_layer(nx, aro_build, perf)
         outpath = p.join(self_path, "beta_plane_bump", "gmon.out")
     if not perf:
-        print "Inspect %s,\nfor example with gprof aronnax_prof %s" % (outpath, outpath)
+        print("Inspect %s,\nfor example with gprof aronnax_prof %s" % (outpath, outpath))
 
 if __name__ == '__main__':
     main()

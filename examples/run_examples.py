@@ -1,7 +1,10 @@
+from __future__ import print_function
+
 import os
 import os.path as p
 import subprocess as sub
 import time
+from builtins import range
 
 import glob
 
@@ -50,7 +53,7 @@ def bump(X, Y):
 
 
 def beta_plane_bump_red_grav():
-    print "Running reduced gravity beta-plane bump example"
+    print("Running reduced gravity beta-plane bump example")
     xlen = 1e6
     ylen = 1e6
     nx = 100
@@ -68,7 +71,7 @@ def beta_plane_bump_red_grav():
             plt_output(grid, 'red-grav-bump')
 
 def beta_plane_bump_n_layer():
-    print "Running n-layer beta-plane bump example"
+    print("Running n-layer beta-plane bump example")
     xlen = 1e6
     ylen = 1e6
     nx = 100
@@ -85,7 +88,7 @@ def beta_plane_bump_n_layer():
             plt_output(grid, 'n-layer-bump')
 
 def beta_plane_gyre_red_grav():
-    print "Running reduced gravity beta-plane gyre example"
+    print("Running reduced gravity beta-plane gyre example")
     xlen = 1e6
     ylen = 2e6
     nx = 100 
@@ -117,7 +120,7 @@ def beta_plane_gyre_red_grav():
             plt_output(grid, 'red-grav-twin-gyre', colour_lim=20)
 
 def beta_plane_gyre_n_layer():
-    print "Running n-layer beta-plane gyre example"
+    print("Running n-layer beta-plane gyre example")
     xlen = 1e6
     ylen = 2e6
     nx = 100
@@ -157,7 +160,7 @@ def plt_output(grid, sim_name, colour_lim=2):
 
     # plot each state of the run
 
-    for i in xrange(len(v_files)):
+    for i in range(len(v_files)):
         h = aro.interpret_raw_file(h_files[i], grid.nx, grid.ny, grid.layers)
         v = aro.interpret_raw_file(v_files[i], grid.nx, grid.ny, grid.layers)
 
@@ -189,7 +192,7 @@ def plt_output(grid, sim_name, colour_lim=2):
     try:
         sub.check_call(["convert", "-delay", "30", "-loop", "0", "state_*.png", "{0}.gif".format(sim_name)])
     except:
-        print "failed to make animation"
+        print("failed to make animation")
 
 
 if __name__ == '__main__':
