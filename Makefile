@@ -5,7 +5,7 @@ LIBS      = -L$(HYPRE_DIR)/lib -lHYPRE -lm
 
 src_dir = src/
 
-TEST_OPTS = -g -fprofile-arcs -ftest-coverage -O1 -fcheck=all -ffpe-trap=invalid,zero,overflow,underflow -Wuninitialized -Werror
+TEST_OPTS = -g -fprofile-arcs -ftest-coverage -O1 -fcheck=all -ffpe-trap=invalid,zero,overflow -Wuninitialized -Werror
 
 CORE_OPTS = -g -Ofast -fno-stack-arrays
 
@@ -23,7 +23,7 @@ HYPRE_PROF_objects = $(patsubst %, $(src_dir)%_HYPRE_PROF.o, $(FILES))
 
 # Profiling execuable
 aronnax_prof: $(PROF_objects) Makefile
-	mpif90 $(PROF_OPTS) $< -o $@ -cpp
+	mpif90 $(PROF_objects) $(PROF_OPTS) -o $@ -cpp
 
 %_PROF.o: %.f90
 	mpif90 $(PROF_OPTS) -J $(src_dir) -c $< -o $@ -cpp
