@@ -1,5 +1,6 @@
 module momentum
   use boundaries
+  use end_run
   implicit none
 
   contains
@@ -27,55 +28,325 @@ module momentum
     double precision, intent(in)  :: au, ar, slip, dx, dy
     double precision, intent(in)  :: hfacN(0:nx+1, 0:ny+1)
     double precision, intent(in)  :: hfacS(0:nx+1, 0:ny+1)
-    integer, intent(in) :: nx, ny, layers
+    integer,          intent(in)  :: nx, ny, layers
     double precision, intent(in)  :: rho0
     logical,          intent(in)  :: RelativeWind
     double precision, intent(in)  :: Cd
     double precision, intent(in)  :: spongeTimeScale(0:nx+1, 0:ny+1, layers)
     double precision, intent(in)  :: spongeU(0:nx+1, 0:ny+1, layers)
-    logical, intent(in) :: RedGrav
+    logical,          intent(in)  :: RedGrav
     double precision, intent(in)  :: botDrag
+
+    integer          :: i, j, k
+    double precision :: dudt_visc(0:nx+1, 0:ny+1, layers)
+    double precision :: dudt_vort(0:nx+1, 0:ny+1, layers)
+    double precision :: dudt_BP(0:nx+1, 0:ny+1, layers)
+    double precision :: dudt_sponge(0:nx+1, 0:ny+1, layers)
+    double precision :: dudt_wind(0:nx+1, 0:ny+1, layers)
+    double precision :: dudt_drag(0:nx+1, 0:ny+1, layers)
+
+
+    dudt = 0d0
+    dudt_visc = 0d0
+    dudt_vort = 0d0
+    dudt_BP = 0d0
+    dudt_sponge = 0d0
+    dudt_wind = 0d0
+    dudt_drag = 0d0
+
+    call evaluate_dudt_visc(dudt_visc, h, u, au, slip, dx, dy, hfacN, &
+      hfacS, nx, ny, layers)
+
+    call evaluate_dudt_vort(dudt_vort, v, zeta, fu, nx, ny, layers)
+
+    call evaluate_dudt_BP(dudt_BP, b, dx, nx, ny, layers)
+
+    call evaluate_dudt_sponge(dudt_sponge, u, spongeTimeScale, spongeU, &
+      nx, ny, layers)
+
+    call evaluate_dudt_wind(dudt_wind, h, u, v, wind_x, wind_y, &
+      wind_depth, nx, ny, layers, rho0, RelativeWind, Cd)
+
+    call evaluate_dudt_drag(dudt_drag, u, ar, nx, ny, layers, RedGrav, &
+      botDrag)
+
+    dudt = dudt + dudt_visc + dudt_vort + dudt_BP + dudt_sponge + &
+            dudt_wind + dudt_drag
+
+    call wrap_fields_3D(dudt, nx, ny, layers)
+
+    return
+  end subroutine evaluate_dudt
+
+
+  ! ---------------------------------------------------------------------------
+  ! Calculate the viscous tendency of zonal velocity for each of the
+  !   active layers
+
+  subroutine evaluate_dudt_visc(dudt_visc, h, u, au, slip, dx, dy, hfacN, &
+      hfacS, nx, ny, layers)
+    implicit none
+
+    ! dudt_visc(i, j) is evaluated at the centre of the left edge of the grid
+    ! box, the same place as u(i, j).
+    double precision, intent(out) :: dudt_visc(0:nx+1, 0:ny+1, layers)
+    double precision, intent(in)  :: h(0:nx+1, 0:ny+1, layers)
+    double precision, intent(in)  :: u(0:nx+1, 0:ny+1, layers)
+    double precision, intent(in)  :: au, slip, dx, dy
+    double precision, intent(in)  :: hfacN(0:nx+1, 0:ny+1)
+    double precision, intent(in)  :: hfacS(0:nx+1, 0:ny+1)
+    integer,          intent(in)  :: nx, ny, layers
 
     integer i, j, k
 
-    dudt = 0d0
+    dudt_visc = 0d0
 
     do k = 1, layers
       do j = 1, ny
         do i = 1, nx
-          dudt(i,j,k) = au*(u(i+1,j,k)+u(i-1,j,k)-2.0d0*u(i,j,k))/(dx*dx) & ! x-component
+          dudt_visc(i,j,k) = au*(u(i+1,j,k)+u(i-1,j,k)-2.0d0*u(i,j,k))/(dx*dx) & ! x-component
               + au*(u(i,j+1,k)+u(i,j-1,k)-2.0d0*u(i,j,k) &
                 ! boundary conditions
                 + (1.0d0 - 2.0d0*slip)*(1.0d0 - hfacN(i,j))*u(i,j,k) &
-                + (1.0d0 - 2.0d0*slip)*(1.0d0 - hfacS(i,j))*u(i,j,k))/(dy*dy) & ! y-component
+                + (1.0d0 - 2.0d0*slip)*(1.0d0 - hfacS(i,j))*u(i,j,k))/(dy*dy) ! y-component
                 ! Together make the horizontal diffusion term
-              + 0.25d0*(fu(i,j)+0.5d0*(zeta(i,j,k)+zeta(i,j+1,k))) &
-                *(v(i-1,j,k)+v(i,j,k)+v(i-1,j+1,k)+v(i,j+1,k)) & ! vorticity term
-              - (b(i,j,k) - b(i-1,j,k))/dx & ! Bernoulli potential term
-              + spongeTimeScale(i,j,k)*(spongeU(i,j,k)-u(i,j,k)) ! forced relaxtion in the sponge regions
-          if (k .eq. 1) then ! only have wind forcing on the top layer
-            ! This will need refining in the event of allowing outcropping.
-            ! apply wind forcing
+        end do
+      end do
+    end do
+
+    return
+  end subroutine evaluate_dudt_visc
+
+
+
+  ! ---------------------------------------------------------------------------
+  ! Calculate the vorticity contribution to the tendency of zonal velocity for
+  !   each of the active layers
+
+  subroutine evaluate_dudt_vort(dudt_vort, v, zeta, fu, nx, ny, layers)
+    implicit none
+
+    ! dudt_vort(i, j) is evaluated at the centre of the left edge of the grid
+    ! box, the same place as u(i, j).
+    double precision, intent(out) :: dudt_vort(0:nx+1, 0:ny+1, layers)
+    double precision, intent(in)  :: v(0:nx+1, 0:ny+1, layers)
+    double precision, intent(in)  :: zeta(0:nx+1, 0:ny+1, layers)
+    double precision, intent(in)  :: fu(0:nx+1, 0:ny+1)
+    integer,          intent(in)  :: nx, ny, layers
+
+    integer :: i, j, k
+
+    dudt_vort = 0d0
+
+
+    do k = 1, layers
+      do j = 1, ny
+        do i = 1, nx
+          dudt_vort(i,j,k) = 0.25d0*(fu(i,j)+0.5d0*(zeta(i,j,k)+zeta(i,j+1,k))) &
+                *(v(i-1,j,k)+v(i,j,k)+v(i-1,j+1,k)+v(i,j+1,k)) ! vorticity term
+        end do
+      end do
+    end do
+
+    return
+  end subroutine evaluate_dudt_vort
+
+
+  ! ---------------------------------------------------------------------------
+  ! Calculate the Bernoulli potential contribution to the tendency of zonal
+  !   velocity for each of the active layers
+
+  subroutine evaluate_dudt_BP(dudt_BP, b, dx, nx, ny, layers)
+    implicit none
+
+    ! dudt_BP(i, j) is evaluated at the centre of the left edge of the grid
+    ! box, the same place as u(i, j).
+    double precision, intent(out) :: dudt_BP(0:nx+1, 0:ny+1, layers)
+    double precision, intent(in)  :: b(0:nx+1, 0:ny+1, layers)
+    double precision, intent(in)  :: dx
+    integer,          intent(in)  :: nx, ny, layers
+
+    integer :: i, j, k
+
+    dudt_BP = 0d0
+
+
+    do k = 1, layers
+      do j = 1, ny
+        do i = 1, nx
+          dudt_BP(i,j,k) = - (b(i,j,k) - b(i-1,j,k))/dx ! Bernoulli potential term
+        end do
+      end do
+    end do
+
+    return
+  end subroutine evaluate_dudt_BP
+
+! ---------------------------------------------------------------------------
+  ! Calculate the sponge contribution to the tendency of zonal
+  !   velocity for each of the active layers
+
+  subroutine evaluate_dudt_sponge(dudt_sponge, u, spongeTimeScale, spongeU, &
+      nx, ny, layers)
+    implicit none
+
+    ! dudt_sponge(i, j) is evaluated at the centre of the left edge of the grid
+    ! box, the same place as u(i, j).
+    double precision, intent(out) :: dudt_sponge(0:nx+1, 0:ny+1, layers)
+    double precision, intent(in)  :: u(0:nx+1, 0:ny+1, layers)
+    double precision, intent(in)  :: spongeTimeScale(0:nx+1, 0:ny+1, layers)
+    double precision, intent(in)  :: spongeU(0:nx+1, 0:ny+1, layers)
+    integer,          intent(in)  :: nx, ny, layers
+
+    integer :: i, j, k
+
+    dudt_sponge = 0d0
+
+
+    do k = 1, layers
+      do j = 1, ny
+        do i = 1, nx
+          dudt_sponge(i,j,k) = + spongeTimeScale(i,j,k)*(spongeU(i,j,k)-u(i,j,k)) ! forced relaxtion in the sponge regions
+        end do
+      end do
+    end do
+
+    return
+  end subroutine evaluate_dudt_sponge
+
+
+! ---------------------------------------------------------------------------
+  ! Calculate the wind contribution to the tendency of zonal
+  !   velocity for each of the active layers
+
+  subroutine evaluate_dudt_wind(dudt_wind, h, u, v, wind_x, wind_y, &
+      wind_depth, nx, ny, layers, rho0, RelativeWind, Cd)
+    implicit none
+
+    ! dudt(i, j) is evaluated at the centre of the left edge of the grid
+    ! box, the same place as u(i, j).
+    double precision, intent(out) :: dudt_wind(0:nx+1, 0:ny+1, layers)
+    double precision, intent(in)  :: h(0:nx+1, 0:ny+1, layers)
+    double precision, intent(in)  :: u(0:nx+1, 0:ny+1, layers)
+    double precision, intent(in)  :: v(0:nx+1, 0:ny+1, layers)
+    double precision, intent(in)  :: wind_x(0:nx+1, 0:ny+1)
+    double precision, intent(in)  :: wind_y(0:nx+1, 0:ny+1)
+    double precision, intent(in)  :: wind_depth
+    integer,          intent(in)  :: nx, ny, layers
+    double precision, intent(in)  :: rho0
+    logical,          intent(in)  :: RelativeWind
+    double precision, intent(in)  :: Cd
+
+    integer          :: i, j, k
+    double precision :: z(0:nx+1, 0:ny+1)
+    double precision :: forc_frac
+    double precision :: recip_wind_depth
+
+    dudt_wind = 0d0
+    z = 0d0
+
+    if (wind_depth .eq. 0d0) then
+      ! momentum forcing acts only on the top layer (k=1), no matter how thin it gets
+      do j = 1, ny
+        do i = 1, nx
+          ! apply wind forcing
+          if (RelativeWind) then
+            dudt_wind(i,j,1) = (2d0*Cd* &
+                 (wind_x(i,j) - u(i,j,1))* &
+              sqrt((wind_x(i,j) - u(i,j,1))**2 + &
+                   (wind_y(i,j) - v(i,j,1))**2))/((h(i,j,1) + h(i-1,j,1)))
+          else
+            dudt_wind(i,j,1) = 2d0*wind_x(i,j)/(rho0*(h(i,j,1) + h(i-1,j,1)))
+          end if
+        end do
+      end do
+
+    else if (wind_depth .gt. 0d0) then
+      ! apply wind forcing to upper `wind_depth` m of the fluid
+      recip_wind_depth = 1d0/wind_depth
+
+      do k = 1, layers
+        do j = 1, ny
+          do i = 1, nx
+
+            if (z(i,j) .le. wind_depth) then
+              ! at least a portion of this layer is within wind_depth m
+              ! of the surface
+              if (z(i,j) + (h(i,j,k) + h(i-1,j,k))*0.5d0 .le. wind_depth) then
+                ! all of this layer is within wind_depth m of the surface
+                forc_frac = (h(i,j,k) + h(i-1,j,k))*0.5d0*recip_wind_depth
+              else
+                ! this means (z(i,j) + h(i,j,k) .gt. wind_depth)
+                ! only a fraction of this layer is within wind_depth m of
+                ! the surface
+                forc_frac = (wind_depth - z(i,j))*recip_wind_depth
+              end if
+            else
+              ! z(i,j) is greater than wind_depth. Therefore, this layer
+              ! does not receive wind forcing.
+              forc_frac = 0d0
+            end if
+
             if (RelativeWind) then 
-              dudt(i,j,k) = dudt(i,j,k) + (2d0*Cd* & 
+              dudt_wind(i,j,k) = forc_frac*(2d0*Cd* &
                    (wind_x(i,j) - u(i,j,k))* & 
                 sqrt((wind_x(i,j) - u(i,j,k))**2 + &
                      (wind_y(i,j) - v(i,j,k))**2))/((h(i,j,k) + h(i-1,j,k)))
             else 
-              dudt(i,j,k) = dudt(i,j,k) + 2d0*wind_x(i,j)/(rho0*(h(i,j,k) + h(i-1,j,k))) 
+              dudt_wind(i,j,k) = forc_frac*2d0*wind_x(i,j)/(rho0*(h(i,j,k) &
+                                  + h(i-1,j,k)))
             end if
-          end if
+
+            ! accumulate layer thickness for next pass through
+            z(i,j) = z(i,j) + h(i,j,k)
+
+          end do
+        end do
+      end do
+
+    else
+      ! wind_depth not set correctly, end program
+      call clean_stop(0, .False.)
+    end if
+
+    return
+  end subroutine evaluate_dudt_wind
+
+
+! ---------------------------------------------------------------------------
+  !> Calculate the tendency of zonal velocity for each of the active layers
+
+  subroutine evaluate_dudt_drag(dudt_drag, u, ar, nx, ny, layers, RedGrav, &
+      botDrag)
+    implicit none
+
+    ! dudt_drag(i, j) is evaluated at the centre of the left edge of the grid
+    ! box, the same place as u(i, j).
+    double precision, intent(out) :: dudt_drag(0:nx+1, 0:ny+1, layers)
+    double precision, intent(in)  :: u(0:nx+1, 0:ny+1, layers)
+    double precision, intent(in)  :: ar
+    integer,          intent(in)  :: nx, ny, layers
+    logical,          intent(in)  :: RedGrav
+    double precision, intent(in)  :: botDrag
+
+    integer  :: i, j, k
+
+    dudt_drag = 0d0
+
+    do k = 1, layers
+      do j = 1, ny
+        do i = 1, nx
           if (layers .gt. 1) then ! only evaluate vertical momentum diffusivity if more than 1 layer
             if (k .eq. 1) then ! adapt vertical momentum diffusivity for 2+ layer model -> top layer
-              dudt(i,j,k) = dudt(i,j,k) - 1.0d0*ar*(u(i,j,k) - 1.0d0*u(i,j,k+1))
+              dudt_drag(i,j,k) = - 1.0d0*ar*(u(i,j,k) - 1.0d0*u(i,j,k+1))
             else if (k .eq. layers) then ! bottom layer
-              dudt(i,j,k) = dudt(i,j,k) - 1.0d0*ar*(u(i,j,k) - 1.0d0*u(i,j,k-1))
+              dudt_drag(i,j,k) = - 1.0d0*ar*(u(i,j,k) - 1.0d0*u(i,j,k-1))
               if (.not. RedGrav) then
                 ! add bottom drag here in isopycnal version
-                dudt(i,j,k) = dudt(i,j,k) - 1.0d0*botDrag*(u(i,j,k))
+                dudt_drag(i,j,k) = dudt_drag(i,j,k) - 1.0d0*botDrag*(u(i,j,k))
               end if
             else ! mid layer/s
-              dudt(i,j,k) = dudt(i,j,k) - &
+              dudt_drag(i,j,k) = - &
                   1.0d0*ar*(2.0d0*u(i,j,k) - 1.0d0*u(i,j,k-1) - 1.0d0*u(i,j,k+1))
             end if
           end if
@@ -83,10 +354,8 @@ module momentum
       end do
     end do
 
-    call wrap_fields_3D(dudt, nx, ny, layers)
-
     return
-  end subroutine evaluate_dudt
+  end subroutine evaluate_dudt_drag
 
   ! ---------------------------------------------------------------------------
   !> Calculate the tendency of meridional velocity for each of the
@@ -113,56 +382,326 @@ module momentum
     double precision, intent(in)  :: dx, dy
     double precision, intent(in)  :: hfacW(0:nx+1, 0:ny+1)
     double precision, intent(in)  :: hfacE(0:nx+1, 0:ny+1)
-    integer, intent(in) :: nx, ny, layers
+    integer,          intent(in)  :: nx, ny, layers
     double precision, intent(in)  :: rho0
     logical,          intent(in)  :: RelativeWind
     double precision, intent(in)  :: Cd
     double precision, intent(in)  :: spongeTimeScale(0:nx+1, 0:ny+1, layers)
     double precision, intent(in)  :: spongeV(0:nx+1, 0:ny+1, layers)
-    logical, intent(in) :: RedGrav
+    logical,          intent(in)  :: RedGrav
     double precision, intent(in)  :: botDrag
 
-    integer i, j, k
+    integer          :: i, j, k
+    double precision :: dvdt_visc(0:nx+1, 0:ny+1, layers)
+    double precision :: dvdt_vort(0:nx+1, 0:ny+1, layers)
+    double precision :: dvdt_BP(0:nx+1, 0:ny+1, layers)
+    double precision :: dvdt_sponge(0:nx+1, 0:ny+1, layers)
+    double precision :: dvdt_wind(0:nx+1, 0:ny+1, layers)
+    double precision :: dvdt_drag(0:nx+1, 0:ny+1, layers)
+
 
     dvdt = 0d0
+    dvdt_visc = 0d0
+    dvdt_vort = 0d0
+    dvdt_BP = 0d0
+    dvdt_sponge = 0d0
+    dvdt_wind = 0d0
+    dvdt_drag = 0d0
+
+    call evaluate_dvdt_visc(dvdt_visc, v, au, slip, dx, dy, hfacW, hfacE, &
+      nx, ny, layers)
+
+    call evaluate_dvdt_vort(dvdt_vort, u, zeta, fv, nx, ny, layers)
+
+    call evaluate_dvdt_BP(dvdt_BP, b, dy, nx, ny, layers)
+
+    call evaluate_dvdt_sponge(dvdt_sponge, v, nx, ny, layers, &
+      spongeTimeScale, spongeV)
+
+    call evaluate_dvdt_wind(dvdt_wind, h, u, v, wind_x, wind_y, &
+      wind_depth, nx, ny, layers, rho0, RelativeWind, Cd)
+
+    call evaluate_dvdt_drag(dvdt_drag, v, ar, nx, ny, layers, RedGrav, &
+      botDrag)
+
+    dvdt = dvdt + dvdt_visc + dvdt_vort + dvdt_BP + dvdt_sponge + &
+            dvdt_wind + dvdt_drag
+
+
+    call wrap_fields_3D(dvdt, nx, ny, layers)
+
+    return
+  end subroutine evaluate_dvdt
+
+
+  ! ---------------------------------------------------------------------------
+  !> Calculate the viscous tendency of meridional velocity for each of the
+  !> active layers
+
+  subroutine evaluate_dvdt_visc(dvdt_visc, v, au, slip, dx, dy, hfacW, hfacE, &
+      nx, ny, layers)
+    implicit none
+
+    ! dvdt_visc(i, j) is evaluated at the centre of the bottom edge of the
+    ! grid box, the same place as v(i, j)
+    double precision, intent(out) :: dvdt_visc(0:nx+1, 0:ny+1, layers)
+    double precision, intent(in)  :: v(0:nx+1, 0:ny+1, layers)
+    double precision, intent(in)  :: au, slip
+    double precision, intent(in)  :: dx, dy
+    double precision, intent(in)  :: hfacW(0:nx+1, 0:ny+1)
+    double precision, intent(in)  :: hfacE(0:nx+1, 0:ny+1)
+    integer,          intent(in)  :: nx, ny, layers
+
+    integer :: i, j, k
+
+    dvdt_visc = 0d0
 
     do k = 1, layers
       do j = 1, ny
         do i = 1, nx
-          dvdt(i,j,k) = &
+          dvdt_visc(i,j,k) = &
               au*(v(i+1,j,k)+v(i-1,j,k)-2.0d0*v(i,j,k) &
                 ! boundary conditions
                 + (1.0d0 - 2.0d0*slip)*(1.0d0 - hfacW(i,j))*v(i,j,k) &
                 + (1.0d0 - 2.0d0*slip)*(1.0d0 - hfacE(i,j))*v(i,j,k))/(dx*dx) & !x-component
-              + au*(v(i,j+1,k) + v(i,j-1,k) - 2.0d0*v(i,j,k))/(dy*dy) & ! y-component.
+              + au*(v(i,j+1,k) + v(i,j-1,k) - 2.0d0*v(i,j,k))/(dy*dy) ! y-component.
               ! Together these make the horizontal diffusion term
+        end do
+      end do
+    end do
+
+    return
+  end subroutine evaluate_dvdt_visc
+
+  ! ---------------------------------------------------------------------------
+  ! Calculate the vorticity contribution to the tendency of meridional
+  !   velocity for each of the active layers
+
+  subroutine evaluate_dvdt_vort(dvdt_vort, u, zeta, fv, nx, ny, layers)
+    implicit none
+
+    ! dvdt_vort(i, j) is evaluated at the centre of the bottom edge of the
+    ! grid box, the same place as v(i, j)
+    double precision, intent(out) :: dvdt_vort(0:nx+1, 0:ny+1, layers)
+    double precision, intent(in)  :: u(0:nx+1, 0:ny+1, layers)
+    double precision, intent(in)  :: zeta(0:nx+1, 0:ny+1, layers)
+    double precision, intent(in)  :: fv(0:nx+1, 0:ny+1)
+    integer,          intent(in)  :: nx, ny, layers
+
+    integer :: i, j, k
+
+    dvdt_vort = 0d0
+
+    do k = 1, layers
+      do j = 1, ny
+        do i = 1, nx
+          dvdt_vort(i,j,k) = &
               - 0.25d0*(fv(i,j)+0.5d0*(zeta(i,j,k)+zeta(i+1,j,k))) &
-                *(u(i,j-1,k)+u(i,j,k)+u(i+1,j-1,k)+u(i+1,j,k)) & !vorticity term
-              - (b(i,j,k)-b(i,j-1,k))/dy & ! Bernoulli Potential term
-              + spongeTimeScale(i,j,k)*(spongeV(i,j,k)-v(i,j,k)) ! forced relaxtion to vsponge (in the sponge regions)
-          if (k .eq. 1) then ! only have wind forcing on the top layer
-            ! This will need refining in the event of allowing outcropping.
-            ! apply wind forcing
-            if (RelativeWind) then 
-              dvdt(i,j,k) = dvdt(i,j,k) + (2d0*Cd* & 
-                   (wind_y(i,j) - v(i,j,k))* & 
-                sqrt((wind_x(i,j) - u(i,j,k))**2 + &
-                     (wind_y(i,j) - v(i,j,k))**2))/((h(i,j,k) + h(i,j-1,k)))
-            else 
-              dvdt(i,j,k) = dvdt(i,j,k) + 2d0*wind_y(i,j)/(rho0*(h(i,j,k) + h(i,j-1,k))) 
-            end if
+                *(u(i,j-1,k)+u(i,j,k)+u(i+1,j-1,k)+u(i+1,j,k)) !vorticity term
+        end do
+      end do
+    end do
+
+
+    return
+  end subroutine evaluate_dvdt_vort
+
+
+  ! ---------------------------------------------------------------------------
+  ! Calculate the Bernoulli potential contribution to the tendency of
+  !   meridional velocity for each of the active layers
+
+  subroutine evaluate_dvdt_BP(dvdt_BP, b, dy, nx, ny, layers)
+    implicit none
+
+    ! dvdt_BP(i, j) is evaluated at the centre of the bottom edge of the
+    ! grid box, the same place as v(i, j)
+    double precision, intent(out) :: dvdt_BP(0:nx+1, 0:ny+1, layers)
+    double precision, intent(in)  :: b(0:nx+1, 0:ny+1, layers)
+    double precision, intent(in)  :: dy
+    integer,          intent(in)  :: nx, ny, layers
+
+    integer :: i, j, k
+
+    dvdt_BP = 0d0
+
+    do k = 1, layers
+      do j = 1, ny
+        do i = 1, nx
+          dvdt_BP(i,j,k) = - (b(i,j,k)-b(i,j-1,k))/dy ! Bernoulli Potential term
+        end do
+      end do
+    end do
+
+    return
+  end subroutine evaluate_dvdt_BP
+
+
+  ! ---------------------------------------------------------------------------
+  ! Calculate the sponge contribution to the tendency of meridional velocity
+  !   for each of the active layers
+
+  subroutine evaluate_dvdt_sponge(dvdt_sponge, v, nx, ny, layers, &
+      spongeTimeScale, spongeV)
+    implicit none
+
+    ! dvdt_sponge(i, j) is evaluated at the centre of the bottom edge of the
+    ! grid box, the same place as v(i, j)
+    double precision, intent(out) :: dvdt_sponge(0:nx+1, 0:ny+1, layers)
+    double precision, intent(in)  :: v(0:nx+1, 0:ny+1, layers)
+    integer,          intent(in)  :: nx, ny, layers
+    double precision, intent(in)  :: spongeTimeScale(0:nx+1, 0:ny+1, layers)
+    double precision, intent(in)  :: spongeV(0:nx+1, 0:ny+1, layers)
+
+    integer :: i, j, k
+
+    dvdt_sponge = 0d0
+
+    do k = 1, layers
+      do j = 1, ny
+        do i = 1, nx
+          dvdt_sponge(i,j,k) =  spongeTimeScale(i,j,k)*(spongeV(i,j,k)-v(i,j,k))
+          ! forced relaxtion to vsponge (in the sponge regions)
+        end do
+      end do
+    end do
+
+    return
+  end subroutine evaluate_dvdt_sponge
+
+
+  ! ---------------------------------------------------------------------------
+  ! Calculate the wind contribution to the tendency of meridional
+  !   velocity for each of the active layers
+
+  subroutine evaluate_dvdt_wind(dvdt_wind, h, u, v, wind_x, wind_y, &
+      wind_depth, nx, ny, layers, rho0, RelativeWind, Cd)
+    implicit none
+
+    ! dvdt_wind(i, j) is evaluated at the centre of the bottom edge of the grid
+    ! box, the same place as v(i, j).
+    double precision, intent(out) :: dvdt_wind(0:nx+1, 0:ny+1, layers)
+    double precision, intent(in)  :: h(0:nx+1, 0:ny+1, layers)
+    double precision, intent(in)  :: u(0:nx+1, 0:ny+1, layers)
+    double precision, intent(in)  :: v(0:nx+1, 0:ny+1, layers)
+    double precision, intent(in)  :: wind_x(0:nx+1, 0:ny+1)
+    double precision, intent(in)  :: wind_y(0:nx+1, 0:ny+1)
+    double precision, intent(in)  :: wind_depth
+    integer,          intent(in)  :: nx, ny, layers
+    double precision, intent(in)  :: rho0
+    logical,          intent(in)  :: RelativeWind
+    double precision, intent(in)  :: Cd
+
+    integer          :: i, j, k
+    double precision :: z(0:nx+1, 0:ny+1)
+    double precision :: forc_frac
+    double precision :: recip_wind_depth
+
+    dvdt_wind = 0d0
+    z = 0d0
+
+    if (wind_depth .eq. 0d0) then
+      ! momentum forcing acts only on the top layer (k=1), no matter how thin it gets
+      do j = 1, ny
+        do i = 1, nx
+          ! apply wind forcing
+          if (RelativeWind) then
+            dvdt_wind(i,j,1) = (2d0*Cd* &
+                 (wind_y(i,j) - v(i,j,1))* &
+              sqrt((wind_y(i,j) - v(i,j,1))**2 + &
+                   (wind_x(i,j) - u(i,j,1))**2))/((h(i,j,1) + h(i,j-1,1)))
+          else
+            dvdt_wind(i,j,1) = 2d0*wind_y(i,j)/(rho0*(h(i,j,1) + h(i,j-1,1)))
           end if
+        end do
+      end do
+
+    else if (wind_depth .gt. 0d0) then
+      ! apply wind forcing to upper `wind_depth` m of the fluid
+      recip_wind_depth = 1d0/wind_depth
+
+      do k = 1, layers
+        do j = 1, ny
+          do i = 1, nx
+            if (z(i,j) .le. wind_depth) then
+              ! at least a portion of this layer is within wind_depth m
+              ! of the surface
+              if (z(i,j) + (h(i,j,k) + h(i,j-1,k))*0.5d0 .le. wind_depth) then
+                ! all of this layer is within wind_depth m of the surface
+                forc_frac = (h(i,j,k) + h(i,j-1,k))*0.5d0*recip_wind_depth
+              else
+                ! this means (z(i,j) + h(i,j,k) .gt. wind_depth)
+                ! only a fraction of this layer is within wind_depth m of
+                ! the surface
+                forc_frac = (wind_depth - z(i,j))*recip_wind_depth
+              end if
+            else
+              ! z(i,j) is greater than wind_depth. Therefore, this layer
+              ! does not receive wind forcing.
+              forc_frac = 0d0
+            end if
+
+            if (RelativeWind) then 
+              dvdt_wind(i,j,k) = forc_frac*(2d0*Cd* &
+                   (wind_y(i,j) - v(i,j,k))* & 
+                sqrt((wind_y(i,j) - v(i,j,k))**2 + &
+                     (wind_x(i,j) - u(i,j,k))**2))/((h(i,j,k) + h(i,j-1,k)))
+            else 
+              dvdt_wind(i,j,k) = forc_frac*2d0*wind_y(i,j)/(rho0*(h(i,j,k) &
+                                  + h(i,j-1,k)))
+            end if
+
+            ! accumulate layer thickness for next pass through
+            z(i,j) = z(i,j) + h(i,j,k)
+
+          end do
+        end do
+      end do
+
+    else
+      ! wind_depth not set correctly, end program
+      call clean_stop(0, .False.)
+    end if
+
+    return
+  end subroutine evaluate_dvdt_wind
+
+
+  ! ---------------------------------------------------------------------------
+  ! Calculate the linear drag contribution to the tendency of meridional
+  !   velocity for each of the active layers
+
+  subroutine evaluate_dvdt_drag(dvdt_drag, v, ar, nx, ny, layers, RedGrav, &
+      botDrag)
+    implicit none
+
+    ! dvdt_drag(i, j) is evaluated at the centre of the bottom edge of the
+    ! grid box, the same place as v(i, j)
+    double precision, intent(out) :: dvdt_drag(0:nx+1, 0:ny+1, layers)
+    double precision, intent(in)  :: v(0:nx+1, 0:ny+1, layers)
+    double precision, intent(in)  :: ar
+    integer,          intent(in)  :: nx, ny, layers
+    logical,          intent(in)  :: RedGrav
+    double precision, intent(in)  :: botDrag
+
+    integer :: i, j, k
+
+    dvdt_drag = 0d0
+
+    do k = 1, layers
+      do j = 1, ny
+        do i = 1, nx
           if (layers .gt. 1) then ! only evaluate vertical momentum diffusivity if more than 1 layer
             if (k .eq. 1) then ! adapt vertical momentum diffusivity for 2+ layer model -> top layer
-              dvdt(i,j,k) = dvdt(i,j,k) - 1.0d0*ar*(v(i,j,k) - 1.0d0*v(i,j,k+1))
+              dvdt_drag(i,j,k) =  - 1.0d0*ar*(v(i,j,k) - 1.0d0*v(i,j,k+1))
             else if (k .eq. layers) then ! bottom layer
-              dvdt(i,j,k) = dvdt(i,j,k) - 1.0d0*ar*(v(i,j,k) - 1.0d0*v(i,j,k-1))
+              dvdt_drag(i,j,k) =  - 1.0d0*ar*(v(i,j,k) - 1.0d0*v(i,j,k-1))
               if (.not. RedGrav) then
                 ! add bottom drag here in isopycnal version
-                dvdt(i,j,k) = dvdt(i,j,k) - 1.0d0*botDrag*(v(i,j,k))
+                dvdt_drag(i,j,k) = dvdt_drag(i,j,k) - 1.0d0*botDrag*(v(i,j,k))
               end if
             else ! mid layer/s
-              dvdt(i,j,k) = dvdt(i,j,k) - &
+              dvdt_drag(i,j,k) =  - &
                   1.0d0*ar*(2.0d0*v(i,j,k) - 1.0d0*v(i,j,k-1) - 1.0d0*v(i,j,k+1))
             end if
           end if
@@ -170,9 +709,7 @@ module momentum
       end do
     end do
 
-    call wrap_fields_3D(dvdt, nx, ny, layers)
-
     return
-  end subroutine evaluate_dvdt
+  end subroutine evaluate_dvdt_drag
 
 end module momentum
