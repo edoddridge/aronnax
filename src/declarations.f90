@@ -65,8 +65,9 @@ module declarations
   ! Wind
   double precision, dimension(:,:),   allocatable :: base_wind_x
   double precision, dimension(:,:),   allocatable :: base_wind_y
-  logical       :: DumpWind
-  character(60) :: wind_mag_time_series_file
+  logical          :: DumpWind
+  character(60)    :: wind_mag_time_series_file
+  double precision :: wind_depth ! depth over which the wind forcing is spread
   double precision, dimension(:),     allocatable :: wind_mag_time_series
   ! Sponge regions
   double precision, dimension(:,:,:), allocatable :: spongeHTimeScale

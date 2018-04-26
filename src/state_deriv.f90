@@ -16,7 +16,7 @@ module state_deriv
       dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
       au, ar, botDrag, kh, kv, slip, &
       RedGrav, hAdvecScheme, g_vec, rho0, wind_x, wind_y, &
-      RelativeWind, Cd, &
+      wind_depth, RelativeWind, Cd, &
       spongeHTimeScale, spongeH, &
       spongeUTimeScale, spongeU, &
       spongeVTimeScale, spongeV, &
@@ -47,6 +47,7 @@ module state_deriv
     double precision, intent(in) :: rho0
     double precision, intent(in) :: wind_x(0:nx+1, 0:ny+1)
     double precision, intent(in) :: wind_y(0:nx+1, 0:ny+1)
+    double precision, intent(in) :: wind_depth
     logical,          intent(in) :: RelativeWind
     double precision, intent(in) :: Cd
     double precision, intent(in) :: spongeHTimeScale(0:nx+1, 0:ny+1, layers)
@@ -90,13 +91,13 @@ module state_deriv
     call evaluate_dhdt(dhdt, h, u, v, kh, kv, dx, dy, nx, ny, layers, &
         spongeHTimeScale, spongeH, wetmask, RedGrav, hAdvecScheme, n)
 
-    call evaluate_dudt(dudt, h, u, v, b, zeta, wind_x, wind_y, fu, au, ar, slip, &
-        dx, dy, hfacN, hfacS, nx, ny, layers, rho0, RelativeWind, Cd, &
-        spongeUTimeScale, spongeU, RedGrav, botDrag)
+    call evaluate_dudt(dudt, h, u, v, b, zeta, wind_x, wind_y, wind_depth, &
+        fu, au, ar, slip, dx, dy, hfacN, hfacS, nx, ny, layers, rho0, &
+        RelativeWind, Cd, spongeUTimeScale, spongeU, RedGrav, botDrag)
 
-    call evaluate_dvdt(dvdt, h, u, v, b, zeta, wind_x, wind_y, fv, au, ar, slip, &
-        dx, dy, hfacW, hfacE, nx, ny, layers, rho0, RelativeWind, Cd, &
-        spongeVTimeScale, spongeV, RedGrav, botDrag)
+    call evaluate_dvdt(dvdt, h, u, v, b, zeta, wind_x, wind_y, wind_depth, &
+        fv, au, ar, slip, dx, dy, hfacW, hfacE, nx, ny, layers, rho0, &
+        RelativeWind, Cd, spongeVTimeScale, spongeV, RedGrav, botDrag)
 
     return
   end subroutine state_derivative

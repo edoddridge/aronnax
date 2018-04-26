@@ -7,9 +7,9 @@ module momentum
   ! ---------------------------------------------------------------------------
   !> Calculate the tendency of zonal velocity for each of the active layers
 
-  subroutine evaluate_dudt(dudt, h, u, v, b, zeta, wind_x, wind_y, fu, &
-      au, ar, slip, dx, dy, hfacN, hfacS, nx, ny, layers, rho0, & 
-      RelativeWind, Cd, spongeTimeScale, spongeU, RedGrav, botDrag)
+  subroutine evaluate_dudt(dudt, h, u, v, b, zeta, wind_x, wind_y, &
+      wind_depth, fu, au, ar, slip, dx, dy, hfacN, hfacS, nx, ny, layers, &
+      rho0, RelativeWind, Cd, spongeTimeScale, spongeU, RedGrav, botDrag)
     implicit none
 
     ! dudt(i, j) is evaluated at the centre of the left edge of the grid
@@ -22,6 +22,7 @@ module momentum
     double precision, intent(in)  :: zeta(0:nx+1, 0:ny+1, layers)
     double precision, intent(in)  :: wind_x(0:nx+1, 0:ny+1)
     double precision, intent(in)  :: wind_y(0:nx+1, 0:ny+1)
+    double precision, intent(in)  :: wind_depth
     double precision, intent(in)  :: fu(0:nx+1, 0:ny+1)
     double precision, intent(in)  :: au, ar, slip, dx, dy
     double precision, intent(in)  :: hfacN(0:nx+1, 0:ny+1)
@@ -91,9 +92,9 @@ module momentum
   !> Calculate the tendency of meridional velocity for each of the
   !> active layers
 
-  subroutine evaluate_dvdt(dvdt, h, u, v, b, zeta, wind_x, wind_y, fv, &
-      au, ar, slip, dx, dy, hfacW, hfacE, nx, ny, layers, rho0, &
-      RelativeWind, Cd, spongeTimeScale, spongeV, RedGrav, botDrag)
+  subroutine evaluate_dvdt(dvdt, h, u, v, b, zeta, wind_x, wind_y, &
+      wind_depth, fv, au, ar, slip, dx, dy, hfacW, hfacE, nx, ny, layers, &
+      rho0, RelativeWind, Cd, spongeTimeScale, spongeV, RedGrav, botDrag)
     implicit none
 
     ! dvdt(i, j) is evaluated at the centre of the bottom edge of the
@@ -106,6 +107,7 @@ module momentum
     double precision, intent(in)  :: zeta(0:nx+1, 0:ny+1, layers)
     double precision, intent(in)  :: wind_x(0:nx+1, 0:ny+1)
     double precision, intent(in)  :: wind_y(0:nx+1, 0:ny+1)
+    double precision, intent(in)  :: wind_depth
     double precision, intent(in)  :: fv(0:nx+1, 0:ny+1)
     double precision, intent(in)  :: au, ar, slip
     double precision, intent(in)  :: dx, dy

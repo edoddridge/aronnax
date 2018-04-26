@@ -61,7 +61,7 @@ module time_stepping
           dx, dy, dt, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
           au, ar, botDrag, kh, kv, slip, &
           RedGrav, hAdvecScheme, AB_order, g_vec, rho0, wind_x, wind_y, &
-          RelativeWind, Cd, &
+          wind_depth, RelativeWind, Cd, &
           spongeHTimeScale, spongeH, &
           spongeUTimeScale, spongeU, &
           spongeVTimeScale, spongeV, &
@@ -93,6 +93,7 @@ module time_stepping
     double precision, intent(in) :: rho0
     double precision, intent(in) :: wind_x(0:nx+1, 0:ny+1)
     double precision, intent(in) :: wind_y(0:nx+1, 0:ny+1)
+    double precision, intent(in) :: wind_depth
     logical,          intent(in) :: RelativeWind
     double precision, intent(in) :: Cd
     double precision, intent(in) :: spongeHTimeScale(0:nx+1, 0:ny+1, layers)
@@ -122,7 +123,7 @@ module time_stepping
           dx, dy, dt, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
           au, ar, botDrag, kh, kv, slip, &
           RedGrav, hAdvecScheme, g_vec, rho0, wind_x, wind_y, &
-          RelativeWind, Cd, &
+          wind_depth, RelativeWind, Cd, &
           spongeHTimeScale, spongeH, &
           spongeUTimeScale, spongeU, &
           spongeVTimeScale, spongeV, &
@@ -159,7 +160,7 @@ module time_stepping
       au, ar, botDrag, kh, kv, slip, &
       RedGrav, hAdvecScheme, TS_algorithm, AB_order, &
       g_vec, rho0, wind_x, wind_y, &
-      RelativeWind, Cd, &
+      wind_depth, RelativeWind, Cd, &
       spongeHTimeScale, spongeH, &
       spongeUTimeScale, spongeU, &
       spongeVTimeScale, spongeV, &
@@ -194,6 +195,7 @@ module time_stepping
     double precision, intent(in)    :: rho0
     double precision, intent(in)    :: wind_x(0:nx+1, 0:ny+1)
     double precision, intent(in)    :: wind_y(0:nx+1, 0:ny+1)
+    double precision, intent(in)    :: wind_depth
     logical,          intent(in)    :: RelativeWind
     double precision, intent(in)    :: Cd
     double precision, intent(in)    :: spongeHTimeScale(0:nx+1, 0:ny+1, layers)
@@ -214,7 +216,7 @@ module time_stepping
           dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
           au, ar, botDrag, kh, kv, slip, &
           RedGrav, hAdvecScheme, g_vec, rho0, wind_x, wind_y, &
-          RelativeWind, Cd, &
+          wind_depth, RelativeWind, Cd, &
           spongeHTimeScale, spongeH, &
           spongeUTimeScale, spongeU, &
           spongeVTimeScale, spongeV, &
@@ -232,7 +234,7 @@ module time_stepping
           dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
           au, ar, botDrag, kh, kv, slip, &
           RedGrav, hAdvecScheme, g_vec, rho0, wind_x, wind_y, &
-          RelativeWind, Cd, &
+          wind_depth, RelativeWind, Cd, &
           spongeHTimeScale, spongeH, &
           spongeUTimeScale, spongeU, &
           spongeVTimeScale, spongeV, &
@@ -249,7 +251,7 @@ module time_stepping
           dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
           au, ar, botDrag, kh, kv, slip, &
           RedGrav, hAdvecScheme, g_vec, rho0, wind_x, wind_y, &
-          RelativeWind, Cd, &
+          wind_depth, RelativeWind, Cd, &
           spongeHTimeScale, spongeH, &
           spongeUTimeScale, spongeU, &
           spongeVTimeScale, spongeV, &
@@ -268,7 +270,7 @@ module time_stepping
           dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
           au, ar, botDrag, kh, kv, slip, &
           RedGrav, hAdvecScheme, g_vec, rho0, wind_x, wind_y, &
-          RelativeWind, Cd, &
+          wind_depth, RelativeWind, Cd, &
           spongeHTimeScale, spongeH, &
           spongeUTimeScale, spongeU, &
           spongeVTimeScale, spongeV, &
@@ -286,7 +288,7 @@ module time_stepping
           dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
           au, ar, botDrag, kh, kv, slip, &
           RedGrav, hAdvecScheme, g_vec, rho0, wind_x, wind_y, &
-          RelativeWind, Cd, &
+          wind_depth, RelativeWind, Cd, &
           spongeHTimeScale, spongeH, &
           spongeUTimeScale, spongeU, &
           spongeVTimeScale, spongeV, &
@@ -303,7 +305,7 @@ module time_stepping
           dx, dy, dt, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
           au, ar, botDrag, kh, kv, slip, &
           RedGrav, hAdvecScheme, g_vec, rho0, wind_x, wind_y, &
-          RelativeWind, Cd, &
+          wind_depth, RelativeWind, Cd, &
           spongeHTimeScale, spongeH, &
           spongeUTimeScale, spongeU, &
           spongeVTimeScale, spongeV, &
@@ -333,7 +335,7 @@ module time_stepping
           dx, dy, dt, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
           au, ar, botDrag, kh, kv, slip, &
           RedGrav, hAdvecScheme, g_vec, rho0, wind_x, wind_y, &
-          RelativeWind, Cd, &
+          wind_depth, RelativeWind, Cd, &
           spongeHTimeScale, spongeH, &
           spongeUTimeScale, spongeU, &
           spongeVTimeScale, spongeV, &
@@ -367,6 +369,7 @@ module time_stepping
     double precision, intent(in) :: rho0
     double precision, intent(in) :: wind_x(0:nx+1, 0:ny+1)
     double precision, intent(in) :: wind_y(0:nx+1, 0:ny+1)
+    double precision, intent(in) :: wind_depth
     logical,          intent(in) :: RelativeWind
     double precision, intent(in) :: Cd
     double precision, intent(in) :: spongeHTimeScale(0:nx+1, 0:ny+1, layers)
@@ -390,7 +393,7 @@ module time_stepping
           dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
           au, ar, botDrag, kh, kv, slip, &
           RedGrav, hAdvecScheme, g_vec, rho0, wind_x, wind_y, &
-          RelativeWind, Cd, &
+          wind_depth, RelativeWind, Cd, &
           spongeHTimeScale, spongeH, &
           spongeUTimeScale, spongeU, &
           spongeVTimeScale, spongeV, &
@@ -406,7 +409,7 @@ module time_stepping
           dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
           au, ar, botDrag, kh, kv, slip, &
           RedGrav, hAdvecScheme, g_vec, rho0, wind_x, wind_y, &
-          RelativeWind, Cd, &
+          wind_depth, RelativeWind, Cd, &
           spongeHTimeScale, spongeH, &
           spongeUTimeScale, spongeU, &
           spongeVTimeScale, spongeV, &

@@ -44,7 +44,7 @@ program aronnax
 
   namelist /NUMERICS/ au, kh, kv, ar, botDrag, dt, slip, &
       niter0, nTimeSteps, hAdvecScheme, TS_algorithm, &
-      dumpFreq, avFreq, checkpointFreq, diagFreq, hmin, maxits, & 
+      dumpFreq, avFreq, checkpointFreq, diagFreq, hmin, maxits, &
       freesurfFac, eps, thickness_error, debug_level
 
   namelist /MODEL/ hmean, depthFile, H0, RedGrav
@@ -62,7 +62,7 @@ program aronnax
 
   namelist /EXTERNAL_FORCING/ zonalWindFile, meridionalWindFile, &
       RelativeWind, Cd, &
-      DumpWind, wind_mag_time_series_file
+      DumpWind, wind_mag_time_series_file, wind_depth
 
   ! Set default values here
 
@@ -80,6 +80,9 @@ program aronnax
 
   ! use N/m^2
   RelativeWind = .FALSE.
+
+  ! wind forcing only in the top layer
+  wind_depth = 0d0
 
   ! use first-order centred differencing
   hAdvecScheme = 1
@@ -224,7 +227,7 @@ program aronnax
       dumpFreq, avFreq, checkpointFreq, diagFreq, &
       maxits, eps, freesurfFac, thickness_error, &
       debug_level, g_vec, rho0, &
-      base_wind_x, base_wind_y, wind_mag_time_series, &
+      base_wind_x, base_wind_y, wind_mag_time_series, wind_depth, &
       spongeHTimeScale, spongeUTimeScale, spongeVTimeScale, &
       spongeH, spongeU, spongeV, &
       nx, ny, layers, RedGrav, hAdvecScheme, TS_algorithm, AB_order, &

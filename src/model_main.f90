@@ -17,7 +17,7 @@ module model_main
       dumpFreq, avFreq, checkpointFreq, diagFreq, &
       maxits, eps, freesurfFac, thickness_error, &
       debug_level, g_vec, rho0, &
-      base_wind_x, base_wind_y, wind_mag_time_series, &
+      base_wind_x, base_wind_y, wind_mag_time_series, wind_depth, &
       spongeHTimeScale, spongeUTimeScale, spongeVTimeScale, &
       spongeH, spongeU, spongeV, &
       nx, ny, layers, RedGrav, hAdvecScheme, TS_algorithm, AB_order, &
@@ -58,6 +58,7 @@ module model_main
     double precision, intent(in) :: base_wind_x(0:nx+1, 0:ny+1)
     double precision, intent(in) :: base_wind_y(0:nx+1, 0:ny+1)
     double precision, intent(in) :: wind_mag_time_series(nTimeSteps)
+    double precision, intent(in) :: wind_depth
     ! Sponge regions
     double precision, intent(in) :: spongeHTimeScale(0:nx+1, 0:ny+1, layers)
     double precision, intent(in) :: spongeUTimeScale(0:nx+1, 0:ny+1, layers)
@@ -235,7 +236,7 @@ module model_main
           dx, dy, dt, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
           au, ar, botDrag, kh, kv, slip, &
           RedGrav, hAdvecScheme, AB_order, g_vec, rho0, wind_x, wind_y, &
-          RelativeWind, Cd, &
+          wind_depth, RelativeWind, Cd, &
           spongeHTimeScale, spongeH, &
           spongeUTimeScale, spongeU, &
           spongeVTimeScale, spongeV, &
@@ -278,7 +279,7 @@ module model_main
           au, ar, botDrag, kh, kv, slip, &
           RedGrav, hAdvecScheme, TS_algorithm, AB_order, &
           g_vec, rho0, wind_x, wind_y, &
-          RelativeWind, Cd, &
+          wind_depth, RelativeWind, Cd, &
           spongeHTimeScale, spongeH, &
           spongeUTimeScale, spongeU, &
           spongeVTimeScale, spongeV, &
