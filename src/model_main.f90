@@ -234,7 +234,7 @@ module model_main
       n = 0
       call initialise_tendencies(dhdt, dudt, dvdt, h, u, v, depth, &
           dx, dy, dt, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
-          au, ar, botDrag, kh, kv, slip, &
+          au, ar, botDrag, kh, kv, hmin, slip, &
           RedGrav, hAdvecScheme, AB_order, g_vec, rho0, wind_x, wind_y, &
           wind_depth, RelativeWind, Cd, &
           spongeHTimeScale, spongeH, &
@@ -276,7 +276,7 @@ module model_main
       call timestep(h_new, u_new, v_new, dhdt, dudt, dvdt, &
           h, u, v, depth, &
           dx, dy, dt, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
-          au, ar, botDrag, kh, kv, slip, &
+          au, ar, botDrag, kh, kv, hmin, slip, &
           RedGrav, hAdvecScheme, TS_algorithm, AB_order, &
           g_vec, rho0, wind_x, wind_y, &
           wind_depth, RelativeWind, Cd, &
@@ -302,7 +302,7 @@ module model_main
 
 
       ! Stop layers from getting too thin
-      call enforce_minimum_layer_thickness(h_new, hmin, nx, ny, layers, n)
+      ! call enforce_minimum_layer_thickness(h_new, hmin, nx, ny, layers, n)
 
       ! Wrap fields around for periodic simulations
       call wrap_fields_3D(u_new, nx, ny, layers)

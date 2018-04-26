@@ -14,7 +14,7 @@ module state_deriv
 
   subroutine state_derivative(dhdt, dudt, dvdt, h, u, v, depth, &
       dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
-      au, ar, botDrag, kh, kv, slip, &
+      au, ar, botDrag, kh, kv, hmin, slip, &
       RedGrav, hAdvecScheme, g_vec, rho0, wind_x, wind_y, &
       wind_depth, RelativeWind, Cd, &
       spongeHTimeScale, spongeH, &
@@ -40,6 +40,7 @@ module state_deriv
     double precision, intent(in) :: fv(0:nx+1, 0:ny+1)
     double precision, intent(in) :: au, ar, botDrag
     double precision, intent(in) :: kh(layers), kv
+    double precision, intent(in) :: hmin
     double precision, intent(in) :: slip
     logical,          intent(in) :: RedGrav
     integer,          intent(in) :: hAdvecScheme
@@ -88,8 +89,8 @@ module state_deriv
     end if
 
     ! Calculate dhdt, dudt, dvdt at current time step
-    call evaluate_dhdt(dhdt, h, u, v, kh, kv, dx, dy, nx, ny, layers, &
-        spongeHTimeScale, spongeH, wetmask, RedGrav, hAdvecScheme, n)
+    call evaluate_dhdt(dhdt, h, u, v, kh, hmin, kv, dx, dy, nx, ny, &
+      layers, spongeHTimeScale, spongeH, wetmask, RedGrav, hAdvecScheme, n)
 
     call evaluate_dudt(dudt, h, u, v, b, zeta, wind_x, wind_y, wind_depth, &
         fu, au, ar, slip, dx, dy, hfacN, hfacS, nx, ny, layers, rho0, &
