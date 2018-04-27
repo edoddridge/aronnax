@@ -471,3 +471,62 @@ def test_vertical_thickness_diffusion_Hypre_3_layers():
         # plt.legend()
         # plt.savefig('h_evo.pdf')
         assert np.max(abs(simuated_h_evo[:,1] - simuated_h_evo[:,3])) < 0.0005
+
+
+def test_outcropping_Hypre():
+
+    nx = 60
+    ny = 30
+    layers = 2
+    xlen = 120e3
+    ylen = 120e3
+    dx = xlen / nx
+    dy = ylen / ny
+
+    grid = aro.Grid(nx, ny, layers, dx, dy)
+
+    def wetmask(X, Y):
+        # start with water everywhere and add some land
+        wetmask = np.ones(X.shape, dtype=np.float64)
+
+        # clean up the edges
+        wetmask[0,:] = 0
+        wetmask[-1,:] = 0
+
+        return wetmask
+
+    def bathymetry(X,Y):
+        depth = 50 + 50*Y/Y.max()
+        return depth
+
+    def init_h1(X, Y):
+        depth = bathymetry(X,Y)
+        proto_h1 = 150 - 200*Y/Y.max()
+        # leave 0.1 m for bottom layer
+        h1 = np.minimum(proto_h1, depth) - 0.1
+        # set outrcropped region to 0.1 m thick
+        h1 = np.maximum(h1, 0.1 + 0*X)
+        # crude smoothing to reduce the sharp gradients
+        h1[1:,:] = (h1[1:,:] + h1[:-1,:])/2
+        h1[:,1:] = (h1[:,1:] + h1[:,:-1])/2.
+        return h1
+
+    def init_h2(X,Y):
+        depth = bathymetry(X,Y)
+        h1 = init_h1(X,Y)
+        h2 = depth - h1
+        return h2
+
+
+    with working_directory(p.join(self_path, 'outcropping')):
+        drv.simulate(
+                initHfile=[init_h1, init_h2],
+                zonalWindFile=[0.1], meridionalWindFile=[0],
+                wind_depth=40,
+                wetMaskFile=[wetmask],
+                depthFile=[bathymetry],
+                nx=nx, ny=ny, layers=layers, dx=dx, dy=dy,
+                exe='aronnax_external_solver_test',
+                dt=10, nTimeSteps=1000)
+        assert_outputs_close(nx, ny, layers, 3e-12)
+        assert_volume_conservation(nx, ny, layers, 3e-5)
