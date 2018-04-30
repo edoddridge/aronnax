@@ -107,3 +107,19 @@ TS_algorithm
  - TS_algorithm = 12: Second-order Runge-Kutta
  - TS_algorithm = 13: Third-order Runge-Kutta (not implemented)
  - TS_algorithm = 14: Fourth-order Runge-Kutta (not implemented)
+
+
+Discussion
+==========
+
+The following points may be helpful when using the model but don't fit above.
+
+Outcropping
+-----------
+
+Aronnax allows for layers to become very thin, which simulates outcropping of isopycnals at the surface, and grounding of isopycnals at the sea floor. Unfortunately outcropping adversely impacts layerwise volume conservation. Over a long simulation the change in volume of a layer may be substantial.
+
+To allow for outcropping the following parameters should be set:
+
+- `hmin` very small
+- `wind_depth` set to >10 m
