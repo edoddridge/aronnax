@@ -9,8 +9,8 @@ module thickness
   ! ---------------------------------------------------------------------------
   !> Calculate the tendency of layer thickness for each of the active layers
   !! dh/dt is in the centre of each grid point.
-  subroutine evaluate_dhdt(dhdt, h, u, v, kh, kv, dx, dy, nx, ny, layers, &
-      spongeTimeScale, spongeH, wetmask, RedGrav, hAdvecScheme, n)
+  subroutine evaluate_dhdt(dhdt, h, u, v, kh, hmin, kv, dx, dy, nx, ny, &
+      layers, spongeTimeScale, spongeH, wetmask, RedGrav, hAdvecScheme, n)
     implicit none
 
     ! dhdt is evaluated at the centre of the grid box
@@ -19,6 +19,7 @@ module thickness
     double precision, intent(in)  :: u(0:nx+1, 0:ny+1, layers)
     double precision, intent(in)  :: v(0:nx+1, 0:ny+1, layers)
     double precision, intent(in)  :: kh(layers), kv
+    double precision, intent(in)  :: hmin
     double precision, intent(in)  :: dx, dy
     integer, intent(in) :: nx, ny, layers
     double precision, intent(in)  :: spongeTimeScale(0:nx+1, 0:ny+1, layers)
@@ -43,7 +44,7 @@ module thickness
     ! to GM in z coordinate model with the same diffusivity).
     dhdt_kh = 0d0
 
-    call dhdt_hor_diff(dhdt_kh, h, kh, dx, dy, nx, ny, layers, &
+    call dhdt_hor_diff(dhdt_kh, h, kh, hmin, dx, dy, nx, ny, layers, &
       wetmask, RedGrav)
 
     ! Calculate thickness tendency due to vertical diffusion
@@ -92,7 +93,7 @@ module thickness
   ! ---------------------------------------------------------------------------
   !> Calculate the tendency of layer thickness for each of the active layers
   !! due to horizontal thickness diffusion
-  subroutine dhdt_hor_diff(dhdt_GM, h, kh, dx, dy, nx, ny, layers, &
+  subroutine dhdt_hor_diff(dhdt_GM, h, kh, hmin, dx, dy, nx, ny, layers, &
       wetmask, RedGrav)
     implicit none
 
@@ -100,12 +101,14 @@ module thickness
     double precision, intent(out) :: dhdt_GM(0:nx+1, 0:ny+1, layers)
     double precision, intent(in)  :: h(0:nx+1, 0:ny+1, layers)
     double precision, intent(in)  :: kh(layers)
+    double precision, intent(in)  :: hmin
     double precision, intent(in)  :: dx, dy
     integer, intent(in) :: nx, ny, layers
     double precision, intent(in)  :: wetmask(0:nx+1, 0:ny+1)
     logical, intent(in) :: RedGrav
 
     integer i, j, k
+    double precision :: kappa_local
 
     ! Calculate tendency due to thickness diffusion (equivalent
     ! to GM in z coordinate model with the same diffusivity).
@@ -116,14 +119,17 @@ module thickness
     do k = 1, layers-1
       do j = 1, ny
         do i = 1, nx
+          ! if h >> hmin, then kappa_local = kh(k)
+          ! if h <~ hmin, then kappa_local is very big
+          kappa_local = kh(k) + 100d0*exp(-h(i,j,k)/hmin)
           dhdt_GM(i,j,k) = &
-              kh(k)*(h(i+1,j,k)*wetmask(i+1,j)    &
+              kappa_local*(h(i+1,j,k)*wetmask(i+1,j)    &
                 + (1d0 - wetmask(i+1,j))*h(i,j,k) & ! reflect around boundary
                 + h(i-1,j,k)*wetmask(i-1,j)       &
                 + (1d0 - wetmask(i-1,j))*h(i,j,k) & ! refelct around boundary
                 - 2*h(i,j,k))/(dx*dx)             & ! x-component
 
-              + kh(k)*(h(i,j+1,k)*wetmask(i,j+1) &
+              + kappa_local*(h(i,j+1,k)*wetmask(i,j+1) &
                 + (1d0 - wetmask(i,j+1))*h(i,j,k) & ! reflect value around boundary
                 + h(i,j-1,k)*wetmask(i,j-1)       &
                 + (1d0 - wetmask(i,j-1))*h(i,j,k) & ! reflect value around boundary
@@ -140,14 +146,17 @@ module thickness
     if (RedGrav) then
       do j = 1, ny
         do i = 1, nx
+          ! if h >> hmin, then kappa_local = kh(k)
+          ! if h <~ hmin, then kappa_local is very big
+          kappa_local = kh(layers) + 100d0*exp(-h(i,j,layers)/hmin)
           dhdt_GM(i,j,layers) = &
-              kh(layers)*(h(i+1,j,layers)*wetmask(i+1,j)   &
+              kappa_local*(h(i+1,j,layers)*wetmask(i+1,j)   &
                 + (1d0 - wetmask(i+1,j))*h(i,j,layers)     & ! boundary
                 + h(i-1,j,layers)*wetmask(i-1,j)           &
                 + (1d0 - wetmask(i-1,j))*h(i,j,layers)     & ! boundary
                 - 2*h(i,j,layers))/(dx*dx)                 & ! x-component
 
-              + kh(layers)*(h(i,j+1,layers)*wetmask(i,j+1) &
+              + kappa_local*(h(i,j+1,layers)*wetmask(i,j+1) &
                 + (1d0 - wetmask(i,j+1))*h(i,j,layers)     & ! reflect value around boundary
                 + h(i,j-1,layers)*wetmask(i,j-1)           &
                 + (1d0 - wetmask(i,j-1))*h(i,j,layers)     & ! reflect value around boundary

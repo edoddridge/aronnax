@@ -146,6 +146,7 @@ section_map = {
     "meridionalWindFile"   : "external_forcing",
     "DumpWind"             : "external_forcing",
     "wind_mag_time_series_file" : "external_forcing",
+    "wind_depth"           : "external_forcing",
     "RelativeWind"         : "external_forcing",
     "Cd"                   : "external_forcing",
     "exe"                  : "executable",
