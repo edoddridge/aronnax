@@ -158,7 +158,7 @@ Yang et al. (2016)
 ------------------
 `Yang et al. (2016)  <https://doi.org/10.1002/2015JC011296>`_ run and analyse a series of idealised n-layer models of the Beaufort Gyre in the Arctic. A configuration of Aronnax that mimics their setup can be found in the reproductions folder.
 
-The spin up of the model proceeds as expected, but baroclinic instability sets in sooner than observed in the simulations by Yang et al. (2016). For this reason, the deepening of the upper layer is halted earlier, and it does not become as thick as in their simulations. There are multiple numerical differences between the model described by Yang et al. and Aronnax. For example, they use biharmonic viscosity and a quadraditic bottom drag, while Aronnax has Laplacian viscosity and linear bottom drag. Numerical details can make a substantial difference to the output of numerical simulations, and these differences may be why Aronnax fails to reproduce the mean state of their model. The model state after 14 years of simulation is shown in :numref:`Yang_et_al_2016_final_state`. Comparing :numref:`Yang_et_al_2016_final_state` with their Figure 3 highlights that the upper layer in the Aronnax simulation is thinner.
+The spin up of the model proceeds as expected, but baroclinic instability sets in sooner than observed in the simulations by Yang et al. (2016). For this reason, the deepening of the upper layer is halted earlier, and it does not become as thick as in their simulations. There are multiple numerical differences between the model described by Yang et al. and Aronnax. For example, they use biharmonic viscosity and a quadratic bottom drag, while Aronnax has Laplacian viscosity and linear bottom drag. Numerical details can make a substantial difference to the output of numerical simulations, and these differences may be why Aronnax fails to reproduce the mean state of their model. The model state after 14 years of simulation is shown in :numref:`Yang_et_al_2016_final_state`. Comparing :numref:`Yang_et_al_2016_final_state` with their Figure 3 highlights that the upper layer in the Aronnax simulation is thinner.
 
 
 .. figure:: ../reproductions/Yang_et_al_2016/spin_up/figures/state_L0_005040.png
@@ -183,7 +183,7 @@ The spin up of the model proceeds as expected, but baroclinic instability sets i
 
 .. only:: html
 
-   An interactive plot of the model state after 14 years of model time can be found below.
+   An interactive plot of the model state after 14 years of model time can be found below. The blue/grey surface shows a cutaway of the bathymetry.
 
 .. raw:: html
   :url: https://edoddridge.github.io/Aronnax/reproductions/Yang-et-al-2016/spin-up/final_state.html
