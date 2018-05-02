@@ -86,9 +86,9 @@ data = [go.Surface(x=grid.x/1e3, y=grid.y/1e3, z=-h_masked,
                     name='Depth of interface'),
         go.Surface(x=grid.x[:100]/1e3, y=grid.y/1e3, z=-depth[:,:100], surfacecolor=-depth[:,:100], 
                     colorscale='inferno',
-                    colorbar=dict(title='Bathymetry (m)', titlefont={'size':30},
-                        tickfont={'size':18}, x=0),
-                    name='Bathymetry')]
+                    # colorbar=dict(title='Bathymetry (m)', titlefont={'size':30},
+                    #     tickfont={'size':18}, x=-0.1),
+                    name='Bathymetry', showscale = False)]
 
 layout = go.Layout(font=dict(family='Times New Roman'),
                     xaxis = dict(
