@@ -21,6 +21,7 @@ import output_preservation_test as opt
 
 import subprocess as sub
 
+from builtins import int    # subclass of long on Py2
 
 
 def f_plane_init_u_test(physics, aro_exec, dt):
@@ -336,7 +337,7 @@ def f_plane_wind_test(physics, aro_exec, nx, ny, dx, dy, dt, nTimeSteps):
 
 def truncation_error(physics, aro_exec, nx, ny, grid_resolution, integration_time):
 
-    if isinstance(grid_resolution, (int, long, float)):
+    if isinstance(grid_resolution, (int, float)):
         dx = grid_resolution
         dt = 30. #np.min([dx/10., 1000.])
 
