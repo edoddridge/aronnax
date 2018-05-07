@@ -124,9 +124,10 @@ def interpret_raw_file(name, nx, ny, layers):
         dx = 1
     if file_part.startswith("debug.dvdt"):
         dy = 1
+
     with fortran_file(name, 'r') as f:
         return f.read_reals(dtype=np.float64) \
-                    .reshape(layers, ny+dy, nx+dx).transpose()
+                    .reshape(layers, ny+dy, nx+dx)
 
 
 ### General input construction helpers

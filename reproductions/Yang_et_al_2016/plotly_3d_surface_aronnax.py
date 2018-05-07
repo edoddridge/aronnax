@@ -67,15 +67,15 @@ v_files = sorted(glob.glob(p.join(file_path, 'snap.v.*')))
 
 
 h_final = aro.interpret_raw_file(h_files[-1], nx, ny, layers)
-h_masked = np.ma.masked_where(mask_h==0, h_final[:,:,0])
+h_masked = np.ma.masked_where(mask_h==0, h_final[0,:,:])
 u_final = aro.interpret_raw_file(u_files[-1], nx, ny, layers)
 v_final = aro.interpret_raw_file(v_files[-1], nx, ny, layers)
 
-speed = np.sqrt((u_final[:-1,:,0]+u_final[1:,:,0])**2 + (v_final[:,1:,0] + v_final[:,:-1,0])**2)
+speed = np.sqrt((u_final[0,:,:-1]+u_final[0,:,1:])**2 + (v_final[:,1:,0] + v_final[:,:-1,0])**2)
 speed[mask_h==0] = np.nan
 
 eta_final = aro.interpret_raw_file(eta_files[-1], nx, ny, 1)
-eta_masked = np.ma.masked_where(mask_h==0, eta_final[:,:,0])*1e2
+eta_masked = np.ma.masked_where(mask_h==0, eta_final[0,:,:])*1e2
 eta_masked = eta_masked - np.min(eta_masked)
 
 data = [go.Surface(x=grid.x/1e3, y=grid.y/1e3, z=-h_masked,
