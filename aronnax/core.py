@@ -17,6 +17,10 @@ from builtins import int
 import numpy as np
 from scipy.io import FortranFile
 
+from dask import delayed
+import dask.array as dsa
+import xarray as xr
+
 class Grid(object):
     """Make a grid object containing all of the axes.
 
@@ -81,53 +85,107 @@ def interpret_raw_file(name, nx, ny, layers):
     # of) indexes in increasing order.
     file_part = p.basename(name)
     dx = 0; dy = 0;
-    if file_part.startswith("snap.BP"):
+    if file_part.startswith("snap.BP."):
         pass
-    if file_part.startswith("snap.eta"):
+    elif file_part.startswith("snap.eta."):
         layers = 1
-    if file_part.startswith("snap.eta_new"):
+    elif file_part.startswith("snap.eta_new."):
         layers = 1
-    if file_part.startswith("snap.eta_star"):
+    elif file_part.startswith("snap.eta_star."):
         layers = 1
-    if file_part.startswith("snap.h"):
+    elif file_part.startswith("snap.h."):
         pass
-    if file_part.startswith("snap.u"):
+    elif file_part.startswith("snap.u."):
         dx = 1
-    if file_part.startswith("snap.ub"):
+    elif file_part.startswith("snap.ub."):
         dx = 1
         layers = 1
-    if file_part.startswith("snap.v"):
+    elif file_part.startswith("snap.v."):
         dy = 1
-    if file_part.startswith("snap.vb"):
+    elif file_part.startswith("snap.vb."):
         dy = 1
         layers = 1
-    if file_part.startswith("snap.zeta"):
+    elif file_part.startswith("snap.zeta."):
         dx = 1 
         dy = 1   
-    if file_part.startswith("wind_x"):
+    elif file_part.startswith("wind_x."):
         dx = 1
         layers = 1
-    if file_part.startswith("wind_y"):
+    elif file_part.startswith("wind_y."):
         dy = 1
         layers = 1
-    if file_part.startswith("av.h"):
+    elif file_part.startswith("av.h."):
         pass
-    if file_part.startswith("av.u"):
+    elif file_part.startswith("av.u."):
         dx = 1
-    if file_part.startswith("av.v"):
+    elif file_part.startswith("av.v."):
         dy = 1
-    if file_part.startswith("av.eta"):
+    elif file_part.startswith("av.eta."):
         layers = 1
-    if file_part.startswith("debug.dhdt"):
+    elif file_part.startswith("debug.dhdt."):
         pass
-    if file_part.startswith("debug.dudt"):
+    elif file_part.startswith("debug.dudt."):
         dx = 1
-    if file_part.startswith("debug.dvdt"):
+    elif file_part.startswith("debug.dvdt."):
         dy = 1
+    else:
+        print('File not recognised - no output returned')
+        return
 
     with fortran_file(name, 'r') as f:
         return f.read_reals(dtype=np.float64) \
                     .reshape(layers, ny+dy, nx+dx)
+
+
+def interpret_raw_file_delayed(name, nx, ny, layers):
+    """
+    Use Dask.delayed to lazily load a single output file. While this can be
+    used as is, it is intended to be an internal function called by `open_mfdataset`.
+    """
+    variable_name = p.basename(name)
+    variable_name = '.'.join(variable_name.split('.')[:-1])
+
+    d = dsa.from_delayed(delayed(interpret_raw_file)(name, nx, ny, layers),
+                            (layers, ny, nx), float, name=variable_name)
+    return d
+
+
+def open_mfdataarray(files, grid):
+    """Open a number of output files into an xarray dataarray. All files
+        must contain the same variable.
+
+    Uses dask.delyaed to lazily load data as required.
+    """
+
+    files = sorted(files)
+
+    output_variables = set()
+    timestamps = []
+    for file_name in files:
+        variable_name = p.basename(file_name)
+        timestamps.append(float(variable_name.split('.')[-1]))
+        variable_name = '.'.join(variable_name.split('.')[:-1]) 
+        output_variables.add(variable_name)
+
+    output_variables = list(output_variables)
+
+    if len(output_variables) > 1:
+        raise ValueError\
+        ('open_mfdataarray only supports loading multiple timestamps of a single variable.')
+        return
+
+    datasets = [interpret_raw_file_delayed(file_name, grid.nx,
+                                            grid.ny, grid.layers)
+                for file_name in files]
+    
+    ds = dsa.stack(datasets, axis=0)
+
+    ds = xr.DataArray(ds, coords=dict(time=timestamps,
+                                        layers=np.arange(grid.layers),
+                                        y=grid.y, x=grid.x),
+                        dims=['time','layers','y','x'],
+                        name=output_variables[0])
+    return ds
 
 
 ### General input construction helpers
