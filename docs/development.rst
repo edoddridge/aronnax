@@ -5,6 +5,11 @@ Development
 Since latest release
 --------------------
 
+- Aronnax paper published in Journal of Open Source Software (15 June 2018)
+
+Version 0.2.0 (15 June 2018)
+--------------------------------
+
 - Allow outcropping `GH196 <https://github.com/edoddridge/aronnax/pull/196>`_ (30 April 2018)
 - Add Python 3 compatibility `GH189 <https://github.com/edoddridge/aronnax/pull/189>`_ (23 April 2018)
 - Add Adams-Bashforth family of timestepping algorithms up to fifth-order `GH184 <https://github.com/edoddridge/aronnax/pull/184>`_ (15 March 2018)
