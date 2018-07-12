@@ -18,7 +18,11 @@ The Python components of Aronnax depend on
 | :bash:`scipy`
 |
 
-We recommend installing these with your favourite package manager before installing Aronnax.
+We recommend installing these with your favourite package manager before installing Aronnax. While the previous dependencies will allow you to run the model, some of the functions for dealing with the output files also depend on
+
+| :bash:`xarray`
+| :bash:`dask`
+|
 
 Additionally, the Fortran core requires
 

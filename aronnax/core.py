@@ -152,9 +152,14 @@ def interpret_raw_file_delayed(name, nx, ny, layers):
 
 def open_mfdataarray(files, grid):
     """Open a number of output files into an xarray dataarray. All files
-        must contain the same variable.
+    must contain the same variable.
 
-    Uses dask.delyaed to lazily load data as required.
+    Uses dask.delayed to lazily load data as required.
+
+    :param list files: a list of file names to load
+    :param grid: a grid object created by aronnax.Grid
+
+    :return: xarray.DataArray of the desired variable
     """
 
     files = sorted(files)
