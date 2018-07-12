@@ -16,6 +16,11 @@ before_install:
   - sudo apt-get install openmpi-bin
   - sudo apt-get install imagemagick
   - pip install scipy
+  - pip install numpy
+  - pip install pandas
+  - pip install xarray
+  - pip install toolz
+  - pip install dask
   - pip install future
   - pip install sphinx
   - pip install sphinx_rtd_theme
