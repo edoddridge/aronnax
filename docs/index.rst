@@ -47,6 +47,7 @@ Aronnax is
    examples
    verification
    benchmarks
+   publications
    development
 
 

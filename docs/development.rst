@@ -7,7 +7,7 @@ Since latest release
 
 - Python functions now have axis order specified by Comodo conventions `GH204 <https://github.com/edoddridge/aronnax/pull/204>`_ (13 July 2018)
 - Python wrapper can lazily load multiple timestamps into a 4D array (t,z,y,x) `GH204 <https://github.com/edoddridge/aronnax/pull/204>`_ (13 July 2018)
-
+- Aronnax paper published in Journal of Open Source Software (15 June 2018)
 
 Version 0.2.0 (15 June 2018)
 --------------------------------
