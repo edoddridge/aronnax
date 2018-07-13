@@ -177,7 +177,6 @@ def open_mfdataarray(files, grid):
     if len(output_variables) > 1:
         raise ValueError\
         ('open_mfdataarray only supports loading multiple timestamps of a single variable.')
-        return
 
     datasets = [interpret_raw_file_delayed(file_name, grid.nx,
                                             grid.ny, grid.layers)
