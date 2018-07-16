@@ -46,26 +46,27 @@ def assert_outputs_close(nx, ny, layers, rtol):
         relerr = np.amax(array_relative_error(ans, good_ans))
         if (relerr >= rtol or np.isnan(relerr)):
             print('test failed at {0}'.format(outfile))
+            print('rtol = {0}: relerr = {1}'.format(rtol, relerr))
             # print ans
             # print good_ans
             test_passes = False
 
             plt.figure()
-            plt.pcolormesh(ans[:,:,0])
+            plt.pcolormesh(ans[0,:,:])
             plt.colorbar()
             plt.title(outfile)
             plt.savefig('current_output_{0}.png'.format(outfile[12:]))
             plt.close()
 
             plt.figure()
-            plt.pcolormesh(good_ans[:,:,0])
+            plt.pcolormesh(good_ans[0,:,:])
             plt.colorbar()
             plt.title(outfile)
             plt.savefig('blessed_output_{0}.png'.format(outfile[12:]))
             plt.close()
 
             plt.figure()
-            plt.pcolormesh(ans[:,:,0] - good_ans[:,:,0], cmap='RdBu_r')
+            plt.pcolormesh(ans[0,:,:] - good_ans[0,:,:], cmap='RdBu_r')
             plt.colorbar()
             plt.title('current - blessed at {0}'.format(outfile[12:]))
             plt.savefig('difference_{0}.png'.format(outfile[12:]))
@@ -83,8 +84,8 @@ def assert_volume_conservation(nx,ny,layers,rtol):
     volume_final = np.zeros((layers))
 
     for k in range(layers):
-        volume_0[k] = np.sum(h_0[:,:,k])
-        volume_final[k] = np.sum(h_final[:,:,k])
+        volume_0[k] = np.sum(h_0[k,:,:])
+        volume_final[k] = np.sum(h_final[k,:,:])
 
         assert np.abs((volume_0[k] - volume_final[k])/volume_0[k]) < rtol
 

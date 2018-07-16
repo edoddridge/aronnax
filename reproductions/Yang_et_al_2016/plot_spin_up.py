@@ -68,14 +68,14 @@ def plt_h_cross_section(simulation=None):
 
     plt.figure()
     for i in range(100,160):
-        plt.plot(-h_final[:,i,0])
+        plt.plot(-h_final[0,i,:])
     plt.title('Timestep {}: Day {:05d}'.format(h_files[-1][-10:], len(h_files)))
     plt.savefig('{0}figures/h_final.png'.format(simulation))
     plt.close()
 
-    plt.pcolormesh(X_h, Y_h, np.transpose(h_final[:,:,0]))
+    plt.pcolormesh(X_h, Y_h, h_final[0,:,:])
     plt.colorbar()
-    plt.contour(X_h, Y_h, np.transpose(h_final[:,:,0]), np.arange(0,800,50), colors='k')
+    plt.contour(X_h, Y_h, h_final[0,:,:], np.arange(0,800,50), colors='k')
     plt.title('Timestep {}: Day {:05d}'.format(h_files[-1][-10:], len(h_files)))
     plt.savefig('{0}figures/h_final_pcolor.png'.format(simulation))
     plt.close()
@@ -89,7 +89,7 @@ def plt_state(simulation=None):
 
     for i in range(len(v_files)):
         h = aro.interpret_raw_file(h_files[i], nx, ny, layers)
-        h_max[i] = h[100,100,0] #np.max(h[:,:,0])
+        h_max[i] = h[0,100,100] #np.max(h[0,:,:])
     
     years = np.arange(len(h_max))/360
     plt.figure()
@@ -107,9 +107,9 @@ def plt_state(simulation=None):
         f, (ax1, ax2) = plt.subplots(1, 2, figsize=(10,5))
         ax1.pcolormesh(X_h, Y_h, np.ma.masked_where(mask_h==1, mask_h), cmap='YlOrBr_r',
             vmin=0, vmax=1)
-        CS = ax1.contour(X_h, Y_h, np.transpose(h[:,:,0]), np.arange(0,800,50), colors='k')
+        CS = ax1.contour(X_h, Y_h, h[0,:,:], np.arange(0,800,50), colors='k')
 
-        im = ax1.pcolormesh(X_v, Y_v, np.ma.masked_where(mask_v==0, np.transpose(v[:,:,0])*100.),
+        im = ax1.pcolormesh(X_v, Y_v, np.ma.masked_where(mask_v==0, v[0,:,:]*100.),
             cmap='RdBu_r', vmin = -75, vmax = 75)
         CB = plt.colorbar(im, ax=ax1, orientation='horizontal')
         CB.set_label('y component of velocity (cm / s)')
@@ -136,10 +136,10 @@ def plt_state(simulation=None):
         plt.figure()
         plt.pcolormesh(X_h, Y_h, np.ma.masked_where(mask_h==1, mask_h), cmap='YlOrBr_r',
             vmin=0, vmax=1)
-        CS = plt.contour(X_h, Y_h, np.transpose(h[:,:,1]), np.arange(0,5000,500),
+        CS = plt.contour(X_h, Y_h, h[1,:,:], np.arange(0,5000,500),
             colors='k')
 
-        plt.pcolormesh(X_v, Y_v, np.ma.masked_where(mask_v==0, np.transpose(v[:,:,1])*100.),
+        plt.pcolormesh(X_v, Y_v, np.ma.masked_where(mask_v==0, v[1,:,:]*100.),
             cmap='RdBu_r', vmin = -15, vmax = 15)
         CB = plt.colorbar()
         CB.set_label('y component of velocity (cm / s)')

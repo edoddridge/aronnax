@@ -53,11 +53,11 @@ def plt_state(simulation=None):
     X,Y = np.meshgrid(grid.x/1e3, grid.y/1e3)
 
     plt.figure()
-    CS = plt.contour(X,Y,np.transpose(h[:,:,0]),colors='k')
+    CS = plt.contour(X,Y,h[0,:,:],colors='k')
     plt.clabel(CS, inline=1, fontsize=10)
     X,Y = np.meshgrid(grid.x/1e3, grid.yp1/1e3)
 
-    plt.pcolormesh(X,Y,np.transpose(v[:,:,0])*100., cmap='RdBu_r'
+    plt.pcolormesh(X,Y,v[0,:,:]*100., cmap='RdBu_r'
         ,vmin = -2, vmax = 2)
     CB = plt.colorbar()
     CB.set_label('y component of velocity (cm / s)')
@@ -91,7 +91,7 @@ def plot_channel_transport(simulation=None):
         v = aro.interpret_raw_file(v_files[i], 102, 182, 1)
 
 
-        transport[i] = np.sum(h[:,70,0]*(v[:,53,0]+v[:,54,0])/2.)*grid.dx/1e6
+        transport[i] = np.sum(h[0,70,:]*(v[0,53,:]+v[0,54,:])/2.)*grid.dx/1e6
 
     plt.figure()
 

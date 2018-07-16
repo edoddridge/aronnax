@@ -21,6 +21,7 @@ import output_preservation_test as opt
 
 import subprocess as sub
 
+from builtins import int    # subclass of long on Py2
 
 
 def f_plane_init_u_test(physics, aro_exec, dt):
@@ -109,10 +110,10 @@ def f_plane_init_u_test(physics, aro_exec, dt):
             # plt.savefig('h.{0}.png'.format(ufile[-10:]),dpi=150)
             # plt.close()
 
-            energy[counter] = nx * ny * (dx * dy * rho0 * (np.sum(np.absolute(h * (u[1:,...]**2 + u[:-1,...]**2)/4.)/2.) + np.sum(np.absolute(h * (v[:,1:,:]**2 + v[:,:-1,:]**2)/4.)/2.)) +  
+            energy[counter] = nx * ny * (dx * dy * rho0 * (np.sum(np.absolute(h * (u[:,:,1:]**2 + u[:,:,:-1]**2)/4.)/2.) + np.sum(np.absolute(h * (v[:,1:,:]**2 + v[:,:-1,:]**2)/4.)/2.)) +  
               dx * dy * rho0 * 0.01 * np.sum(np.absolute(h - 400.)))
 
-            momentum[counter] = nx * ny * dx * dy * rho0 * (np.sum(np.absolute(h * (u[1:,...] + u[:-1,...])/2.)) + np.sum(np.absolute(h * (v[:,1:,:] + v[:,:-1,:])/2.)))
+            momentum[counter] = nx * ny * dx * dy * rho0 * (np.sum(np.absolute(h * (u[:,:,1:] + u[:,:,:-1])/2.)) + np.sum(np.absolute(h * (v[:,1:,:] + v[:,:-1,:])/2.)))
 
             volume[counter] = np.sum(h)
 
@@ -130,9 +131,9 @@ def f_plane_init_u_test(physics, aro_exec, dt):
         X, Y = np.meshgrid(grid.x, grid.yp1)
         init_v = aro.interpret_raw_file(vfiles[1], nx, ny, layers) #init_V(X, Y, True)
 
-        energy_expected[:] = nx * ny * (dx * dy * rho0 * (np.sum(np.absolute(400. * (init_u[1:,...]**2 + init_u[:-1,...]**2)/4.)/2.) + np.sum(np.absolute(400. * (init_v[:,1:,:]**2 + init_v[:,:-1,:]**2)/4.)/2.)) )
+        energy_expected[:] = nx * ny * (dx * dy * rho0 * (np.sum(np.absolute(400. * (init_u[:,:,1:]**2 + init_u[:,:,:-1]**2)/4.)/2.) + np.sum(np.absolute(400. * (init_v[:,1:,:]**2 + init_v[:,:-1,:]**2)/4.)/2.)) )
 
-        momentum_expected[:] = nx * ny * dx * dy * rho0 * (np.sum(np.absolute(h * (init_u[1:,...] + init_u[:-1,...])/2.)) + np.sum(np.absolute(h * (init_v[:,1:,:] + init_v[:,:-1,:])/2.)))
+        momentum_expected[:] = nx * ny * dx * dy * rho0 * (np.sum(np.absolute(h * (init_u[:,:,1:] + init_u[:,:,:-1])/2.)) + np.sum(np.absolute(h * (init_v[:,1:,:] + init_v[:,:-1,:])/2.)))
 
         # print momentum[0]/momentum_expected[0]
 
@@ -271,7 +272,7 @@ def f_plane_wind_test(physics, aro_exec, nx, ny, dx, dy, dt, nTimeSteps):
             # plt.savefig('h.{0}.png'.format(ufile[-10:]),dpi=150)
             # plt.close()
 
-            momentum[counter] = dx * dy * rho0 * (np.sum(np.absolute(h * (u[1:,...] + u[:-1,...])/2.)) + np.sum(np.absolute(h * (v[:,1:,:] + v[:,:-1,:])/2.)))
+            momentum[counter] = dx * dy * rho0 * (np.sum(np.absolute(h * (u[:,:,1:] + u[:,:,:-1])/2.)) + np.sum(np.absolute(h * (v[:,1:,:] + v[:,:-1,:])/2.)))
 
             momentum_expected[counter] =  2.* dx * dy * 1e-5 * (model_iteration[counter] + 2) * dt
 
@@ -336,7 +337,7 @@ def f_plane_wind_test(physics, aro_exec, nx, ny, dx, dy, dt, nTimeSteps):
 
 def truncation_error(physics, aro_exec, nx, ny, grid_resolution, integration_time):
 
-    if isinstance(grid_resolution, (int, long, float)):
+    if isinstance(grid_resolution, (int, float)):
         dx = grid_resolution
         dt = 30. #np.min([dx/10., 1000.])
 

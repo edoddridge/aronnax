@@ -167,12 +167,12 @@ def plt_output(grid, sim_name, colour_lim=2):
         X,Y = np.meshgrid(grid.x/1e3, grid.y/1e3)
 
         plt.figure()
-        CS = plt.contour(X,Y,np.transpose(h[:,:,0]),colors='k')
+        CS = plt.contour(X,Y,h[0,:,:],colors='k')
         plt.clabel(CS, inline=1, inline_spacing=17,
          fontsize=10, fmt=r'%3.0f')
         X,Y = np.meshgrid(grid.x/1e3, grid.yp1/1e3)
 
-        im = plt.pcolormesh(X,Y,np.transpose(v[:,:,0])*100., cmap='RdBu_r'
+        im = plt.pcolormesh(X,Y,v[0,:,:]*100., cmap='RdBu_r'
             ,vmin = -colour_lim, vmax = colour_lim)
         im.set_edgecolor('face')
         CB = plt.colorbar()
