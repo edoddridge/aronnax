@@ -325,20 +325,26 @@ module barotropic_mode
     integer*8        :: hypre_x
     integer*8        :: hypre_solver
     integer*8        :: precond
-    double precision, dimension(:),     allocatable :: values
+    double precision, dimension(:),     allocatable :: b_values
+    double precision, dimension(:),     allocatable :: init_values
+    double precision, dimension(:),     allocatable :: final_values
 
     integer :: nx_tile, ny_tile
+
+        ! A currently unused variable that can be used to
+    ! print information from the solver - see comments below.
+   ! double precision :: hypre_out(2)
 
     nx_tile = iupper(myid,1)-ilower(myid,1) + 1
     ny_tile = iupper(myid,2)-ilower(myid,2) + 1
 
-    allocate(values(nx_tile*ny_tile))
+    allocate(b_values(nx_tile*ny_tile))
+    allocate(init_values(nx_tile*ny_tile))
+    allocate(final_values(nx_tile*ny_tile))
     ! just nx*ny for the tile this processor owns
 
 
-    ! A currently unused variable that can be used to
-    ! print information from the solver - see comments below.
-  !  double precision :: hypre_out(2)
+
 
 
     ! wrap this code in preprocessing flags to allow the model to be compiled without the external library, if desired.
@@ -352,12 +358,13 @@ module barotropic_mode
       do i = ilower(myid,1), iupper(myid,1)
     ! the 2D array is being laid out like
     ! [x1y1, x2y1, x3y1, x1y2, x2y2, x3y2, x1y3, x2y3, x3y3]
-      values( ((j-1)*nx_tile + i) ) = -etastar(i,j)/dt**2
+      b_values( ((j-1)*nx_tile + i) ) = -etastar(i,j)/dt**2
+      init_values( ((j-1)*nx_tile + i) ) = etastar(i,j)
       end do
     end do
 
     call HYPRE_StructVectorSetBoxValues(hypre_b, &
-      ilower(myid,:), iupper(myid,:), values, ierr)
+      ilower(myid,:), iupper(myid,:), b_values, ierr)
 
     call HYPRE_StructVectorAssemble(hypre_b, ierr)
 
@@ -366,7 +373,7 @@ module barotropic_mode
     call HYPRE_StructVectorInitialize(hypre_x, ierr)
 
     call HYPRE_StructVectorSetBoxValues(hypre_x, &
-      ilower(myid,:), iupper(myid,:), values, ierr)
+      ilower(myid,:), iupper(myid,:), init_values, ierr)
 
     call HYPRE_StructVectorAssemble(hypre_x, ierr)
 
@@ -419,6 +426,7 @@ module barotropic_mode
     ! and this may be useful in the future.
     ! call HYPRE_ParCSRPCGGetNumIterations(hypre_solver, &
     !   hypre_out(1), ierr)
+
     ! print *, 'num iterations = ', hypre_out(1)
 
     ! call HYPRE_ParCSRPCGGetFinalRelative(hypre_solver, &
@@ -426,11 +434,11 @@ module barotropic_mode
     ! print *, 'final residual norm = ', hypre_out(2)
 
     call HYPRE_StructVectorGetBoxValues(hypre_x, &
-      ilower(myid,:), iupper(myid,:), values, ierr)
+      ilower(myid,:), iupper(myid,:), final_values, ierr)
 
     do j = ilower(myid,2), iupper(myid,2) ! loop over every grid point
       do i = ilower(myid,1), iupper(myid,1)
-      etanew(i,j) = values( ((j-1)*nx_tile + i) )
+      etanew(i,j) = final_values( ((j-1)*nx_tile + i) )
       end do
     end do
 
