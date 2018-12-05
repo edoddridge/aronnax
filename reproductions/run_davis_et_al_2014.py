@@ -12,7 +12,6 @@ import sys
 sys.path.append(p.join(root_path, 'test'))
 sys.path.append(p.join(root_path, 'reproductions/Davis_et_al_2014'))
 
-import aronnax as aro
 import aronnax.driver as drv
 from aronnax.utils import working_directory
 
@@ -65,7 +64,7 @@ def davis_wind_x(X, Y):
 
 
     # my attempt
-    norm = (L*(2+np.pi)/2.)/(4*np.pi);
+    # norm = (L*(2+np.pi)/2.)/(4*np.pi);
     
     tau_x = (L/(2*np.pi))*np.sin(np.pi*r/L)+(r/4)+(L/(4*np.pi))*(np.cos(np.pi*r/L)-1);
     tau_x = tau_x/np.mean(np.fabs(tau_x[r<L]))
@@ -184,7 +183,7 @@ def run_davis_2014_control(nx, ny, layers, nTimeSteps, dt, simulation=None):
     dx = xlen / nx
     dy = ylen / ny
 
-    grid = aro.Grid(nx, ny, layers, dx, dy)
+    # grid = aro.Grid(nx, ny, layers, dx, dy)
 
     with working_directory(p.join(self_path, 
         "Davis_et_al_2014/{0}".format(simulation))):
@@ -207,7 +206,7 @@ def run_davis_control_final_five(nx, ny, layers, nTimeSteps, dt, simulation=None
     dx = xlen / nx
     dy = ylen / ny
 
-    grid = aro.Grid(nx, ny, layers, dx, dy)
+    # grid = aro.Grid(nx, ny, layers, dx, dy)
 
     with working_directory(p.join(self_path, 
         "Davis_et_al_2014/{0}".format(simulation))):

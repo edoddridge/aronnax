@@ -8,9 +8,6 @@ import matplotlib.pyplot as plt
 self_path = p.dirname(p.abspath(__file__))
 root_path = p.dirname(self_path)
 
-import sys
-
-import aronnax as aro
 import aronnax.driver as drv
 from aronnax.utils import working_directory
 
@@ -24,8 +21,6 @@ def Yang_et_al_spin_up():
     ylen = 1000e3
     dx = xlen / nx
     dy = ylen / ny
-
-    grid = aro.Grid(nx, ny, layers, dx, dy)
 
     def wind_x(X, Y):
 

@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 import plotly.offline as pyo
 import plotly.graph_objs as go
 
@@ -26,7 +25,6 @@ def wetmask(X, Y):
     return wetmask
 
 def bathymetry(X,Y):
-    mask = wetmask(X, Y)
     r = np.sqrt((Y-500e3)**2 + (X-500e3)**2)
 
     # creating slope near southern boundary
@@ -71,7 +69,7 @@ h_masked = np.ma.masked_where(mask_h==0, h_final[0,:,:])
 u_final = aro.interpret_raw_file(u_files[-1], nx, ny, layers)
 v_final = aro.interpret_raw_file(v_files[-1], nx, ny, layers)
 
-speed = np.sqrt((u_final[0,:,:-1]+u_final[0,:,1:])**2 + (v_final[:,1:,0] + v_final[:,:-1,0])**2)
+speed = np.sqrt((u_final[0,:,:-1]+u_final[0,:,1:])**2 + (v_final[0,1:,:] + v_final[0,:-1,:])**2)
 speed[mask_h==0] = np.nan
 
 eta_final = aro.interpret_raw_file(eta_files[-1], nx, ny, 1)

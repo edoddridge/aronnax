@@ -1,9 +1,7 @@
 from __future__ import print_function
 
-import os
 import os.path as p
 import subprocess as sub
-import time
 from builtins import range
 
 import glob
@@ -40,7 +38,7 @@ def bump(X, Y):
 
     im = plt.pcolormesh(X/1e3,Y/1e3, iniH, vmin = 500, vmax = 520)
     im.set_edgecolor('face')
-    CB = plt.colorbar()
+    plt.colorbar()
     plt.title('Initial depth of upper layer (m)')
     plt.axes().set_aspect('equal')
     plt.xlabel('x coordinate (km)')

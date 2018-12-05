@@ -1,4 +1,3 @@
-import os
 import os.path as p
 
 import glob
@@ -107,7 +106,7 @@ def plt_state(simulation=None):
         f, (ax1, ax2) = plt.subplots(1, 2, figsize=(10,5))
         ax1.pcolormesh(X_h, Y_h, np.ma.masked_where(mask_h==1, mask_h), cmap='YlOrBr_r',
             vmin=0, vmax=1)
-        CS = ax1.contour(X_h, Y_h, h[0,:,:], np.arange(0,800,50), colors='k')
+        ax1.contour(X_h, Y_h, h[0,:,:], np.arange(0,800,50), colors='k')
 
         im = ax1.pcolormesh(X_v, Y_v, np.ma.masked_where(mask_v==0, v[0,:,:]*100.),
             cmap='RdBu_r', vmin = -75, vmax = 75)
@@ -136,7 +135,7 @@ def plt_state(simulation=None):
         plt.figure()
         plt.pcolormesh(X_h, Y_h, np.ma.masked_where(mask_h==1, mask_h), cmap='YlOrBr_r',
             vmin=0, vmax=1)
-        CS = plt.contour(X_h, Y_h, h[1,:,:], np.arange(0,5000,500),
+        plt.contour(X_h, Y_h, h[1,:,:], np.arange(0,5000,500),
             colors='k')
 
         plt.pcolormesh(X_v, Y_v, np.ma.masked_where(mask_v==0, v[1,:,:]*100.),
@@ -170,7 +169,7 @@ def plt_state(simulation=None):
 
 
 if __name__ == '__main__':
-    sub.check_call(["mkdir", "-p", "spin_up_upwind/figures/"])
+    sub.check_call(["mkdir", "-p", "spin_up/figures/"])
 
-    plt_h_cross_section('spin_up_upwind/')
-    plt_state('spin_up_upwind/')
+    plt_h_cross_section('spin_up/')
+    plt_state('spin_up/')
