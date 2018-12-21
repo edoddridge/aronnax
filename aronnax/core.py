@@ -83,6 +83,17 @@ def interpret_raw_file(name, nx, ny, layers):
     # rate of change as one traverses the elements sequentially,
     # whereas Python (and all other programming languages I am aware
     # of) indexes in increasing order.
+
+    dx, dy, layers = __find_grid_offsets(name, nx, ny, layers)
+
+    with fortran_file(name, 'r') as f:
+        return f.read_reals(dtype=np.float64) \
+                    .reshape(layers, ny+dy, nx+dx)
+
+
+def __find_grid_offsets(name, nx, ny, layers):
+    """Internal function for determining location of variable on the grid."""
+
     file_part = p.basename(name)
     dx = 0; dy = 0;
     if file_part.startswith("snap.BP."):
@@ -132,12 +143,10 @@ def interpret_raw_file(name, nx, ny, layers):
         print('File not recognised - no output returned')
         return
 
-    with fortran_file(name, 'r') as f:
-        return f.read_reals(dtype=np.float64) \
-                    .reshape(layers, ny+dy, nx+dx)
+    return dx, dy, layers
 
 
-def interpret_raw_file_delayed(name, nx, ny, layers):
+def interpret_raw_file_delayed(name, nx, ny, layers, dx, dy):
     """
     Use Dask.delayed to lazily load a single output file. While this can be
     used as is, it is intended to be an internal function called by `open_mfdataset`.
@@ -146,7 +155,7 @@ def interpret_raw_file_delayed(name, nx, ny, layers):
     variable_name = '.'.join(variable_name.split('.')[:-1])
 
     d = dsa.from_delayed(delayed(interpret_raw_file)(name, nx, ny, layers),
-                            (layers, ny, nx), float, name=variable_name)
+                            (layers, ny+dy, nx+dx), float, name=variable_name)
     return d
 
 
@@ -178,17 +187,46 @@ def open_mfdataarray(files, grid):
         raise ValueError\
         ('open_mfdataarray only supports loading multiple timestamps of a single variable.')
 
+    dx, dy, layers = __find_grid_offsets(files[0], grid.nx, grid.ny, grid.layers)
+
     datasets = [interpret_raw_file_delayed(file_name, grid.nx,
-                                            grid.ny, grid.layers)
+                                            grid.ny, layers, dx, dy)
                 for file_name in files]
     
     ds = dsa.stack(datasets, axis=0)
 
-    ds = xr.DataArray(ds, coords=dict(time=timestamps,
-                                        layers=np.arange(grid.layers),
+    if dx ==1 and dy == 1:
+        # variable at vorticity location
+        ds = xr.DataArray(ds, coords=dict(time=timestamps,
+                                        layers=np.arange(layers),
+                                        yp1=grid.yp1, xp1=grid.xp1),
+                        dims=['time','layers','yp1','xp1'],
+                        name=output_variables[0])
+    elif dx == 1:
+        # variable at u location
+        ds = xr.DataArray(ds, coords=dict(time=timestamps,
+                                        layers=np.arange(layers),
+                                        y=grid.y, xp1=grid.xp1),
+                        dims=['time','layers','y','xp1'],
+                        name=output_variables[0])
+    elif dy == 1:
+        # variable at v location
+        ds = xr.DataArray(ds, coords=dict(time=timestamps,
+                                        layers=np.arange(layers),
+                                        yp1=grid.yp1, x=grid.x),
+                        dims=['time','layers','yp1','x'],
+                        name=output_variables[0])
+    elif dx == 0 and dy ==0:
+        # variable at h location
+        ds = xr.DataArray(ds, coords=dict(time=timestamps,
+                                        layers=np.arange(layers),
                                         y=grid.y, x=grid.x),
                         dims=['time','layers','y','x'],
                         name=output_variables[0])
+    else:
+        # not able to determine where we are
+        raise ValueError('Unable to determine grid location')
+
     return ds
 
 
