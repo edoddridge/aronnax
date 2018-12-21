@@ -95,7 +95,7 @@ def __find_grid_offsets(name, nx, ny, layers):
     """Internal function for determining location of variable on the grid."""
 
     file_part = p.basename(name)
-    dx = 0; dy = 0; layers = layers;
+    dx = 0; dy = 0;
     if file_part.startswith("snap.BP."):
         pass
     elif file_part.startswith("snap.eta."):
@@ -226,7 +226,6 @@ def open_mfdataarray(files, grid):
     else:
         # not able to determine where we are
         raise ValueError('Unable to determine grid location')
-        return
 
     return ds
 
