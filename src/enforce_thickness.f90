@@ -8,14 +8,14 @@ module enforce_thickness
   !> Check that the free surface anomaly and layer thicknesses are consistent with the depth field. If they're not, then scale the layer thicnkesses to make them fit.
 
   subroutine enforce_depth_thickness_consistency(h, eta, depth, &
-      freesurfFac, thickness_error, nx, ny, layers)
+      freesurfFac, thickness_error, nx, ny, layers, OL)
     implicit none
 
     double precision, intent(inout) :: h(0:nx+1, 0:ny+1, layers)
     double precision, intent(in) :: eta(0:nx+1, 0:ny+1)
     double precision, intent(in) :: depth(0:nx+1, 0:ny+1)
     double precision, intent(in) :: freesurfFac, thickness_error
-    integer, intent(in) :: nx, ny, layers
+    integer, intent(in) :: nx, ny, layers, OL
 
     integer k
     double precision h_norming(0:nx+1, 0:ny+1)
@@ -36,12 +36,12 @@ module enforce_thickness
   ! ---------------------------------------------------------------------------
   !> Ensure that layer heights do not fall below the prescribed minimum
 
-  subroutine enforce_minimum_layer_thickness(hnew, hmin, nx, ny, layers, n)
+  subroutine enforce_minimum_layer_thickness(hnew, hmin, nx, ny, layers, OL, n)
     implicit none
 
     double precision, intent(inout) :: hnew(0:nx+1, 0:ny+1, layers)
     double precision, intent(in) :: hmin
-    integer, intent(in) :: nx, ny, layers, n
+    integer, intent(in) :: nx, ny, layers, OL, n
 
     integer counter, i, j, k
 

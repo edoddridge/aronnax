@@ -7,6 +7,7 @@ module declarations
   integer :: nx ! number of x grid points
   integer :: ny ! number of y grid points
   integer :: layers ! number of active layers in the model
+  integer :: OL ! size of halo region
   ! Layer thickness (h)
   double precision, dimension(:,:,:), allocatable :: h
   ! Velocity component (u)

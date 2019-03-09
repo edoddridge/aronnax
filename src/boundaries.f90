@@ -12,7 +12,7 @@ module boundaries
   !! 0 means barrier
   !! 1 mean open
 
-  subroutine calc_boundary_masks(wetmask, hfacW, hfacE, hfacS, hfacN, nx, ny)
+  subroutine calc_boundary_masks(wetmask, hfacW, hfacE, hfacS, hfacN, nx, ny, OL)
     implicit none
 
     double precision, intent(in)  :: wetmask(0:nx+1, 0:ny+1)
@@ -22,6 +22,7 @@ module boundaries
     double precision, intent(out) :: hfacS(0:nx+1, 0:ny+1)
     integer, intent(in) :: nx !< number of grid points in x direction
     integer, intent(in) :: ny !< number of grid points in y direction
+    integer, intent(in) :: OL !< size of halo region
 
     double precision temp(0:nx+1, 0:ny+1)
     integer i, j
@@ -110,13 +111,13 @@ module boundaries
   ! ---------------------------------------------------------------------------
   !> Apply the boundary conditions
 
-  subroutine apply_boundary_conditions(array, hfac, wetmask, nx, ny, layers)
+  subroutine apply_boundary_conditions(array, hfac, wetmask, nx, ny, layers, OL)
     implicit none
 
-    double precision, intent(inout) :: array(0:nx+1,0:ny+1,layers)
-    double precision, intent(in) :: hfac(0:nx+1,0:ny+1)
-    double precision, intent(in) :: wetmask(0:nx+1,0:ny+1)
-    integer, intent(in) :: nx, ny, layers
+    double precision, intent(inout) :: array(1-OL:nx+OL,1-OL:ny+OL,layers)
+    double precision, intent(in) :: hfac(1-OL:nx+OL,1-OL:ny+OL)
+    double precision, intent(in) :: wetmask(1-OL:nx+OL,1-OL:ny+OL)
+    integer, intent(in) :: nx, ny, layers, OL
 
     integer k
 
@@ -137,11 +138,11 @@ module boundaries
   !-----------------------------------------------------------------
   !> Wrap 3D fields around for periodic boundary conditions
 
-  subroutine wrap_fields_3D(array, nx, ny, layers)
+  subroutine wrap_fields_3D(array, nx, ny, layers, OL)
     implicit none
 
-    double precision, intent(inout) :: array(0:nx+1, 0:ny+1, layers)
-    integer, intent(in) :: nx, ny, layers
+    double precision, intent(inout) :: array(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    integer, intent(in) :: nx, ny, layers, OL
 
     ! wrap array around for periodicity
     array(0, :, :) = array(nx, :, :)
@@ -155,11 +156,11 @@ module boundaries
   !-----------------------------------------------------------------
   !> Wrap 2D fields around for periodic boundary conditions
 
-  subroutine wrap_fields_2D(array, nx, ny)
+  subroutine wrap_fields_2D(array, nx, ny, OL)
     implicit none
 
-    double precision, intent(inout) :: array(0:nx+1, 0:ny+1)
-    integer, intent(in) :: nx, ny
+    double precision, intent(inout) :: array(1-OL:nx+OL, 1-OL:ny+OL)
+    integer, intent(in) :: nx, ny, OL
 
     ! wrap array around for periodicity
     array(0, :) = array(nx, :)

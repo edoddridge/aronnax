@@ -7,7 +7,7 @@ module bernoulli
 
   !> Evaluate the Bornoulli Potential for n-layer physics.
   !! B is evaluated at the tracer point, for each grid box.
-  subroutine evaluate_b_iso(b, h, u, v, nx, ny, layers, g_vec, depth)
+  subroutine evaluate_b_iso(b, h, u, v, nx, ny, layers, OL, g_vec, depth)
     implicit none
 
     ! Evaluate the baroclinic component of the Bernoulli Potential
@@ -21,6 +21,7 @@ module bernoulli
     integer, intent(in) :: nx !< number of x grid points
     integer, intent(in) :: ny !< number of y grid points
     integer, intent(in) :: layers !< number of layers
+    integer, intent(in) :: OL !< size of halo region
     double precision, intent(in)  :: g_vec(layers) !< reduced gravity at each interface
     double precision, intent(in)  :: depth(0:nx+1, 0:ny+1) !< total depth of fluid
 
@@ -65,7 +66,7 @@ module bernoulli
       end do
     end do
 
-    call wrap_fields_3D(b, nx, ny, layers)
+    call wrap_fields_3D(b, nx, ny, layers, OL)
 
 
     return
@@ -73,7 +74,7 @@ module bernoulli
 
   ! ---------------------------------------------------------------------------
 
-  subroutine evaluate_b_RedGrav(b, h, u, v, nx, ny, layers, gr)
+  subroutine evaluate_b_RedGrav(b, h, u, v, nx, ny, layers, OL, gr)
     implicit none
 
     ! Evaluate Bernoulli Potential at centre of grid box
@@ -81,7 +82,7 @@ module bernoulli
     double precision, intent(in)  :: h(0:nx+1, 0:ny+1, layers)
     double precision, intent(in)  :: u(0:nx+1, 0:ny+1, layers)
     double precision, intent(in)  :: v(0:nx+1, 0:ny+1, layers)
-    integer, intent(in) :: nx, ny, layers
+    integer, intent(in) :: nx, ny, layers, OL
     double precision, intent(in)  :: gr(layers)
 
     integer i, j, k, l, m
@@ -113,7 +114,7 @@ module bernoulli
       end do
     end do
 
-    call wrap_fields_3D(b, nx, ny, layers)
+    call wrap_fields_3D(b, nx, ny, layers, OL)
 
     return
   end subroutine evaluate_b_RedGrav

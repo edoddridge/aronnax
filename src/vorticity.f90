@@ -9,13 +9,13 @@ module vorticity
   ! ---------------------------------------------------------------------------
   !> Evaluate relative vorticity at lower left grid boundary (du/dy
   !! and dv/dx are at lower left corner as well)
-  subroutine evaluate_zeta(zeta, u, v, nx, ny, layers, dx, dy)
+  subroutine evaluate_zeta(zeta, u, v, nx, ny, layers, OL, dx, dy)
     implicit none
 
     double precision, intent(out) :: zeta(0:nx+1, 0:ny+1, layers)
     double precision, intent(in)  :: u(0:nx+1, 0:ny+1, layers)
     double precision, intent(in)  :: v(0:nx+1, 0:ny+1, layers)
-    integer, intent(in) :: nx, ny, layers
+    integer, intent(in) :: nx, ny, layers, OL
     double precision, intent(in)  :: dx, dy
 
     integer i, j, k
@@ -30,7 +30,7 @@ module vorticity
       end do
     end do
 
-    call wrap_fields_3D(zeta, nx, ny, layers)
+    call wrap_fields_3D(zeta, nx, ny, layers, OL)
 
     return
   end subroutine evaluate_zeta

@@ -10,7 +10,7 @@ module momentum
 
   subroutine evaluate_dudt(dudt, h, u, v, b, zeta, wind_x, wind_y, &
       wind_depth, fu, au, ar, slip, dx, dy, hfacN, hfacS, nx, ny, layers, &
-      rho0, RelativeWind, Cd, spongeTimeScale, spongeU, RedGrav, botDrag)
+      OL, rho0, RelativeWind, Cd, spongeTimeScale, spongeU, RedGrav, botDrag)
     implicit none
 
     ! dudt(i, j) is evaluated at the centre of the left edge of the grid
@@ -28,7 +28,7 @@ module momentum
     double precision, intent(in)  :: au, ar, slip, dx, dy
     double precision, intent(in)  :: hfacN(0:nx+1, 0:ny+1)
     double precision, intent(in)  :: hfacS(0:nx+1, 0:ny+1)
-    integer,          intent(in)  :: nx, ny, layers
+    integer,          intent(in)  :: nx, ny, layers, OL
     double precision, intent(in)  :: rho0
     logical,          intent(in)  :: RelativeWind
     double precision, intent(in)  :: Cd
@@ -55,25 +55,25 @@ module momentum
     dudt_drag = 0d0
 
     call evaluate_dudt_visc(dudt_visc, h, u, au, slip, dx, dy, hfacN, &
-      hfacS, nx, ny, layers)
+      hfacS, nx, ny, layers, OL)
 
-    call evaluate_dudt_vort(dudt_vort, v, zeta, fu, nx, ny, layers)
+    call evaluate_dudt_vort(dudt_vort, v, zeta, fu, nx, ny, layers, OL)
 
-    call evaluate_dudt_BP(dudt_BP, b, dx, nx, ny, layers)
+    call evaluate_dudt_BP(dudt_BP, b, dx, nx, ny, layers, OL)
 
     call evaluate_dudt_sponge(dudt_sponge, u, spongeTimeScale, spongeU, &
-      nx, ny, layers)
+      nx, ny, layers, OL)
 
     call evaluate_dudt_wind(dudt_wind, h, u, v, wind_x, wind_y, &
-      wind_depth, nx, ny, layers, rho0, RelativeWind, Cd)
+      wind_depth, nx, ny, layers, OL, rho0, RelativeWind, Cd)
 
-    call evaluate_dudt_drag(dudt_drag, u, ar, nx, ny, layers, RedGrav, &
+    call evaluate_dudt_drag(dudt_drag, u, ar, nx, ny, layers, OL, RedGrav, &
       botDrag)
 
     dudt = dudt + dudt_visc + dudt_vort + dudt_BP + dudt_sponge + &
             dudt_wind + dudt_drag
 
-    call wrap_fields_3D(dudt, nx, ny, layers)
+    call wrap_fields_3D(dudt, nx, ny, layers, OL)
 
     return
   end subroutine evaluate_dudt
@@ -84,7 +84,7 @@ module momentum
   !   active layers
 
   subroutine evaluate_dudt_visc(dudt_visc, h, u, au, slip, dx, dy, hfacN, &
-      hfacS, nx, ny, layers)
+      hfacS, nx, ny, layers, OL)
     implicit none
 
     ! dudt_visc(i, j) is evaluated at the centre of the left edge of the grid
@@ -95,7 +95,7 @@ module momentum
     double precision, intent(in)  :: au, slip, dx, dy
     double precision, intent(in)  :: hfacN(0:nx+1, 0:ny+1)
     double precision, intent(in)  :: hfacS(0:nx+1, 0:ny+1)
-    integer,          intent(in)  :: nx, ny, layers
+    integer,          intent(in)  :: nx, ny, layers, OL
 
     integer i, j, k
 
@@ -123,7 +123,7 @@ module momentum
   ! Calculate the vorticity contribution to the tendency of zonal velocity for
   !   each of the active layers
 
-  subroutine evaluate_dudt_vort(dudt_vort, v, zeta, fu, nx, ny, layers)
+  subroutine evaluate_dudt_vort(dudt_vort, v, zeta, fu, nx, ny, layers, OL)
     implicit none
 
     ! dudt_vort(i, j) is evaluated at the centre of the left edge of the grid
@@ -132,7 +132,7 @@ module momentum
     double precision, intent(in)  :: v(0:nx+1, 0:ny+1, layers)
     double precision, intent(in)  :: zeta(0:nx+1, 0:ny+1, layers)
     double precision, intent(in)  :: fu(0:nx+1, 0:ny+1)
-    integer,          intent(in)  :: nx, ny, layers
+    integer,          intent(in)  :: nx, ny, layers, OL
 
     integer :: i, j, k
 
@@ -156,7 +156,7 @@ module momentum
   ! Calculate the Bernoulli potential contribution to the tendency of zonal
   !   velocity for each of the active layers
 
-  subroutine evaluate_dudt_BP(dudt_BP, b, dx, nx, ny, layers)
+  subroutine evaluate_dudt_BP(dudt_BP, b, dx, nx, ny, layers, OL)
     implicit none
 
     ! dudt_BP(i, j) is evaluated at the centre of the left edge of the grid
@@ -164,7 +164,7 @@ module momentum
     double precision, intent(out) :: dudt_BP(0:nx+1, 0:ny+1, layers)
     double precision, intent(in)  :: b(0:nx+1, 0:ny+1, layers)
     double precision, intent(in)  :: dx
-    integer,          intent(in)  :: nx, ny, layers
+    integer,          intent(in)  :: nx, ny, layers, OL
 
     integer :: i, j, k
 
@@ -187,7 +187,7 @@ module momentum
   !   velocity for each of the active layers
 
   subroutine evaluate_dudt_sponge(dudt_sponge, u, spongeTimeScale, spongeU, &
-      nx, ny, layers)
+      nx, ny, layers, OL)
     implicit none
 
     ! dudt_sponge(i, j) is evaluated at the centre of the left edge of the grid
@@ -196,7 +196,7 @@ module momentum
     double precision, intent(in)  :: u(0:nx+1, 0:ny+1, layers)
     double precision, intent(in)  :: spongeTimeScale(0:nx+1, 0:ny+1, layers)
     double precision, intent(in)  :: spongeU(0:nx+1, 0:ny+1, layers)
-    integer,          intent(in)  :: nx, ny, layers
+    integer,          intent(in)  :: nx, ny, layers, OL
 
     integer :: i, j, k
 
@@ -220,7 +220,7 @@ module momentum
   !   velocity for each of the active layers
 
   subroutine evaluate_dudt_wind(dudt_wind, h, u, v, wind_x, wind_y, &
-      wind_depth, nx, ny, layers, rho0, RelativeWind, Cd)
+      wind_depth, nx, ny, layers, OL, rho0, RelativeWind, Cd)
     implicit none
 
     ! dudt(i, j) is evaluated at the centre of the left edge of the grid
@@ -232,7 +232,7 @@ module momentum
     double precision, intent(in)  :: wind_x(0:nx+1, 0:ny+1)
     double precision, intent(in)  :: wind_y(0:nx+1, 0:ny+1)
     double precision, intent(in)  :: wind_depth
-    integer,          intent(in)  :: nx, ny, layers
+    integer,          intent(in)  :: nx, ny, layers, OL
     double precision, intent(in)  :: rho0
     logical,          intent(in)  :: RelativeWind
     double precision, intent(in)  :: Cd
@@ -316,7 +316,7 @@ module momentum
 ! ---------------------------------------------------------------------------
   !> Calculate the tendency of zonal velocity for each of the active layers
 
-  subroutine evaluate_dudt_drag(dudt_drag, u, ar, nx, ny, layers, RedGrav, &
+  subroutine evaluate_dudt_drag(dudt_drag, u, ar, nx, ny, layers, OL, RedGrav, &
       botDrag)
     implicit none
 
@@ -325,7 +325,7 @@ module momentum
     double precision, intent(out) :: dudt_drag(0:nx+1, 0:ny+1, layers)
     double precision, intent(in)  :: u(0:nx+1, 0:ny+1, layers)
     double precision, intent(in)  :: ar
-    integer,          intent(in)  :: nx, ny, layers
+    integer,          intent(in)  :: nx, ny, layers, OL
     logical,          intent(in)  :: RedGrav
     double precision, intent(in)  :: botDrag
 
@@ -363,7 +363,7 @@ module momentum
 
   subroutine evaluate_dvdt(dvdt, h, u, v, b, zeta, wind_x, wind_y, &
       wind_depth, fv, au, ar, slip, dx, dy, hfacW, hfacE, nx, ny, layers, &
-      rho0, RelativeWind, Cd, spongeTimeScale, spongeV, RedGrav, botDrag)
+      OL, rho0, RelativeWind, Cd, spongeTimeScale, spongeV, RedGrav, botDrag)
     implicit none
 
     ! dvdt(i, j) is evaluated at the centre of the bottom edge of the
@@ -382,7 +382,7 @@ module momentum
     double precision, intent(in)  :: dx, dy
     double precision, intent(in)  :: hfacW(0:nx+1, 0:ny+1)
     double precision, intent(in)  :: hfacE(0:nx+1, 0:ny+1)
-    integer,          intent(in)  :: nx, ny, layers
+    integer,          intent(in)  :: nx, ny, layers, OL
     double precision, intent(in)  :: rho0
     logical,          intent(in)  :: RelativeWind
     double precision, intent(in)  :: Cd
@@ -409,26 +409,26 @@ module momentum
     dvdt_drag = 0d0
 
     call evaluate_dvdt_visc(dvdt_visc, v, au, slip, dx, dy, hfacW, hfacE, &
-      nx, ny, layers)
+      nx, ny, layers, OL)
 
-    call evaluate_dvdt_vort(dvdt_vort, u, zeta, fv, nx, ny, layers)
+    call evaluate_dvdt_vort(dvdt_vort, u, zeta, fv, nx, ny, layers, OL)
 
-    call evaluate_dvdt_BP(dvdt_BP, b, dy, nx, ny, layers)
+    call evaluate_dvdt_BP(dvdt_BP, b, dy, nx, ny, layers, OL)
 
-    call evaluate_dvdt_sponge(dvdt_sponge, v, nx, ny, layers, &
+    call evaluate_dvdt_sponge(dvdt_sponge, v, nx, ny, layers, OL, &
       spongeTimeScale, spongeV)
 
     call evaluate_dvdt_wind(dvdt_wind, h, u, v, wind_x, wind_y, &
-      wind_depth, nx, ny, layers, rho0, RelativeWind, Cd)
+      wind_depth, nx, ny, layers, OL, rho0, RelativeWind, Cd)
 
-    call evaluate_dvdt_drag(dvdt_drag, v, ar, nx, ny, layers, RedGrav, &
+    call evaluate_dvdt_drag(dvdt_drag, v, ar, nx, ny, layers, OL, RedGrav, &
       botDrag)
 
     dvdt = dvdt + dvdt_visc + dvdt_vort + dvdt_BP + dvdt_sponge + &
             dvdt_wind + dvdt_drag
 
 
-    call wrap_fields_3D(dvdt, nx, ny, layers)
+    call wrap_fields_3D(dvdt, nx, ny, layers, OL)
 
     return
   end subroutine evaluate_dvdt
@@ -439,7 +439,7 @@ module momentum
   !> active layers
 
   subroutine evaluate_dvdt_visc(dvdt_visc, v, au, slip, dx, dy, hfacW, hfacE, &
-      nx, ny, layers)
+      nx, ny, layers, OL)
     implicit none
 
     ! dvdt_visc(i, j) is evaluated at the centre of the bottom edge of the
@@ -450,7 +450,7 @@ module momentum
     double precision, intent(in)  :: dx, dy
     double precision, intent(in)  :: hfacW(0:nx+1, 0:ny+1)
     double precision, intent(in)  :: hfacE(0:nx+1, 0:ny+1)
-    integer,          intent(in)  :: nx, ny, layers
+    integer,          intent(in)  :: nx, ny, layers, OL
 
     integer :: i, j, k
 
@@ -477,7 +477,7 @@ module momentum
   ! Calculate the vorticity contribution to the tendency of meridional
   !   velocity for each of the active layers
 
-  subroutine evaluate_dvdt_vort(dvdt_vort, u, zeta, fv, nx, ny, layers)
+  subroutine evaluate_dvdt_vort(dvdt_vort, u, zeta, fv, nx, ny, layers, OL)
     implicit none
 
     ! dvdt_vort(i, j) is evaluated at the centre of the bottom edge of the
@@ -486,7 +486,7 @@ module momentum
     double precision, intent(in)  :: u(0:nx+1, 0:ny+1, layers)
     double precision, intent(in)  :: zeta(0:nx+1, 0:ny+1, layers)
     double precision, intent(in)  :: fv(0:nx+1, 0:ny+1)
-    integer,          intent(in)  :: nx, ny, layers
+    integer,          intent(in)  :: nx, ny, layers, OL
 
     integer :: i, j, k
 
@@ -511,7 +511,7 @@ module momentum
   ! Calculate the Bernoulli potential contribution to the tendency of
   !   meridional velocity for each of the active layers
 
-  subroutine evaluate_dvdt_BP(dvdt_BP, b, dy, nx, ny, layers)
+  subroutine evaluate_dvdt_BP(dvdt_BP, b, dy, nx, ny, layers, OL)
     implicit none
 
     ! dvdt_BP(i, j) is evaluated at the centre of the bottom edge of the
@@ -519,7 +519,7 @@ module momentum
     double precision, intent(out) :: dvdt_BP(0:nx+1, 0:ny+1, layers)
     double precision, intent(in)  :: b(0:nx+1, 0:ny+1, layers)
     double precision, intent(in)  :: dy
-    integer,          intent(in)  :: nx, ny, layers
+    integer,          intent(in)  :: nx, ny, layers, OL
 
     integer :: i, j, k
 
@@ -541,7 +541,7 @@ module momentum
   ! Calculate the sponge contribution to the tendency of meridional velocity
   !   for each of the active layers
 
-  subroutine evaluate_dvdt_sponge(dvdt_sponge, v, nx, ny, layers, &
+  subroutine evaluate_dvdt_sponge(dvdt_sponge, v, nx, ny, layers, OL, &
       spongeTimeScale, spongeV)
     implicit none
 
@@ -549,7 +549,7 @@ module momentum
     ! grid box, the same place as v(i, j)
     double precision, intent(out) :: dvdt_sponge(0:nx+1, 0:ny+1, layers)
     double precision, intent(in)  :: v(0:nx+1, 0:ny+1, layers)
-    integer,          intent(in)  :: nx, ny, layers
+    integer,          intent(in)  :: nx, ny, layers, OL
     double precision, intent(in)  :: spongeTimeScale(0:nx+1, 0:ny+1, layers)
     double precision, intent(in)  :: spongeV(0:nx+1, 0:ny+1, layers)
 
@@ -575,7 +575,7 @@ module momentum
   !   velocity for each of the active layers
 
   subroutine evaluate_dvdt_wind(dvdt_wind, h, u, v, wind_x, wind_y, &
-      wind_depth, nx, ny, layers, rho0, RelativeWind, Cd)
+      wind_depth, nx, ny, OL, layers, rho0, RelativeWind, Cd)
     implicit none
 
     ! dvdt_wind(i, j) is evaluated at the centre of the bottom edge of the grid
@@ -587,7 +587,7 @@ module momentum
     double precision, intent(in)  :: wind_x(0:nx+1, 0:ny+1)
     double precision, intent(in)  :: wind_y(0:nx+1, 0:ny+1)
     double precision, intent(in)  :: wind_depth
-    integer,          intent(in)  :: nx, ny, layers
+    integer,          intent(in)  :: nx, ny, layers, OL
     double precision, intent(in)  :: rho0
     logical,          intent(in)  :: RelativeWind
     double precision, intent(in)  :: Cd
@@ -671,7 +671,7 @@ module momentum
   ! Calculate the linear drag contribution to the tendency of meridional
   !   velocity for each of the active layers
 
-  subroutine evaluate_dvdt_drag(dvdt_drag, v, ar, nx, ny, layers, RedGrav, &
+  subroutine evaluate_dvdt_drag(dvdt_drag, v, ar, nx, ny, layers, OL, RedGrav, &
       botDrag)
     implicit none
 
@@ -680,7 +680,7 @@ module momentum
     double precision, intent(out) :: dvdt_drag(0:nx+1, 0:ny+1, layers)
     double precision, intent(in)  :: v(0:nx+1, 0:ny+1, layers)
     double precision, intent(in)  :: ar
-    integer,          intent(in)  :: nx, ny, layers
+    integer,          intent(in)  :: nx, ny, layers, OL
     logical,          intent(in)  :: RedGrav
     double precision, intent(in)  :: botDrag
 

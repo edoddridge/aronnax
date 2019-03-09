@@ -7,12 +7,12 @@ module end_run
   !> Check to see if there are any NaNs in the data field and stop the
   !! calculation if any are found.
 
-  subroutine break_if_NaN(data, nx, ny, layers, n)
+  subroutine break_if_NaN(data, nx, ny, layers, OL, n)
     implicit none
 
     ! To stop the program if it detects a NaN in the variable being checked
 
-    integer, intent(in) :: nx, ny, layers, n
+    integer, intent(in) :: nx, ny, layers, OL, n
     double precision, intent(in) :: data(0:nx+1, 0:ny+1, layers)
 
     integer :: i, j, k

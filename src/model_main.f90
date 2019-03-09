@@ -20,28 +20,28 @@ module model_main
       base_wind_x, base_wind_y, wind_mag_time_series, wind_depth, &
       spongeHTimeScale, spongeUTimeScale, spongeVTimeScale, &
       spongeH, spongeU, spongeV, &
-      nx, ny, layers, RedGrav, hAdvecScheme, TS_algorithm, AB_order, &
+      nx, ny, layers, OL, RedGrav, hAdvecScheme, TS_algorithm, AB_order, &
       DumpWind, RelativeWind, Cd, &
       MPI_COMM_WORLD, myid, num_procs, ilower, iupper, &
       hypre_grid)
     implicit none
 
     ! Layer thickness (h)
-    double precision, intent(inout) :: h(0:nx+1, 0:ny+1, layers)
+    double precision, intent(inout) :: h(1-OL:nx+OL, 1-OL:ny+OL, layers)
     ! Velocity component (u)
-    double precision, intent(inout) :: u(0:nx+1, 0:ny+1, layers)
+    double precision, intent(inout) :: u(1-OL:nx+OL, 1-OL:ny+OL, layers)
     ! Velocity component (v)
-    double precision, intent(inout) :: v(0:nx+1, 0:ny+1, layers)
+    double precision, intent(inout) :: v(1-OL:nx+OL, 1-OL:ny+OL, layers)
     ! Free surface (eta)
-    double precision, intent(inout) :: eta(0:nx+1, 0:ny+1)
+    double precision, intent(inout) :: eta(1-OL:nx+OL, 1-OL:ny+OL)
     ! Bathymetry
-    double precision, intent(in) :: depth(0:nx+1, 0:ny+1)
+    double precision, intent(in) :: depth(1-OL:nx+OL, 1-OL:ny+OL)
     ! Grid
     double precision, intent(in) :: dx, dy
-    double precision, intent(in) :: wetmask(0:nx+1, 0:ny+1)
+    double precision, intent(in) :: wetmask(1-OL:nx+OL, 1-OL:ny+OL)
     ! Coriolis parameter at u and v grid-points respectively
-    double precision, intent(in) :: fu(0:nx+1, 0:ny+1)
-    double precision, intent(in) :: fv(0:nx+1, 0:ny+1)
+    double precision, intent(in) :: fu(1-OL:nx+OL, 1-OL:ny+OL)
+    double precision, intent(in) :: fv(1-OL:nx+OL, 1-OL:ny+OL)
     ! Numerics
     double precision, intent(in) :: dt, au, ar, botDrag
     double precision, intent(in) :: kh(layers), kv
@@ -55,19 +55,19 @@ module model_main
     double precision, intent(in) :: g_vec(layers)
     double precision, intent(in) :: rho0
     ! Wind
-    double precision, intent(in) :: base_wind_x(0:nx+1, 0:ny+1)
-    double precision, intent(in) :: base_wind_y(0:nx+1, 0:ny+1)
+    double precision, intent(in) :: base_wind_x(1-OL:nx+OL, 1-OL:ny+OL)
+    double precision, intent(in) :: base_wind_y(1-OL:nx+OL, 1-OL:ny+OL)
     double precision, intent(in) :: wind_mag_time_series(nTimeSteps)
     double precision, intent(in) :: wind_depth
     ! Sponge regions
-    double precision, intent(in) :: spongeHTimeScale(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in) :: spongeUTimeScale(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in) :: spongeVTimeScale(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in) :: spongeH(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in) :: spongeU(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in) :: spongeV(0:nx+1, 0:ny+1, layers)
+    double precision, intent(in) :: spongeHTimeScale(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in) :: spongeUTimeScale(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in) :: spongeVTimeScale(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in) :: spongeH(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in) :: spongeU(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in) :: spongeV(1-OL:nx+OL, 1-OL:ny+OL, layers)
     ! Resolution
-    integer,          intent(in) :: nx, ny, layers
+    integer,          intent(in) :: nx, ny, layers, OL
     ! Reduced gravity vs n-layer physics
     logical,          intent(in) :: RedGrav
     integer,          intent(in) :: hAdvecScheme
@@ -78,33 +78,33 @@ module model_main
     logical,          intent(in) :: RelativeWind
     double precision,  intent(in) :: Cd
 
-    double precision :: dhdt(0:nx+1, 0:ny+1, layers, AB_order)
-    double precision :: h_new(0:nx+1, 0:ny+1, layers)
+    double precision :: dhdt(1-OL:nx+OL, 1-OL:ny+OL, layers, AB_order)
+    double precision :: h_new(1-OL:nx+OL, 1-OL:ny+OL, layers)
     ! for saving average fields
-    double precision :: hav(0:nx+1, 0:ny+1, layers)
+    double precision :: hav(1-OL:nx+OL, 1-OL:ny+OL, layers)
 
-    double precision :: dudt(0:nx+1, 0:ny+1, layers, AB_order)
-    double precision :: u_new(0:nx+1, 0:ny+1, layers)
+    double precision :: dudt(1-OL:nx+OL, 1-OL:ny+OL, layers, AB_order)
+    double precision :: u_new(1-OL:nx+OL, 1-OL:ny+OL, layers)
     ! for saving average fields
-    double precision :: uav(0:nx+1, 0:ny+1, layers)
+    double precision :: uav(1-OL:nx+OL, 1-OL:ny+OL, layers)
 
-    double precision :: dvdt(0:nx+1, 0:ny+1, layers, AB_order)
-    double precision :: v_new(0:nx+1, 0:ny+1, layers)
+    double precision :: dvdt(1-OL:nx+OL, 1-OL:ny+OL, layers, AB_order)
+    double precision :: v_new(1-OL:nx+OL, 1-OL:ny+OL, layers)
     ! for saving average fields
-    double precision :: vav(0:nx+1, 0:ny+1, layers)
+    double precision :: vav(1-OL:nx+OL, 1-OL:ny+OL, layers)
 
-    double precision :: etanew(0:nx+1, 0:ny+1)
+    double precision :: etanew(1-OL:nx+OL, 1-OL:ny+OL)
     ! for saving average fields
-    double precision :: etaav(0:nx+1, 0:ny+1)
+    double precision :: etaav(1-OL:nx+OL, 1-OL:ny+OL)
 
     ! Pressure solver variables
     double precision :: a(5, nx, ny)
 
     ! Geometry
-    double precision :: hfacW(0:nx+1, 0:ny+1)
-    double precision :: hfacE(0:nx+1, 0:ny+1)
-    double precision :: hfacN(0:nx+1, 0:ny+1)
-    double precision :: hfacS(0:nx+1, 0:ny+1)
+    double precision :: hfacW(1-OL:nx+OL, 1-OL:ny+OL)
+    double precision :: hfacE(1-OL:nx+OL, 1-OL:ny+OL)
+    double precision :: hfacN(1-OL:nx+OL, 1-OL:ny+OL)
+    double precision :: hfacS(1-OL:nx+OL, 1-OL:ny+OL)
 
     ! Numerics
     double precision :: pi
@@ -131,8 +131,8 @@ module model_main
     integer :: n
 
     ! Wind
-    double precision :: wind_x(0:nx+1, 0:ny+1)
-    double precision :: wind_y(0:nx+1, 0:ny+1)
+    double precision :: wind_x(1-OL:nx+OL, 1-OL:ny+OL)
+    double precision :: wind_y(1-OL:nx+OL, 1-OL:ny+OL)
 
     ! Time
     integer*8 :: start_time, last_report_time, cur_time
@@ -193,16 +193,16 @@ module model_main
     ! initialise etanew
     etanew = 0d0
 
-    call calc_boundary_masks(wetmask, hfacW, hfacE, hfacS, hfacN, nx, ny)
+    call calc_boundary_masks(wetmask, hfacW, hfacE, hfacS, hfacN, nx, ny, OL)
 
-    call apply_boundary_conditions(u, hfacW, wetmask, nx, ny, layers)
-    call apply_boundary_conditions(v, hfacS, wetmask, nx, ny, layers)
+    call apply_boundary_conditions(u, hfacW, wetmask, nx, ny, layers, OL)
+    call apply_boundary_conditions(v, hfacS, wetmask, nx, ny, layers, OL)
 
 
     if (.not. RedGrav) then
       ! Initialise arrays for pressure solver
       ! a = derivatives of the depth field
-        call calc_A_matrix(a, depth, g_vec(1), dx, dy, nx, ny, freesurfFac, dt, &
+        call calc_A_matrix(a, depth, g_vec(1), dx, dy, nx, ny, OL, freesurfFac, dt, &
             hfacW, hfacE, hfacS, hfacN)
 
 #ifndef useExtSolver
@@ -223,7 +223,7 @@ module model_main
       ! If they are not, then scale the layer thicknesses to make
       ! them consistent.
       call enforce_depth_thickness_consistency(h, eta, depth, &
-          freesurfFac, thickness_error, nx, ny, layers)
+          freesurfFac, thickness_error, nx, ny, layers, OL)
     end if
 
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -240,13 +240,13 @@ module model_main
           spongeHTimeScale, spongeH, &
           spongeUTimeScale, spongeU, &
           spongeVTimeScale, spongeV, &
-          nx, ny, layers, debug_level)
+          nx, ny, layers, OL, debug_level)
 
     else if (niter0 .ne. 0) then
       n = niter0
 
       call load_checkpoint_files(dhdt, dudt, dvdt, h, u, v, eta, &
-            RedGrav, niter0, nx, ny, layers, AB_order)
+            RedGrav, niter0, nx, ny, layers, OL, AB_order)
 
     end if
 
@@ -283,18 +283,18 @@ module model_main
           spongeHTimeScale, spongeH, &
           spongeUTimeScale, spongeU, &
           spongeVTimeScale, spongeV, &
-          nx, ny, layers, n, debug_level)
+          nx, ny, layers, OL, n, debug_level)
 
       ! Apply the boundary conditions
-      call apply_boundary_conditions(u_new, hfacW, wetmask, nx, ny, layers)
-      call apply_boundary_conditions(v_new, hfacS, wetmask, nx, ny, layers)
+      call apply_boundary_conditions(u_new, hfacW, wetmask, nx, ny, layers, OL)
+      call apply_boundary_conditions(v_new, hfacS, wetmask, nx, ny, layers, OL)
 
       ! Do the isopycnal layer physics
       if (.not. RedGrav) then
         call barotropic_correction(h_new, u_new, v_new, eta, etanew, depth, a, &
             dx, dy, wetmask, hfacW, hfacS, dt, &
             maxits, eps, rjac, freesurfFac, thickness_error, &
-            debug_level, g_vec, nx, ny, layers, n, &
+            debug_level, g_vec, nx, ny, layers, OL, n, &
             MPI_COMM_WORLD, myid, num_procs, ilower, iupper, &
             hypre_grid, hypre_A, ierr)
 
@@ -302,19 +302,19 @@ module model_main
 
 
       ! Stop layers from getting too thin
-      ! call enforce_minimum_layer_thickness(h_new, hmin, nx, ny, layers, n)
+      ! call enforce_minimum_layer_thickness(h_new, hmin, nx, ny, layers, OL, n)
 
       ! Wrap fields around for periodic simulations
-      call wrap_fields_3D(u_new, nx, ny, layers)
-      call wrap_fields_3D(v_new, nx, ny, layers)
-      call wrap_fields_3D(h_new, nx, ny, layers)
+      call wrap_fields_3D(u_new, nx, ny, layers, OL)
+      call wrap_fields_3D(v_new, nx, ny, layers, OL)
+      call wrap_fields_3D(h_new, nx, ny, layers, OL)
       if (.not. RedGrav) then
-        call wrap_fields_2D(etanew, nx, ny)
+        call wrap_fields_2D(etanew, nx, ny, OL)
       end if    
 
       ! Apply the boundary conditions
-      call apply_boundary_conditions(u_new, hfacW, wetmask, nx, ny, layers)
-      call apply_boundary_conditions(v_new, hfacS, wetmask, nx, ny, layers)
+      call apply_boundary_conditions(u_new, hfacW, wetmask, nx, ny, layers, OL)
+      call apply_boundary_conditions(v_new, hfacS, wetmask, nx, ny, layers, OL)
 
       ! Accumulate average fields
       if (avwrite .ne. 0) then
@@ -337,7 +337,7 @@ module model_main
 
       call maybe_dump_output(h, hav, u, uav, v, vav, eta, etaav, &
           dudt, dvdt, dhdt, AB_order, &
-          wind_x, wind_y, nx, ny, layers, &
+          wind_x, wind_y, nx, ny, layers, OL, &
           n, nwrite, avwrite, checkpointwrite, diagwrite, &
           RedGrav, DumpWind, debug_level)
 
@@ -359,7 +359,7 @@ module model_main
     ! save checkpoint at end of every simulation
     call maybe_dump_output(h, hav, u, uav, v, vav, eta, etaav, &
         dudt, dvdt, dhdt, AB_order, &
-        wind_x, wind_y, nx, ny, layers, &
+        wind_x, wind_y, nx, ny, layers, OL, &
         n, n, n, n-1, n, &
         RedGrav, DumpWind, 0)
 

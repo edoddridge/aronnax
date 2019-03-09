@@ -8,7 +8,8 @@ module advection_schemes
   !> Use a first-order centered advection scheme to calculate the advctive
   !! thickness tendency
 
-  subroutine h_advec_1_centered(dhdt_advec, h, u, v, dx, dy, nx, ny, layers)
+  subroutine h_advec_1_centered(dhdt_advec, h, u, v, dx, dy, nx, ny, &
+                                layers, OL)
     implicit none
 
     ! dhdt is evaluated at the centre of the grid box
@@ -17,7 +18,7 @@ module advection_schemes
     double precision, intent(in)  :: u(0:nx+1, 0:ny+1, layers)
     double precision, intent(in)  :: v(0:nx+1, 0:ny+1, layers)
     double precision, intent(in)  :: dx, dy
-    integer, intent(in) :: nx, ny, layers
+    integer, intent(in) :: nx, ny, layers, OL
 
     integer i, j, k
 
@@ -42,7 +43,7 @@ module advection_schemes
   !> Use a first-order upwind advection scheme to calculate the advctive
   !! thickness tendency
 
-  subroutine h_advec_1_upwind(dhdt_advec, h, u, v, dx, dy, nx, ny, layers)
+  subroutine h_advec_1_upwind(dhdt_advec, h, u, v, dx, dy, nx, ny, layers, OL)
     implicit none
 
     ! dhdt is evaluated at the centre of the grid box
@@ -51,7 +52,7 @@ module advection_schemes
     double precision, intent(in)  :: u(0:nx+1, 0:ny+1, layers)
     double precision, intent(in)  :: v(0:nx+1, 0:ny+1, layers)
     double precision, intent(in)  :: dx, dy
-    integer, intent(in) :: nx, ny, layers
+    integer, intent(in) :: nx, ny, layers, OL
 
     integer i, j, k
 

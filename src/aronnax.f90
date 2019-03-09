@@ -56,7 +56,7 @@ program aronnax
 
   namelist /PHYSICS/ g_vec, rho0
 
-  namelist /GRID/ nx, ny, layers, dx, dy, fUfile, fVfile, wetMaskFile
+  namelist /GRID/ nx, ny, layers, OL, dx, dy, fUfile, fVfile, wetMaskFile
 
   namelist /INITIAL_CONDITIONS/ initUfile, initVfile, initHfile, initEtaFile
 
@@ -71,7 +71,6 @@ program aronnax
   avFreq = 0d0
   checkpointFreq = 0d0
   diagFreq = 0d0
-
 
   debug_level = 0
   
@@ -96,6 +95,8 @@ program aronnax
   kh = 0d0
   kv = 0d0
 
+  ! size of halo region
+  OL = 1
 
   open(unit=8, file="parameters.in", status='OLD', recl=80)
   read(unit=8, nml=NUMERICS)
@@ -159,61 +160,61 @@ program aronnax
 
 
 
-  allocate(h(0:nx+1, 0:ny+1, layers))
-  allocate(u(0:nx+1, 0:ny+1, layers))
-  allocate(v(0:nx+1, 0:ny+1, layers))
-  allocate(eta(0:nx+1, 0:ny+1))
-  allocate(depth(0:nx+1, 0:ny+1))
+  allocate(h(1-OL:nx+OL, 1-OL:ny+OL, layers))
+  allocate(u(1-OL:nx+OL, 1-OL:ny+OL, layers))
+  allocate(v(1-OL:nx+OL, 1-OL:ny+OL, layers))
+  allocate(eta(1-OL:nx+OL, 1-OL:ny+OL))
+  allocate(depth(1-OL:nx+OL, 1-OL:ny+OL))
 
-  allocate(wetmask(0:nx+1, 0:ny+1))
-  allocate(fu(0:nx+1, 0:ny+1))
-  allocate(fv(0:nx+1, 0:ny+1))
+  allocate(wetmask(1-OL:nx+OL, 1-OL:ny+OL))
+  allocate(fu(1-OL:nx+OL, 1-OL:ny+OL))
+  allocate(fv(1-OL:nx+OL, 1-OL:ny+OL))
 
   allocate(zeros(layers))
 
-  allocate(base_wind_x(0:nx+1, 0:ny+1))
-  allocate(base_wind_y(0:nx+1, 0:ny+1))
+  allocate(base_wind_x(1-OL:nx+OL, 1-OL:ny+OL))
+  allocate(base_wind_y(1-OL:nx+OL, 1-OL:ny+OL))
   allocate(wind_mag_time_series(nTimeSteps))
 
-  allocate(spongeHTimeScale(0:nx+1, 0:ny+1, layers))
-  allocate(spongeUTimeScale(0:nx+1, 0:ny+1, layers))
-  allocate(spongeVTimeScale(0:nx+1, 0:ny+1, layers))
-  allocate(spongeH(0:nx+1, 0:ny+1, layers))
-  allocate(spongeU(0:nx+1, 0:ny+1, layers))
-  allocate(spongeV(0:nx+1, 0:ny+1, layers))
+  allocate(spongeHTimeScale(1-OL:nx+OL, 1-OL:ny+OL, layers))
+  allocate(spongeUTimeScale(1-OL:nx+OL, 1-OL:ny+OL, layers))
+  allocate(spongeVTimeScale(1-OL:nx+OL, 1-OL:ny+OL, layers))
+  allocate(spongeH(1-OL:nx+OL, 1-OL:ny+OL, layers))
+  allocate(spongeU(1-OL:nx+OL, 1-OL:ny+OL, layers))
+  allocate(spongeV(1-OL:nx+OL, 1-OL:ny+OL, layers))
 
   ! Zero vector - for internal use only
   zeros = 0d0
 
 
   ! Read in arrays from the input files
-  call read_input_fileU(initUfile, u, 0.d0, nx, ny, layers)
-  call read_input_fileV(initVfile, v, 0.d0, nx, ny, layers)
-  call read_input_fileH(initHfile, h, hmean, nx, ny, layers)
+  call read_input_fileU(initUfile, u, 0.d0, nx, ny, layers, OL)
+  call read_input_fileV(initVfile, v, 0.d0, nx, ny, layers, OL)
+  call read_input_fileH(initHfile, h, hmean, nx, ny, layers, OL)
 
-  call read_input_fileU(fUfile, fu, 0.d0, nx, ny, 1)
-  call read_input_fileV(fVfile, fv, 0.d0, nx, ny, 1)
+  call read_input_fileU(fUfile, fu, 0.d0, nx, ny, 1, OL)
+  call read_input_fileV(fVfile, fv, 0.d0, nx, ny, 1, OL)
 
-  call read_input_fileU(zonalWindFile, base_wind_x, 0.d0, nx, ny, 1)
-  call read_input_fileV(meridionalWindFile, base_wind_y, 0.d0, nx, ny, 1)
+  call read_input_fileU(zonalWindFile, base_wind_x, 0.d0, nx, ny, 1,OL)
+  call read_input_fileV(meridionalWindFile, base_wind_y, 0.d0, nx, ny, 1, OL)
 
   call read_input_file_time_series(wind_mag_time_series_file, &
       wind_mag_time_series, 1d0, nTimeSteps)
 
   call read_input_fileH(spongeHTimeScaleFile, spongeHTimeScale, &
-      zeros, nx, ny, layers)
-  call read_input_fileH(spongeHfile, spongeH, hmean, nx, ny, layers)
+      zeros, nx, ny, layers, OL)
+  call read_input_fileH(spongeHfile, spongeH, hmean, nx, ny, layers, OL)
   call read_input_fileU(spongeUTimeScaleFile, spongeUTimeScale, &
-      0.d0, nx, ny, layers)
-  call read_input_fileU(spongeUfile, spongeU, 0.d0, nx, ny, layers)
+      0.d0, nx, ny, layers, OL)
+  call read_input_fileU(spongeUfile, spongeU, 0.d0, nx, ny, layers, OL)
   call read_input_fileV(spongeVTimeScaleFile, spongeVTimeScale, &
-      0.d0, nx, ny, layers)
-  call read_input_fileV(spongeVfile, spongeV, 0.d0, nx, ny, layers)
-  call read_input_fileH_2D(wetMaskFile, wetmask, 1.d0, nx, ny)
+      0.d0, nx, ny, layers, OL)
+  call read_input_fileV(spongeVfile, spongeV, 0.d0, nx, ny, layers, OL)
+  call read_input_fileH_2D(wetMaskFile, wetmask, 1.d0, nx, ny, OL)
 
   if (.not. RedGrav) then
-    call read_input_fileH_2D(depthFile, depth, H0, nx, ny)
-    call read_input_fileH_2D(initEtaFile, eta, 0.d0, nx, ny)
+    call read_input_fileH_2D(depthFile, depth, H0, nx, ny, OL)
+    call read_input_fileH_2D(initEtaFile, eta, 0.d0, nx, ny, OL)
     ! Check that depth is positive - it must be greater than zero
     if (minval(depth) .lt. 0) then
       write(17, "(A)") "Depths must be positive."
@@ -230,7 +231,7 @@ program aronnax
       base_wind_x, base_wind_y, wind_mag_time_series, wind_depth, &
       spongeHTimeScale, spongeUTimeScale, spongeVTimeScale, &
       spongeH, spongeU, spongeV, &
-      nx, ny, layers, RedGrav, hAdvecScheme, TS_algorithm, AB_order, &
+      nx, ny, layers, OL, RedGrav, hAdvecScheme, TS_algorithm, AB_order, &
       DumpWind, RelativeWind, Cd, &
       MPI_COMM_WORLD, myid, num_procs, ilower, iupper, &
       hypre_grid)

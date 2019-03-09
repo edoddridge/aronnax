@@ -20,7 +20,7 @@ module state_deriv
       spongeHTimeScale, spongeH, &
       spongeUTimeScale, spongeU, &
       spongeVTimeScale, spongeV, &
-      nx, ny, layers, n, debug_level)
+      nx, ny, layers, OL, n, debug_level)
     implicit none
 
     double precision, intent(out) :: dhdt(0:nx+1, 0:ny+1, layers)
@@ -57,7 +57,7 @@ module state_deriv
     double precision, intent(in) :: spongeU(0:nx+1, 0:ny+1, layers)
     double precision, intent(in) :: spongeVTimeScale(0:nx+1, 0:ny+1, layers)
     double precision, intent(in) :: spongeV(0:nx+1, 0:ny+1, layers)
-    integer, intent(in) :: nx, ny, layers
+    integer, intent(in) :: nx, ny, layers, OL
     integer, intent(in) :: n
     integer, intent(in) :: debug_level
 
@@ -68,36 +68,36 @@ module state_deriv
 
     ! Calculate Bernoulli potential
     if (RedGrav) then
-      call evaluate_b_RedGrav(b, h, u, v, nx, ny, layers, g_vec)
+      call evaluate_b_RedGrav(b, h, u, v, nx, ny, layers, OL, g_vec)
       if (debug_level .ge. 4) then
-        call write_output_3d(b, nx, ny, layers, 0, 0, &
+        call write_output_3d(b, nx, ny, layers, OL, 0, 0, &
           n, 'output/snap.BP.')
       end if
     else
-      call evaluate_b_iso(b, h, u, v, nx, ny, layers, g_vec, depth)
+      call evaluate_b_iso(b, h, u, v, nx, ny, layers, OL, g_vec, depth)
       if (debug_level .ge. 4) then
-        call write_output_3d(b, nx, ny, layers, 0, 0, &
+        call write_output_3d(b, nx, ny, layers, OL, 0, 0, &
           n, 'output/snap.BP.')
       end if
     end if
 
     ! Calculate relative vorticity
-    call evaluate_zeta(zeta, u, v, nx, ny, layers, dx, dy)
+    call evaluate_zeta(zeta, u, v, nx, ny, layers, OL, dx, dy)
     if (debug_level .ge. 4) then
-      call write_output_3d(zeta, nx, ny, layers, 1, 1, &
+      call write_output_3d(zeta, nx, ny, layers, OL, 1, 1, &
         n, 'output/snap.zeta.')
     end if
 
     ! Calculate dhdt, dudt, dvdt at current time step
     call evaluate_dhdt(dhdt, h, u, v, kh, hmin, kv, dx, dy, nx, ny, &
-      layers, spongeHTimeScale, spongeH, wetmask, RedGrav, hAdvecScheme, n)
+      layers, OL, spongeHTimeScale, spongeH, wetmask, RedGrav, hAdvecScheme, n)
 
     call evaluate_dudt(dudt, h, u, v, b, zeta, wind_x, wind_y, wind_depth, &
-        fu, au, ar, slip, dx, dy, hfacN, hfacS, nx, ny, layers, rho0, &
+        fu, au, ar, slip, dx, dy, hfacN, hfacS, nx, ny, layers, OL, rho0, &
         RelativeWind, Cd, spongeUTimeScale, spongeU, RedGrav, botDrag)
 
     call evaluate_dvdt(dvdt, h, u, v, b, zeta, wind_x, wind_y, wind_depth, &
-        fv, au, ar, slip, dx, dy, hfacW, hfacE, nx, ny, layers, rho0, &
+        fv, au, ar, slip, dx, dy, hfacW, hfacE, nx, ny, layers, OL, rho0, &
         RelativeWind, Cd, spongeVTimeScale, spongeV, RedGrav, botDrag)
 
     return

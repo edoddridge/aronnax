@@ -10,7 +10,7 @@ module thickness
   !> Calculate the tendency of layer thickness for each of the active layers
   !! dh/dt is in the centre of each grid point.
   subroutine evaluate_dhdt(dhdt, h, u, v, kh, hmin, kv, dx, dy, nx, ny, &
-      layers, spongeTimeScale, spongeH, wetmask, RedGrav, hAdvecScheme, n)
+      layers, OL, spongeTimeScale, spongeH, wetmask, RedGrav, hAdvecScheme, n)
     implicit none
 
     ! dhdt is evaluated at the centre of the grid box
@@ -21,7 +21,7 @@ module thickness
     double precision, intent(in)  :: kh(layers), kv
     double precision, intent(in)  :: hmin
     double precision, intent(in)  :: dx, dy
-    integer, intent(in) :: nx, ny, layers
+    integer, intent(in) :: nx, ny, layers, OL
     double precision, intent(in)  :: spongeTimeScale(0:nx+1, 0:ny+1, layers)
     double precision, intent(in)  :: spongeH(0:nx+1, 0:ny+1, layers)
     double precision, intent(in)  :: wetmask(0:nx+1, 0:ny+1)
@@ -45,11 +45,11 @@ module thickness
     dhdt_kh = 0d0
 
     call dhdt_hor_diff(dhdt_kh, h, kh, hmin, dx, dy, nx, ny, layers, &
-      wetmask, RedGrav)
+      OL, wetmask, RedGrav)
 
     ! Calculate thickness tendency due to vertical diffusion
     dhdt_kv = 0d0
-    call dhdt_vert_diff(dhdt_kv, h, kv, nx, ny, layers, RedGrav)
+    call dhdt_vert_diff(dhdt_kv, h, kv, nx, ny, layers, OL, RedGrav)
 
 
     ! Calculate the thickness tendency due to the flow field
@@ -57,10 +57,10 @@ module thickness
 
     if (hAdvecScheme .eq. 1) then
       ! first-order centered
-      call h_advec_1_centered(dhdt_advec, h, u, v, dx, dy, nx, ny, layers)
+      call h_advec_1_centered(dhdt_advec, h, u, v, dx, dy, nx, ny, layers, OL)
     else if (hAdvecScheme .eq. 2) then
       ! first-order upwind
-      call h_advec_1_upwind(dhdt_advec, h, u, v, dx, dy, nx, ny, layers)
+      call h_advec_1_upwind(dhdt_advec, h, u, v, dx, dy, nx, ny, layers, OL)
     else
       call clean_stop(n, .FALSE.)
     end if
@@ -85,7 +85,7 @@ module thickness
       dhdt(:, :, k) = dhdt(:, :, k) * wetmask
     end do
 
-    call wrap_fields_3D(dhdt, nx, ny, layers)
+    call wrap_fields_3D(dhdt, nx, ny, layers, OL)
 
     return
   end subroutine evaluate_dhdt
@@ -94,7 +94,7 @@ module thickness
   !> Calculate the tendency of layer thickness for each of the active layers
   !! due to horizontal thickness diffusion
   subroutine dhdt_hor_diff(dhdt_GM, h, kh, hmin, dx, dy, nx, ny, layers, &
-      wetmask, RedGrav)
+      OL, wetmask, RedGrav)
     implicit none
 
     ! dhdt is evaluated at the centre of the grid box
@@ -103,7 +103,7 @@ module thickness
     double precision, intent(in)  :: kh(layers)
     double precision, intent(in)  :: hmin
     double precision, intent(in)  :: dx, dy
-    integer, intent(in) :: nx, ny, layers
+    integer, intent(in) :: nx, ny, layers, OL
     double precision, intent(in)  :: wetmask(0:nx+1, 0:ny+1)
     logical, intent(in) :: RedGrav
 
@@ -175,14 +175,14 @@ module thickness
   ! ---------------------------------------------------------------------------
   !> Calculate the tendency of layer thickness for each of the active layers
   !! due to vertical thickness diffusion
-  subroutine dhdt_vert_diff(dhdt_kv, h, kv, nx, ny, layers, RedGrav)
+  subroutine dhdt_vert_diff(dhdt_kv, h, kv, nx, ny, layers, OL, RedGrav)
     implicit none
 
     ! dhdt is evaluated at the centre of the grid box
     double precision, intent(out) :: dhdt_kv(0:nx+1, 0:ny+1, layers)
     double precision, intent(in)  :: h(0:nx+1, 0:ny+1, layers)
     double precision, intent(in)  :: kv
-    integer, intent(in) :: nx, ny, layers
+    integer, intent(in) :: nx, ny, layers, OL
     logical, intent(in) :: RedGrav
 
     integer i, j, k

@@ -133,6 +133,7 @@ section_map = {
     "nx"                   : "grid",
     "ny"                   : "grid",
     "layers"               : "grid",
+    "OL"                   : "grid",
     "dx"                   : "grid",
     "dy"                   : "grid",
     "fUfile"               : "grid",

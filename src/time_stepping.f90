@@ -65,7 +65,7 @@ module time_stepping
           spongeHTimeScale, spongeH, &
           spongeUTimeScale, spongeU, &
           spongeVTimeScale, spongeV, &
-          nx, ny, layers, debug_level)
+          nx, ny, layers, OL, debug_level)
     implicit none
 
     double precision, intent(out) :: dhdt(0:nx+1, 0:ny+1, layers, AB_order)
@@ -103,7 +103,7 @@ module time_stepping
     double precision, intent(in) :: spongeU(0:nx+1, 0:ny+1, layers)
     double precision, intent(in) :: spongeVTimeScale(0:nx+1, 0:ny+1, layers)
     double precision, intent(in) :: spongeV(0:nx+1, 0:ny+1, layers)
-    integer, intent(in) :: nx, ny, layers
+    integer, intent(in) :: nx, ny, layers, OL
     integer, intent(in) :: debug_level
 
 
@@ -128,16 +128,16 @@ module time_stepping
           spongeHTimeScale, spongeH, &
           spongeUTimeScale, spongeU, &
           spongeVTimeScale, spongeV, &
-          nx, ny, layers, 0, debug_level)
+          nx, ny, layers, OL, 0, debug_level)
 
             ! Apply the boundary conditions
-      call apply_boundary_conditions(u_new, hfacW, wetmask, nx, ny, layers)
-      call apply_boundary_conditions(v_new, hfacS, wetmask, nx, ny, layers)
+      call apply_boundary_conditions(u_new, hfacW, wetmask, nx, ny, layers, OL)
+      call apply_boundary_conditions(v_new, hfacS, wetmask, nx, ny, layers, OL)
 
       ! Wrap fields around for periodic simulations
-      call wrap_fields_3D(u_new, nx, ny, layers)
-      call wrap_fields_3D(v_new, nx, ny, layers)
-      call wrap_fields_3D(h_new, nx, ny, layers)
+      call wrap_fields_3D(u_new, nx, ny, layers, OL)
+      call wrap_fields_3D(v_new, nx, ny, layers, OL)
+      call wrap_fields_3D(h_new, nx, ny, layers, OL)
 
       ! Shuffle arrays: new -> present
       ! thickness and velocity fields
@@ -165,7 +165,7 @@ module time_stepping
       spongeHTimeScale, spongeH, &
       spongeUTimeScale, spongeU, &
       spongeVTimeScale, spongeV, &
-      nx, ny, layers, n, debug_level)
+      nx, ny, layers, OL, n, debug_level)
     implicit none
 
 
@@ -206,7 +206,7 @@ module time_stepping
     double precision, intent(in)    :: spongeU(0:nx+1, 0:ny+1, layers)
     double precision, intent(in)    :: spongeVTimeScale(0:nx+1, 0:ny+1, layers)
     double precision, intent(in)    :: spongeV(0:nx+1, 0:ny+1, layers)
-    integer,          intent(in)    :: nx, ny, layers
+    integer,          intent(in)    :: nx, ny, layers, OL
     integer,          intent(in)    :: n
     integer,          intent(in)    :: debug_level
 
@@ -222,12 +222,12 @@ module time_stepping
           spongeHTimeScale, spongeH, &
           spongeUTimeScale, spongeU, &
           spongeVTimeScale, spongeV, &
-          nx, ny, layers, n, debug_level)
+          nx, ny, layers, OL, n, debug_level)
 
       ! Use dh/dt, du/dt and dv/dt to step h, u and v forward in time
-      call ForwardEuler(h_new, dhdt, h, dt, nx, ny, layers, AB_order)
-      call ForwardEuler(u_new, dudt, u, dt, nx, ny, layers, AB_order)
-      call ForwardEuler(v_new, dvdt, v, dt, nx, ny, layers, AB_order)
+      call ForwardEuler(h_new, dhdt, h, dt, nx, ny, layers, OL, AB_order)
+      call ForwardEuler(u_new, dudt, u, dt, nx, ny, layers, OL, AB_order)
+      call ForwardEuler(v_new, dvdt, v, dt, nx, ny, layers, OL, AB_order)
 
 
     else if (TS_algorithm .eq. 2) then
@@ -240,12 +240,12 @@ module time_stepping
           spongeHTimeScale, spongeH, &
           spongeUTimeScale, spongeU, &
           spongeVTimeScale, spongeV, &
-          nx, ny, layers, n, debug_level)
+          nx, ny, layers, OL, n, debug_level)
 
       ! Use dh/dt, du/dt and dv/dt to step h, u and v forward in time
-      call AB2(h_new, dhdt, h, dt, nx, ny, layers, AB_order)
-      call AB2(u_new, dudt, u, dt, nx, ny, layers, AB_order)
-      call AB2(v_new, dvdt, v, dt, nx, ny, layers, AB_order)
+      call AB2(h_new, dhdt, h, dt, nx, ny, layers, OL, AB_order)
+      call AB2(u_new, dudt, u, dt, nx, ny, layers, OL, AB_order)
+      call AB2(v_new, dvdt, v, dt, nx, ny, layers, OL, AB_order)
 
     else if (TS_algorithm .eq. 3) then
       ! Third-order AB
@@ -257,13 +257,13 @@ module time_stepping
           spongeHTimeScale, spongeH, &
           spongeUTimeScale, spongeU, &
           spongeVTimeScale, spongeV, &
-          nx, ny, layers, n, debug_level)
+          nx, ny, layers, OL, n, debug_level)
 
       ! Use dh/dt, du/dt and dv/dt to step h, u and v forward in time with
       ! the Adams-Bashforth third order linear multistep method
-      call AB3(h_new, dhdt, h, dt, nx, ny, layers, AB_order)
-      call AB3(u_new, dudt, u, dt, nx, ny, layers, AB_order)
-      call AB3(v_new, dvdt, v, dt, nx, ny, layers, AB_order)
+      call AB3(h_new, dhdt, h, dt, nx, ny, layers, OL, AB_order)
+      call AB3(u_new, dudt, u, dt, nx, ny, layers, OL, AB_order)
+      call AB3(v_new, dvdt, v, dt, nx, ny, layers, OL, AB_order)
 
     else if (TS_algorithm .eq. 4) then
       ! Fourth-order AB
@@ -276,12 +276,12 @@ module time_stepping
           spongeHTimeScale, spongeH, &
           spongeUTimeScale, spongeU, &
           spongeVTimeScale, spongeV, &
-          nx, ny, layers, n, debug_level)
+          nx, ny, layers, OL, n, debug_level)
 
       ! Use dh/dt, du/dt and dv/dt to step h, u and v forward in time
-      call AB4(h_new, dhdt, h, dt, nx, ny, layers, AB_order)
-      call AB4(u_new, dudt, u, dt, nx, ny, layers, AB_order)
-      call AB4(v_new, dvdt, v, dt, nx, ny, layers, AB_order)
+      call AB4(h_new, dhdt, h, dt, nx, ny, layers, OL, AB_order)
+      call AB4(u_new, dudt, u, dt, nx, ny, layers, OL, AB_order)
+      call AB4(v_new, dvdt, v, dt, nx, ny, layers, OL, AB_order)
 
     else if (TS_algorithm .eq. 5) then
       ! Fifth-order AB
@@ -294,12 +294,12 @@ module time_stepping
           spongeHTimeScale, spongeH, &
           spongeUTimeScale, spongeU, &
           spongeVTimeScale, spongeV, &
-          nx, ny, layers, n, debug_level)
+          nx, ny, layers, OL, n, debug_level)
 
       ! Use dh/dt, du/dt and dv/dt to step h, u and v forward in time
-      call AB5(h_new, dhdt, h, dt, nx, ny, layers, AB_order)
-      call AB5(u_new, dudt, u, dt, nx, ny, layers, AB_order)
-      call AB5(v_new, dvdt, v, dt, nx, ny, layers, AB_order)
+      call AB5(h_new, dhdt, h, dt, nx, ny, layers, OL, AB_order)
+      call AB5(u_new, dudt, u, dt, nx, ny, layers, OL, AB_order)
+      call AB5(v_new, dvdt, v, dt, nx, ny, layers, OL, AB_order)
 
     else if (TS_algorithm .eq. 12) then
       ! Second-order RK
@@ -311,7 +311,7 @@ module time_stepping
           spongeHTimeScale, spongeH, &
           spongeUTimeScale, spongeU, &
           spongeVTimeScale, spongeV, &
-          nx, ny, layers, n, debug_level)
+          nx, ny, layers, OL, n, debug_level)
 
     else if (TS_algorithm .eq. 13) then
       ! Third-order RK
@@ -341,7 +341,7 @@ module time_stepping
           spongeHTimeScale, spongeH, &
           spongeUTimeScale, spongeU, &
           spongeVTimeScale, spongeV, &
-          nx, ny, layers, n, debug_level)
+          nx, ny, layers, OL, n, debug_level)
     implicit none
 
     double precision, intent(out) :: h_new(0:nx+1, 0:ny+1, layers)
@@ -381,7 +381,7 @@ module time_stepping
     double precision, intent(in) :: spongeU(0:nx+1, 0:ny+1, layers)
     double precision, intent(in) :: spongeVTimeScale(0:nx+1, 0:ny+1, layers)
     double precision, intent(in) :: spongeV(0:nx+1, 0:ny+1, layers)
-    integer, intent(in) :: nx, ny, layers
+    integer, intent(in) :: nx, ny, layers, OL
     integer, intent(in) :: n
     integer, intent(in) :: debug_level
 
@@ -400,7 +400,7 @@ module time_stepping
           spongeHTimeScale, spongeH, &
           spongeUTimeScale, spongeU, &
           spongeVTimeScale, spongeV, &
-          nx, ny, layers, n, debug_level)
+          nx, ny, layers, OL, n, debug_level)
 
       ! Calculate the values at half the time interval with Forward Euler
       hhalf = h+0.5d0*dt*dhdt
@@ -416,7 +416,7 @@ module time_stepping
           spongeHTimeScale, spongeH, &
           spongeUTimeScale, spongeU, &
           spongeVTimeScale, spongeV, &
-          nx, ny, layers, n, debug_level)
+          nx, ny, layers, OL, n, debug_level)
 
       ! Calculate h, u, v with these tendencies
       h_new = h + dt*dhdt

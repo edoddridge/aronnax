@@ -10,7 +10,7 @@ module io
 
   subroutine maybe_dump_output(h, hav, u, uav, v, vav, eta, etaav, &
           dudt, dvdt, dhdt, AB_order, &
-          wind_x, wind_y, nx, ny, layers, &
+          wind_x, wind_y, nx, ny, layers, OL, &
           n, nwrite, avwrite, checkpointwrite, diagwrite, &
           RedGrav, DumpWind, debug_level)
     implicit none
@@ -29,7 +29,7 @@ module io
     integer,          intent(in)    :: AB_order
     double precision, intent(in)    :: wind_x(0:nx+1, 0:ny+1)
     double precision, intent(in)    :: wind_y(0:nx+1, 0:ny+1)
-    integer,          intent(in)    :: nx, ny, layers, n
+    integer,          intent(in)    :: nx, ny, layers, OL, n
     integer,          intent(in)    :: nwrite, avwrite, checkpointwrite, diagwrite
     logical,          intent(in)    :: RedGrav, DumpWind
     integer,          intent(in)    :: debug_level
@@ -48,37 +48,37 @@ module io
 
     if (dump_output) then 
       
-      call write_output_3d(h, nx, ny, layers, 0, 0, &
+      call write_output_3d(h, nx, ny, layers, OL, 0, 0, &
       n, 'output/snap.h.')
-      call write_output_3d(u, nx, ny, layers, 1, 0, &
+      call write_output_3d(u, nx, ny, layers, OL, 1, 0, &
       n, 'output/snap.u.')
-      call write_output_3d(v, nx, ny, layers, 0, 1, &
+      call write_output_3d(v, nx, ny, layers, OL, 0, 1, &
       n, 'output/snap.v.')
 
 
       if (.not. RedGrav) then
-        call write_output_2d(eta, nx, ny, 0, 0, &
+        call write_output_2d(eta, nx, ny, OL, 0, 0, &
           n, 'output/snap.eta.')
       end if
 
       if (DumpWind .eqv. .true.) then
-        call write_output_2d(wind_x, nx, ny, 1, 0, &
+        call write_output_2d(wind_x, nx, ny, OL, 1, 0, &
           n, 'output/wind_x.')
-        call write_output_2d(wind_y, nx, ny, 0, 1, &
+        call write_output_2d(wind_y, nx, ny, OL, 0, 1, &
           n, 'output/wind_y.')
       end if
 
       if (debug_level .ge. 1) then
-        call write_output_3d(dhdt(:,:,:,1), nx, ny, layers, 0, 0, &
+        call write_output_3d(dhdt(:,:,:,1), nx, ny, layers, OL, 0, 0, &
           n, 'output/debug.dhdt.')
-        call write_output_3d(dudt(:,:,:,1), nx, ny, layers, 1, 0, &
+        call write_output_3d(dudt(:,:,:,1), nx, ny, layers, OL, 1, 0, &
           n, 'output/debug.dudt.')
-        call write_output_3d(dvdt(:,:,:,1), nx, ny, layers, 0, 1, &
+        call write_output_3d(dvdt(:,:,:,1), nx, ny, layers, OL, 0, 1, &
           n, 'output/debug.dvdt.')
       end if
 
       ! Check if there are NaNs in the data
-      call break_if_NaN(h, nx, ny, layers, n)
+      call break_if_NaN(h, nx, ny, layers, OL, n)
       ! call break_if_NaN(u, nx, ny, layers, n)
       ! call break_if_NaN(v, nx, ny, layers, n)
 
@@ -99,21 +99,21 @@ module io
           etaav = etaav/real(avwrite)
         end if
 
-        call write_output_3d(hav, nx, ny, layers, 0, 0, &
+        call write_output_3d(hav, nx, ny, layers, OL, 0, 0, &
         n, 'output/av.h.')
-        call write_output_3d(uav, nx, ny, layers, 1, 0, &
+        call write_output_3d(uav, nx, ny, layers, OL, 1, 0, &
         n, 'output/av.u.')
-        call write_output_3d(vav, nx, ny, layers, 0, 1, &
+        call write_output_3d(vav, nx, ny, layers, OL, 0, 1, &
         n, 'output/av.v.')
 
 
         if (.not. RedGrav) then
-          call write_output_2d(etaav, nx, ny, 0, 0, &
+          call write_output_2d(etaav, nx, ny, OL, 0, 0, &
             n, 'output/av.eta.')
         end if
 
         ! Check if there are NaNs in the data
-        call break_if_NaN(h, nx, ny, layers, n)
+        call break_if_NaN(h, nx, ny, layers, OL, n)
         ! call break_if_NaN(u, nx, ny, layers, n)
         ! call break_if_NaN(v, nx, ny, layers, n)
       end if
@@ -133,22 +133,22 @@ module io
     if (checkpointwrite .eq. 0) then
       ! not saving checkpoints, so move on
     else if (mod(n-1, checkpointwrite) .eq. 0) then
-      call write_checkpoint_output(h, nx, ny, layers, 1, &
+      call write_checkpoint_output(h, nx, ny, layers, OL, 1, &
       n, 'checkpoints/h.')
-      call write_checkpoint_output(u, nx, ny, layers, 1, &
+      call write_checkpoint_output(u, nx, ny, layers, OL, 1, &
       n, 'checkpoints/u.')
-      call write_checkpoint_output(v, nx, ny, layers, 1, &
+      call write_checkpoint_output(v, nx, ny, layers, OL, 1, &
       n, 'checkpoints/v.')
 
-      call write_checkpoint_output(dhdt, nx, ny, layers, AB_order, &
+      call write_checkpoint_output(dhdt, nx, ny, layers, OL, AB_order, &
         n, 'checkpoints/dhdt.')
-      call write_checkpoint_output(dudt, nx, ny, layers, AB_order, &
+      call write_checkpoint_output(dudt, nx, ny, layers, OL, AB_order, &
         n, 'checkpoints/dudt.')
-      call write_checkpoint_output(dvdt, nx, ny, layers, AB_order, &
+      call write_checkpoint_output(dvdt, nx, ny, layers, OL, AB_order, &
         n, 'checkpoints/dvdt.')
 
       if (.not. RedGrav) then
-        call write_checkpoint_output(eta, nx, ny, 1, 1, &
+        call write_checkpoint_output(eta, nx, ny, OL, 1, 1, &
           n, 'checkpoints/eta.')
       end if
 
@@ -157,11 +157,11 @@ module io
     if (diagwrite .eq. 0) then
       ! not saving diagnostics. Move one.
     else if (mod(n-1, diagwrite) .eq. 0) then
-      call write_diag_output(h, nx, ny, layers, n, 'output/diagnostic.h.csv')
-      call write_diag_output(u, nx, ny, layers, n, 'output/diagnostic.u.csv')
-      call write_diag_output(v, nx, ny, layers, n, 'output/diagnostic.v.csv')
+      call write_diag_output(h, nx, ny, layers, OL, n, 'output/diagnostic.h.csv')
+      call write_diag_output(u, nx, ny, layers, OL, n, 'output/diagnostic.u.csv')
+      call write_diag_output(v, nx, ny, layers, OL, n, 'output/diagnostic.v.csv')
       if (.not. RedGrav) then
-        call write_diag_output(eta, nx, ny, 1, n, 'output/diagnostic.eta.csv')
+        call write_diag_output(eta, nx, ny, OL, 1, n, 'output/diagnostic.eta.csv')
       end if
     end if
 
@@ -170,17 +170,16 @@ module io
 
   ! ---------------------------------------------------------------------------
 
-  subroutine read_input_fileH(name, array, default, nx, ny, layers)
+  subroutine read_input_fileH(name, array, default, nx, ny, layers, OL)
     implicit none
 
     character(60), intent(in) :: name
-    double precision, intent(out) :: array(0:nx+1, 0:ny+1, layers)
+    double precision, intent(out) :: array(1-OL:nx+OL, 1-OL:ny+OL, layers)
     double precision, intent(in) :: default(layers)
-    integer, intent(in) :: nx, ny, layers
+    integer, intent(in) :: nx, ny, layers, OL
 
     double precision array_small(nx, ny, layers)
     integer k
-
 
 
     if (name.ne.'') then
@@ -188,7 +187,7 @@ module io
       read(10) array_small
       close(10)
       array(1:nx, 1:ny, :) = array_small
-      call wrap_fields_3D(array, nx, ny, layers)
+      call wrap_fields_3D(array, nx, ny, layers, OL)
     else
       do k = 1, layers
         array(:, :, k) = default(k)
@@ -200,13 +199,13 @@ module io
 
   ! ---------------------------------------------------------------------------
 
-  subroutine read_input_fileH_2D(name, array, default, nx, ny)
+  subroutine read_input_fileH_2D(name, array, default, nx, ny, OL)
     implicit none
 
     character(60), intent(in) :: name
-    double precision, intent(out) :: array(0:nx+1, 0:ny+1)
+    double precision, intent(out) :: array(1-OL:nx+OL, 1-OL:ny+OL)
     double precision, intent(in) :: default
-    integer, intent(in) :: nx, ny
+    integer, intent(in) :: nx, ny, OL
 
     double precision array_small(nx, ny)
 
@@ -215,7 +214,7 @@ module io
       read(10) array_small
       close(10)
       array(1:nx, 1:ny) = array_small
-      call wrap_fields_2D(array, nx, ny)
+      call wrap_fields_2D(array, nx, ny, OL)
     else
       array = default
     end if
@@ -225,13 +224,13 @@ module io
 
   ! ---------------------------------------------------------------------------
 
-  subroutine read_input_fileU(name, array, default, nx, ny, layers)
+  subroutine read_input_fileU(name, array, default, nx, ny, layers, OL)
     implicit none
 
     character(60), intent(in) :: name
-    double precision, intent(out) :: array(0:nx+1, 0:ny+1, layers)
+    double precision, intent(out) :: array(1-OL:nx+OL, 1-OL:ny+OL, layers)
     double precision, intent(in) :: default
-    integer, intent(in) :: nx, ny, layers
+    integer, intent(in) :: nx, ny, layers, OL
 
     double precision array_small(nx+1, ny, layers)
 
@@ -240,7 +239,7 @@ module io
       read(10) array_small
       close(10)
       array(1:nx+1, 1:ny, :) = array_small
-      call wrap_fields_3D(array, nx, ny, layers)
+      call wrap_fields_3D(array, nx, ny, layers, OL)
     else
       array = default
     end if
@@ -250,13 +249,13 @@ module io
 
   ! ---------------------------------------------------------------------------
 
-  subroutine read_input_fileV(name, array, default, nx, ny, layers)
+  subroutine read_input_fileV(name, array, default, nx, ny, layers, OL)
     implicit none
 
     character(60), intent(in) :: name
-    double precision, intent(out) :: array(0:nx+1, 0:ny+1, layers)
+    double precision, intent(out) :: array(1-OL:nx+OL, 1-OL:ny+OL, layers)
     double precision, intent(in) :: default
-    integer, intent(in) :: nx, ny, layers
+    integer, intent(in) :: nx, ny, layers, OL
 
     double precision array_small(nx, ny+1, layers)
 
@@ -265,7 +264,7 @@ module io
       read(10) array_small
       close(10)
       array(1:nx, 1:ny+1, :) = array_small
-      call wrap_fields_3D(array, nx, ny, layers)
+      call wrap_fields_3D(array, nx, ny, layers, OL)
     else
       array = default
     end if
@@ -297,12 +296,12 @@ module io
   !-----------------------------------------------------------------
   !> Write snapshot output of 3d field
 
-  subroutine write_output_3d(array, nx, ny, layers, xstep, ystep, &
+  subroutine write_output_3d(array, nx, ny, layers, OL, xstep, ystep, &
       n, name)
     implicit none
 
     double precision, intent(in) :: array(0:nx+1, 0:ny+1, layers)
-    integer,          intent(in) :: nx, ny, layers, xstep, ystep
+    integer,          intent(in) :: nx, ny, layers, OL, xstep, ystep
     integer,          intent(in) :: n
     character(*),     intent(in) :: name
 
@@ -322,12 +321,12 @@ module io
   !-----------------------------------------------------------------
   !> Write snapshot output of 3d field
 
-  subroutine write_checkpoint_output(array, nx, ny, layers, AB_order, &
+  subroutine write_checkpoint_output(array, nx, ny, layers, OL, AB_order, &
       n, name)
     implicit none
 
     double precision, intent(in) :: array(0:nx+1, 0:ny+1, layers, AB_order)
-    integer,          intent(in) :: nx, ny, layers, AB_order
+    integer,          intent(in) :: nx, ny, layers, OL, AB_order
     integer,          intent(in) :: n
     character(*),     intent(in) :: name
 
@@ -348,7 +347,7 @@ module io
   !> Load in checkpoint files when restarting a simulation
 
   subroutine load_checkpoint_files(dhdt, dudt, dvdt, h, u, v, eta, &
-            RedGrav, niter0, nx, ny, layers, AB_order)
+            RedGrav, niter0, nx, ny, layers, OL, AB_order)
 
     double precision, intent(out) :: dhdt(0:nx+1, 0:ny+1, layers, AB_order)
     double precision, intent(out) :: dudt(0:nx+1, 0:ny+1, layers, AB_order)
@@ -359,7 +358,7 @@ module io
     double precision, intent(out) :: eta(0:nx+1, 0:ny+1)
     logical,          intent(in)  :: RedGrav
     integer,          intent(in) :: niter0
-    integer,          intent(in) :: nx, ny, layers, AB_order
+    integer,          intent(in) :: nx, ny, layers, OL, AB_order
 
     ! dummy variable for loading checkpoints
     character(10)    :: num
@@ -399,12 +398,12 @@ module io
   !-----------------------------------------------------------------
   !> Write snapshot output of 2d field
 
-  subroutine write_output_2d(array, nx, ny, xstep, ystep, &
+  subroutine write_output_2d(array, nx, ny, OL, xstep, ystep, &
       n, name)
     implicit none
 
     double precision, intent(in) :: array(0:nx+1, 0:ny+1)
-    integer,          intent(in) :: nx, ny, xstep, ystep
+    integer,          intent(in) :: nx, ny, OL, xstep, ystep
     integer,          intent(in) :: n
     character(*),     intent(in) :: name
 
@@ -489,12 +488,12 @@ module io
   !-----------------------------------------------------------------
   !> Save diagnostistics of given fields
 
-  subroutine write_diag_output(array, nx, ny, layers, &
+  subroutine write_diag_output(array, nx, ny, layers, OL, &
       n, filename)
     implicit none
 
     double precision, intent(in) :: array(0:nx+1, 0:ny+1, layers)
-    integer,          intent(in) :: nx, ny, layers
+    integer,          intent(in) :: nx, ny, layers, OL
     integer,          intent(in) :: n
     character(*),     intent(in) :: filename
 
