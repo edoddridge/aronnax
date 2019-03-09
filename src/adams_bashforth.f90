@@ -12,9 +12,9 @@ module adams_bashforth
   subroutine ForwardEuler(X_new, dXdt, X, dt, nx, ny, layers, OL, AB_order)
     implicit none
 
-    double precision, intent(out) :: X_new(0:nx+1, 0:ny+1, layers)
-    double precision, intent(inout) :: dXdt(0:nx+1, 0:ny+1, layers, AB_order)
-    double precision, intent(in) :: X(0:nx+1, 0:ny+1, layers)
+    double precision, intent(out) :: X_new(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(inout) :: dXdt(1-OL:nx+OL, 1-OL:ny+OL, layers, AB_order)
+    double precision, intent(in) :: X(1-OL:nx+OL, 1-OL:ny+OL, layers)
     double precision, intent(in) :: dt
     integer,          intent(in) :: nx, ny, layers, OL, AB_order
 
@@ -27,9 +27,9 @@ module adams_bashforth
   subroutine AB2(X_new, dXdt, X, dt, nx, ny, layers, OL, AB_order)
     implicit none
 
-    double precision, intent(out) :: X_new(0:nx+1, 0:ny+1, layers)
-    double precision, intent(inout) :: dXdt(0:nx+1, 0:ny+1, layers, AB_order)
-    double precision, intent(in) :: X(0:nx+1, 0:ny+1, layers)
+    double precision, intent(out) :: X_new(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(inout) :: dXdt(1-OL:nx+OL, 1-OL:ny+OL, layers, AB_order)
+    double precision, intent(in) :: X(1-OL:nx+OL, 1-OL:ny+OL, layers)
     double precision, intent(in) :: dt
     integer,          intent(in) :: nx, ny, layers, OL, AB_order
 
@@ -45,9 +45,9 @@ module adams_bashforth
   subroutine AB3(X_new, dXdt, X, dt, nx, ny, layers, OL, AB_order)
     implicit none
 
-    double precision, intent(out) :: X_new(0:nx+1, 0:ny+1, layers)
-    double precision, intent(inout) :: dXdt(0:nx+1, 0:ny+1, layers, AB_order)
-    double precision, intent(in) :: X(0:nx+1, 0:ny+1, layers)
+    double precision, intent(out) :: X_new(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(inout) :: dXdt(1-OL:nx+OL, 1-OL:ny+OL, layers, AB_order)
+    double precision, intent(in) :: X(1-OL:nx+OL, 1-OL:ny+OL, layers)
     double precision, intent(in) :: dt
     integer,          intent(in) :: nx, ny, layers, OL, AB_order
 
@@ -65,9 +65,9 @@ module adams_bashforth
   subroutine AB4(X_new, dXdt, X, dt, nx, ny, layers, OL, AB_order)
     implicit none
 
-    double precision, intent(out) :: X_new(0:nx+1, 0:ny+1, layers)
-    double precision, intent(inout) :: dXdt(0:nx+1, 0:ny+1, layers, AB_order)
-    double precision, intent(in) :: X(0:nx+1, 0:ny+1, layers)
+    double precision, intent(out) :: X_new(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(inout) :: dXdt(1-OL:nx+OL, 1-OL:ny+OL, layers, AB_order)
+    double precision, intent(in) :: X(1-OL:nx+OL, 1-OL:ny+OL, layers)
     double precision, intent(in) :: dt
     integer,          intent(in) :: nx, ny, layers, OL, AB_order
 
@@ -87,9 +87,9 @@ module adams_bashforth
   subroutine AB5(X_new, dXdt, X, dt, nx, ny, layers, OL, AB_order)
     implicit none
 
-    double precision, intent(out) :: X_new(0:nx+1, 0:ny+1, layers)
-    double precision, intent(inout) :: dXdt(0:nx+1, 0:ny+1, layers, AB_order)
-    double precision, intent(in) :: X(0:nx+1, 0:ny+1, layers)
+    double precision, intent(out) :: X_new(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(inout) :: dXdt(1-OL:nx+OL, 1-OL:ny+OL, layers, AB_order)
+    double precision, intent(in) :: X(1-OL:nx+OL, 1-OL:ny+OL, layers)
     double precision, intent(in) :: dt
     integer,          intent(in) :: nx, ny, layers, OL, AB_order
 

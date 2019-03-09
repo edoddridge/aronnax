@@ -15,14 +15,14 @@ module barotropic_mode
     implicit none
 
     double precision, intent(out) :: ub(nx+1, ny)
-    double precision, intent(in)  :: u(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: h(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: eta(0:nx+1, 0:ny+1)
+    double precision, intent(in)  :: u(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: h(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: eta(1-OL:nx+OL, 1-OL:ny+OL)
     double precision, intent(in)  :: freesurfFac
     integer, intent(in) :: nx, ny, layers, OL
 
     integer i, j, k
-    double precision h_temp(0:nx+1, 0:ny+1, layers)
+    double precision h_temp(1-OL:nx+OL, 1-OL:ny+OL, layers)
 
     ub = 0d0
 
@@ -48,14 +48,14 @@ module barotropic_mode
     implicit none
 
     double precision, intent(out) :: vb(nx, ny+1)
-    double precision, intent(in)  :: v(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: h(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: eta(0:nx+1, 0:ny+1)
+    double precision, intent(in)  :: v(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: h(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: eta(1-OL:nx+OL, 1-OL:ny+OL)
     double precision, intent(in)  :: freesurfFac
     integer, intent(in) :: nx, ny, layers, OL
 
     integer i, j, k
-    double precision h_temp(0:nx+1, 0:ny+1, layers)
+    double precision h_temp(1-OL:nx+OL, 1-OL:ny+OL, layers)
 
     vb = 0d0
 
@@ -85,8 +85,8 @@ module barotropic_mode
 
     double precision, intent(in)  :: ub(nx+1, ny)
     double precision, intent(in)  :: vb(nx, ny+1)
-    double precision, intent(in)  :: eta(0:nx+1, 0:ny+1)
-    double precision, intent(out) :: etastar(0:nx+1, 0:ny+1)
+    double precision, intent(in)  :: eta(1-OL:nx+OL, 1-OL:ny+OL)
+    double precision, intent(out) :: etastar(1-OL:nx+OL, 1-OL:ny+OL)
     double precision, intent(in)  :: freesurfFac
     integer, intent(in) :: nx, ny, OL
     double precision, intent(in) :: dx, dy, dt
@@ -117,8 +117,8 @@ module barotropic_mode
     implicit none
 
     double precision, intent(in)  :: a(5, nx, ny)
-    double precision, intent(out) :: etanew(0:nx+1, 0:ny+1)
-    double precision, intent(in)  :: etastar(0:nx+1, 0:ny+1)
+    double precision, intent(out) :: etanew(1-OL:nx+OL, 1-OL:ny+OL)
+    double precision, intent(in)  :: etastar(1-OL:nx+OL, 1-OL:ny+OL)
     integer, intent(in) :: nx, ny, OL
     double precision, intent(in) :: dt
     double precision, intent(in) :: rjac, eps
@@ -312,8 +312,8 @@ module barotropic_mode
     integer,          intent(in)  :: num_procs
     integer,          intent(in)  :: ilower(0:num_procs-1,2)
     integer,          intent(in)  :: iupper(0:num_procs-1,2)
-    double precision, intent(in)  :: etastar(0:nx+1, 0:ny+1)
-    double precision, intent(out) :: etanew(0:nx+1, 0:ny+1)
+    double precision, intent(in)  :: etastar(1-OL:nx+OL, 1-OL:ny+OL)
+    double precision, intent(out) :: etanew(1-OL:nx+OL, 1-OL:ny+OL)
     integer,          intent(in)  :: nx, ny, OL
     double precision, intent(in)  :: dt
     integer,          intent(in)  :: maxits
@@ -342,10 +342,6 @@ module barotropic_mode
     allocate(init_values(nx_tile*ny_tile))
     allocate(final_values(nx_tile*ny_tile))
     ! just nx*ny for the tile this processor owns
-
-
-
-
 
     ! wrap this code in preprocessing flags to allow the model to be compiled without the external library, if desired.
 #ifdef useExtSolver
@@ -467,8 +463,8 @@ module barotropic_mode
       xstep, ystep, dspace, dt, nx, ny, layers, OL)
     implicit none
 
-    double precision, intent(inout) :: array(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in) :: etanew(0:nx+1, 0:ny+1)
+    double precision, intent(inout) :: array(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in) :: etanew(1-OL:nx+OL, 1-OL:ny+OL)
     double precision, intent(in) :: g_vec(layers)
     integer, intent(in) :: xstep, ystep
     double precision, intent(in) :: dspace, dt
@@ -502,15 +498,15 @@ module barotropic_mode
     implicit none
 
     double precision, intent(out) :: a(5, nx, ny)
-    double precision, intent(in)  :: depth(0:nx+1, 0:ny+1)
+    double precision, intent(in)  :: depth(1-OL:nx+OL, 1-OL:ny+OL)
     double precision, intent(in)  :: g, dx, dy
     integer, intent(in)           :: nx, ny, OL
     double precision, intent(in)  :: freesurfFac
     double precision, intent(in)  :: dt
-    double precision, intent(in)  :: hfacW(0:nx+1, 0:ny+1)
-    double precision, intent(in)  :: hfacE(0:nx+1, 0:ny+1)
-    double precision, intent(in)  :: hfacN(0:nx+1, 0:ny+1)
-    double precision, intent(in)  :: hfacS(0:nx+1, 0:ny+1)
+    double precision, intent(in)  :: hfacW(1-OL:nx+OL, 1-OL:ny+OL)
+    double precision, intent(in)  :: hfacE(1-OL:nx+OL, 1-OL:ny+OL)
+    double precision, intent(in)  :: hfacN(1-OL:nx+OL, 1-OL:ny+OL)
+    double precision, intent(in)  :: hfacS(1-OL:nx+OL, 1-OL:ny+OL)
 
     integer i, j
 
@@ -544,17 +540,17 @@ module barotropic_mode
 
     implicit none
 
-    double precision, intent(inout) :: hnew(0:nx+1, 0:ny+1, layers)
-    double precision, intent(inout) :: unew(0:nx+1, 0:ny+1, layers)
-    double precision, intent(inout) :: vnew(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)    :: eta(0:nx+1, 0:ny+1)
-    double precision, intent(out)   :: etanew(0:nx+1, 0:ny+1)
-    double precision, intent(in)    :: depth(0:nx+1, 0:ny+1)
+    double precision, intent(inout) :: hnew(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(inout) :: unew(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(inout) :: vnew(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)    :: eta(1-OL:nx+OL, 1-OL:ny+OL)
+    double precision, intent(out)   :: etanew(1-OL:nx+OL, 1-OL:ny+OL)
+    double precision, intent(in)    :: depth(1-OL:nx+OL, 1-OL:ny+OL)
     double precision, intent(in)    :: a(5, nx, ny)
     double precision, intent(in)    :: dx, dy
-    double precision, intent(in)    :: wetmask(0:nx+1, 0:ny+1)
-    double precision, intent(in)    :: hfacW(0:nx+1, 0:ny+1)
-    double precision, intent(in)    :: hfacS(0:nx+1, 0:ny+1)
+    double precision, intent(in)    :: wetmask(1-OL:nx+OL, 1-OL:ny+OL)
+    double precision, intent(in)    :: hfacW(1-OL:nx+OL, 1-OL:ny+OL)
+    double precision, intent(in)    :: hfacS(1-OL:nx+OL, 1-OL:ny+OL)
     double precision, intent(in)    :: dt
     integer,          intent(in)    :: maxits
     double precision, intent(in)    :: eps, rjac, freesurfFac, thickness_error
@@ -572,7 +568,7 @@ module barotropic_mode
     ! barotropic velocity components (for pressure solver)
     double precision :: ub(nx+1, ny)
     double precision :: vb(nx, ny+1)
-    double precision :: etastar(0:nx+1, 0:ny+1)
+    double precision :: etastar(1-OL:nx+OL, 1-OL:ny+OL)
 
     character(10)    :: num
 

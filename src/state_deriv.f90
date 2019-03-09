@@ -23,21 +23,21 @@ module state_deriv
       nx, ny, layers, OL, n, debug_level)
     implicit none
 
-    double precision, intent(out) :: dhdt(0:nx+1, 0:ny+1, layers)
-    double precision, intent(out) :: dudt(0:nx+1, 0:ny+1, layers)
-    double precision, intent(out) :: dvdt(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in) :: h(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in) :: u(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in) :: v(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in) :: depth(0:nx+1, 0:ny+1, layers)
+    double precision, intent(out) :: dhdt(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(out) :: dudt(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(out) :: dvdt(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in) :: h(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in) :: u(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in) :: v(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in) :: depth(1-OL:nx+OL, 1-OL:ny+OL, layers)
     double precision, intent(in) :: dx, dy
-    double precision, intent(in) :: wetmask(0:nx+1, 0:ny+1)
-    double precision, intent(in) :: hfacW(0:nx+1, 0:ny+1)
-    double precision, intent(in) :: hfacE(0:nx+1, 0:ny+1)
-    double precision, intent(in) :: hfacN(0:nx+1, 0:ny+1)
-    double precision, intent(in) :: hfacS(0:nx+1, 0:ny+1)
-    double precision, intent(in) :: fu(0:nx+1, 0:ny+1)
-    double precision, intent(in) :: fv(0:nx+1, 0:ny+1)
+    double precision, intent(in) :: wetmask(1-OL:nx+OL, 1-OL:ny+OL)
+    double precision, intent(in) :: hfacW(1-OL:nx+OL, 1-OL:ny+OL)
+    double precision, intent(in) :: hfacE(1-OL:nx+OL, 1-OL:ny+OL)
+    double precision, intent(in) :: hfacN(1-OL:nx+OL, 1-OL:ny+OL)
+    double precision, intent(in) :: hfacS(1-OL:nx+OL, 1-OL:ny+OL)
+    double precision, intent(in) :: fu(1-OL:nx+OL, 1-OL:ny+OL)
+    double precision, intent(in) :: fv(1-OL:nx+OL, 1-OL:ny+OL)
     double precision, intent(in) :: au, ar, botDrag
     double precision, intent(in) :: kh(layers), kv
     double precision, intent(in) :: hmin
@@ -46,25 +46,25 @@ module state_deriv
     integer,          intent(in) :: hAdvecScheme
     double precision, intent(in) :: g_vec(layers)
     double precision, intent(in) :: rho0
-    double precision, intent(in) :: wind_x(0:nx+1, 0:ny+1)
-    double precision, intent(in) :: wind_y(0:nx+1, 0:ny+1)
+    double precision, intent(in) :: wind_x(1-OL:nx+OL, 1-OL:ny+OL)
+    double precision, intent(in) :: wind_y(1-OL:nx+OL, 1-OL:ny+OL)
     double precision, intent(in) :: wind_depth
     logical,          intent(in) :: RelativeWind
     double precision, intent(in) :: Cd
-    double precision, intent(in) :: spongeHTimeScale(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in) :: spongeH(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in) :: spongeUTimeScale(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in) :: spongeU(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in) :: spongeVTimeScale(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in) :: spongeV(0:nx+1, 0:ny+1, layers)
+    double precision, intent(in) :: spongeHTimeScale(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in) :: spongeH(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in) :: spongeUTimeScale(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in) :: spongeU(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in) :: spongeVTimeScale(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in) :: spongeV(1-OL:nx+OL, 1-OL:ny+OL, layers)
     integer, intent(in) :: nx, ny, layers, OL
     integer, intent(in) :: n
     integer, intent(in) :: debug_level
 
     ! Bernoulli potential
-    double precision :: b(0:nx+1, 0:ny+1, layers)
+    double precision :: b(1-OL:nx+OL, 1-OL:ny+OL, layers)
     ! Relative vorticity
-    double precision :: zeta(0:nx+1, 0:ny+1, layers)
+    double precision :: zeta(1-OL:nx+OL, 1-OL:ny+OL, layers)
 
     ! Calculate Bernoulli potential
     if (RedGrav) then

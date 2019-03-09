@@ -15,20 +15,20 @@ module io
           RedGrav, DumpWind, debug_level)
     implicit none
 
-    double precision, intent(in)    :: h(0:nx+1, 0:ny+1, layers)
-    double precision, intent(inout) :: hav(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)    :: u(0:nx+1, 0:ny+1, layers)
-    double precision, intent(inout) :: uav(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)    :: v(0:nx+1, 0:ny+1, layers)
-    double precision, intent(inout) :: vav(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)    :: eta(0:nx+1, 0:ny+1)
-    double precision, intent(inout) :: etaav(0:nx+1, 0:ny+1)
-    double precision, intent(in)    :: dudt(0:nx+1, 0:ny+1, layers, AB_order)
-    double precision, intent(in)    :: dvdt(0:nx+1, 0:ny+1, layers, AB_order)
-    double precision, intent(in)    :: dhdt(0:nx+1, 0:ny+1, layers, AB_order)
+    double precision, intent(in)    :: h(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(inout) :: hav(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)    :: u(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(inout) :: uav(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)    :: v(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(inout) :: vav(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)    :: eta(1-OL:nx+OL, 1-OL:ny+OL)
+    double precision, intent(inout) :: etaav(1-OL:nx+OL, 1-OL:ny+OL)
+    double precision, intent(in)    :: dudt(1-OL:nx+OL, 1-OL:ny+OL, layers, AB_order)
+    double precision, intent(in)    :: dvdt(1-OL:nx+OL, 1-OL:ny+OL, layers, AB_order)
+    double precision, intent(in)    :: dhdt(1-OL:nx+OL, 1-OL:ny+OL, layers, AB_order)
     integer,          intent(in)    :: AB_order
-    double precision, intent(in)    :: wind_x(0:nx+1, 0:ny+1)
-    double precision, intent(in)    :: wind_y(0:nx+1, 0:ny+1)
+    double precision, intent(in)    :: wind_x(1-OL:nx+OL, 1-OL:ny+OL)
+    double precision, intent(in)    :: wind_y(1-OL:nx+OL, 1-OL:ny+OL)
     integer,          intent(in)    :: nx, ny, layers, OL, n
     integer,          intent(in)    :: nwrite, avwrite, checkpointwrite, diagwrite
     logical,          intent(in)    :: RedGrav, DumpWind
@@ -300,7 +300,7 @@ module io
       n, name)
     implicit none
 
-    double precision, intent(in) :: array(0:nx+1, 0:ny+1, layers)
+    double precision, intent(in) :: array(1-OL:nx+OL, 1-OL:ny+OL, layers)
     integer,          intent(in) :: nx, ny, layers, OL, xstep, ystep
     integer,          intent(in) :: n
     character(*),     intent(in) :: name
@@ -325,7 +325,7 @@ module io
       n, name)
     implicit none
 
-    double precision, intent(in) :: array(0:nx+1, 0:ny+1, layers, AB_order)
+    double precision, intent(in) :: array(1-OL:nx+OL, 1-OL:ny+OL, layers, AB_order)
     integer,          intent(in) :: nx, ny, layers, OL, AB_order
     integer,          intent(in) :: n
     character(*),     intent(in) :: name
@@ -349,13 +349,13 @@ module io
   subroutine load_checkpoint_files(dhdt, dudt, dvdt, h, u, v, eta, &
             RedGrav, niter0, nx, ny, layers, OL, AB_order)
 
-    double precision, intent(out) :: dhdt(0:nx+1, 0:ny+1, layers, AB_order)
-    double precision, intent(out) :: dudt(0:nx+1, 0:ny+1, layers, AB_order)
-    double precision, intent(out) :: dvdt(0:nx+1, 0:ny+1, layers, AB_order)
-    double precision, intent(out) :: h(0:nx+1, 0:ny+1, layers)
-    double precision, intent(out) :: u(0:nx+1, 0:ny+1, layers)
-    double precision, intent(out) :: v(0:nx+1, 0:ny+1, layers)
-    double precision, intent(out) :: eta(0:nx+1, 0:ny+1)
+    double precision, intent(out) :: dhdt(1-OL:nx+OL, 1-OL:ny+OL, layers, AB_order)
+    double precision, intent(out) :: dudt(1-OL:nx+OL, 1-OL:ny+OL, layers, AB_order)
+    double precision, intent(out) :: dvdt(1-OL:nx+OL, 1-OL:ny+OL, layers, AB_order)
+    double precision, intent(out) :: h(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(out) :: u(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(out) :: v(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(out) :: eta(1-OL:nx+OL, 1-OL:ny+OL)
     logical,          intent(in)  :: RedGrav
     integer,          intent(in) :: niter0
     integer,          intent(in) :: nx, ny, layers, OL, AB_order
@@ -402,7 +402,7 @@ module io
       n, name)
     implicit none
 
-    double precision, intent(in) :: array(0:nx+1, 0:ny+1)
+    double precision, intent(in) :: array(1-OL:nx+OL, 1-OL:ny+OL)
     integer,          intent(in) :: nx, ny, OL, xstep, ystep
     integer,          intent(in) :: n
     character(*),     intent(in) :: name
@@ -492,7 +492,7 @@ module io
       n, filename)
     implicit none
 
-    double precision, intent(in) :: array(0:nx+1, 0:ny+1, layers)
+    double precision, intent(in) :: array(1-OL:nx+OL, 1-OL:ny+OL, layers)
     integer,          intent(in) :: nx, ny, layers, OL
     integer,          intent(in) :: n
     character(*),     intent(in) :: filename

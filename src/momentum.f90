@@ -15,35 +15,35 @@ module momentum
 
     ! dudt(i, j) is evaluated at the centre of the left edge of the grid
     ! box, the same place as u(i, j).
-    double precision, intent(out) :: dudt(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: h(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: u(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: v(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: b(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: zeta(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: wind_x(0:nx+1, 0:ny+1)
-    double precision, intent(in)  :: wind_y(0:nx+1, 0:ny+1)
+    double precision, intent(out) :: dudt(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: h(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: u(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: v(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: b(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: zeta(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: wind_x(1-OL:nx+OL, 1-OL:ny+OL)
+    double precision, intent(in)  :: wind_y(1-OL:nx+OL, 1-OL:ny+OL)
     double precision, intent(in)  :: wind_depth
-    double precision, intent(in)  :: fu(0:nx+1, 0:ny+1)
+    double precision, intent(in)  :: fu(1-OL:nx+OL, 1-OL:ny+OL)
     double precision, intent(in)  :: au, ar, slip, dx, dy
-    double precision, intent(in)  :: hfacN(0:nx+1, 0:ny+1)
-    double precision, intent(in)  :: hfacS(0:nx+1, 0:ny+1)
+    double precision, intent(in)  :: hfacN(1-OL:nx+OL, 1-OL:ny+OL)
+    double precision, intent(in)  :: hfacS(1-OL:nx+OL, 1-OL:ny+OL)
     integer,          intent(in)  :: nx, ny, layers, OL
     double precision, intent(in)  :: rho0
     logical,          intent(in)  :: RelativeWind
     double precision, intent(in)  :: Cd
-    double precision, intent(in)  :: spongeTimeScale(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: spongeU(0:nx+1, 0:ny+1, layers)
+    double precision, intent(in)  :: spongeTimeScale(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: spongeU(1-OL:nx+OL, 1-OL:ny+OL, layers)
     logical,          intent(in)  :: RedGrav
     double precision, intent(in)  :: botDrag
 
     integer          :: i, j, k
-    double precision :: dudt_visc(0:nx+1, 0:ny+1, layers)
-    double precision :: dudt_vort(0:nx+1, 0:ny+1, layers)
-    double precision :: dudt_BP(0:nx+1, 0:ny+1, layers)
-    double precision :: dudt_sponge(0:nx+1, 0:ny+1, layers)
-    double precision :: dudt_wind(0:nx+1, 0:ny+1, layers)
-    double precision :: dudt_drag(0:nx+1, 0:ny+1, layers)
+    double precision :: dudt_visc(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision :: dudt_vort(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision :: dudt_BP(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision :: dudt_sponge(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision :: dudt_wind(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision :: dudt_drag(1-OL:nx+OL, 1-OL:ny+OL, layers)
 
 
     dudt = 0d0
@@ -89,12 +89,12 @@ module momentum
 
     ! dudt_visc(i, j) is evaluated at the centre of the left edge of the grid
     ! box, the same place as u(i, j).
-    double precision, intent(out) :: dudt_visc(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: h(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: u(0:nx+1, 0:ny+1, layers)
+    double precision, intent(out) :: dudt_visc(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: h(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: u(1-OL:nx+OL, 1-OL:ny+OL, layers)
     double precision, intent(in)  :: au, slip, dx, dy
-    double precision, intent(in)  :: hfacN(0:nx+1, 0:ny+1)
-    double precision, intent(in)  :: hfacS(0:nx+1, 0:ny+1)
+    double precision, intent(in)  :: hfacN(1-OL:nx+OL, 1-OL:ny+OL)
+    double precision, intent(in)  :: hfacS(1-OL:nx+OL, 1-OL:ny+OL)
     integer,          intent(in)  :: nx, ny, layers, OL
 
     integer i, j, k
@@ -128,10 +128,10 @@ module momentum
 
     ! dudt_vort(i, j) is evaluated at the centre of the left edge of the grid
     ! box, the same place as u(i, j).
-    double precision, intent(out) :: dudt_vort(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: v(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: zeta(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: fu(0:nx+1, 0:ny+1)
+    double precision, intent(out) :: dudt_vort(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: v(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: zeta(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: fu(1-OL:nx+OL, 1-OL:ny+OL)
     integer,          intent(in)  :: nx, ny, layers, OL
 
     integer :: i, j, k
@@ -161,8 +161,8 @@ module momentum
 
     ! dudt_BP(i, j) is evaluated at the centre of the left edge of the grid
     ! box, the same place as u(i, j).
-    double precision, intent(out) :: dudt_BP(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: b(0:nx+1, 0:ny+1, layers)
+    double precision, intent(out) :: dudt_BP(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: b(1-OL:nx+OL, 1-OL:ny+OL, layers)
     double precision, intent(in)  :: dx
     integer,          intent(in)  :: nx, ny, layers, OL
 
@@ -192,10 +192,10 @@ module momentum
 
     ! dudt_sponge(i, j) is evaluated at the centre of the left edge of the grid
     ! box, the same place as u(i, j).
-    double precision, intent(out) :: dudt_sponge(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: u(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: spongeTimeScale(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: spongeU(0:nx+1, 0:ny+1, layers)
+    double precision, intent(out) :: dudt_sponge(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: u(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: spongeTimeScale(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: spongeU(1-OL:nx+OL, 1-OL:ny+OL, layers)
     integer,          intent(in)  :: nx, ny, layers, OL
 
     integer :: i, j, k
@@ -225,12 +225,12 @@ module momentum
 
     ! dudt(i, j) is evaluated at the centre of the left edge of the grid
     ! box, the same place as u(i, j).
-    double precision, intent(out) :: dudt_wind(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: h(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: u(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: v(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: wind_x(0:nx+1, 0:ny+1)
-    double precision, intent(in)  :: wind_y(0:nx+1, 0:ny+1)
+    double precision, intent(out) :: dudt_wind(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: h(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: u(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: v(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: wind_x(1-OL:nx+OL, 1-OL:ny+OL)
+    double precision, intent(in)  :: wind_y(1-OL:nx+OL, 1-OL:ny+OL)
     double precision, intent(in)  :: wind_depth
     integer,          intent(in)  :: nx, ny, layers, OL
     double precision, intent(in)  :: rho0
@@ -238,7 +238,7 @@ module momentum
     double precision, intent(in)  :: Cd
 
     integer          :: i, j, k
-    double precision :: z(0:nx+1, 0:ny+1)
+    double precision :: z(1-OL:nx+OL, 1-OL:ny+OL)
     double precision :: forc_frac
     double precision :: recip_wind_depth
 
@@ -322,8 +322,8 @@ module momentum
 
     ! dudt_drag(i, j) is evaluated at the centre of the left edge of the grid
     ! box, the same place as u(i, j).
-    double precision, intent(out) :: dudt_drag(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: u(0:nx+1, 0:ny+1, layers)
+    double precision, intent(out) :: dudt_drag(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: u(1-OL:nx+OL, 1-OL:ny+OL, layers)
     double precision, intent(in)  :: ar
     integer,          intent(in)  :: nx, ny, layers, OL
     logical,          intent(in)  :: RedGrav
@@ -368,36 +368,36 @@ module momentum
 
     ! dvdt(i, j) is evaluated at the centre of the bottom edge of the
     ! grid box, the same place as v(i, j)
-    double precision, intent(out) :: dvdt(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: h(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: u(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: v(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: b(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: zeta(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: wind_x(0:nx+1, 0:ny+1)
-    double precision, intent(in)  :: wind_y(0:nx+1, 0:ny+1)
+    double precision, intent(out) :: dvdt(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: h(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: u(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: v(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: b(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: zeta(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: wind_x(1-OL:nx+OL, 1-OL:ny+OL)
+    double precision, intent(in)  :: wind_y(1-OL:nx+OL, 1-OL:ny+OL)
     double precision, intent(in)  :: wind_depth
-    double precision, intent(in)  :: fv(0:nx+1, 0:ny+1)
+    double precision, intent(in)  :: fv(1-OL:nx+OL, 1-OL:ny+OL)
     double precision, intent(in)  :: au, ar, slip
     double precision, intent(in)  :: dx, dy
-    double precision, intent(in)  :: hfacW(0:nx+1, 0:ny+1)
-    double precision, intent(in)  :: hfacE(0:nx+1, 0:ny+1)
+    double precision, intent(in)  :: hfacW(1-OL:nx+OL, 1-OL:ny+OL)
+    double precision, intent(in)  :: hfacE(1-OL:nx+OL, 1-OL:ny+OL)
     integer,          intent(in)  :: nx, ny, layers, OL
     double precision, intent(in)  :: rho0
     logical,          intent(in)  :: RelativeWind
     double precision, intent(in)  :: Cd
-    double precision, intent(in)  :: spongeTimeScale(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: spongeV(0:nx+1, 0:ny+1, layers)
+    double precision, intent(in)  :: spongeTimeScale(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: spongeV(1-OL:nx+OL, 1-OL:ny+OL, layers)
     logical,          intent(in)  :: RedGrav
     double precision, intent(in)  :: botDrag
 
     integer          :: i, j, k
-    double precision :: dvdt_visc(0:nx+1, 0:ny+1, layers)
-    double precision :: dvdt_vort(0:nx+1, 0:ny+1, layers)
-    double precision :: dvdt_BP(0:nx+1, 0:ny+1, layers)
-    double precision :: dvdt_sponge(0:nx+1, 0:ny+1, layers)
-    double precision :: dvdt_wind(0:nx+1, 0:ny+1, layers)
-    double precision :: dvdt_drag(0:nx+1, 0:ny+1, layers)
+    double precision :: dvdt_visc(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision :: dvdt_vort(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision :: dvdt_BP(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision :: dvdt_sponge(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision :: dvdt_wind(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision :: dvdt_drag(1-OL:nx+OL, 1-OL:ny+OL, layers)
 
 
     dvdt = 0d0
@@ -444,12 +444,12 @@ module momentum
 
     ! dvdt_visc(i, j) is evaluated at the centre of the bottom edge of the
     ! grid box, the same place as v(i, j)
-    double precision, intent(out) :: dvdt_visc(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: v(0:nx+1, 0:ny+1, layers)
+    double precision, intent(out) :: dvdt_visc(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: v(1-OL:nx+OL, 1-OL:ny+OL, layers)
     double precision, intent(in)  :: au, slip
     double precision, intent(in)  :: dx, dy
-    double precision, intent(in)  :: hfacW(0:nx+1, 0:ny+1)
-    double precision, intent(in)  :: hfacE(0:nx+1, 0:ny+1)
+    double precision, intent(in)  :: hfacW(1-OL:nx+OL, 1-OL:ny+OL)
+    double precision, intent(in)  :: hfacE(1-OL:nx+OL, 1-OL:ny+OL)
     integer,          intent(in)  :: nx, ny, layers, OL
 
     integer :: i, j, k
@@ -482,10 +482,10 @@ module momentum
 
     ! dvdt_vort(i, j) is evaluated at the centre of the bottom edge of the
     ! grid box, the same place as v(i, j)
-    double precision, intent(out) :: dvdt_vort(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: u(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: zeta(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: fv(0:nx+1, 0:ny+1)
+    double precision, intent(out) :: dvdt_vort(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: u(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: zeta(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: fv(1-OL:nx+OL, 1-OL:ny+OL)
     integer,          intent(in)  :: nx, ny, layers, OL
 
     integer :: i, j, k
@@ -516,8 +516,8 @@ module momentum
 
     ! dvdt_BP(i, j) is evaluated at the centre of the bottom edge of the
     ! grid box, the same place as v(i, j)
-    double precision, intent(out) :: dvdt_BP(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: b(0:nx+1, 0:ny+1, layers)
+    double precision, intent(out) :: dvdt_BP(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: b(1-OL:nx+OL, 1-OL:ny+OL, layers)
     double precision, intent(in)  :: dy
     integer,          intent(in)  :: nx, ny, layers, OL
 
@@ -547,11 +547,11 @@ module momentum
 
     ! dvdt_sponge(i, j) is evaluated at the centre of the bottom edge of the
     ! grid box, the same place as v(i, j)
-    double precision, intent(out) :: dvdt_sponge(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: v(0:nx+1, 0:ny+1, layers)
+    double precision, intent(out) :: dvdt_sponge(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: v(1-OL:nx+OL, 1-OL:ny+OL, layers)
     integer,          intent(in)  :: nx, ny, layers, OL
-    double precision, intent(in)  :: spongeTimeScale(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: spongeV(0:nx+1, 0:ny+1, layers)
+    double precision, intent(in)  :: spongeTimeScale(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: spongeV(1-OL:nx+OL, 1-OL:ny+OL, layers)
 
     integer :: i, j, k
 
@@ -575,17 +575,17 @@ module momentum
   !   velocity for each of the active layers
 
   subroutine evaluate_dvdt_wind(dvdt_wind, h, u, v, wind_x, wind_y, &
-      wind_depth, nx, ny, OL, layers, rho0, RelativeWind, Cd)
+      wind_depth, nx, ny, layers, OL, rho0, RelativeWind, Cd)
     implicit none
 
     ! dvdt_wind(i, j) is evaluated at the centre of the bottom edge of the grid
     ! box, the same place as v(i, j).
-    double precision, intent(out) :: dvdt_wind(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: h(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: u(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: v(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: wind_x(0:nx+1, 0:ny+1)
-    double precision, intent(in)  :: wind_y(0:nx+1, 0:ny+1)
+    double precision, intent(out) :: dvdt_wind(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: h(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: u(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: v(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: wind_x(1-OL:nx+OL, 1-OL:ny+OL)
+    double precision, intent(in)  :: wind_y(1-OL:nx+OL, 1-OL:ny+OL)
     double precision, intent(in)  :: wind_depth
     integer,          intent(in)  :: nx, ny, layers, OL
     double precision, intent(in)  :: rho0
@@ -593,7 +593,7 @@ module momentum
     double precision, intent(in)  :: Cd
 
     integer          :: i, j, k
-    double precision :: z(0:nx+1, 0:ny+1)
+    double precision :: z(1-OL:nx+OL, 1-OL:ny+OL)
     double precision :: forc_frac
     double precision :: recip_wind_depth
 
@@ -677,8 +677,8 @@ module momentum
 
     ! dvdt_drag(i, j) is evaluated at the centre of the bottom edge of the
     ! grid box, the same place as v(i, j)
-    double precision, intent(out) :: dvdt_drag(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: v(0:nx+1, 0:ny+1, layers)
+    double precision, intent(out) :: dvdt_drag(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: v(1-OL:nx+OL, 1-OL:ny+OL, layers)
     double precision, intent(in)  :: ar
     integer,          intent(in)  :: nx, ny, layers, OL
     logical,          intent(in)  :: RedGrav

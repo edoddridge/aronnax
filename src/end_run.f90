@@ -13,7 +13,7 @@ module end_run
     ! To stop the program if it detects a NaN in the variable being checked
 
     integer, intent(in) :: nx, ny, layers, OL, n
-    double precision, intent(in) :: data(0:nx+1, 0:ny+1, layers)
+    double precision, intent(in) :: data(1-OL:nx+OL, 1-OL:ny+OL, layers)
 
     integer :: i, j, k
 

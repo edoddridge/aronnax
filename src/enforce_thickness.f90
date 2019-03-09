@@ -11,14 +11,14 @@ module enforce_thickness
       freesurfFac, thickness_error, nx, ny, layers, OL)
     implicit none
 
-    double precision, intent(inout) :: h(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in) :: eta(0:nx+1, 0:ny+1)
-    double precision, intent(in) :: depth(0:nx+1, 0:ny+1)
+    double precision, intent(inout) :: h(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in) :: eta(1-OL:nx+OL, 1-OL:ny+OL)
+    double precision, intent(in) :: depth(1-OL:nx+OL, 1-OL:ny+OL)
     double precision, intent(in) :: freesurfFac, thickness_error
     integer, intent(in) :: nx, ny, layers, OL
 
     integer k
-    double precision h_norming(0:nx+1, 0:ny+1)
+    double precision h_norming(1-OL:nx+OL, 1-OL:ny+OL)
 
     h_norming = (freesurfFac*eta + depth) / sum(h,3)
     do k = 1, layers
@@ -39,7 +39,7 @@ module enforce_thickness
   subroutine enforce_minimum_layer_thickness(hnew, hmin, nx, ny, layers, OL, n)
     implicit none
 
-    double precision, intent(inout) :: hnew(0:nx+1, 0:ny+1, layers)
+    double precision, intent(inout) :: hnew(1-OL:nx+OL, 1-OL:ny+OL, layers)
     double precision, intent(in) :: hmin
     integer, intent(in) :: nx, ny, layers, OL, n
 

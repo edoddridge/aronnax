@@ -15,16 +15,16 @@ module boundaries
   subroutine calc_boundary_masks(wetmask, hfacW, hfacE, hfacS, hfacN, nx, ny, OL)
     implicit none
 
-    double precision, intent(in)  :: wetmask(0:nx+1, 0:ny+1)
-    double precision, intent(out) :: hfacW(0:nx+1, 0:ny+1)
-    double precision, intent(out) :: hfacE(0:nx+1, 0:ny+1)
-    double precision, intent(out) :: hfacN(0:nx+1, 0:ny+1)
-    double precision, intent(out) :: hfacS(0:nx+1, 0:ny+1)
+    double precision, intent(in)  :: wetmask(1-OL:nx+OL, 1-OL:ny+OL)
+    double precision, intent(out) :: hfacW(1-OL:nx+OL, 1-OL:ny+OL)
+    double precision, intent(out) :: hfacE(1-OL:nx+OL, 1-OL:ny+OL)
+    double precision, intent(out) :: hfacN(1-OL:nx+OL, 1-OL:ny+OL)
+    double precision, intent(out) :: hfacS(1-OL:nx+OL, 1-OL:ny+OL)
     integer, intent(in) :: nx !< number of grid points in x direction
     integer, intent(in) :: ny !< number of grid points in y direction
     integer, intent(in) :: OL !< size of halo region
 
-    double precision temp(0:nx+1, 0:ny+1)
+    double precision temp(1-OL:nx+OL, 1-OL:ny+OL)
     integer i, j
 
     hfacW = 1d0

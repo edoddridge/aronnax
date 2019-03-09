@@ -13,10 +13,10 @@ module advection_schemes
     implicit none
 
     ! dhdt is evaluated at the centre of the grid box
-    double precision, intent(out) :: dhdt_advec(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: h(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: u(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: v(0:nx+1, 0:ny+1, layers)
+    double precision, intent(out) :: dhdt_advec(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: h(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: u(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: v(1-OL:nx+OL, 1-OL:ny+OL, layers)
     double precision, intent(in)  :: dx, dy
     integer, intent(in) :: nx, ny, layers, OL
 
@@ -47,10 +47,10 @@ module advection_schemes
     implicit none
 
     ! dhdt is evaluated at the centre of the grid box
-    double precision, intent(out) :: dhdt_advec(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: h(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: u(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: v(0:nx+1, 0:ny+1, layers)
+    double precision, intent(out) :: dhdt_advec(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: h(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: u(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: v(1-OL:nx+OL, 1-OL:ny+OL, layers)
     double precision, intent(in)  :: dx, dy
     integer, intent(in) :: nx, ny, layers, OL
 

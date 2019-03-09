@@ -12,9 +12,9 @@ module vorticity
   subroutine evaluate_zeta(zeta, u, v, nx, ny, layers, OL, dx, dy)
     implicit none
 
-    double precision, intent(out) :: zeta(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: u(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: v(0:nx+1, 0:ny+1, layers)
+    double precision, intent(out) :: zeta(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: u(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: v(1-OL:nx+OL, 1-OL:ny+OL, layers)
     integer, intent(in) :: nx, ny, layers, OL
     double precision, intent(in)  :: dx, dy
 

@@ -14,17 +14,17 @@ module thickness
     implicit none
 
     ! dhdt is evaluated at the centre of the grid box
-    double precision, intent(out) :: dhdt(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: h(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: u(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: v(0:nx+1, 0:ny+1, layers)
+    double precision, intent(out) :: dhdt(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: h(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: u(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: v(1-OL:nx+OL, 1-OL:ny+OL, layers)
     double precision, intent(in)  :: kh(layers), kv
     double precision, intent(in)  :: hmin
     double precision, intent(in)  :: dx, dy
     integer, intent(in) :: nx, ny, layers, OL
-    double precision, intent(in)  :: spongeTimeScale(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: spongeH(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: wetmask(0:nx+1, 0:ny+1)
+    double precision, intent(in)  :: spongeTimeScale(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: spongeH(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: wetmask(1-OL:nx+OL, 1-OL:ny+OL)
     logical, intent(in) :: RedGrav
     integer, intent(in) :: hAdvecScheme
     integer, intent(in) :: n
@@ -32,13 +32,13 @@ module thickness
     integer i, j, k
     ! Thickness tendency due to thickness diffusion (equivalent to Gent
     ! McWilliams in a z coordinate model)
-    double precision dhdt_kh(0:nx+1, 0:ny+1, layers)
+    double precision dhdt_kh(1-OL:nx+OL, 1-OL:ny+OL, layers)
 
     ! Thickness tendency due to vertical diffusion of mass
-    double precision dhdt_kv(0:nx+1, 0:ny+1, layers)
+    double precision dhdt_kv(1-OL:nx+OL, 1-OL:ny+OL, layers)
 
     ! Thickness tendency due to thickness advection
-    double precision dhdt_advec(0:nx+1, 0:ny+1, layers)
+    double precision dhdt_advec(1-OL:nx+OL, 1-OL:ny+OL, layers)
 
     ! Calculate tendency due to thickness diffusion (equivalent
     ! to GM in z coordinate model with the same diffusivity).
@@ -98,13 +98,13 @@ module thickness
     implicit none
 
     ! dhdt is evaluated at the centre of the grid box
-    double precision, intent(out) :: dhdt_GM(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: h(0:nx+1, 0:ny+1, layers)
+    double precision, intent(out) :: dhdt_GM(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: h(1-OL:nx+OL, 1-OL:ny+OL, layers)
     double precision, intent(in)  :: kh(layers)
     double precision, intent(in)  :: hmin
     double precision, intent(in)  :: dx, dy
     integer, intent(in) :: nx, ny, layers, OL
-    double precision, intent(in)  :: wetmask(0:nx+1, 0:ny+1)
+    double precision, intent(in)  :: wetmask(1-OL:nx+OL, 1-OL:ny+OL)
     logical, intent(in) :: RedGrav
 
     integer i, j, k
@@ -179,8 +179,8 @@ module thickness
     implicit none
 
     ! dhdt is evaluated at the centre of the grid box
-    double precision, intent(out) :: dhdt_kv(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: h(0:nx+1, 0:ny+1, layers)
+    double precision, intent(out) :: dhdt_kv(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: h(1-OL:nx+OL, 1-OL:ny+OL, layers)
     double precision, intent(in)  :: kv
     integer, intent(in) :: nx, ny, layers, OL
     logical, intent(in) :: RedGrav

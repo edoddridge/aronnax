@@ -14,20 +14,20 @@ module bernoulli
     ! (u dot u + Montgomery potential) in the n-layer physics, at centre
     ! of grid box
 
-    double precision, intent(out) :: b(0:nx+1, 0:ny+1, layers) !< Bernoulli Potential
-    double precision, intent(in)  :: h(0:nx+1, 0:ny+1, layers) !< layer thicknesses
-    double precision, intent(in)  :: u(0:nx+1, 0:ny+1, layers) !< zonal velocities
-    double precision, intent(in)  :: v(0:nx+1, 0:ny+1, layers) !< meridional velocities
+    double precision, intent(out) :: b(1-OL:nx+OL, 1-OL:ny+OL, layers) !< Bernoulli Potential
+    double precision, intent(in)  :: h(1-OL:nx+OL, 1-OL:ny+OL, layers) !< layer thicknesses
+    double precision, intent(in)  :: u(1-OL:nx+OL, 1-OL:ny+OL, layers) !< zonal velocities
+    double precision, intent(in)  :: v(1-OL:nx+OL, 1-OL:ny+OL, layers) !< meridional velocities
     integer, intent(in) :: nx !< number of x grid points
     integer, intent(in) :: ny !< number of y grid points
     integer, intent(in) :: layers !< number of layers
     integer, intent(in) :: OL !< size of halo region
     double precision, intent(in)  :: g_vec(layers) !< reduced gravity at each interface
-    double precision, intent(in)  :: depth(0:nx+1, 0:ny+1) !< total depth of fluid
+    double precision, intent(in)  :: depth(1-OL:nx+OL, 1-OL:ny+OL) !< total depth of fluid
 
     integer i, j, k
-    double precision z(0:nx+1, 0:ny+1, layers)
-    double precision M(0:nx+1, 0:ny+1, layers)
+    double precision z(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision M(1-OL:nx+OL, 1-OL:ny+OL, layers)
 
     ! Calculate layer interface locations
     z = 0d0
@@ -78,10 +78,10 @@ module bernoulli
     implicit none
 
     ! Evaluate Bernoulli Potential at centre of grid box
-    double precision, intent(out) :: b(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: h(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: u(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: v(0:nx+1, 0:ny+1, layers)
+    double precision, intent(out) :: b(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: h(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: u(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    double precision, intent(in)  :: v(1-OL:nx+OL, 1-OL:ny+OL, layers)
     integer, intent(in) :: nx, ny, layers, OL
     double precision, intent(in)  :: gr(layers)
 
