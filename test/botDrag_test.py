@@ -19,11 +19,6 @@ import sys
 sys.path.append(p.join(root_path, 'test'))
 import output_preservation_test as opt
 
-import subprocess as sub
-
-from builtins import int    # subclass of long on Py2
-
-
 def test_f_plane_Hypre_botDrag(botDrag=1e-5, layers=1):
 
     test_executable = "aronnax_external_solver_test"
@@ -83,8 +78,6 @@ def test_f_plane_Hypre_botDrag(botDrag=1e-5, layers=1):
 
         momentum = np.zeros(len(hfiles))
         momentum_expected = np.zeros(len(hfiles))
-
-        volume = np.zeros(len(hfiles))
 
         for counter,ufile in enumerate(ufiles):
 
