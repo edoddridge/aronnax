@@ -138,27 +138,43 @@ program aronnax
   allocate(ilower(0:num_procs-1, 2))
   allocate(iupper(0:num_procs-1, 2))
 
+  allocate(xlower(0:num_procs-1))
+  allocate(xupper(0:num_procs-1))
+  allocate(ylower(0:num_procs-1))
+  allocate(yupper(0:num_procs-1))
 
-  do i = 0, nProcX - 1
-    ilower(i * nProcY:(i+1)*nProcY - 1,1) = i * nx / nProcX
-    iupper(i * nProcY:(i+1)*nProcY - 1,1) = ((i+1) * nx / nProcX)
+  ! calculate x and y limits for each tile
+  do i = 0,nProcX-1
+    xlower(i) = (i*nx/nProcX) + 1
+    xupper(i) = (i+1)*nx/nProcX
   end do
-  ! correct first ilower value to exclude the global halo
-  ilower(0,1) = 1
 
-  do j = 0, nProcY - 1
-    ilower(j * nProcX:(j+1)*nProcX - 1,2) = j * ny / nProcY
-    iupper(j * nProcX:(j+1)*nProcX - 1,2) = ((j+1) * ny / nProcY)
+  do i = 0,nProcY-1
+    ylower(i) = (i*ny/nProcY) + 1
+    yupper(i) = (i+1)*ny/nProcY
   end do
-  ! correct first ilower value to exclude the global halo
-  ilower(0,2) = 1
+
+  ! Combine into ilower and iupper vectors for hypre
+  do k = 0, num_procs-1
+    ! i,j as horizontal idicies for tiles
+    i = mod(k, nProcX)
+    j = floor(real(k)/nProcX)
+
+    ! x locations
+    ilower(k,1) = xlower(i)
+    iupper(k,1) = xupper(i)
+
+    ! y ocations
+    ilower(k,2) = ylower(j)
+    iupper(k,2) = yupper(j)
+
+  end do
+
 
 #ifdef useExtSolver
   call create_Hypre_grid(MPI_COMM_WORLD, hypre_grid, ilower, iupper, &
           num_procs, myid, nx, ny, ierr)
 #endif
-
-
 
   allocate(h(1-OL:nx+OL, 1-OL:ny+OL, layers))
   allocate(u(1-OL:nx+OL, 1-OL:ny+OL, layers))

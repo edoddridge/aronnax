@@ -96,10 +96,12 @@ module declarations
   integer :: ierr
   integer :: num_procs, myid
 
+  integer, dimension(:),   allocatable :: xlower, xupper
+  integer, dimension(:),   allocatable :: ylower, yupper
   integer, dimension(:,:), allocatable :: ilower, iupper
   integer, dimension(:,:), allocatable :: jlower, jupper
   integer*8 :: hypre_grid
-  integer   :: i, j
+  integer   :: i, j, k
   integer   :: offsets(2,5)
 
   contains
