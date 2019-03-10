@@ -5,6 +5,10 @@ Development
 Since latest release
 --------------------
 
+- Remove unused subroutine for enforcing minimum layer thickness `GH211 <https://github.com/edoddridge/aronnax/pull/211>`_ (9 March 2019)
+- Bug fix for bottom drag (didn't apply drag in one-layer simulations) `GH209 <https://github.com/edoddridge/aronnax/pull/209>`_ (9 March 2019)
+- Bug fix for open_mfdatarray, now respects variable location on C-grid `GH208 <https://github.com/edoddridge/aronnax/pull/208>`_ (21 December 2018)
+- Improved initial guess for external solver routine `GH206 <https://github.com/edoddridge/aronnax/pull/206>`_ (20 November 2018)
 - Python functions now have axis order specified by Comodo conventions `GH204 <https://github.com/edoddridge/aronnax/pull/204>`_ (13 July 2018)
 - Python wrapper can lazily load multiple timestamps into a 4D array (t,z,y,x) `GH204 <https://github.com/edoddridge/aronnax/pull/204>`_ (13 July 2018)
 - Aronnax paper published in Journal of Open Source Software (15 June 2018)
