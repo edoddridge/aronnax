@@ -300,10 +300,6 @@ module model_main
 
       end if
 
-
-      ! Stop layers from getting too thin
-      ! call enforce_minimum_layer_thickness(h_new, hmin, nx, ny, layers, n)
-
       ! Wrap fields around for periodic simulations
       call wrap_fields_3D(u_new, nx, ny, layers)
       call wrap_fields_3D(v_new, nx, ny, layers)
