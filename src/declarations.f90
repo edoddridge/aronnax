@@ -23,6 +23,11 @@ module declarations
   ! Grid
   double precision :: dx, dy
   double precision, dimension(:,:),   allocatable :: wetmask
+  double precision, dimension(:,:),   allocatable :: hfacW
+  double precision, dimension(:,:),   allocatable :: hfacE
+  double precision, dimension(:,:),   allocatable :: hfacS
+  double precision, dimension(:,:),   allocatable :: hfacN
+
   ! Coriolis parameter at u and v grid-points respectively
   double precision, dimension(:,:),   allocatable :: fu
   double precision, dimension(:,:),   allocatable :: fv
@@ -88,6 +93,8 @@ module declarations
   character(60) :: zonalWindFile, meridionalWindFile
   logical       :: RelativeWind
   double precision :: Cd
+
+  integer*8 :: start_time
 
   ! External pressure solver variables
   integer :: nProcX, nProcY

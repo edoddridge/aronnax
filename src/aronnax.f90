@@ -38,7 +38,6 @@ program aronnax
 
   implicit none
 
-
   ! TODO Possibly wait until the model is split into multiple files,
   ! then hide the long unsightly code there.
 
@@ -63,6 +62,8 @@ program aronnax
   namelist /EXTERNAL_FORCING/ zonalWindFile, meridionalWindFile, &
       RelativeWind, Cd, &
       DumpWind, wind_mag_time_series_file, wind_depth
+
+  start_time = time()
 
   ! Set default values here
 
@@ -176,61 +177,129 @@ program aronnax
           num_procs, myid, nx, ny, ierr)
 #endif
 
-  allocate(h(1-OL:nx+OL, 1-OL:ny+OL, layers))
-  allocate(u(1-OL:nx+OL, 1-OL:ny+OL, layers))
-  allocate(v(1-OL:nx+OL, 1-OL:ny+OL, layers))
-  allocate(eta(1-OL:nx+OL, 1-OL:ny+OL))
-  allocate(depth(1-OL:nx+OL, 1-OL:ny+OL))
+  allocate(h(ilower(myid,1)-OL:iupper(myid,1)+OL, &
+             ilower(myid,2)-OL:iupper(myid,2)+OL, layers))
+  allocate(u(ilower(myid,1)-OL:iupper(myid,1)+OL, &
+             ilower(myid,2)-OL:iupper(myid,2)+OL, layers))
+  allocate(v(ilower(myid,1)-OL:iupper(myid,1)+OL, &
+             ilower(myid,2)-OL:iupper(myid,2)+OL, layers))
+  allocate(eta(ilower(myid,1)-OL:iupper(myid,1)+OL, &
+             ilower(myid,2)-OL:iupper(myid,2)+OL))
+  allocate(depth(ilower(myid,1)-OL:iupper(myid,1)+OL, &
+             ilower(myid,2)-OL:iupper(myid,2)+OL))
 
-  allocate(wetmask(1-OL:nx+OL, 1-OL:ny+OL))
-  allocate(fu(1-OL:nx+OL, 1-OL:ny+OL))
-  allocate(fv(1-OL:nx+OL, 1-OL:ny+OL))
+  allocate(wetmask(ilower(myid,1)-OL:iupper(myid,1)+OL, &
+             ilower(myid,2)-OL:iupper(myid,2)+OL))
+  allocate(hfacW(ilower(myid,1)-OL:iupper(myid,1)+OL, &
+             ilower(myid,2)-OL:iupper(myid,2)+OL))
+  allocate(hfacE(ilower(myid,1)-OL:iupper(myid,1)+OL, &
+             ilower(myid,2)-OL:iupper(myid,2)+OL))
+  allocate(hfacS(ilower(myid,1)-OL:iupper(myid,1)+OL, &
+             ilower(myid,2)-OL:iupper(myid,2)+OL))
+  allocate(hfacN(ilower(myid,1)-OL:iupper(myid,1)+OL, &
+             ilower(myid,2)-OL:iupper(myid,2)+OL))
+
+  allocate(fu(ilower(myid,1)-OL:iupper(myid,1)+OL, &
+             ilower(myid,2)-OL:iupper(myid,2)+OL))
+  allocate(fv(ilower(myid,1)-OL:iupper(myid,1)+OL, &
+             ilower(myid,2)-OL:iupper(myid,2)+OL))
 
   allocate(zeros(layers))
 
-  allocate(base_wind_x(1-OL:nx+OL, 1-OL:ny+OL))
-  allocate(base_wind_y(1-OL:nx+OL, 1-OL:ny+OL))
+  allocate(base_wind_x(ilower(myid,1)-OL:iupper(myid,1)+OL, &
+             ilower(myid,2)-OL:iupper(myid,2)+OL))
+  allocate(base_wind_y(ilower(myid,1)-OL:iupper(myid,1)+OL, &
+             ilower(myid,2)-OL:iupper(myid,2)+OL))
   allocate(wind_mag_time_series(nTimeSteps))
 
-  allocate(spongeHTimeScale(1-OL:nx+OL, 1-OL:ny+OL, layers))
-  allocate(spongeUTimeScale(1-OL:nx+OL, 1-OL:ny+OL, layers))
-  allocate(spongeVTimeScale(1-OL:nx+OL, 1-OL:ny+OL, layers))
-  allocate(spongeH(1-OL:nx+OL, 1-OL:ny+OL, layers))
-  allocate(spongeU(1-OL:nx+OL, 1-OL:ny+OL, layers))
-  allocate(spongeV(1-OL:nx+OL, 1-OL:ny+OL, layers))
+  allocate(spongeHTimeScale(ilower(myid,1)-OL:iupper(myid,1)+OL, &
+             ilower(myid,2)-OL:iupper(myid,2)+OL, layers))
+  allocate(spongeUTimeScale(ilower(myid,1)-OL:iupper(myid,1)+OL, &
+             ilower(myid,2)-OL:iupper(myid,2)+OL, layers))
+  allocate(spongeVTimeScale(ilower(myid,1)-OL:iupper(myid,1)+OL, &
+             ilower(myid,2)-OL:iupper(myid,2)+OL, layers))
+  allocate(spongeH(ilower(myid,1)-OL:iupper(myid,1)+OL, &
+             ilower(myid,2)-OL:iupper(myid,2)+OL, layers))
+  allocate(spongeU(ilower(myid,1)-OL:iupper(myid,1)+OL, &
+             ilower(myid,2)-OL:iupper(myid,2)+OL, layers))
+  allocate(spongeV(ilower(myid,1)-OL:iupper(myid,1)+OL, &
+             ilower(myid,2)-OL:iupper(myid,2)+OL, layers))
 
   ! Zero vector - for internal use only
   zeros = 0d0
 
 
   ! Read in arrays from the input files
-  call read_input_fileU(initUfile, u, 0.d0, nx, ny, layers, OL)
-  call read_input_fileV(initVfile, v, 0.d0, nx, ny, layers, OL)
-  call read_input_fileH(initHfile, h, hmean, nx, ny, layers, OL)
+  call read_input_fileU(initUfile, u, 0.d0, nx, ny, layers, OL, &
+                              ilower(myid,1), iupper(myid,1), &
+                              ilower(myid,2), iupper(myid,2), myid)
+  call read_input_fileV(initVfile, v, 0.d0, nx, ny, layers, OL, &
+                              ilower(myid,1), iupper(myid,1), &
+                              ilower(myid,2), iupper(myid,2), myid)
+  call read_input_fileH(initHfile, h, hmean, nx, ny, layers, OL, &
+                              ilower(myid,1), iupper(myid,1), &
+                              ilower(myid,2), iupper(myid,2), myid)
 
-  call read_input_fileU(fUfile, fu, 0.d0, nx, ny, 1, OL)
-  call read_input_fileV(fVfile, fv, 0.d0, nx, ny, 1, OL)
+  call read_input_fileU(fUfile, fu, 0.d0, nx, ny, 1, OL, &
+                              ilower(myid,1), iupper(myid,1), &
+                              ilower(myid,2), iupper(myid,2), myid)
+  call read_input_fileV(fVfile, fv, 0.d0, nx, ny, 1, OL, &
+                              ilower(myid,1), iupper(myid,1), &
+                              ilower(myid,2), iupper(myid,2), myid)
 
-  call read_input_fileU(zonalWindFile, base_wind_x, 0.d0, nx, ny, 1,OL)
-  call read_input_fileV(meridionalWindFile, base_wind_y, 0.d0, nx, ny, 1, OL)
+  call read_input_fileU(zonalWindFile, base_wind_x, 0.d0, nx, ny, 1, &
+                        OL, &
+                              ilower(myid,1), iupper(myid,1), &
+                              ilower(myid,2), iupper(myid,2), myid)
+  call read_input_fileV(meridionalWindFile, base_wind_y, 0.d0, nx, ny, &
+                        1, OL, &
+                              ilower(myid,1), iupper(myid,1), &
+                              ilower(myid,2), iupper(myid,2), myid)
 
   call read_input_file_time_series(wind_mag_time_series_file, &
       wind_mag_time_series, 1d0, nTimeSteps)
 
   call read_input_fileH(spongeHTimeScaleFile, spongeHTimeScale, &
-      zeros, nx, ny, layers, OL)
-  call read_input_fileH(spongeHfile, spongeH, hmean, nx, ny, layers, OL)
+      zeros, nx, ny, layers, OL, &
+                              ilower(myid,1), iupper(myid,1), &
+                              ilower(myid,2), iupper(myid,2), myid)
+  call read_input_fileH(spongeHfile, spongeH, hmean, nx, ny, layers, &
+                        OL, &
+                              ilower(myid,1), iupper(myid,1), &
+                              ilower(myid,2), iupper(myid,2), myid)
   call read_input_fileU(spongeUTimeScaleFile, spongeUTimeScale, &
-      0.d0, nx, ny, layers, OL)
-  call read_input_fileU(spongeUfile, spongeU, 0.d0, nx, ny, layers, OL)
+      0.d0, nx, ny, layers, OL, &
+                              ilower(myid,1), iupper(myid,1), &
+                              ilower(myid,2), iupper(myid,2), myid)
+  call read_input_fileU(spongeUfile, spongeU, 0.d0, nx, ny, layers, &
+                        OL, &
+                              ilower(myid,1), iupper(myid,1), &
+                              ilower(myid,2), iupper(myid,2), myid)
   call read_input_fileV(spongeVTimeScaleFile, spongeVTimeScale, &
-      0.d0, nx, ny, layers, OL)
-  call read_input_fileV(spongeVfile, spongeV, 0.d0, nx, ny, layers, OL)
-  call read_input_fileH_2D(wetMaskFile, wetmask, 1.d0, nx, ny, OL)
+      0.d0, nx, ny, layers, OL, &
+                              ilower(myid,1), iupper(myid,1), &
+                              ilower(myid,2), iupper(myid,2), myid)
+  call read_input_fileV(spongeVfile, spongeV, 0.d0, nx, ny, layers, &
+                        OL, &
+                              ilower(myid,1), iupper(myid,1), &
+                              ilower(myid,2), iupper(myid,2), myid)
+
+  call read_input_fileH_2D(wetMaskFile, wetmask, 1d0, nx, ny, OL, &
+                              ilower(myid,1), iupper(myid,1), &
+                              ilower(myid,2), iupper(myid,2), myid)
+
+  call calc_boundary_masks(wetMaskFile, hfacW, hfacE, hfacS, hfacN, nx, ny, OL, &
+                              ilower(myid,1), iupper(myid,1), &
+                              ilower(myid,2), iupper(myid,2))
+
 
   if (.not. RedGrav) then
-    call read_input_fileH_2D(depthFile, depth, H0, nx, ny, OL)
-    call read_input_fileH_2D(initEtaFile, eta, 0.d0, nx, ny, OL)
+    call read_input_fileH_2D(depthFile, depth, H0, nx, ny, OL, &
+                              ilower(myid,1), iupper(myid,1), &
+                              ilower(myid,2), iupper(myid,2), myid)
+    call read_input_fileH_2D(initEtaFile, eta, 0.d0, nx, ny, OL, &
+                              ilower(myid,1), iupper(myid,1), &
+                              ilower(myid,2), iupper(myid,2), myid)
     ! Check that depth is positive - it must be greater than zero
     if (minval(depth) .lt. 0) then
       write(17, "(A)") "Depths must be positive."
@@ -239,7 +308,9 @@ program aronnax
   end if
 
 
-  call model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
+  call model_run(h, u, v, eta, depth, dx, dy, wetmask, &
+      hfacW, hfacE, hfacS, hfacN, &
+      fu, fv, &
       dt, au, ar, botDrag, kh, kv, slip, hmin, niter0, nTimeSteps, &
       dumpFreq, avFreq, checkpointFreq, diagFreq, &
       maxits, eps, freesurfFac, thickness_error, &
@@ -247,8 +318,11 @@ program aronnax
       base_wind_x, base_wind_y, wind_mag_time_series, wind_depth, &
       spongeHTimeScale, spongeUTimeScale, spongeVTimeScale, &
       spongeH, spongeU, spongeV, &
-      nx, ny, layers, OL, RedGrav, hAdvecScheme, TS_algorithm, AB_order, &
-      DumpWind, RelativeWind, Cd, &
+      nx, ny, layers, OL, &
+      ilower(myid,1), iupper(myid,1), &
+      ilower(myid,2), iupper(myid,2), &
+      RedGrav, hAdvecScheme, TS_algorithm, AB_order, &
+      DumpWind, RelativeWind, Cd, start_time, &
       MPI_COMM_WORLD, myid, num_procs, ilower, iupper, &
       hypre_grid)
 
