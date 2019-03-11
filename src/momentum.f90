@@ -349,13 +349,15 @@ module momentum
               dudt_drag(i,j,k) = - 1.0d0*ar*(u(i,j,k) - 1.0d0*u(i,j,k+1))
             else if (k .eq. layers) then ! bottom layer
               dudt_drag(i,j,k) = - 1.0d0*ar*(u(i,j,k) - 1.0d0*u(i,j,k-1))
-              if (.not. RedGrav) then
-                ! add bottom drag here in isopycnal version
-                dudt_drag(i,j,k) = dudt_drag(i,j,k) - 1.0d0*botDrag*(u(i,j,k))
-              end if
             else ! mid layer/s
               dudt_drag(i,j,k) = - &
                   1.0d0*ar*(2.0d0*u(i,j,k) - 1.0d0*u(i,j,k-1) - 1.0d0*u(i,j,k+1))
+            end if
+          end if
+          if (k .eq. layers) then ! add bottom drag if not reduced gravity
+            if (.not. RedGrav) then
+                ! add bottom drag here in isopycnal version
+                dudt_drag(i,j,k) = dudt_drag(i,j,k) - 1.0d0*botDrag*(u(i,j,k))
             end if
           end if
         end do
@@ -710,13 +712,15 @@ module momentum
               dvdt_drag(i,j,k) =  - 1.0d0*ar*(v(i,j,k) - 1.0d0*v(i,j,k+1))
             else if (k .eq. layers) then ! bottom layer
               dvdt_drag(i,j,k) =  - 1.0d0*ar*(v(i,j,k) - 1.0d0*v(i,j,k-1))
-              if (.not. RedGrav) then
-                ! add bottom drag here in isopycnal version
-                dvdt_drag(i,j,k) = dvdt_drag(i,j,k) - 1.0d0*botDrag*(v(i,j,k))
-              end if
             else ! mid layer/s
               dvdt_drag(i,j,k) =  - &
                   1.0d0*ar*(2.0d0*v(i,j,k) - 1.0d0*v(i,j,k-1) - 1.0d0*v(i,j,k+1))
+            end if
+          end if
+          if (k .eq. layers) then ! add bottom drag if not reduced gravity
+            if (.not. RedGrav) then
+              ! add bottom drag here in isopycnal version
+              dvdt_drag(i,j,k) = dvdt_drag(i,j,k) - 1.0d0*botDrag*(v(i,j,k))
             end if
           end if
         end do

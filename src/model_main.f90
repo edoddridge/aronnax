@@ -318,10 +318,6 @@ module model_main
 
       end if
 
-
-      ! Stop layers from getting too thin
-      ! call enforce_minimum_layer_thickness(h_new, hmin, nx, ny, layers, OL, n)
-
       ! Apply the boundary conditions
       call apply_boundary_conditions(u_new, hfacW, wetmask, &
                               xlow, xhigh, ylow, yhigh, layers, OL)
