@@ -4,3 +4,4 @@ run_finished.txt
 layer thickness dropped below hmin.txt
 parameters.in
 aronnax-merged.conf
+checkpoints/
