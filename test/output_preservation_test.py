@@ -1,6 +1,5 @@
 import os
 import os.path as p
-import subprocess as sub
 import time
 
 import glob
@@ -139,6 +138,18 @@ def test_gaussian_bump_red_grav():
                      nx=10, ny=10, dx=xlen/10, dy=ylen/10)
         assert_outputs_close(10, 10, 1, 1.5e-13)
         assert_volume_conservation(10, 10, 1, 1e-5)
+        # assert_diagnostics_similar(['h', 'u', 'v'], 1e-10)
+
+
+def test_gaussian_bump_red_grav_continuation_MPI_2X():
+    xlen = 1e6
+    ylen = 1e6
+    with working_directory(p.join(self_path, "beta_plane_bump_red_grav")):
+        drv.simulate(initHfile=[bump], exe=test_executable,
+                     nx=10, ny=10, dx=xlen/10, dy=ylen/10,
+                     niter0=101, nTimeSteps=400, nProcX=2)
+        assert_outputs_close(10, 10, 1, 1.5e-13)
+        assert_volume_conservation(10, 10, 1, 1e-5)
         assert_diagnostics_similar(['h', 'u', 'v'], 1e-10)
 
 
@@ -173,6 +184,18 @@ def test_gaussian_bump_debug_test():
         assert_volume_conservation(10, 10, 2, 1e-5)
         assert_diagnostics_similar(['h', 'u', 'v', 'eta'], 1e-10)
 
+def test_gaussian_bump_red_grav_debug_test():
+    xlen = 1e6
+    ylen = 1e6
+    with working_directory(p.join(self_path, "beta_plane_bump_red_grav_debug_test")):
+        drv.simulate(initHfile=[bump], exe=test_executable,
+                     nx=10, ny=10, dx=xlen/10, dy=ylen/10,
+                     nProcY=2
+                     )
+        assert_outputs_close(10, 10, 1, 1.5e-13)
+        assert_volume_conservation(10, 10, 1, 1e-5)
+        assert_diagnostics_similar(['h', 'u', 'v'], 1e-10)
+
 def test_beta_plane_gyre_red_grav():
     xlen = 1e6
     ylen = 2e6
@@ -183,7 +206,8 @@ def test_beta_plane_gyre_red_grav():
         return 0.05 * (1 - np.cos(2*np.pi * Y/np.max(grid.y)))
     with working_directory(p.join(self_path, "beta_plane_gyre_red_grav")):
         drv.simulate(zonalWindFile=[wind], valgrind=False,
-                     nx=nx, ny=ny, exe=test_executable, dx=xlen/nx, dy=ylen/ny)
+                     nx=nx, ny=ny, exe=test_executable, dx=xlen/nx, dy=ylen/ny,
+                     nProcX=2)
         assert_outputs_close(nx, ny, layers, 4e-13)
         assert_volume_conservation(nx, ny, layers, 1e-5)
         assert_diagnostics_similar(['h', 'u', 'v'], 1e-10)
@@ -218,6 +242,51 @@ def test_beta_plane_gyre_free_surf():
         assert_volume_conservation(nx, ny, layers, 1e-5)
         assert_diagnostics_similar(['h', 'u', 'v', 'eta'], 1e-8)
 
+def test_beta_plane_gyre_free_surf_Hypre_MPI(nProcX=1, nProcY=1):
+    xlen = 1e6
+    ylen = 2e6
+    nx = 10; ny = 20
+    layers = 2
+    grid = aro.Grid(nx, ny, layers, xlen / nx, ylen / ny)
+
+    def wind(_, Y):
+        return 0.05 * (1 - np.cos(2*np.pi * Y/np.max(grid.y)))
+
+    with working_directory(p.join(self_path, "beta_plane_gyre_free_surf_hypre")):
+        if (nProcX == 1 and nProcY == 1):
+            drv.simulate(zonalWindFile=[wind], valgrind=False,
+                         nx=nx, ny=ny, exe='aronnax_external_solver_test',
+                         dx=xlen/nx, dy=ylen/ny)
+        elif (nProcX != 1 and nProcY == 1):
+            drv.simulate(zonalWindFile=[wind], valgrind=False,
+                         nx=nx, ny=ny, exe='aronnax_external_solver_test',
+                         dx=xlen/nx, dy=ylen/ny,
+                         nProcX=nProcX)
+        elif (nProcX == 1 and nProcY != 1):
+            drv.simulate(zonalWindFile=[wind], valgrind=False,
+                         nx=nx, ny=ny, exe='aronnax_external_solver_test',
+                         dx=xlen/nx, dy=ylen/ny,
+                         nProcY=nProcY)
+        else:
+            drv.simulate(zonalWindFile=[wind], valgrind=False,
+                         nx=nx, ny=ny, exe='aronnax_external_solver_test',
+                         dx=xlen/nx, dy=ylen/ny,
+                         nProcX=nProcX, nProcY=nProcY)
+
+        assert_outputs_close(nx, ny, layers, 3e-12)
+        assert_volume_conservation(nx, ny, layers, 1e-5)
+        assert_diagnostics_similar(['h', 'u', 'v', 'eta'], 1e-8)
+
+def test_beta_plane_gyre_free_surf_Hypre_MPI_2X():
+    test_beta_plane_gyre_free_surf_Hypre_MPI(nProcX=2)
+
+def test_beta_plane_gyre_free_surf_Hypre_MPI_2Y():
+    test_beta_plane_gyre_free_surf_Hypre_MPI(nProcY=2)
+
+def test_beta_plane_gyre_free_surf_Hypre_MPI_2X_2Y():
+    test_beta_plane_gyre_free_surf_Hypre_MPI(nProcX=2, nProcY=2)
+
+
 def test_periodic_BC_red_grav():
     nx = 50
     ny = 20
@@ -247,7 +316,7 @@ def test_periodic_BC_red_grav():
                      fUfile=[-1e-4],
                      fVfile=[-1e-4],
                      nTimeSteps=801,
-                     dumpFreq=10000)
+                     dumpFreq=10000, nProcY=2)
         assert_outputs_close(nx, ny, layers, 3e-12)
         assert_volume_conservation(nx, ny, layers, 1e-5)
         assert_diagnostics_similar(['h', 'u', 'v'], 1e-10)
