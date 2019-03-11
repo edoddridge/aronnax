@@ -11,7 +11,7 @@ CORE_OPTS = -g -Ofast -fno-stack-arrays
 
 PROF_OPTS = -g -pg -Ofast
 
-FILES = declarations advection_schemes adams_bashforth end_run enforce_thickness boundaries vorticity momentum io thickness bernoulli state_deriv time_stepping barotropic_mode model_main aronnax
+FILES = declarations advection_schemes adams_bashforth end_run enforce_thickness boundaries exchange vorticity momentum io thickness bernoulli state_deriv time_stepping barotropic_mode model_main aronnax
 
 TEST_objects = $(patsubst %, $(src_dir)%_TEST.o, $(FILES))
 CORE_objects = $(patsubst %, $(src_dir)%_CORE.o, $(FILES))
