@@ -5,7 +5,7 @@ Development
 Since latest release
 --------------------
 
-
+- Checkpointing bugfix. Subroutine was using global array indicies for local array `GH214 <https://github.com/edoddridge/aronnax/pull/214>`_ (12 March 2019)
 
 Version 0.3.0 (12 March 2019)
 --------------------------------
