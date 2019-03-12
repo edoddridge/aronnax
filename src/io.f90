@@ -425,19 +425,23 @@ module io
     character(*),     intent(in) :: name
     integer,          intent(in) :: num_procs, myid
 
-    character(10)  :: num
-    double precision :: global_array(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    character(10)    :: num
+    double precision :: global_array(1-OL:nx+OL, 1-OL:ny+OL, layers, AB_order)
+    integer          :: k
 
     write(num, '(i10.10)') n
 
-    call collect_global_array(array, global_array, nx, ny, layers, ilower, iupper, &
+    do k = 1, AB_order
+      call collect_global_array(array(:,:,:,k), global_array(:,:,:,k), &
+                          nx, ny, layers, ilower, iupper, &
                           xlow, xhigh, ylow, yhigh, OL, num_procs, myid)
+    end do
 
     if (myid .eq. 0) then
       ! Output the data to a file
       open(unit=10, status='replace', file=name//num, &
           form='unformatted')
-      write(10) array
+      write(10) global_array
       close(10)
     end if
 
