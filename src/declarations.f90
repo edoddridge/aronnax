@@ -7,6 +7,7 @@ module declarations
   integer :: nx ! number of x grid points
   integer :: ny ! number of y grid points
   integer :: layers ! number of active layers in the model
+  integer :: OL ! size of halo region
   ! Layer thickness (h)
   double precision, dimension(:,:,:), allocatable :: h
   ! Velocity component (u)
@@ -22,6 +23,11 @@ module declarations
   ! Grid
   double precision :: dx, dy
   double precision, dimension(:,:),   allocatable :: wetmask
+  double precision, dimension(:,:),   allocatable :: hfacW
+  double precision, dimension(:,:),   allocatable :: hfacE
+  double precision, dimension(:,:),   allocatable :: hfacS
+  double precision, dimension(:,:),   allocatable :: hfacN
+
   ! Coriolis parameter at u and v grid-points respectively
   double precision, dimension(:,:),   allocatable :: fu
   double precision, dimension(:,:),   allocatable :: fv
@@ -88,6 +94,8 @@ module declarations
   logical       :: RelativeWind
   double precision :: Cd
 
+  integer*8 :: start_time
+
   ! External pressure solver variables
   integer :: nProcX, nProcY
 
@@ -95,10 +103,12 @@ module declarations
   integer :: ierr
   integer :: num_procs, myid
 
+  integer, dimension(:),   allocatable :: xlower, xupper
+  integer, dimension(:),   allocatable :: ylower, yupper
   integer, dimension(:,:), allocatable :: ilower, iupper
   integer, dimension(:,:), allocatable :: jlower, jupper
   integer*8 :: hypre_grid
-  integer   :: i, j
+  integer   :: i, j, k
   integer   :: offsets(2,5)
 
   contains

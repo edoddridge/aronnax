@@ -131,15 +131,107 @@ def benchmark_gaussian_bump(grid_points):
     benchmark_gaussian_bump_save(grid_points)
     benchmark_gaussian_bump_plot()
 
+def benchmark_parallel_gaussian_bump_red_grav_save(n_procs):
+    run_time = np.zeros(len(n_procs))
+    nx = 480
+    def bump(X, Y):
+        return 500. + 20*np.exp(-((6e5-X)**2 + (5e5-Y)**2)/(2*1e5**2))
+
+    with working_directory(p.join(self_path, "beta_plane_bump_red_grav")):
+        aro_exec = "aronnax_core"
+        for counter, nProcX in enumerate(n_procs):
+            if nProcX == 1:
+                run_time[counter] = aro.simulate(
+                    exe=aro_exec, initHfile=[bump], nx=nx, ny=nx)
+            else:
+                run_time[counter] = aro.simulate(
+                    exe=aro_exec, initHfile=[bump],
+                    nx=nx, ny=nx, nProcX=nProcX)
+
+        with open("mpi_times.pkl", "wb") as f:
+            pkl.dump((n_procs, run_time), f)
+
+def benchmark_parallel_gaussian_bump_red_grav_plot():
+    with working_directory(p.join(self_path, "beta_plane_bump_red_grav")):
+        with open("mpi_times.pkl", "rb") as f:
+            (n_procs, run_time) = pkl.load(f)
+
+        plt.figure()
+        plt.loglog(n_procs, run_time*scale_factor,
+            '-*', label='aronnax_core')
+
+        scale = scale_factor * run_time[0]
+        plt.loglog(n_procs, scale/n_procs,
+            ':', label='O(1/n)', color='black', linewidth=0.5)
+        plt.legend()
+        plt.xlabel('Number of processors')
+        plt.ylabel('Avg time per integration step (ms)')
+        plt.title('Runtime scaling of a 1.5-layer Aronnax simulation\n on a square grid')
+        plt.savefig('beta_plane_bump_mpi_scaling.png', dpi=150, bbox_inches='tight')
+
+def benchmark_parallel_gaussian_bump_red_grav(n_procs):
+    benchmark_parallel_gaussian_bump_red_grav_save(n_procs)
+    benchmark_parallel_gaussian_bump_red_grav_plot()
+
+
+def benchmark_parallel_gaussian_bump_save(n_procs):
+    run_time = np.zeros(len(n_procs))
+    nx = 120
+    def bump(X, Y):
+        return 500. + 20*np.exp(-((6e5-X)**2 + (5e5-Y)**2)/(2*1e5**2))
+
+    with working_directory(p.join(self_path, "beta_plane_bump")):
+        aro_exec = "aronnax_external_solver"
+        for counter, nProcX in enumerate(n_procs):
+            if nProcX == 1:
+                run_time[counter] = aro.simulate(
+                    exe=aro_exec, initHfile=[bump, lambda X, Y: 2000. - bump(X, Y)],
+                    nx=nx, ny=nx)
+            else:
+                run_time[counter] = aro.simulate(
+                    exe=aro_exec, initHfile=[bump, lambda X, Y: 2000. - bump(X, Y)],
+                    nx=nx, ny=nx, nProcX=nProcX)
+
+        with open("mpi_times.pkl", "wb") as f:
+            pkl.dump((n_procs, run_time), f)
+
+def benchmark_parallel_gaussian_bump_plot():
+    with working_directory(p.join(self_path, "beta_plane_bump")):
+        with open("mpi_times.pkl", "rb") as f:
+            (n_procs, run_time) = pkl.load(f)
+
+        plt.figure()
+        plt.loglog(n_procs, run_time*scale_factor,
+            '-*', label='aronnax_external_solver')
+
+        scale = scale_factor * run_time[0]
+        plt.loglog(n_procs, scale/n_procs,
+            ':', label='O(1/n)', color='black', linewidth=0.5)
+        plt.legend()
+        plt.xlabel('Number of processors')
+        plt.ylabel('Avg time per integration step (ms)')
+        plt.title('Runtime scaling of a 2-layer Aronnax simulation\n on a square grid')
+        plt.savefig('beta_plane_bump_mpi_scaling.png', dpi=150, bbox_inches='tight')
+
+def benchmark_parallel_gaussian_bump(n_procs):
+    benchmark_parallel_gaussian_bump_save(n_procs)
+    benchmark_parallel_gaussian_bump_plot()
+
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
         if sys.argv[1] == "save":
             benchmark_gaussian_bump_red_grav_save(np.array([10, 20, 40, 60, 80, 100, 150, 200, 300, 400, 500]))
             benchmark_gaussian_bump_save(np.array([10, 20, 40, 60, 80, 100, 120]))
+            benchmark_parallel_gaussian_bump_red_grav_save([1,2,3,4])
+            benchmark_parallel_gaussian_bump_save([1,2,3,4])
         else:
             benchmark_gaussian_bump_red_grav_plot()
             benchmark_gaussian_bump_plot()
+            benchmark_parallel_gaussian_bump_red_grav_plot()
+            benchmark_parallel_gaussian_bump_plot()
     else:
         benchmark_gaussian_bump_red_grav(np.array([10, 20, 40, 60, 80, 100, 150, 200, 300, 400, 500]))
         benchmark_gaussian_bump(np.array([10, 20, 40, 60, 80, 100, 120]))
+        benchmark_parallel_gaussian_bump_red_grav([1,2,3,4])
+        benchmark_parallel_gaussian_bump([1,2,3,4])

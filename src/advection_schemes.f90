@@ -8,24 +8,25 @@ module advection_schemes
   !> Use a first-order centered advection scheme to calculate the advctive
   !! thickness tendency
 
-  subroutine h_advec_1_centered(dhdt_advec, h, u, v, dx, dy, nx, ny, layers)
+  subroutine h_advec_1_centered(dhdt_advec, h, u, v, dx, dy, &
+                                xlow, xhigh, ylow, yhigh, layers, OL)
     implicit none
 
     ! dhdt is evaluated at the centre of the grid box
-    double precision, intent(out) :: dhdt_advec(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: h(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: u(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: v(0:nx+1, 0:ny+1, layers)
+    double precision, intent(out) :: dhdt_advec(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in)  :: h(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in)  :: u(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in)  :: v(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
     double precision, intent(in)  :: dx, dy
-    integer, intent(in) :: nx, ny, layers
+    integer, intent(in) :: xlow, xhigh, ylow, yhigh, layers, OL
 
     integer i, j, k
 
     dhdt_advec = 0d0
 
     do k = 1, layers
-      do j = 1, ny
-        do i = 1, nx
+      do j = ylow, yhigh
+        do i = xlow, xhigh
           dhdt_advec(i,j,k) = & 
               - ((h(i,j,k)+h(i+1,j,k))*u(i+1,j,k) &
                - (h(i-1,j,k)+h(i,j,k))*u(i,j,k))/(dx*2d0) & ! d(hu)/dx
@@ -42,24 +43,25 @@ module advection_schemes
   !> Use a first-order upwind advection scheme to calculate the advctive
   !! thickness tendency
 
-  subroutine h_advec_1_upwind(dhdt_advec, h, u, v, dx, dy, nx, ny, layers)
+  subroutine h_advec_1_upwind(dhdt_advec, h, u, v, dx, dy, &
+                              xlow, xhigh, ylow, yhigh, layers, OL)
     implicit none
 
     ! dhdt is evaluated at the centre of the grid box
-    double precision, intent(out) :: dhdt_advec(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: h(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: u(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: v(0:nx+1, 0:ny+1, layers)
+    double precision, intent(out) :: dhdt_advec(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in)  :: h(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in)  :: u(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in)  :: v(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
     double precision, intent(in)  :: dx, dy
-    integer, intent(in) :: nx, ny, layers
+    integer, intent(in) :: xlow, xhigh, ylow, yhigh, layers, OL
 
     integer i, j, k
 
     dhdt_advec = 0d0
 
     do k = 1, layers
-      do j = 1, ny
-        do i = 1, nx
+      do j = ylow, yhigh
+        do i = xlow, xhigh
           dhdt_advec(i,j,k) = &
               ! d(hu)/dx
               ! u(i+1,j,k) point

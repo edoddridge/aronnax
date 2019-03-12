@@ -5,6 +5,8 @@ module model_main
   use state_deriv
   use time_stepping
   use enforce_thickness
+  use exchange
+
   implicit none
 
   contains
@@ -12,7 +14,9 @@ module model_main
   ! ------------------------------ Primary routine ----------------------------
   !> Run the model
 
-  subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, fu, fv, &
+  subroutine model_run(h, u, v, eta, depth, dx, dy, wetmask, &
+      hfacW, hfacE, hfacS, hfacN, &
+      fu, fv, &
       dt, au, ar, botDrag, kh, kv, slip, hmin, niter0, nTimeSteps, &
       dumpFreq, avFreq, checkpointFreq, diagFreq, &
       maxits, eps, freesurfFac, thickness_error, &
@@ -20,28 +24,33 @@ module model_main
       base_wind_x, base_wind_y, wind_mag_time_series, wind_depth, &
       spongeHTimeScale, spongeUTimeScale, spongeVTimeScale, &
       spongeH, spongeU, spongeV, &
-      nx, ny, layers, RedGrav, hAdvecScheme, TS_algorithm, AB_order, &
-      DumpWind, RelativeWind, Cd, &
+      nx, ny, layers, OL, xlow, xhigh, ylow, yhigh, &
+      RedGrav, hAdvecScheme, TS_algorithm, AB_order, &
+      DumpWind, RelativeWind, Cd, start_time, &
       MPI_COMM_WORLD, myid, num_procs, ilower, iupper, &
       hypre_grid)
     implicit none
 
     ! Layer thickness (h)
-    double precision, intent(inout) :: h(0:nx+1, 0:ny+1, layers)
+    double precision, intent(inout) :: h(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
     ! Velocity component (u)
-    double precision, intent(inout) :: u(0:nx+1, 0:ny+1, layers)
+    double precision, intent(inout) :: u(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
     ! Velocity component (v)
-    double precision, intent(inout) :: v(0:nx+1, 0:ny+1, layers)
+    double precision, intent(inout) :: v(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
     ! Free surface (eta)
-    double precision, intent(inout) :: eta(0:nx+1, 0:ny+1)
+    double precision, intent(inout) :: eta(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
     ! Bathymetry
-    double precision, intent(in) :: depth(0:nx+1, 0:ny+1)
+    double precision, intent(in) :: depth(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
     ! Grid
     double precision, intent(in) :: dx, dy
-    double precision, intent(in) :: wetmask(0:nx+1, 0:ny+1)
+    double precision, intent(in) :: wetmask(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(in) :: hfacW(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(in) :: hfacE(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(in) :: hfacS(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(in) :: hfacN(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
     ! Coriolis parameter at u and v grid-points respectively
-    double precision, intent(in) :: fu(0:nx+1, 0:ny+1)
-    double precision, intent(in) :: fv(0:nx+1, 0:ny+1)
+    double precision, intent(in) :: fu(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(in) :: fv(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
     ! Numerics
     double precision, intent(in) :: dt, au, ar, botDrag
     double precision, intent(in) :: kh(layers), kv
@@ -55,19 +64,20 @@ module model_main
     double precision, intent(in) :: g_vec(layers)
     double precision, intent(in) :: rho0
     ! Wind
-    double precision, intent(in) :: base_wind_x(0:nx+1, 0:ny+1)
-    double precision, intent(in) :: base_wind_y(0:nx+1, 0:ny+1)
+    double precision, intent(in) :: base_wind_x(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(in) :: base_wind_y(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
     double precision, intent(in) :: wind_mag_time_series(nTimeSteps)
     double precision, intent(in) :: wind_depth
     ! Sponge regions
-    double precision, intent(in) :: spongeHTimeScale(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in) :: spongeUTimeScale(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in) :: spongeVTimeScale(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in) :: spongeH(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in) :: spongeU(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in) :: spongeV(0:nx+1, 0:ny+1, layers)
+    double precision, intent(in) :: spongeHTimeScale(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in) :: spongeUTimeScale(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in) :: spongeVTimeScale(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in) :: spongeH(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in) :: spongeU(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in) :: spongeV(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
     ! Resolution
-    integer,          intent(in) :: nx, ny, layers
+    integer,          intent(in) :: nx, ny, layers, OL
+    integer,          intent(in) :: xlow, xhigh, ylow, yhigh
     ! Reduced gravity vs n-layer physics
     logical,          intent(in) :: RedGrav
     integer,          intent(in) :: hAdvecScheme
@@ -76,35 +86,30 @@ module model_main
     ! Whether to write computed wind in the output
     logical,          intent(in) :: DumpWind
     logical,          intent(in) :: RelativeWind
-    double precision,  intent(in) :: Cd
+    double precision, intent(in) :: Cd
+    integer*8,        intent(inout) :: start_time
 
-    double precision :: dhdt(0:nx+1, 0:ny+1, layers, AB_order)
-    double precision :: h_new(0:nx+1, 0:ny+1, layers)
+    double precision :: dhdt(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers, AB_order)
+    double precision :: h_new(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
     ! for saving average fields
-    double precision :: hav(0:nx+1, 0:ny+1, layers)
+    double precision :: hav(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
 
-    double precision :: dudt(0:nx+1, 0:ny+1, layers, AB_order)
-    double precision :: u_new(0:nx+1, 0:ny+1, layers)
+    double precision :: dudt(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers, AB_order)
+    double precision :: u_new(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
     ! for saving average fields
-    double precision :: uav(0:nx+1, 0:ny+1, layers)
+    double precision :: uav(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
 
-    double precision :: dvdt(0:nx+1, 0:ny+1, layers, AB_order)
-    double precision :: v_new(0:nx+1, 0:ny+1, layers)
+    double precision :: dvdt(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers, AB_order)
+    double precision :: v_new(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
     ! for saving average fields
-    double precision :: vav(0:nx+1, 0:ny+1, layers)
+    double precision :: vav(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
 
-    double precision :: etanew(0:nx+1, 0:ny+1)
+    double precision :: etanew(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
     ! for saving average fields
-    double precision :: etaav(0:nx+1, 0:ny+1)
+    double precision :: etaav(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
 
     ! Pressure solver variables
-    double precision :: a(5, nx, ny)
-
-    ! Geometry
-    double precision :: hfacW(0:nx+1, 0:ny+1)
-    double precision :: hfacE(0:nx+1, 0:ny+1)
-    double precision :: hfacN(0:nx+1, 0:ny+1)
-    double precision :: hfacS(0:nx+1, 0:ny+1)
+    double precision :: a(5, xlow:xhigh, ylow:yhigh)
 
     ! Numerics
     double precision :: pi
@@ -116,7 +121,7 @@ module model_main
     ! External solver variables
     integer          :: offsets(2,5)
     integer          :: i, j ! loop variables
-    double precision :: values(nx * ny)
+    double precision :: values((xhigh - xlow + 1)*(yhigh - ylow + 1))
     integer          :: indicies(2)
     integer*8        :: hypre_grid
     integer*8        :: stencil
@@ -131,31 +136,31 @@ module model_main
     integer :: n
 
     ! Wind
-    double precision :: wind_x(0:nx+1, 0:ny+1)
-    double precision :: wind_y(0:nx+1, 0:ny+1)
+    double precision :: wind_x(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision :: wind_y(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
 
     ! Time
-    integer*8 :: start_time, last_report_time, cur_time
+    integer*8 :: last_report_time, cur_time
 
-
-    start_time = time()
-    if (RedGrav) then
-      print "(A, I0, A, I0, A, I0, A, I0, A)", &
-          "Running a reduced-gravity configuration of size ", &
-          nx, "x", ny, "x", layers, " by ", nTimeSteps, " time steps."
-    else
-      print "(A, I0, A, I0, A, I0, A, I0, A)", &
-          "Running an n-layer configuration of size ", &
-          nx, "x", ny, "x", layers, " by ", nTimeSteps, " time steps."
-    end if
 
     if (myid .eq. 0) then
-      ! Show the domain decomposition
-      print "(A)", "Domain decomposition:"
-      print "(A, I0)", 'ilower (x) = ', ilower(:,1)
-      print "(A, I0)", 'ilower (y) = ', ilower(:,2)
-      print "(A, I0)", 'iupper (x) = ', iupper(:,1)
-      print "(A, I0)", 'iupper (y) = ', iupper(:,2)
+      if (RedGrav) then
+        print "(A, I0, A, I0, A, I0, A, I0, A)", &
+            "Running a reduced-gravity configuration of size ", &
+            nx, "x", ny, "x", layers, " by ", nTimeSteps, " time steps."
+      else
+        print "(A, I0, A, I0, A, I0, A, I0, A)", &
+            "Running an n-layer configuration of size ", &
+            nx, "x", ny, "x", layers, " by ", nTimeSteps, " time steps."
+      end if
+
+    !   ! Show the domain decomposition
+      do n = 0, num_procs-1
+        print "(A, I0, A, I0, A, I0)", 'tile ', n, ': x limits = ', &
+                  ilower(n,1), ", ", iupper(n,1)
+        print "(A, I0, A, I0, A, I0)", 'tile ', n, ': y limits = ', &
+                  ilower(n,2), ", ", iupper(n,2)
+      end do
     end if
 
     last_report_time = start_time
@@ -172,12 +177,14 @@ module model_main
     wind_x = base_wind_x*wind_mag_time_series(1)
     wind_y = base_wind_y*wind_mag_time_series(1)
 
-    ! Initialise the diagnostic files
-    call create_diag_file(layers, 'output/diagnostic.h.csv', 'h', niter0)
-    call create_diag_file(layers, 'output/diagnostic.u.csv', 'u', niter0)
-    call create_diag_file(layers, 'output/diagnostic.v.csv', 'v', niter0)
-    if (.not. RedGrav) then
-      call create_diag_file(1, 'output/diagnostic.eta.csv', 'eta', niter0)
+    if (myid .eq. 0) then
+      ! Initialise the diagnostic files
+      call create_diag_file(layers, 'output/diagnostic.h.csv', 'h', niter0)
+      call create_diag_file(layers, 'output/diagnostic.u.csv', 'u', niter0)
+      call create_diag_file(layers, 'output/diagnostic.v.csv', 'v', niter0)
+      if (.not. RedGrav) then
+        call create_diag_file(1, 'output/diagnostic.eta.csv', 'eta', niter0)
+      end if
     end if
 
     ! Initialise the average fields
@@ -193,16 +200,17 @@ module model_main
     ! initialise etanew
     etanew = 0d0
 
-    call calc_boundary_masks(wetmask, hfacW, hfacE, hfacS, hfacN, nx, ny)
-
-    call apply_boundary_conditions(u, hfacW, wetmask, nx, ny, layers)
-    call apply_boundary_conditions(v, hfacS, wetmask, nx, ny, layers)
+    call apply_boundary_conditions(u, hfacW, wetmask, &
+                          xlow, xhigh, ylow, yhigh, layers, OL)
+    call apply_boundary_conditions(v, hfacS, wetmask, &
+                          xlow, xhigh, ylow, yhigh, layers, OL)
 
 
     if (.not. RedGrav) then
       ! Initialise arrays for pressure solver
       ! a = derivatives of the depth field
-        call calc_A_matrix(a, depth, g_vec(1), dx, dy, nx, ny, freesurfFac, dt, &
+        call calc_A_matrix(a, depth, g_vec(1), dx, dy, OL, &
+            xlow, xhigh, ylow, yhigh, freesurfFac, dt, &
             hfacW, hfacE, hfacS, hfacN)
 
 #ifndef useExtSolver
@@ -215,7 +223,7 @@ module model_main
 #else
       ! use the external pressure solver
       call create_Hypre_A_matrix(MPI_COMM_WORLD, hypre_grid, hypre_A, &
-            a, nx, ny, ierr)
+            a, xlow, xhigh, ylow, yhigh, ierr)
 #endif
 
       ! Check that the supplied free surface anomaly and layer
@@ -223,7 +231,8 @@ module model_main
       ! If they are not, then scale the layer thicknesses to make
       ! them consistent.
       call enforce_depth_thickness_consistency(h, eta, depth, &
-          freesurfFac, thickness_error, nx, ny, layers)
+          freesurfFac, thickness_error, &
+          xlow, xhigh, ylow, yhigh, layers, OL)
     end if
 
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -240,13 +249,15 @@ module model_main
           spongeHTimeScale, spongeH, &
           spongeUTimeScale, spongeU, &
           spongeVTimeScale, spongeV, &
-          nx, ny, layers, debug_level)
+          nx, ny, layers, ilower, iupper, xlow, xhigh, ylow, yhigh, &
+          OL, num_procs, myid, debug_level)
 
     else if (niter0 .ne. 0) then
       n = niter0
 
       call load_checkpoint_files(dhdt, dudt, dvdt, h, u, v, eta, &
-            RedGrav, niter0, nx, ny, layers, AB_order)
+            RedGrav, niter0, nx, ny, layers, ilower, iupper, xlow, xhigh, ylow, yhigh, &
+          OL, num_procs, myid, AB_order)
 
     end if
 
@@ -257,11 +268,14 @@ module model_main
     !   before solving for the fields at the next time step.
 
     cur_time = time()
-    if (cur_time - start_time .eq. 1) then
-      print "(A)", "Initialized in 1 second."
-    else
-      print "(A, I0, A)", "Initialized in " , cur_time - start_time, " seconds."
+    if (myid .eq. 0) then
+      if (cur_time - start_time .eq. 1) then
+        print "(A)", "Initialized in 1 second."
+      else
+        print "(A, I0, A)", "Initialized in " , cur_time - start_time, " seconds."
+      end if
     end if
+
     last_report_time = cur_time
 
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -283,34 +297,44 @@ module model_main
           spongeHTimeScale, spongeH, &
           spongeUTimeScale, spongeU, &
           spongeVTimeScale, spongeV, &
-          nx, ny, layers, n, debug_level)
+          nx, ny, layers, ilower, iupper, xlow, xhigh, ylow, yhigh, &
+          OL, num_procs, myid, n, debug_level)
 
       ! Apply the boundary conditions
-      call apply_boundary_conditions(u_new, hfacW, wetmask, nx, ny, layers)
-      call apply_boundary_conditions(v_new, hfacS, wetmask, nx, ny, layers)
+      call apply_boundary_conditions(u_new, hfacW, wetmask, &
+                              xlow, xhigh, ylow, yhigh, layers, OL)
+      call apply_boundary_conditions(v_new, hfacS, wetmask, &
+                              xlow, xhigh, ylow, yhigh, layers, OL)
 
       ! Do the isopycnal layer physics
       if (.not. RedGrav) then
         call barotropic_correction(h_new, u_new, v_new, eta, etanew, depth, a, &
             dx, dy, wetmask, hfacW, hfacS, dt, &
             maxits, eps, rjac, freesurfFac, thickness_error, &
-            debug_level, g_vec, nx, ny, layers, n, &
+            debug_level, g_vec, nx, ny, layers, OL, &
+            xlow, xhigh, ylow, yhigh, n, &
             MPI_COMM_WORLD, myid, num_procs, ilower, iupper, &
             hypre_grid, hypre_A, ierr)
 
       end if
 
-      ! Wrap fields around for periodic simulations
-      call wrap_fields_3D(u_new, nx, ny, layers)
-      call wrap_fields_3D(v_new, nx, ny, layers)
-      call wrap_fields_3D(h_new, nx, ny, layers)
-      if (.not. RedGrav) then
-        call wrap_fields_2D(etanew, nx, ny)
-      end if    
-
       ! Apply the boundary conditions
-      call apply_boundary_conditions(u_new, hfacW, wetmask, nx, ny, layers)
-      call apply_boundary_conditions(v_new, hfacS, wetmask, nx, ny, layers)
+      call apply_boundary_conditions(u_new, hfacW, wetmask, &
+                              xlow, xhigh, ylow, yhigh, layers, OL)
+      call apply_boundary_conditions(v_new, hfacS, wetmask, &
+                              xlow, xhigh, ylow, yhigh, layers, OL)
+
+      ! update global and tile halos with new values
+      call update_halos(h_new, nx, ny, layers, ilower, iupper, &
+                          xlow, xhigh, ylow, yhigh, OL, num_procs, myid)
+      call update_halos(u_new, nx, ny, layers, ilower, iupper, &
+                          xlow, xhigh, ylow, yhigh, OL, num_procs, myid)
+      call update_halos(v_new, nx, ny, layers, ilower, iupper, &
+                          xlow, xhigh, ylow, yhigh, OL, num_procs, myid)
+      if (.not. RedGrav) then
+        call update_halos(etanew, nx, ny, 1, ilower, iupper, &
+                          xlow, xhigh, ylow, yhigh, OL, num_procs, myid)
+      end if   
 
       ! Accumulate average fields
       if (avwrite .ne. 0) then
@@ -333,31 +357,57 @@ module model_main
 
       call maybe_dump_output(h, hav, u, uav, v, vav, eta, etaav, &
           dudt, dvdt, dhdt, AB_order, &
-          wind_x, wind_y, nx, ny, layers, &
+          wind_x, wind_y, nx, ny, layers, ilower, iupper, &
+          xlow, xhigh, ylow, yhigh, OL, num_procs, myid, &
           n, nwrite, avwrite, checkpointwrite, diagwrite, &
           RedGrav, DumpWind, debug_level)
 
 
       cur_time = time()
-      if (cur_time - last_report_time > 3) then
-        ! Three seconds passed since last report
-        last_report_time = cur_time
-        print "(A, I0, A, I0, A)", "Completed time step ", &
-            n, " at ", cur_time - start_time, " seconds."
+      if (myid .eq. 0) then
+        if (cur_time - last_report_time > 3) then
+          ! Three seconds passed since last report
+          last_report_time = cur_time
+          print "(A, I0, A, I0, A)", "Completed time step ", &
+              n, " at ", cur_time - start_time, " seconds."
+        end if
       end if
 
     end do
 
     cur_time = time()
-    print "(A, I0, A, I0, A)", "Run finished at time step ", &
-        n, ", in ", cur_time - start_time, " seconds."
-
+    if (myid .eq. 0) then
+      print "(A, I0, A, I0, A)", "Run finished at time step ", &
+          n, ", in ", cur_time - start_time, " seconds."
+    end if
+    
     ! save checkpoint at end of every simulation
-    call maybe_dump_output(h, hav, u, uav, v, vav, eta, etaav, &
-        dudt, dvdt, dhdt, AB_order, &
-        wind_x, wind_y, nx, ny, layers, &
-        n, n, n, n-1, n, &
-        RedGrav, DumpWind, 0)
+    call write_checkpoint_output(h, nx, ny, layers, ilower, iupper, &
+                      xlow, xhigh, ylow, yhigh, OL, 1, &
+                      n, 'checkpoints/h.', num_procs, myid)
+    call write_checkpoint_output(u, nx, ny, layers, ilower, iupper, &
+                      xlow, xhigh, ylow, yhigh, OL, 1, &
+                      n, 'checkpoints/u.', num_procs, myid)
+    call write_checkpoint_output(v, nx, ny, layers, ilower, iupper, &
+                      xlow, xhigh, ylow, yhigh, OL, 1, &
+                      n, 'checkpoints/v.', num_procs, myid)
+
+    call write_checkpoint_output(dhdt, nx, ny, layers, ilower, iupper, &
+                      xlow, xhigh, ylow, yhigh, OL, AB_order, &
+                      n, 'checkpoints/dhdt.', num_procs, myid)
+    call write_checkpoint_output(dudt, nx, ny, layers, ilower, iupper, &
+                      xlow, xhigh, ylow, yhigh, OL, AB_order, &
+                      n, 'checkpoints/dudt.', num_procs, myid)
+    call write_checkpoint_output(dvdt, nx, ny, layers, ilower, iupper, &
+                      xlow, xhigh, ylow, yhigh, OL, AB_order, &
+                      n, 'checkpoints/dvdt.', num_procs, myid)
+
+    if (.not. RedGrav) then
+      call write_checkpoint_output(eta, nx, ny, 1, ilower, iupper, &
+                      xlow, xhigh, ylow, yhigh, OL, 1, &
+                      n, 'checkpoints/eta.', num_procs, myid)
+    end if
+    
 
     return
   end subroutine model_run

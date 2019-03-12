@@ -5,6 +5,7 @@ Development
 Since latest release
 --------------------
 
+- MULTICORE Aronnax can now run in parallel across multiple processors using MPI `GH212 <https://github.com/edoddridge/aronnax/pull/212>`_ (12 March 2019)
 - Remove unused subroutine for enforcing minimum layer thickness `GH211 <https://github.com/edoddridge/aronnax/pull/211>`_ (9 March 2019)
 - Bug fix for bottom drag (didn't apply drag in one-layer simulations) `GH209 <https://github.com/edoddridge/aronnax/pull/209>`_ (9 March 2019)
 - Bug fix for open_mfdatarray, now respects variable location on C-grid `GH208 <https://github.com/edoddridge/aronnax/pull/208>`_ (21 December 2018)

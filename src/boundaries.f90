@@ -12,97 +12,126 @@ module boundaries
   !! 0 means barrier
   !! 1 mean open
 
-  subroutine calc_boundary_masks(wetmask, hfacW, hfacE, hfacS, hfacN, nx, ny)
+  subroutine calc_boundary_masks(wetMaskFile, hfacW, hfacE, hfacS, hfacN, nx, ny, OL, &
+                                  xlow, xhigh, ylow, yhigh)
     implicit none
 
-    double precision, intent(in)  :: wetmask(0:nx+1, 0:ny+1)
-    double precision, intent(out) :: hfacW(0:nx+1, 0:ny+1)
-    double precision, intent(out) :: hfacE(0:nx+1, 0:ny+1)
-    double precision, intent(out) :: hfacN(0:nx+1, 0:ny+1)
-    double precision, intent(out) :: hfacS(0:nx+1, 0:ny+1)
+    character(60), intent(in)     :: wetMaskFile
+    double precision, intent(out) :: hfacW(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(out) :: hfacE(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(out) :: hfacN(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(out) :: hfacS(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
     integer, intent(in) :: nx !< number of grid points in x direction
     integer, intent(in) :: ny !< number of grid points in y direction
+    integer, intent(in) :: OL !< size of halo region
+    integer, intent(in) :: xlow, xhigh, ylow, yhigh ! tile limits
 
-    double precision temp(0:nx+1, 0:ny+1)
+    double precision temp(1-OL:nx+OL, 1-OL:ny+OL)
+    double precision wetmask_global(1-OL:nx+OL, 1-OL:ny+OL)
+    double precision wetmask_global_small(nx, ny)
+    double precision hfacW_global(1-OL:nx+OL, 1-OL:ny+OL)
+    double precision hfacE_global(1-OL:nx+OL, 1-OL:ny+OL)
+    double precision hfacN_global(1-OL:nx+OL, 1-OL:ny+OL)
+    double precision hfacS_global(1-OL:nx+OL, 1-OL:ny+OL)
     integer i, j
 
-    hfacW = 1d0
+    if (wetMaskFile.ne.'') then
+      open(unit=10, form='unformatted', file=wetMaskFile)
+      read(10) wetmask_global_small
+      close(10)
+      wetmask_global(1:nx, 1:ny) = wetmask_global_small
+      call wrap_fields_2D(wetmask_global, nx, ny, OL)
+    else
+      wetmask_global = 1d0
+    end if
 
-    temp = 0.0
+    hfacW_global = 1d0
+
+    temp = 0d0
     do j = 0, ny+1
       do i = 1, nx+1
-        temp(i, j) = wetmask(i-1, j) - wetmask(i, j)
+        temp(i, j) = wetmask_global(i-1, j) - wetmask_global(i, j)
       end do
     end do
 
     do j = 0, ny+1
       do i = 1, nx+1
         if (temp(i, j) .ne. 0.0) then
-          hfacW(i, j) = 0d0
+          hfacW_global(i, j) = 0d0
         end if
       end do
     end do
 
     ! and now for all  western cells
-    hfacW(0, :) = hfacW(nx, :)
+    hfacW_global(0, :) = hfacW_global(nx, :)
 
-    hfacE = 1d0
+    hfacE_global = 1d0
 
-    temp = 0.0
+    temp = 0d0
     do j = 0, ny+1
       do i = 0, nx
-        temp(i, j) = wetmask(i, j) - wetmask(i+1, j)
+        temp(i, j) = wetmask_global(i, j) - wetmask_global(i+1, j)
       end do
     end do
 
     do j = 0, ny+1
       do i = 0, nx
         if (temp(i, j) .ne. 0.0) then
-          hfacE(i, j) = 0d0
+          hfacE_global(i, j) = 0d0
         end if
       end do
     end do
 
     ! and now for all  eastern cells
-    hfacE(nx+1, :) = hfacE(1, :)
+    hfacE_global(nx+1, :) = hfacE_global(1, :)
 
-    hfacS = 1
+    hfacS_global = 1d0
 
-    temp = 0.0
+    temp = 0d0
     do j = 1, ny+1
       do i = 0, nx+1
-        temp(i, j) = wetmask(i, j-1) - wetmask(i, j)
+        temp(i, j) = wetmask_global(i, j-1) - wetmask_global(i, j)
       end do
     end do
 
     do j = 1, ny+1
       do i = 0, nx+1
         if (temp(i, j) .ne. 0.0) then
-          hfacS(i, j) = 0d0
+          hfacS_global(i, j) = 0d0
         end if
       end do
     end do
 
     ! all southern cells
-    hfacS(:, 0) = hfacS(:, ny)
+    hfacS_global(:, 0) = hfacS_global(:, ny)
 
-    hfacN = 1
-    temp = 0.0
+    hfacN_global = 1d0
+    temp = 0d0
     do j = 0, ny
       do i = 0, nx+1
-        temp(i, j) = wetmask(i, j) - wetmask(i, j+1)
+        temp(i, j) = wetmask_global(i, j) - wetmask_global(i, j+1)
       end do
     end do
 
     do j = 0, ny
       do i = 0, nx+1
         if (temp(i, j) .ne. 0.0) then
-          hfacN(i, j) = 0d0
+          hfacN_global(i, j) = 0d0
         end if
       end do
     end do
     ! all northern cells
-    hfacN(:, ny+1) = hfacN(:, 1)
+    hfacN_global(:, ny+1) = hfacN_global(:, 1)
+
+    ! set tile sized arrays
+    do j = ylow-OL, yhigh+OL
+      do i = xlow-OL, xhigh+OL
+        hfacW(i,j) = hfacW_global(i,j)
+        hfacE(i,j) = hfacE_global(i,j)
+        hfacS(i,j) = hfacS_global(i,j)
+        hfacN(i,j) = hfacN_global(i,j)
+      end do
+    end do
 
     return
   end subroutine calc_boundary_masks
@@ -110,13 +139,17 @@ module boundaries
   ! ---------------------------------------------------------------------------
   !> Apply the boundary conditions
 
-  subroutine apply_boundary_conditions(array, hfac, wetmask, nx, ny, layers)
+  subroutine apply_boundary_conditions(array, hfac, wetmask, &
+                              xlow, xhigh, ylow, yhigh, layers, OL)
     implicit none
 
-    double precision, intent(inout) :: array(0:nx+1,0:ny+1,layers)
-    double precision, intent(in) :: hfac(0:nx+1,0:ny+1)
-    double precision, intent(in) :: wetmask(0:nx+1,0:ny+1)
-    integer, intent(in) :: nx, ny, layers
+    double precision, intent(inout) :: array(xlow-OL:xhigh+OL, &
+                                              ylow-OL:yhigh+OL,layers)
+    double precision, intent(in) :: hfac(xlow-OL:xhigh+OL, &
+                                          ylow-OL:yhigh+OL)
+    double precision, intent(in) :: wetmask(xlow-OL:xhigh+OL, &
+                                            ylow-OL:yhigh+OL)
+    integer, intent(in) :: xlow, xhigh, ylow, yhigh, layers, OL
 
     integer k
 
@@ -128,7 +161,7 @@ module boundaries
     ! - wetmask is 1 in wet cells, and zero in dry cells.
 
     do k = 1, layers
-      array(:, :, k) = array(:, :, k) * hfac * wetmask(:, :)
+      array(:, :, k) = array(:, :, k) * hfac(:,:) * wetmask(:, :)
     end do
 
     return
@@ -137,11 +170,11 @@ module boundaries
   !-----------------------------------------------------------------
   !> Wrap 3D fields around for periodic boundary conditions
 
-  subroutine wrap_fields_3D(array, nx, ny, layers)
+  subroutine wrap_fields_3D(array, nx, ny, layers, OL)
     implicit none
 
-    double precision, intent(inout) :: array(0:nx+1, 0:ny+1, layers)
-    integer, intent(in) :: nx, ny, layers
+    double precision, intent(inout) :: array(1-OL:nx+OL, 1-OL:ny+OL, layers)
+    integer, intent(in) :: nx, ny, layers, OL
 
     ! wrap array around for periodicity
     array(0, :, :) = array(nx, :, :)
@@ -155,11 +188,11 @@ module boundaries
   !-----------------------------------------------------------------
   !> Wrap 2D fields around for periodic boundary conditions
 
-  subroutine wrap_fields_2D(array, nx, ny)
+  subroutine wrap_fields_2D(array, nx, ny, OL)
     implicit none
 
-    double precision, intent(inout) :: array(0:nx+1, 0:ny+1)
-    integer, intent(in) :: nx, ny
+    double precision, intent(inout) :: array(1-OL:nx+OL, 1-OL:ny+OL)
+    integer, intent(in) :: nx, ny, OL
 
     ! wrap array around for periodicity
     array(0, :) = array(nx, :)

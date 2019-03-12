@@ -133,6 +133,7 @@ section_map = {
     "nx"                   : "grid",
     "ny"                   : "grid",
     "layers"               : "grid",
+    "OL"                   : "grid",
     "dx"                   : "grid",
     "dy"                   : "grid",
     "fUfile"               : "grid",
@@ -255,6 +256,9 @@ def generate_parameters_file(config):
 def run_executable(config):
     """Run the compiled Fortran core, possibly in a test or debug regime."""
     core_name = config.get("executable", "exe")
+    nProcX = config.get("pressure_solver", "nProcX")
+    nProcY = config.get("pressure_solver", "nProcY")
+    nprocs = int(nProcX)*int(nProcY)
     env = dict(os.environ, GFORTRAN_STDERR_UNIT="17")
     if config.getboolean("executable", "valgrind") \
        or 'ARONNAX_TEST_VALGRIND_ALL' in os.environ:
@@ -271,7 +275,7 @@ def run_executable(config):
             "-e", "branch-instructions", "-e", "branch-misses"]
         sub.check_call(perf_cmds + [p.join(root_path, core_name)], env=env)
     else:
-        sub.check_call(["mpirun", "-np", "1", p.join(root_path, core_name)], env=env)
+        sub.check_call(["mpirun", "-np", "{0}".format(nprocs), p.join(root_path, core_name)], env=env)
 
 def convert_output_to_netcdf(config):
     # TODO Issue #30

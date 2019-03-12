@@ -4,9 +4,6 @@ Running Aronnax
 
 To run a simulation with Aronnax one needs to have a Python session active in the folder for the simulation. This folder should contain a file, `aronnax.conf` that contains the configuration choices for the simulation. Some, or all, of these choices may be overridden by arguments passed to the simulate function, but it is likely simpler to specify many of the choices in a configuration file.
 
-
-.. note:: Despite requiring MPI Aronnax is currently stuck on one processor (MPI is required for the Hypre library). We aspire to have Aronnax running in parallel, but it hasn't happened yet.
-
 .. autofunction:: aronnax.driver.simulate
 
 As described above, it is possible to define functions that can be passed to `aronnax.driver.simulate` and used to create input or forcing fields. The test suite, found in the 'test' folder uses this functionality to create the zonal wind stress for the :math:`\beta`-plane gyre tests. The relevant code is shown below:
@@ -30,9 +27,13 @@ Executables
 
 Aronnax includes multiple targets for the Makefile. These produce executables intended either for testing or production runs. The different options for `exe` are discussed below. For a comparison on the execution speed of these executables see :ref:`benchmarking`.
 
+For production runs, and simulations that span multiple processors, use either `aronnax_core` (for :math:`n+1/2`-layer mode) or `aronnax_external_solver` (for :math:`n`-layer mode).
+
+
 - `aronnax_core`
 
-  - Uses the internal Fortran code and aggressive compiler optimisation. This is the best executable to use for reduced gravity (:math:`n+1/2` layer) simulations. It may also be used for :math:`n` layer simulations but is considerably slower than `aronnax_external_solver` since it does not use the external Hypre library for the pressure solve.
+  - Uses the internal Fortran code and aggressive compiler optimisation. This is the best executable to use for reduced gravity (:math:`n+1/2` layer) simulations. It may also be used for :math:`n` layer simulations but is considerably slower than `aronnax_external_solver` since it does not use the external Hypre library for the pressure solve. `aronnax_core` cannot run on multiple processors in :math:`n`-layer mode.
+
 
 - `aronnax_test`
   
@@ -49,6 +50,8 @@ Aronnax includes multiple targets for the Makefile. These produce executables in
 - `aronnax_external_solver`
 
   - Uses the external Hypre library and aggressive compiler optimisations. This is the fastest executable to use in :math:`n` layer mode. It can also be used in :math:`n+1/2` layer mode, but there is no advantage over `aronnax_core`.
+
+
 
 Parameters
 ===========

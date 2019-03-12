@@ -11,18 +11,18 @@ module barotropic_mode
   ! ---------------------------------------------------------------------------
   !> Calculate the barotropic u velocity
 
-  subroutine calc_baro_u(ub, u, h, eta, freesurfFac, nx, ny, layers)
+  subroutine calc_baro_u(ub, u, h, eta, freesurfFac, xlow, xhigh, ylow, yhigh, layers, OL)
     implicit none
 
-    double precision, intent(out) :: ub(nx+1, ny)
-    double precision, intent(in)  :: u(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: h(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: eta(0:nx+1, 0:ny+1)
+    double precision, intent(out) :: ub(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(in)  :: u(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in)  :: h(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in)  :: eta(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
     double precision, intent(in)  :: freesurfFac
-    integer, intent(in) :: nx, ny, layers
+    integer, intent(in) :: xlow, xhigh, ylow, yhigh, layers, OL
 
     integer i, j, k
-    double precision h_temp(0:nx+1, 0:ny+1, layers)
+    double precision h_temp(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
 
     ub = 0d0
 
@@ -30,8 +30,8 @@ module barotropic_mode
     ! add free surface elevation to the upper layer
     h_temp(:, :, 1) = h(:, :, 1) + eta*freesurfFac
 
-    do i = 1, nx+1
-      do j = 1, ny
+    do i = xlow, xhigh+1
+      do j = ylow, yhigh
         do k = 1, layers
           ub(i,j) = ub(i,j) + u(i,j,k)*(h_temp(i,j,k)+h_temp(i-1,j,k))/2d0
         end do
@@ -44,18 +44,18 @@ module barotropic_mode
   ! ---------------------------------------------------------------------------
   !> Calculate the barotropic v velocity
 
-  subroutine calc_baro_v(vb, v, h, eta, freesurfFac, nx, ny, layers)
+  subroutine calc_baro_v(vb, v, h, eta, freesurfFac, xlow, xhigh, ylow, yhigh, layers, OL)
     implicit none
 
-    double precision, intent(out) :: vb(nx, ny+1)
-    double precision, intent(in)  :: v(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: h(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)  :: eta(0:nx+1, 0:ny+1)
+    double precision, intent(out) :: vb(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(in)  :: v(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in)  :: h(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in)  :: eta(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
     double precision, intent(in)  :: freesurfFac
-    integer, intent(in) :: nx, ny, layers
+    integer, intent(in) :: xlow, xhigh, ylow, yhigh, layers, OL
 
     integer i, j, k
-    double precision h_temp(0:nx+1, 0:ny+1, layers)
+    double precision h_temp(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
 
     vb = 0d0
 
@@ -63,8 +63,8 @@ module barotropic_mode
     ! add free surface elevation to the upper layer
     h_temp(:, :, 1) = h(:, :, 1) + eta*freesurfFac
 
-    do i = 1, nx
-      do j = 1, ny+1
+    do i = xlow, xhigh
+      do j = ylow, yhigh+1
         do k = 1, layers
           vb(i,j) = vb(i,j) + v(i,j,k)*(h_temp(i,j,k)+h_temp(i,j-1,k))/2d0
         end do
@@ -80,29 +80,29 @@ module barotropic_mode
   !! pressure gradient.
 
   subroutine calc_eta_star(ub, vb, eta, etastar, &
-      freesurfFac, nx, ny, dx, dy, dt)
+      freesurfFac, xlow, xhigh, ylow, yhigh, OL, dx, dy, dt)
     implicit none
 
-    double precision, intent(in)  :: ub(nx+1, ny)
-    double precision, intent(in)  :: vb(nx, ny+1)
-    double precision, intent(in)  :: eta(0:nx+1, 0:ny+1)
-    double precision, intent(out) :: etastar(0:nx+1, 0:ny+1)
+    double precision, intent(in)  :: ub(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(in)  :: vb(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(in)  :: eta(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(out) :: etastar(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
     double precision, intent(in)  :: freesurfFac
-    integer, intent(in) :: nx, ny
-    double precision, intent(in) :: dx, dy, dt
+    integer,          intent(in)  :: xlow, xhigh, ylow, yhigh, OL
+    double precision, intent(in)  :: dx, dy, dt
 
     integer i, j
 
     etastar = 0d0
 
-    do i = 1, nx
-      do j = 1, ny
+    do i = xlow, xhigh
+      do j = ylow, yhigh
         etastar(i,j) = freesurfFac*eta(i,j) - &
             dt*((ub(i+1,j) - ub(i,j))/dx + (vb(i,j+1) - vb(i,j))/dy)
       end do
     end do
 
-    call wrap_fields_2D(etastar, nx, ny)
+    ! call wrap_fields_2D(etastar, nx, ny, OL)
 
     return
   end subroutine calc_eta_star
@@ -112,14 +112,14 @@ module barotropic_mode
   !! Euler timestepping for the free surface anomaly, or for the surface
   !! pressure required to keep the barotropic flow nondivergent.
 
-  subroutine SOR_solver(a, etanew, etastar, nx, ny, dt, &
+  subroutine SOR_solver(a, etanew, etastar, nx, ny, OL, dt, &
       rjac, eps, maxits, n)
     implicit none
 
     double precision, intent(in)  :: a(5, nx, ny)
-    double precision, intent(out) :: etanew(0:nx+1, 0:ny+1)
-    double precision, intent(in)  :: etastar(0:nx+1, 0:ny+1)
-    integer, intent(in) :: nx, ny
+    double precision, intent(out) :: etanew(1-OL:nx+OL, 1-OL:ny+OL)
+    double precision, intent(in)  :: etastar(1-OL:nx+OL, 1-OL:ny+OL)
+    integer, intent(in) :: nx, ny, OL
     double precision, intent(in) :: dt
     double precision, intent(in) :: rjac, eps
     integer, intent(in) :: maxits, n
@@ -175,7 +175,7 @@ module barotropic_mode
         relax_param = 1.d0/(1.d0-0.25d0*rjac**2*relax_param)
       end if
 
-      call wrap_fields_2D(etanew, nx, ny)
+      call wrap_fields_2D(etanew, nx, ny, OL)
 
       if (nit.gt.1.and.norm.lt.eps*norm0) then
 
@@ -208,9 +208,7 @@ module barotropic_mode
 #ifdef useExtSolver
     call Hypre_StructGridCreate(MPI_COMM_WORLD, 2, hypre_grid, ierr)
 
-    !do i = 0, num_procs-1
     call HYPRE_StructGridSetExtents(hypre_grid, ilower(myid,:),iupper(myid,:), ierr)
-    !end do
 
     call HYPRE_StructGridSetPeriodic(hypre_grid, [nx, ny], ierr)
 
@@ -223,14 +221,14 @@ module barotropic_mode
   ! ---------------------------------------------------------------------------
 
   subroutine create_Hypre_A_matrix(MPI_COMM_WORLD, hypre_grid, hypre_A, &
-            a, nx, ny, ierr)
+            a, xlow, xhigh, ylow, yhigh, ierr)
     implicit none
 
     integer,          intent(in)  :: MPI_COMM_WORLD
     integer*8,        intent(in)  :: hypre_grid
     integer*8,        intent(out) :: hypre_A
-    double precision, intent(in)  :: a(5, nx, ny)
-    integer,          intent(in)  :: nx, ny
+    double precision, intent(in)  :: a(5, xlow:xhigh, ylow:yhigh)
+    integer,          intent(in)  :: xlow, xhigh, ylow, yhigh
     integer,          intent(out) :: ierr
 
     ! Hypre stencil for creating the A matrix
@@ -266,8 +264,8 @@ module barotropic_mode
 
     call HYPRE_StructMatrixInitialize(hypre_A, ierr)
 
-    do i = 1, nx
-      do j = 1, ny
+    do i = xlow, xhigh
+      do j = ylow, yhigh
         indicies(1) = i
         indicies(2) = j
 
@@ -302,7 +300,7 @@ module barotropic_mode
 
   subroutine Ext_solver(MPI_COMM_WORLD, hypre_A, hypre_grid, myid, num_procs, &
       ilower, iupper, etastar, &
-      etanew, nx, ny, dt, maxits, eps, ierr)
+      etanew, nx, ny, xlow, xhigh, ylow, yhigh, OL, dt, maxits, eps, ierr)
     implicit none
 
     integer,          intent(in)  :: MPI_COMM_WORLD
@@ -312,9 +310,9 @@ module barotropic_mode
     integer,          intent(in)  :: num_procs
     integer,          intent(in)  :: ilower(0:num_procs-1,2)
     integer,          intent(in)  :: iupper(0:num_procs-1,2)
-    double precision, intent(in)  :: etastar(0:nx+1, 0:ny+1)
-    double precision, intent(out) :: etanew(0:nx+1, 0:ny+1)
-    integer,          intent(in)  :: nx, ny
+    double precision, intent(in)  :: etastar(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(out) :: etanew(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    integer,          intent(in)  :: nx, ny, xlow, xhigh, ylow, yhigh, OL
     double precision, intent(in)  :: dt
     integer,          intent(in)  :: maxits
     double precision, intent(in)  :: eps
@@ -325,27 +323,19 @@ module barotropic_mode
     integer*8        :: hypre_x
     integer*8        :: hypre_solver
     integer*8        :: precond
-    double precision, dimension(:),     allocatable :: b_values
-    double precision, dimension(:),     allocatable :: init_values
-    double precision, dimension(:),     allocatable :: final_values
+    double precision :: b_values((xhigh-xlow+1)*(yhigh-ylow+1))
+    double precision :: init_values((xhigh-xlow+1)*(yhigh-ylow+1))
+    double precision :: final_values((xhigh-xlow+1)*(yhigh-ylow+1))
 
     integer :: nx_tile, ny_tile
+    integer :: i_local, j_local
 
         ! A currently unused variable that can be used to
     ! print information from the solver - see comments below.
    ! double precision :: hypre_out(2)
 
-    nx_tile = iupper(myid,1)-ilower(myid,1) + 1
-    ny_tile = iupper(myid,2)-ilower(myid,2) + 1
-
-    allocate(b_values(nx_tile*ny_tile))
-    allocate(init_values(nx_tile*ny_tile))
-    allocate(final_values(nx_tile*ny_tile))
-    ! just nx*ny for the tile this processor owns
-
-
-
-
+    nx_tile = xhigh-xlow + 1
+    ny_tile = yhigh-ylow + 1
 
     ! wrap this code in preprocessing flags to allow the model to be compiled without the external library, if desired.
 #ifdef useExtSolver
@@ -354,12 +344,25 @@ module barotropic_mode
     call HYPRE_StructVectorInitialize(hypre_b, ierr)
 
     ! set rhs values (vector b)
-    do j = ilower(myid,2), iupper(myid,2) ! loop over every grid point
-      do i = ilower(myid,1), iupper(myid,1)
+    do j = ylow, yhigh ! loop over every grid point
+      do i = xlow, xhigh
+
+          i_local = i - xlow
+          j_local = j - ylow
+     
+     ! the 2D array is being laid out like
+     ! [x1y1, x2y1, x3y1, x1y2, x2y2, x3y2, x1y3, x2y3, x3y3]
+
+          b_values(i_local &
+                     + j_local*(xhigh - xlow + 1) &
+                     + 1) = -etastar(i,j)/dt**2
+
+          init_values(i_local &
+                     + j_local*(xhigh - xlow + 1) &
+                     + 1) = etastar(i,j)
+
     ! the 2D array is being laid out like
     ! [x1y1, x2y1, x3y1, x1y2, x2y2, x3y2, x1y3, x2y3, x3y3]
-      b_values( ((j-1)*nx_tile + i) ) = -etastar(i,j)/dt**2
-      init_values( ((j-1)*nx_tile + i) ) = etastar(i,j)
       end do
     end do
 
@@ -436,9 +439,19 @@ module barotropic_mode
     call HYPRE_StructVectorGetBoxValues(hypre_x, &
       ilower(myid,:), iupper(myid,:), final_values, ierr)
 
-    do j = ilower(myid,2), iupper(myid,2) ! loop over every grid point
-      do i = ilower(myid,1), iupper(myid,1)
-      etanew(i,j) = final_values( ((j-1)*nx_tile + i) )
+    do j = ylow, yhigh ! loop over every grid point
+      do i = xlow, xhigh
+        ! etanew(i,j) = final_values( ((j-1)*nx_tile + i) )
+          i_local = i - xlow
+          j_local = j - ylow
+     
+     ! the 2D array is being laid out like
+     ! [x1y1, x2y1, x3y1, x1y2, x2y2, x3y2, x1y3, x2y3, x3y3]
+
+          etanew(i,j) = final_values(i_local &
+                                     + j_local*(xhigh - xlow + 1) &
+                                     + 1)
+
       end do
     end do
 
@@ -464,23 +477,23 @@ module barotropic_mode
   !> gradient.
 
   subroutine update_velocities_for_barotropic_tendency(array, etanew, g_vec, &
-      xstep, ystep, dspace, dt, nx, ny, layers)
+      xstep, ystep, dspace, dt, xlow, xhigh, ylow, yhigh, layers, OL)
     implicit none
 
-    double precision, intent(inout) :: array(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in) :: etanew(0:nx+1, 0:ny+1)
+    double precision, intent(inout) :: array(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in) :: etanew(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
     double precision, intent(in) :: g_vec(layers)
     integer, intent(in) :: xstep, ystep
     double precision, intent(in) :: dspace, dt
-    integer, intent(in) :: nx, ny, layers
+    integer, intent(in) :: xlow, xhigh, ylow, yhigh, layers, OL
 
     integer i, j, k
     double precision baro_contrib
 
     ! TODO Assert that xstep and ystep are either 1, 0 or 0, 1.
 
-    do i = xstep, nx
-      do j = ystep, ny
+    do i = xlow-OL+xstep, xhigh
+      do j = ylow-OL+ystep, yhigh
         do k = 1, layers
           baro_contrib = &
               -g_vec(1)*(etanew(i,j) - etanew(i-xstep,j-ystep))/(dspace)
@@ -497,25 +510,31 @@ module barotropic_mode
   ! ---------------------------------------------------------------------------
   !> Compute derivatives of the depth field for the pressure solver
 
-  subroutine calc_A_matrix(a, depth, g, dx, dy, nx, ny, freesurfFac, dt, &
+  subroutine calc_A_matrix(a, depth, g, dx, dy, OL, &
+            xlow, xhigh, ylow, yhigh, freesurfFac, dt, &
             hfacW, hfacE, hfacS, hfacN)
     implicit none
 
-    double precision, intent(out) :: a(5, nx, ny)
-    double precision, intent(in)  :: depth(0:nx+1, 0:ny+1)
+    double precision, intent(out) :: a(5, xlow:xhigh, ylow:yhigh)
+    double precision, intent(in)  :: depth(xlow-OL:xhigh+OL, &
+                                            ylow-OL:yhigh+OL)
     double precision, intent(in)  :: g, dx, dy
-    integer, intent(in)           :: nx, ny
+    integer,          intent(in)  :: OL, xlow, xhigh, ylow, yhigh
     double precision, intent(in)  :: freesurfFac
     double precision, intent(in)  :: dt
-    double precision, intent(in)  :: hfacW(0:nx+1, 0:ny+1)
-    double precision, intent(in)  :: hfacE(0:nx+1, 0:ny+1)
-    double precision, intent(in)  :: hfacN(0:nx+1, 0:ny+1)
-    double precision, intent(in)  :: hfacS(0:nx+1, 0:ny+1)
+    double precision, intent(in)  :: hfacW(xlow-OL:xhigh+OL, &
+                                            ylow-OL:yhigh+OL)
+    double precision, intent(in)  :: hfacE(xlow-OL:xhigh+OL, &
+                                            ylow-OL:yhigh+OL)
+    double precision, intent(in)  :: hfacN(xlow-OL:xhigh+OL, &
+                                            ylow-OL:yhigh+OL)
+    double precision, intent(in)  :: hfacS(xlow-OL:xhigh+OL, &
+                                            ylow-OL:yhigh+OL)
 
     integer i, j
 
-    do j = 1, ny
-      do i = 1, nx
+    do j = ylow, yhigh
+      do i = xlow, xhigh
         a(1,i,j) = g*0.5*(depth(i+1,j)+depth(i,j))*hfacE(i,j)/dx**2
         a(2,i,j) = g*0.5*(depth(i,j+1)+depth(i,j))*hfacN(i,j)/dy**2
         a(3,i,j) = g*0.5*(depth(i,j)+depth(i-1,j))*hfacW(i,j)/dx**2
@@ -523,8 +542,8 @@ module barotropic_mode
       end do
     end do
 
-    do j = 1, ny
-      do i = 1, nx
+    do j = ylow, yhigh
+      do i = xlow, xhigh
         a(5,i,j) = -a(1,i,j)-a(2,i,j)-a(3,i,j)-a(4,i,j) - freesurfFac/dt**2
       end do
     end do
@@ -538,29 +557,31 @@ module barotropic_mode
   subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
       dx, dy, wetmask, hfacW, hfacS, dt, &
       maxits, eps, rjac, freesurfFac, thickness_error, &
-      debug_level, g_vec, nx, ny, layers, n, &
-       MPI_COMM_WORLD, myid, num_procs, ilower, iupper, &
-       hypre_grid, hypre_A, ierr)
+      debug_level, g_vec, nx, ny, layers, OL, &
+      xlow, xhigh, ylow, yhigh, &
+      n, MPI_COMM_WORLD, myid, num_procs, ilower, iupper, &
+      hypre_grid, hypre_A, ierr)
 
     implicit none
 
-    double precision, intent(inout) :: hnew(0:nx+1, 0:ny+1, layers)
-    double precision, intent(inout) :: unew(0:nx+1, 0:ny+1, layers)
-    double precision, intent(inout) :: vnew(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)    :: eta(0:nx+1, 0:ny+1)
-    double precision, intent(out)   :: etanew(0:nx+1, 0:ny+1)
-    double precision, intent(in)    :: depth(0:nx+1, 0:ny+1)
+    double precision, intent(inout) :: hnew(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(inout) :: unew(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(inout) :: vnew(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in)    :: eta(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(out)   :: etanew(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(in)    :: depth(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
     double precision, intent(in)    :: a(5, nx, ny)
     double precision, intent(in)    :: dx, dy
-    double precision, intent(in)    :: wetmask(0:nx+1, 0:ny+1)
-    double precision, intent(in)    :: hfacW(0:nx+1, 0:ny+1)
-    double precision, intent(in)    :: hfacS(0:nx+1, 0:ny+1)
+    double precision, intent(in)    :: wetmask(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(in)    :: hfacW(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(in)    :: hfacS(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
     double precision, intent(in)    :: dt
     integer,          intent(in)    :: maxits
     double precision, intent(in)    :: eps, rjac, freesurfFac, thickness_error
     integer,          intent(in)    :: debug_level
     double precision, intent(in)    :: g_vec(layers)
-    integer,          intent(in)    :: nx, ny, layers, n
+    integer,          intent(in)    :: nx, ny, layers, OL
+    integer,          intent(in)    :: xlow, xhigh, ylow, yhigh, n
     integer,          intent(in)    :: MPI_COMM_WORLD
     integer,          intent(in)    :: myid, num_procs
     integer,          intent(in)    :: ilower(0:num_procs-1,2)
@@ -570,47 +591,51 @@ module barotropic_mode
     integer,          intent(out) :: ierr
 
     ! barotropic velocity components (for pressure solver)
-    double precision :: ub(nx+1, ny)
-    double precision :: vb(nx, ny+1)
-    double precision :: etastar(0:nx+1, 0:ny+1)
+    double precision :: ub(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision :: vb(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision :: etastar(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
 
     character(10)    :: num
 
     ! Calculate the barotropic velocities
-    call calc_baro_u(ub, unew, hnew, eta, freesurfFac, nx, ny, layers)
-    call calc_baro_v(vb, vnew, hnew, eta, freesurfFac, nx, ny, layers)
+    call calc_baro_u(ub, unew, hnew, eta, freesurfFac, xlow, xhigh, ylow, yhigh, &
+                      layers, OL)
+    call calc_baro_v(vb, vnew, hnew, eta, freesurfFac, xlow, xhigh, ylow, yhigh, &
+                      layers, OL)
     
     if (debug_level .ge. 4) then
-
-      write(num, '(i10.10)') n
-
       ! Output the data to a file
-      open(unit=10, status='replace', file='output/'//'snap.ub.'//num, &
-          form='unformatted')
-      write(10) ub(1:nx+1, 1:ny)
-      close(10)
+      call write_output_3d(ub, nx, ny, 1, ilower, iupper, &
+                          xlow, xhigh, ylow, yhigh, OL, 1, 0, &
+                          n, 'output/snap.ub.', num_procs, myid)
 
-      open(unit=10, status='replace', file='output/'//'snap.vb.'//num, &
-          form='unformatted')
-      write(10) vb(1:nx, 1:ny+1)
-      close(10)
+      call write_output_3d(vb, nx, ny, 1, ilower, iupper, &
+                          xlow, xhigh, ylow, yhigh, OL, 0, 1, &
+                          n, 'output/snap.vb.', num_procs, myid)
     end if
-
 
     ! Calculate divergence of ub and vb, and solve for the pressure
     ! field that removes it
-    call calc_eta_star(ub, vb, eta, etastar, freesurfFac, nx, ny, dx, dy, dt)
+    call calc_eta_star(ub, vb, eta, etastar, freesurfFac, &
+                    xlow, xhigh, ylow, yhigh, OL, dx, dy, dt)
     ! print *, maxval(abs(etastar))
     if (debug_level .ge. 4) then
-      call write_output_2d(etastar, nx, ny, 0, 0, &
-        n, 'output/snap.eta_star.')
+      call write_output_3d(etastar, nx, ny, 1, ilower, iupper, &
+                          xlow, xhigh, ylow, yhigh, OL, 0, 0, &
+                          n, 'output/snap.eta_star.', num_procs, myid)
     end if
 
     ! Prevent barotropic signals from bouncing around outside the
     ! wet region of the model.
     ! etastar = etastar*wetmask
 #ifndef useExtSolver
-    call SOR_solver(a, etanew, etastar, nx, ny, &
+    ! this call IS NOT PARALLEL SAFE
+    ! It has been left with global indicies, since it only works on one core.
+    if (num_procs .ne. 1) then
+      print "(A)", "SOR solver can only be used on one core."
+      call clean_stop(n, .FALSE.)
+    end if
+    call SOR_solver(a, etanew, etastar, nx, ny, OL, &
        dt, rjac, eps, maxits, n)
     ! print *, maxval(abs(etanew))
 #endif
@@ -618,24 +643,26 @@ module barotropic_mode
 #ifdef useExtSolver
     call Ext_solver(MPI_COMM_WORLD, hypre_A, hypre_grid, myid, num_procs, &
       ilower, iupper, etastar, &
-      etanew, nx, ny, dt, maxits, eps, ierr)
+      etanew, nx, ny, xlow, xhigh, ylow, yhigh, OL, dt, maxits, eps, ierr)
 #endif
 
     if (debug_level .ge. 4) then
-      call write_output_2d(etanew, nx, ny, 0, 0, &
-        n, 'output/snap.eta_new.')
+      call write_output_3d(etanew, nx, ny, 1, ilower, iupper, &
+                          xlow, xhigh, ylow, yhigh, OL, 0, 0, &
+                          n, 'output/snap.eta_new.', num_procs, myid)
     end if
 
     etanew = etanew*wetmask
 
-    call wrap_fields_2D(etanew, nx, ny)
+    call update_halos(etanew, nx, ny, 1, ilower, iupper, &
+                          xlow, xhigh, ylow, yhigh, OL, num_procs, myid)
 
     ! Now update the velocities using the barotropic tendency due to
     ! the pressure gradient.
     call update_velocities_for_barotropic_tendency(unew, etanew, g_vec, &
-        1, 0, dx, dt, nx, ny, layers)
+        1, 0, dx, dt, xlow, xhigh, ylow, yhigh, layers, OL)
     call update_velocities_for_barotropic_tendency(vnew, etanew, g_vec, &
-        0, 1, dy, dt, nx, ny, layers)
+        0, 1, dy, dt, xlow, xhigh, ylow, yhigh, layers, OL)
 
     ! We now have correct velocities at the next time step, but the
     ! layer thicknesses were updated using the velocities without
@@ -643,11 +670,13 @@ module barotropic_mode
     ! between layer thicknesses and ocean depth by scaling
     ! thicknesses to agree with free surface.
     call enforce_depth_thickness_consistency(hnew, etanew, depth, &
-        freesurfFac, thickness_error, nx, ny, layers)
+        freesurfFac, thickness_error, xlow, xhigh, ylow, yhigh, layers, OL)
 
     ! Apply the boundary conditions
-    call apply_boundary_conditions(unew, hfacW, wetmask, nx, ny, layers)
-    call apply_boundary_conditions(vnew, hfacS, wetmask, nx, ny, layers)
+    call apply_boundary_conditions(unew, hfacW, wetmask, &
+                                xlow, xhigh, ylow, yhigh, layers, OL)
+    call apply_boundary_conditions(vnew, hfacS, wetmask, &
+                                xlow, xhigh, ylow, yhigh, layers, OL)
 
     return
   end subroutine barotropic_correction

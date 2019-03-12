@@ -2,6 +2,7 @@ module time_stepping
   use state_deriv
   use boundaries
   use adams_bashforth
+  use exchange
   implicit none
 
   contains
@@ -65,24 +66,26 @@ module time_stepping
           spongeHTimeScale, spongeH, &
           spongeUTimeScale, spongeU, &
           spongeVTimeScale, spongeV, &
-          nx, ny, layers, debug_level)
+          nx, ny, layers, ilower, iupper, xlow, xhigh, ylow, yhigh, &
+          OL, num_procs, myid, debug_level)
     implicit none
 
-    double precision, intent(out) :: dhdt(0:nx+1, 0:ny+1, layers, AB_order)
-    double precision, intent(out) :: dudt(0:nx+1, 0:ny+1, layers, AB_order)
-    double precision, intent(out) :: dvdt(0:nx+1, 0:ny+1, layers, AB_order)
-    double precision, intent(inout) :: h(0:nx+1, 0:ny+1, layers)
-    double precision, intent(inout) :: u(0:nx+1, 0:ny+1, layers)
-    double precision, intent(inout) :: v(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in) :: depth(0:nx+1, 0:ny+1, layers)
+
+    double precision, intent(out) :: dhdt(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers, AB_order)
+    double precision, intent(out) :: dudt(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers, AB_order)
+    double precision, intent(out) :: dvdt(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers, AB_order)
+    double precision, intent(inout) :: h(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(inout) :: u(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(inout) :: v(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in) :: depth(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
     double precision, intent(in) :: dx, dy, dt
-    double precision, intent(in) :: wetmask(0:nx+1, 0:ny+1)
-    double precision, intent(in) :: hfacW(0:nx+1, 0:ny+1)
-    double precision, intent(in) :: hfacE(0:nx+1, 0:ny+1)
-    double precision, intent(in) :: hfacN(0:nx+1, 0:ny+1)
-    double precision, intent(in) :: hfacS(0:nx+1, 0:ny+1)
-    double precision, intent(in) :: fu(0:nx+1, 0:ny+1)
-    double precision, intent(in) :: fv(0:nx+1, 0:ny+1)
+    double precision, intent(in) :: wetmask(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(in) :: hfacW(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(in) :: hfacE(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(in) :: hfacN(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(in) :: hfacS(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(in) :: fu(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(in) :: fv(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
     double precision, intent(in) :: au, ar, botDrag
     double precision, intent(in) :: kh(layers), kv
     double precision, intent(in) :: hmin
@@ -92,25 +95,29 @@ module time_stepping
     integer,          intent(in) :: AB_order
     double precision, intent(in) :: g_vec(layers)
     double precision, intent(in) :: rho0
-    double precision, intent(in) :: wind_x(0:nx+1, 0:ny+1)
-    double precision, intent(in) :: wind_y(0:nx+1, 0:ny+1)
+    double precision, intent(in) :: wind_x(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(in) :: wind_y(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
     double precision, intent(in) :: wind_depth
     logical,          intent(in) :: RelativeWind
     double precision, intent(in) :: Cd
-    double precision, intent(in) :: spongeHTimeScale(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in) :: spongeH(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in) :: spongeUTimeScale(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in) :: spongeU(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in) :: spongeVTimeScale(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in) :: spongeV(0:nx+1, 0:ny+1, layers)
-    integer, intent(in) :: nx, ny, layers
-    integer, intent(in) :: debug_level
+    double precision, intent(in) :: spongeHTimeScale(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in) :: spongeH(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in) :: spongeUTimeScale(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in) :: spongeU(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in) :: spongeVTimeScale(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in) :: spongeV(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    integer,          intent(in) :: nx, ny, layers
+    integer,          intent(in) :: ilower(0:num_procs-1,2)
+    integer,          intent(in) :: iupper(0:num_procs-1,2)
+    integer,          intent(in) :: xlow, xhigh, ylow, yhigh, OL
+    integer,          intent(in) :: num_procs, myid
+    integer,          intent(in) :: debug_level
 
 
 
-    double precision :: h_new(0:nx+1, 0:ny+1, layers)
-    double precision :: u_new(0:nx+1, 0:ny+1, layers)
-    double precision :: v_new(0:nx+1, 0:ny+1, layers)
+    double precision :: h_new(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision :: u_new(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision :: v_new(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
     integer          :: t
 
     ! Do some initial time steps with Runge-Kutta second-order.
@@ -128,17 +135,22 @@ module time_stepping
           spongeHTimeScale, spongeH, &
           spongeUTimeScale, spongeU, &
           spongeVTimeScale, spongeV, &
-          nx, ny, layers, 0, debug_level)
+          nx, ny, layers, ilower, iupper, xlow, xhigh, ylow, yhigh, &
+          OL, num_procs, myid, 0, debug_level)
 
             ! Apply the boundary conditions
-      call apply_boundary_conditions(u_new, hfacW, wetmask, nx, ny, layers)
-      call apply_boundary_conditions(v_new, hfacS, wetmask, nx, ny, layers)
+      call apply_boundary_conditions(u_new, hfacW, wetmask, &
+                                xlow, xhigh, ylow, yhigh, layers, OL)
+      call apply_boundary_conditions(v_new, hfacS, wetmask, &
+                                xlow, xhigh, ylow, yhigh, layers, OL)
 
-      ! Wrap fields around for periodic simulations
-      call wrap_fields_3D(u_new, nx, ny, layers)
-      call wrap_fields_3D(v_new, nx, ny, layers)
-      call wrap_fields_3D(h_new, nx, ny, layers)
-
+      ! update global and tile halos with new values
+      call update_halos(h_new, nx, ny, layers, ilower, iupper, &
+                          xlow, xhigh, ylow, yhigh, OL, num_procs, myid)
+      call update_halos(u_new, nx, ny, layers, ilower, iupper, &
+                          xlow, xhigh, ylow, yhigh, OL, num_procs, myid)
+      call update_halos(v_new, nx, ny, layers, ilower, iupper, &
+                          xlow, xhigh, ylow, yhigh, OL, num_procs, myid)
       ! Shuffle arrays: new -> present
       ! thickness and velocity fields
       h = h_new
@@ -165,28 +177,28 @@ module time_stepping
       spongeHTimeScale, spongeH, &
       spongeUTimeScale, spongeU, &
       spongeVTimeScale, spongeV, &
-      nx, ny, layers, n, debug_level)
+      nx, ny, layers, ilower, iupper, xlow, xhigh, ylow, yhigh, &
+      OL, num_procs, myid, n, debug_level)
     implicit none
 
-
-    double precision, intent(out)   :: h_new(0:nx+1, 0:ny+1, layers)
-    double precision, intent(out)   :: u_new(0:nx+1, 0:ny+1, layers)
-    double precision, intent(out)   :: v_new(0:nx+1, 0:ny+1, layers)
-    double precision, intent(inout) :: dhdt(0:nx+1, 0:ny+1, layers, AB_order)
-    double precision, intent(inout) :: dudt(0:nx+1, 0:ny+1, layers, AB_order)
-    double precision, intent(inout) :: dvdt(0:nx+1, 0:ny+1, layers, AB_order)
-    double precision, intent(in)    :: h(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)    :: u(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)    :: v(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)    :: depth(0:nx+1, 0:ny+1, layers)
+    double precision, intent(out)   :: h_new(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(out)   :: u_new(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(out)   :: v_new(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(inout) :: dhdt(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers, AB_order)
+    double precision, intent(inout) :: dudt(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers, AB_order)
+    double precision, intent(inout) :: dvdt(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers, AB_order)
+    double precision, intent(in)    :: h(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in)    :: u(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in)    :: v(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in)    :: depth(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
     double precision, intent(in)    :: dx, dy, dt
-    double precision, intent(in)    :: wetmask(0:nx+1, 0:ny+1)
-    double precision, intent(in)    :: hfacW(0:nx+1, 0:ny+1)
-    double precision, intent(in)    :: hfacE(0:nx+1, 0:ny+1)
-    double precision, intent(in)    :: hfacN(0:nx+1, 0:ny+1)
-    double precision, intent(in)    :: hfacS(0:nx+1, 0:ny+1)
-    double precision, intent(in)    :: fu(0:nx+1, 0:ny+1)
-    double precision, intent(in)    :: fv(0:nx+1, 0:ny+1)
+    double precision, intent(in)    :: wetmask(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(in)    :: hfacW(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(in)    :: hfacE(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(in)    :: hfacN(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(in)    :: hfacS(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(in)    :: fu(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(in)    :: fv(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
     double precision, intent(in)    :: au, ar, botDrag
     double precision, intent(in)    :: kh(layers), kv
     double precision, intent(in)    :: hmin
@@ -195,18 +207,22 @@ module time_stepping
     integer,          intent(in)    :: hAdvecScheme, TS_algorithm, AB_order
     double precision, intent(in)    :: g_vec(layers)
     double precision, intent(in)    :: rho0
-    double precision, intent(in)    :: wind_x(0:nx+1, 0:ny+1)
-    double precision, intent(in)    :: wind_y(0:nx+1, 0:ny+1)
+    double precision, intent(in)    :: wind_x(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(in)    :: wind_y(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
     double precision, intent(in)    :: wind_depth
     logical,          intent(in)    :: RelativeWind
     double precision, intent(in)    :: Cd
-    double precision, intent(in)    :: spongeHTimeScale(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)    :: spongeH(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)    :: spongeUTimeScale(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)    :: spongeU(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)    :: spongeVTimeScale(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in)    :: spongeV(0:nx+1, 0:ny+1, layers)
+    double precision, intent(in)    :: spongeHTimeScale(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in)    :: spongeH(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in)    :: spongeUTimeScale(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in)    :: spongeU(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in)    :: spongeVTimeScale(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in)    :: spongeV(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
     integer,          intent(in)    :: nx, ny, layers
+    integer,          intent(in)    :: ilower(0:num_procs-1,2)
+    integer,          intent(in)    :: iupper(0:num_procs-1,2)
+    integer,          intent(in)    :: xlow, xhigh, ylow, yhigh, OL
+    integer,          intent(in)    :: num_procs, myid
     integer,          intent(in)    :: n
     integer,          intent(in)    :: debug_level
 
@@ -222,12 +238,13 @@ module time_stepping
           spongeHTimeScale, spongeH, &
           spongeUTimeScale, spongeU, &
           spongeVTimeScale, spongeV, &
-          nx, ny, layers, n, debug_level)
+          nx, ny, layers, ilower, iupper, xlow, xhigh, ylow, yhigh, &
+          OL, num_procs, myid, n, debug_level)
 
       ! Use dh/dt, du/dt and dv/dt to step h, u and v forward in time
-      call ForwardEuler(h_new, dhdt, h, dt, nx, ny, layers, AB_order)
-      call ForwardEuler(u_new, dudt, u, dt, nx, ny, layers, AB_order)
-      call ForwardEuler(v_new, dvdt, v, dt, nx, ny, layers, AB_order)
+      call ForwardEuler(h_new, dhdt, h, dt, xlow, xhigh, ylow, yhigh, layers, OL, AB_order)
+      call ForwardEuler(u_new, dudt, u, dt, xlow, xhigh, ylow, yhigh, layers, OL, AB_order)
+      call ForwardEuler(v_new, dvdt, v, dt, xlow, xhigh, ylow, yhigh, layers, OL, AB_order)
 
 
     else if (TS_algorithm .eq. 2) then
@@ -240,12 +257,13 @@ module time_stepping
           spongeHTimeScale, spongeH, &
           spongeUTimeScale, spongeU, &
           spongeVTimeScale, spongeV, &
-          nx, ny, layers, n, debug_level)
+          nx, ny, layers, ilower, iupper, xlow, xhigh, ylow, yhigh, &
+          OL, num_procs, myid, n, debug_level)
 
       ! Use dh/dt, du/dt and dv/dt to step h, u and v forward in time
-      call AB2(h_new, dhdt, h, dt, nx, ny, layers, AB_order)
-      call AB2(u_new, dudt, u, dt, nx, ny, layers, AB_order)
-      call AB2(v_new, dvdt, v, dt, nx, ny, layers, AB_order)
+      call AB2(h_new, dhdt, h, dt, xlow, xhigh, ylow, yhigh, layers, OL, AB_order)
+      call AB2(u_new, dudt, u, dt, xlow, xhigh, ylow, yhigh, layers, OL, AB_order)
+      call AB2(v_new, dvdt, v, dt, xlow, xhigh, ylow, yhigh, layers, OL, AB_order)
 
     else if (TS_algorithm .eq. 3) then
       ! Third-order AB
@@ -257,13 +275,14 @@ module time_stepping
           spongeHTimeScale, spongeH, &
           spongeUTimeScale, spongeU, &
           spongeVTimeScale, spongeV, &
-          nx, ny, layers, n, debug_level)
+          nx, ny, layers, ilower, iupper, xlow, xhigh, ylow, yhigh, &
+          OL, num_procs, myid, n, debug_level)
 
       ! Use dh/dt, du/dt and dv/dt to step h, u and v forward in time with
       ! the Adams-Bashforth third order linear multistep method
-      call AB3(h_new, dhdt, h, dt, nx, ny, layers, AB_order)
-      call AB3(u_new, dudt, u, dt, nx, ny, layers, AB_order)
-      call AB3(v_new, dvdt, v, dt, nx, ny, layers, AB_order)
+      call AB3(h_new, dhdt, h, dt, xlow, xhigh, ylow, yhigh, layers, OL, AB_order)
+      call AB3(u_new, dudt, u, dt, xlow, xhigh, ylow, yhigh, layers, OL, AB_order)
+      call AB3(v_new, dvdt, v, dt, xlow, xhigh, ylow, yhigh, layers, OL, AB_order)
 
     else if (TS_algorithm .eq. 4) then
       ! Fourth-order AB
@@ -276,12 +295,13 @@ module time_stepping
           spongeHTimeScale, spongeH, &
           spongeUTimeScale, spongeU, &
           spongeVTimeScale, spongeV, &
-          nx, ny, layers, n, debug_level)
+          nx, ny, layers, ilower, iupper, xlow, xhigh, ylow, yhigh, &
+          OL, num_procs, myid, n, debug_level)
 
       ! Use dh/dt, du/dt and dv/dt to step h, u and v forward in time
-      call AB4(h_new, dhdt, h, dt, nx, ny, layers, AB_order)
-      call AB4(u_new, dudt, u, dt, nx, ny, layers, AB_order)
-      call AB4(v_new, dvdt, v, dt, nx, ny, layers, AB_order)
+      call AB4(h_new, dhdt, h, dt, xlow, xhigh, ylow, yhigh, layers, OL, AB_order)
+      call AB4(u_new, dudt, u, dt, xlow, xhigh, ylow, yhigh, layers, OL, AB_order)
+      call AB4(v_new, dvdt, v, dt, xlow, xhigh, ylow, yhigh, layers, OL, AB_order)
 
     else if (TS_algorithm .eq. 5) then
       ! Fifth-order AB
@@ -294,12 +314,13 @@ module time_stepping
           spongeHTimeScale, spongeH, &
           spongeUTimeScale, spongeU, &
           spongeVTimeScale, spongeV, &
-          nx, ny, layers, n, debug_level)
+          nx, ny, layers, ilower, iupper, xlow, xhigh, ylow, yhigh, &
+          OL, num_procs, myid, n, debug_level)
 
       ! Use dh/dt, du/dt and dv/dt to step h, u and v forward in time
-      call AB5(h_new, dhdt, h, dt, nx, ny, layers, AB_order)
-      call AB5(u_new, dudt, u, dt, nx, ny, layers, AB_order)
-      call AB5(v_new, dvdt, v, dt, nx, ny, layers, AB_order)
+      call AB5(h_new, dhdt, h, dt, xlow, xhigh, ylow, yhigh, layers, OL, AB_order)
+      call AB5(u_new, dudt, u, dt, xlow, xhigh, ylow, yhigh, layers, OL, AB_order)
+      call AB5(v_new, dvdt, v, dt, xlow, xhigh, ylow, yhigh, layers, OL, AB_order)
 
     else if (TS_algorithm .eq. 12) then
       ! Second-order RK
@@ -311,7 +332,8 @@ module time_stepping
           spongeHTimeScale, spongeH, &
           spongeUTimeScale, spongeU, &
           spongeVTimeScale, spongeV, &
-          nx, ny, layers, n, debug_level)
+          nx, ny, layers, ilower, iupper, xlow, xhigh, ylow, yhigh, &
+          OL, num_procs, myid, n, debug_level)
 
     else if (TS_algorithm .eq. 13) then
       ! Third-order RK
@@ -341,27 +363,28 @@ module time_stepping
           spongeHTimeScale, spongeH, &
           spongeUTimeScale, spongeU, &
           spongeVTimeScale, spongeV, &
-          nx, ny, layers, n, debug_level)
+          nx, ny, layers, ilower, iupper, xlow, xhigh, ylow, yhigh, &
+          OL, num_procs, myid, n, debug_level)
     implicit none
 
-    double precision, intent(out) :: h_new(0:nx+1, 0:ny+1, layers)
-    double precision, intent(out) :: u_new(0:nx+1, 0:ny+1, layers)
-    double precision, intent(out) :: v_new(0:nx+1, 0:ny+1, layers)
-    double precision, intent(out) :: dhdt(0:nx+1, 0:ny+1, layers)
-    double precision, intent(out) :: dudt(0:nx+1, 0:ny+1, layers)
-    double precision, intent(out) :: dvdt(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in) :: h(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in) :: u(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in) :: v(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in) :: depth(0:nx+1, 0:ny+1, layers)
+    double precision, intent(out) :: h_new(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(out) :: u_new(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(out) :: v_new(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(out) :: dhdt(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(out) :: dudt(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(out) :: dvdt(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in) :: h(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in) :: u(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in) :: v(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in) :: depth(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
     double precision, intent(in) :: dx, dy, dt
-    double precision, intent(in) :: wetmask(0:nx+1, 0:ny+1)
-    double precision, intent(in) :: hfacW(0:nx+1, 0:ny+1)
-    double precision, intent(in) :: hfacE(0:nx+1, 0:ny+1)
-    double precision, intent(in) :: hfacN(0:nx+1, 0:ny+1)
-    double precision, intent(in) :: hfacS(0:nx+1, 0:ny+1)
-    double precision, intent(in) :: fu(0:nx+1, 0:ny+1)
-    double precision, intent(in) :: fv(0:nx+1, 0:ny+1)
+    double precision, intent(in) :: wetmask(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(in) :: hfacW(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(in) :: hfacE(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(in) :: hfacN(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(in) :: hfacS(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(in) :: fu(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(in) :: fv(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
     double precision, intent(in) :: au, ar, botDrag
     double precision, intent(in) :: kh(layers), kv
     double precision, intent(in) :: hmin
@@ -370,25 +393,29 @@ module time_stepping
     integer,          intent(in) :: hAdvecScheme
     double precision, intent(in) :: g_vec(layers)
     double precision, intent(in) :: rho0
-    double precision, intent(in) :: wind_x(0:nx+1, 0:ny+1)
-    double precision, intent(in) :: wind_y(0:nx+1, 0:ny+1)
+    double precision, intent(in) :: wind_x(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(in) :: wind_y(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
     double precision, intent(in) :: wind_depth
     logical,          intent(in) :: RelativeWind
     double precision, intent(in) :: Cd
-    double precision, intent(in) :: spongeHTimeScale(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in) :: spongeH(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in) :: spongeUTimeScale(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in) :: spongeU(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in) :: spongeVTimeScale(0:nx+1, 0:ny+1, layers)
-    double precision, intent(in) :: spongeV(0:nx+1, 0:ny+1, layers)
-    integer, intent(in) :: nx, ny, layers
-    integer, intent(in) :: n
-    integer, intent(in) :: debug_level
+    double precision, intent(in) :: spongeHTimeScale(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in) :: spongeH(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in) :: spongeUTimeScale(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in) :: spongeU(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in) :: spongeVTimeScale(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in) :: spongeV(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    integer,          intent(in) :: nx, ny, layers
+    integer,          intent(in) :: ilower(0:num_procs-1,2)
+    integer,          intent(in) :: iupper(0:num_procs-1,2)
+    integer,          intent(in) :: xlow, xhigh, ylow, yhigh, OL
+    integer,          intent(in) :: num_procs, myid
+    integer,          intent(in) :: n
+    integer,          intent(in) :: debug_level
 
 
-    double precision :: hhalf(0:nx+1, 0:ny+1, layers)
-    double precision :: uhalf(0:nx+1, 0:ny+1, layers)
-    double precision :: vhalf(0:nx+1, 0:ny+1, layers)
+    double precision :: hhalf(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision :: uhalf(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision :: vhalf(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
 
 
       call state_derivative(dhdt, dudt, dvdt, &
@@ -400,7 +427,8 @@ module time_stepping
           spongeHTimeScale, spongeH, &
           spongeUTimeScale, spongeU, &
           spongeVTimeScale, spongeV, &
-          nx, ny, layers, n, debug_level)
+          nx, ny, layers, ilower, iupper, xlow, xhigh, ylow, yhigh, &
+          OL, num_procs, myid, n, debug_level)
 
       ! Calculate the values at half the time interval with Forward Euler
       hhalf = h+0.5d0*dt*dhdt
@@ -416,7 +444,8 @@ module time_stepping
           spongeHTimeScale, spongeH, &
           spongeUTimeScale, spongeU, &
           spongeVTimeScale, spongeV, &
-          nx, ny, layers, n, debug_level)
+          nx, ny, layers, ilower, iupper, xlow, xhigh, ylow, yhigh, &
+          OL, num_procs, myid, n, debug_level)
 
       ! Calculate h, u, v with these tendencies
       h_new = h + dt*dhdt
