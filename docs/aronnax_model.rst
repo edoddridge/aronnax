@@ -50,20 +50,20 @@ in which :math:`h_{n}` is the thickness of layer :math:`n`, and :math:`\mathbf{v
 Momentum equations
 -------------------
 .. math::
-    \frac{D \mathbf{v_{n}}}{D t} +  \mathbf{f} \times \mathbf{v_{n}} + g^{'}\mathbf{\nabla}h_{n} = \mathbf{F_{n}},
+    \frac{D \mathbf{v_{n}}}{D t} +  \mathbf{f} \times \mathbf{v_{n}} + g^{'}\mathbf{\nabla}h_{n} = \frac{\mathbf{F_{n}}}{\rho_{0}},
     :name: eqn_layerwise_momentum
 
 
 
-in which :math:`g^{'}` is the reduced gravity given by :math:`{g(\rho_{2} - \rho_{1})}/{\rho_{1}}`. The reduced gravity is dynamically equivalent to gravity, but is scaled to take into account the density difference between the two layers.
+in which :math:`\mathbf{f}` is the Coriolis parameter, and :math:`g^{'}` is the reduced gravity given by :math:`{g(\rho_{n+1} - \rho_{n})}/{\rho_{0}}`, and :math:`\mathbf{F_{n}}/\rho_{0}` represents the forcing and drag terms acting on layer :math:`n`, scaled by the (constant) background density :math:`\rho_{0}`. The reduced gravity is dynamically equivalent to gravity, but is scaled to take into account the density difference between the two layers. When Aronnax runs in :math:`n`-layer mode there is an additional term on the left-hand side to account for the pressure gradient due to the surface given by :math:`g\mathbf{\nabla}\eta`, where :math:`g` is gravity and :math:`\eta` is the free surface elevation (or the surface pressure field if running with a rigid lid).
 
 This can be rewritten in terms of the Bernoulli Potential to give,
 
 .. math::
-    \frac{\partial\mathbf{v_{n}}}{\partial t} + (f+\zeta_{n}) \times v_{n} + \nabla \Pi_{n} + = \kappa \nabla^{2}v_{n} + \frac{\mathbf{F_{n}}}{\rho_{0}}
+    \frac{\partial\mathbf{v_{n}}}{\partial t} + (f+\zeta_{n}) \times \mathbf{v_{n}} + \nabla \Pi_{n} + = \kappa \nabla^{2} \mathbf{v_{n}} + \frac{\mathbf{F_{n}}}{\rho_{0}}
     :name: eqn_momentum_Bernoulli_form
 
-where :math:`\Pi_{n}` is the Bernoulli potential, :math:`\left(\mathbf{v_{n}}\cdot\mathbf{v_{n}}\right)/2 + p/\rho_{0}`, and :math:`p` is the hydrostatic pressure. In this form the non-linearity from the material derivative has been moved into the Bernoulli Potential and the vorticity term. 
+where :math:`\zeta_{n}` is the relative vorticity in layer :math:`n`, :math:`\Pi_{n}` is the Bernoulli potential in layer :math:`n` defined as :math:`\left(\mathbf{v_{n}}\cdot\mathbf{v_{n}}\right)/2 + p/\rho_{0}` in which :math:`p` is the hydrostatic pressure, and :math:`\kappa` is the viscosity. In this form the non-linearity from the material derivative has been moved into the Bernoulli Potential and the vorticity term. 
 
 
 The model can be used in either reduced gravity mode, with a quiescent abyss, or in n-layer mode with bathymetry. In the n-layer case the model can either be run with a rigid lid, or with a free surface. In n-layer simulations the following equation is also solved
