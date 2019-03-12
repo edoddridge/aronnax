@@ -382,12 +382,31 @@ module model_main
     end if
     
     ! save checkpoint at end of every simulation
-    call maybe_dump_output(h, hav, u, uav, v, vav, eta, etaav, &
-          dudt, dvdt, dhdt, AB_order, &
-          wind_x, wind_y, nx, ny, layers, ilower, iupper, &
-          xlow, xhigh, ylow, yhigh, OL, num_procs, myid, &
-          n, n, n, n-1, n, &
-          RedGrav, DumpWind, 0)
+    call write_checkpoint_output(h, nx, ny, layers, ilower, iupper, &
+                      xlow, xhigh, ylow, yhigh, OL, 1, &
+                      n, 'checkpoints/h.', num_procs, myid)
+    call write_checkpoint_output(u, nx, ny, layers, ilower, iupper, &
+                      xlow, xhigh, ylow, yhigh, OL, 1, &
+                      n, 'checkpoints/u.', num_procs, myid)
+    call write_checkpoint_output(v, nx, ny, layers, ilower, iupper, &
+                      xlow, xhigh, ylow, yhigh, OL, 1, &
+                      n, 'checkpoints/v.', num_procs, myid)
+
+    call write_checkpoint_output(dhdt, nx, ny, layers, ilower, iupper, &
+                      xlow, xhigh, ylow, yhigh, OL, AB_order, &
+                      n, 'checkpoints/dhdt.', num_procs, myid)
+    call write_checkpoint_output(dudt, nx, ny, layers, ilower, iupper, &
+                      xlow, xhigh, ylow, yhigh, OL, AB_order, &
+                      n, 'checkpoints/dudt.', num_procs, myid)
+    call write_checkpoint_output(dvdt, nx, ny, layers, ilower, iupper, &
+                      xlow, xhigh, ylow, yhigh, OL, AB_order, &
+                      n, 'checkpoints/dvdt.', num_procs, myid)
+
+    if (.not. RedGrav) then
+      call write_checkpoint_output(eta, nx, ny, 1, ilower, iupper, &
+                      xlow, xhigh, ylow, yhigh, OL, 1, &
+                      n, 'checkpoints/eta.', num_procs, myid)
+    end if
     
 
     return
