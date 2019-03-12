@@ -140,6 +140,28 @@ def test_gaussian_bump_red_grav():
         assert_volume_conservation(10, 10, 1, 1e-5)
         # assert_diagnostics_similar(['h', 'u', 'v'], 1e-10)
 
+def test_gaussian_bump_red_grav_continuation_of_single_core_MPI_2X():
+    xlen = 1e6
+    ylen = 1e6
+    with working_directory(p.join(self_path, "beta_plane_bump_red_grav")):
+        drv.simulate(initHfile=[bump], exe=test_executable,
+                     nx=10, ny=10, dx=xlen/10, dy=ylen/10,
+                     niter0=101, nTimeSteps=400, nProcX=2)
+        assert_outputs_close(10, 10, 1, 1.5e-13)
+        assert_volume_conservation(10, 10, 1, 1e-5)
+        assert_diagnostics_similar(['h', 'u', 'v'], 1e-10)
+
+
+def test_gaussian_bump_red_grav_MPI_2X():
+    xlen = 1e6
+    ylen = 1e6
+    with working_directory(p.join(self_path, "beta_plane_bump_red_grav")):
+        drv.simulate(initHfile=[bump], exe=test_executable,
+                     nx=10, ny=10, dx=xlen/10, dy=ylen/10,
+                     nProcX=2)
+        assert_outputs_close(10, 10, 1, 1.5e-13)
+        assert_volume_conservation(10, 10, 1, 1e-5)
+        # assert_diagnostics_similar(['h', 'u', 'v'], 1e-10)
 
 def test_gaussian_bump_red_grav_continuation_MPI_2X():
     xlen = 1e6

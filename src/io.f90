@@ -416,7 +416,7 @@ module io
                         n, name, num_procs, myid)
     implicit none
 
-    double precision, intent(in) :: array(1-OL:nx+OL, 1-OL:ny+OL, layers, AB_order)
+    double precision, intent(in) :: array(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers, AB_order)
     integer,          intent(in) :: nx, ny, layers
     integer,          intent(in) :: ilower(0:num_procs-1,2)
     integer,          intent(in) :: iupper(0:num_procs-1,2)
