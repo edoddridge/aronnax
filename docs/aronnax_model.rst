@@ -60,7 +60,7 @@ in which :math:`g^{'}` is the reduced gravity given by :math:`{g(\rho_{2} - \rho
 This can be rewritten in terms of the Bernoulli Potential to give,
 
 .. math::
-    \frac{\partial\mathbf{v_{n}}}{\partial t} - (f+\zeta_{n}) \times v_{n} + \nabla \Pi_{n} + = \kappa \nabla^{2}v_{n} + \frac{\mathbf{F_{n}}}{\rho_{0}}
+    \frac{\partial\mathbf{v_{n}}}{\partial t} + (f+\zeta_{n}) \times v_{n} + \nabla \Pi_{n} + = \kappa \nabla^{2}v_{n} + \frac{\mathbf{F_{n}}}{\rho_{0}}
     :name: eqn_momentum_Bernoulli_form
 
 where :math:`\Pi_{n}` is the Bernoulli potential, :math:`\left(\mathbf{v_{n}}\cdot\mathbf{v_{n}}\right)/2 + p/\rho_{0}`, and :math:`p` is the hydrostatic pressure. In this form the non-linearity from the material derivative has been moved into the Bernoulli Potential and the vorticity term. 
