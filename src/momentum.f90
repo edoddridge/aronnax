@@ -110,8 +110,8 @@ module momentum
     dudt_visc = 0d0
 
     do k = 1, layers
-      do j = ylow, yhigh
-        do i = xlow, xhigh
+      do j = ylow-OL+1, yhigh+OL-1
+        do i = xlow-OL+1, xhigh+OL-1
           dudt_visc(i,j,k) = au*(u(i+1,j,k)+u(i-1,j,k)-2.0d0*u(i,j,k))/(dx*dx) & ! x-component
               + au*(u(i,j+1,k)+u(i,j-1,k)-2.0d0*u(i,j,k) &
                 ! boundary conditions
@@ -148,8 +148,8 @@ module momentum
 
 
     do k = 1, layers
-      do j = ylow, yhigh
-        do i = xlow, xhigh
+      do j = ylow-OL+1, yhigh+OL-1
+        do i = xlow-OL+1, xhigh+OL-1
           dudt_vort(i,j,k) = 0.25d0*(fu(i,j)+0.5d0*(zeta(i,j,k)+zeta(i,j+1,k))) &
                 *(v(i-1,j,k)+v(i,j,k)+v(i-1,j+1,k)+v(i,j+1,k)) ! vorticity term
         end do
@@ -180,8 +180,8 @@ module momentum
 
 
     do k = 1, layers
-      do j = ylow, yhigh
-        do i = xlow, xhigh
+      do j = ylow-OL+1, yhigh+OL-1
+        do i = xlow-OL+1, xhigh+OL-1
           dudt_BP(i,j,k) = - (b(i,j,k) - b(i-1,j,k))/dx ! Bernoulli potential term
         end do
       end do
@@ -212,8 +212,8 @@ module momentum
 
 
     do k = 1, layers
-      do j = ylow, yhigh
-        do i = xlow, xhigh
+      do j = ylow-OL+1, yhigh+OL-1
+        do i = xlow-OL+1, xhigh+OL-1
           dudt_sponge(i,j,k) = + spongeTimeScale(i,j,k)*(spongeU(i,j,k)-u(i,j,k)) ! forced relaxtion in the sponge regions
         end do
       end do
@@ -255,8 +255,8 @@ module momentum
 
     if (wind_depth .eq. 0d0) then
       ! momentum forcing acts only on the top layer (k=1), no matter how thin it gets
-      do j = ylow, yhigh
-        do i = xlow, xhigh
+      do j = ylow-OL+1, yhigh+OL-1
+        do i = xlow-OL+1, xhigh+OL-1
           ! apply wind forcing
           if (RelativeWind) then
             dudt_wind(i,j,1) = (2d0*Cd* &
@@ -274,8 +274,8 @@ module momentum
       recip_wind_depth = 1d0/wind_depth
 
       do k = 1, layers
-        do j = ylow, yhigh
-          do i = xlow, xhigh
+        do j = ylow-OL+1, yhigh+OL-1
+          do i = xlow-OL+1, xhigh+OL-1
 
             if (z(i,j) .le. wind_depth) then
               ! at least a portion of this layer is within wind_depth m
@@ -342,8 +342,8 @@ module momentum
     dudt_drag = 0d0
 
     do k = 1, layers
-      do j = ylow, yhigh
-        do i = xlow, xhigh
+      do j = ylow-OL+1, yhigh+OL-1
+        do i = xlow-OL+1, xhigh+OL-1
           if (layers .gt. 1) then ! only evaluate vertical momentum diffusivity if more than 1 layer
             if (k .eq. 1) then ! adapt vertical momentum diffusivity for 2+ layer model -> top layer
               dudt_drag(i,j,k) = - 1.0d0*ar*(u(i,j,k) - 1.0d0*u(i,j,k+1))
@@ -473,8 +473,8 @@ module momentum
     dvdt_visc = 0d0
 
     do k = 1, layers
-      do j = ylow, yhigh
-        do i = xlow, xhigh
+      do j = ylow-OL+1, yhigh+OL-1
+        do i = xlow-OL+1, xhigh+OL-1
           dvdt_visc(i,j,k) = &
               au*(v(i+1,j,k)+v(i-1,j,k)-2.0d0*v(i,j,k) &
                 ! boundary conditions
@@ -509,8 +509,8 @@ module momentum
     dvdt_vort = 0d0
 
     do k = 1, layers
-      do j = ylow, yhigh
-        do i = xlow, xhigh
+      do j = ylow-OL+1, yhigh+OL-1
+        do i = xlow-OL+1, xhigh+OL-1
           dvdt_vort(i,j,k) = &
               - 0.25d0*(fv(i,j)+0.5d0*(zeta(i,j,k)+zeta(i+1,j,k))) &
                 *(u(i,j-1,k)+u(i,j,k)+u(i+1,j-1,k)+u(i+1,j,k)) !vorticity term
@@ -542,8 +542,8 @@ module momentum
     dvdt_BP = 0d0
 
     do k = 1, layers
-      do j = ylow, yhigh
-        do i = xlow, xhigh
+      do j = ylow-OL+1, yhigh+OL-1
+        do i = xlow-OL+1, xhigh+OL-1
           dvdt_BP(i,j,k) = - (b(i,j,k)-b(i,j-1,k))/dy ! Bernoulli Potential term
         end do
       end do
@@ -574,8 +574,8 @@ module momentum
     dvdt_sponge = 0d0
 
     do k = 1, layers
-      do j = ylow, yhigh
-        do i = xlow, xhigh
+      do j = ylow-OL+1, yhigh+OL-1
+        do i = xlow-OL+1, xhigh+OL-1
           dvdt_sponge(i,j,k) =  spongeTimeScale(i,j,k)*(spongeV(i,j,k)-v(i,j,k))
           ! forced relaxtion to vsponge (in the sponge regions)
         end do
@@ -618,8 +618,8 @@ module momentum
 
     if (wind_depth .eq. 0d0) then
       ! momentum forcing acts only on the top layer (k=1), no matter how thin it gets
-      do j = ylow, yhigh
-        do i = xlow, xhigh
+      do j = ylow-OL+1, yhigh+OL-1
+        do i = xlow-OL+1, xhigh+OL-1
           ! apply wind forcing
           if (RelativeWind) then
             dvdt_wind(i,j,1) = (2d0*Cd* &
@@ -637,8 +637,8 @@ module momentum
       recip_wind_depth = 1d0/wind_depth
 
       do k = 1, layers
-        do j = ylow, yhigh
-          do i = xlow, xhigh
+        do j = ylow-OL+1, yhigh+OL-1
+          do i = xlow-OL+1, xhigh+OL-1
             if (z(i,j) .le. wind_depth) then
               ! at least a portion of this layer is within wind_depth m
               ! of the surface
@@ -705,8 +705,8 @@ module momentum
     dvdt_drag = 0d0
 
     do k = 1, layers
-      do j = ylow, yhigh
-        do i = xlow, xhigh
+      do j = ylow-OL+1, yhigh+OL-1
+        do i = xlow-OL+1, xhigh+OL-1
           if (layers .gt. 1) then ! only evaluate vertical momentum diffusivity if more than 1 layer
             if (k .eq. 1) then ! adapt vertical momentum diffusivity for 2+ layer model -> top layer
               dvdt_drag(i,j,k) =  - 1.0d0*ar*(v(i,j,k) - 1.0d0*v(i,j,k+1))

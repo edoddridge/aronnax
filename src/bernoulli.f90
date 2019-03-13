@@ -62,8 +62,8 @@ module bernoulli
 
     ! For the rest of the layers we get a baroclinic pressure contribution
     do k = 1, layers ! move through the different layers of the model
-      do j = ylow, yhigh ! move through longitude
-        do i = xlow, xhigh ! move through latitude
+      do j = ylow-OL+1, yhigh+OL-1 ! move through longitude
+        do i = xlow-OL+1, xhigh+OL-1 ! move through latitude
           b(i,j,k) = M(i,j,k) &
               + (u(i,j,k)**2+u(i+1,j,k)**2+v(i,j,k)**2+v(i,j+1,k)**2)/4.0d0
           ! Add the (u^2 + v^2)/2 term to the Montgomery Potential
@@ -101,8 +101,8 @@ module bernoulli
     b = 0d0
 
     do k = 1, layers ! move through the different layers of the model
-      do j = ylow, yhigh ! move through longitude
-        do i = xlow, xhigh ! move through latitude
+      do j = ylow-OL+1, yhigh+OL-1 ! move through longitude
+        do i = xlow-OL+1, xhigh+OL-1 ! move through latitude
           ! The following loops are to get the pressure term in the
           ! Bernoulli Potential
           b_proto = 0d0

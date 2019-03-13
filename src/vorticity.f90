@@ -28,8 +28,8 @@ module vorticity
     zeta = 0d0
 
     do k = 1, layers
-      do j = ylow, yhigh+OL
-        do i = xlow, xhigh+OL
+      do j = ylow-OL+1, yhigh+OL
+        do i = xlow-OL+1, xhigh+OL
           zeta(i,j,k) = (v(i,j,k)-v(i-1,j,k))/dx-(u(i,j,k)-u(i,j-1,k))/dy
         end do
       end do
