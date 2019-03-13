@@ -50,12 +50,12 @@ in which :math:`h_{n}` is the thickness of layer :math:`n`, and :math:`\mathbf{v
 Momentum equations
 -------------------
 .. math::
-    \frac{D \mathbf{v_{n}}}{D t} +  \mathbf{f} \times \mathbf{v_{n}} + g^{'}\mathbf{\nabla}h_{n} = \frac{\mathbf{F_{n}}}{\rho_{0}},
+    \frac{D \mathbf{v_{n}}}{D t} +  \mathbf{f} \times \mathbf{v_{n}} + g'\mathbf{\nabla}h_{n} = \frac{\mathbf{F_{n}}}{\rho_{0}},
     :name: eqn_layerwise_momentum
 
 
 
-in which :math:`\mathbf{f}` is the Coriolis parameter, and :math:`g^{'}` is the reduced gravity given by :math:`{g(\rho_{n+1} - \rho_{n})}/{\rho_{0}}`, and :math:`\mathbf{F_{n}}/\rho_{0}` represents the forcing and drag terms acting on layer :math:`n`, scaled by the (constant) background density :math:`\rho_{0}`. The reduced gravity is dynamically equivalent to gravity, but is scaled to take into account the density difference between the two layers. When Aronnax runs in :math:`n`-layer mode there is an additional term on the left-hand side to account for the pressure gradient due to the surface given by :math:`g\mathbf{\nabla}\eta`, where :math:`g` is gravity and :math:`\eta` is the free surface elevation (or the surface pressure field if running with a rigid lid).
+in which :math:`\mathbf{f}` is the Coriolis parameter, and :math:`g'` is the reduced gravity given by :math:`{g(\rho_{n+1} - \rho_{n})}/{\rho_{0}}`, and :math:`\mathbf{F_{n}}/\rho_{0}` represents the forcing and drag terms acting on layer :math:`n`, scaled by the (constant) background density :math:`\rho_{0}`. The reduced gravity is dynamically equivalent to gravity, but is scaled to take into account the density difference between the two layers. When Aronnax runs in :math:`n`-layer mode there is an additional term on the left-hand side to account for the pressure gradient due to the surface given by :math:`g\mathbf{\nabla}\eta`, where :math:`g` is gravity and :math:`\eta` is the free surface elevation (or the surface pressure field if running with a rigid lid).
 
 This can be rewritten in terms of the Bernoulli Potential to give,
 
@@ -169,10 +169,10 @@ displacements of the interface. The momentum equation for the upper
 layer is therefore
 
 .. math::
-    \frac{D\mathbf{V}}{Dt} +  \mathbf{f} \times \mathbf{V} + g^{'}\mathbf{\nabla}h = \mathbf{F},
+    \frac{D\mathbf{V}}{Dt} +  \mathbf{f} \times \mathbf{V} + g'\mathbf{\nabla}h = \mathbf{F},
     :name: eqn_reduced_grav_layer_1_momentum
 
-in which :math:`g^{'}` is the reduced gravity given by
+in which :math:`g'` is the reduced gravity given by
 :math:`{g(\rho_{2} - \rho_{1})}/{\rho_{1}}`. The reduced gravity is
 dynamically equivalent to gravity, but is scaled to take into account
 the density difference between the two layers.
