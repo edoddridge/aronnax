@@ -331,10 +331,7 @@ module model_main
                           xlow, xhigh, ylow, yhigh, OL, num_procs, myid)
       call update_halos(v_new, nx, ny, layers, ilower, iupper, &
                           xlow, xhigh, ylow, yhigh, OL, num_procs, myid)
-      if (.not. RedGrav) then
-        call update_halos(etanew, nx, ny, 1, ilower, iupper, &
-                          xlow, xhigh, ylow, yhigh, OL, num_procs, myid)
-      end if   
+      ! eta_new halo is updated in barotropic_correction
 
       ! Accumulate average fields
       if (avwrite .ne. 0) then

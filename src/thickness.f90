@@ -91,9 +91,6 @@ module thickness
       dhdt(:, :, k) = dhdt(:, :, k) * wetmask
     end do
 
-    ! call wrap_fields_3D(dhdt, nx, ny, layers, OL)
-    call update_halos(dhdt, nx, ny, layers, ilower, iupper, &
-                          xlow, xhigh, ylow, yhigh, OL, num_procs, myid)
     return
   end subroutine evaluate_dhdt
 

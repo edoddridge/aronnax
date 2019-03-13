@@ -71,8 +71,6 @@ module bernoulli
       end do
     end do
 
-    call update_halos(b, nx, ny, layers, ilower, iupper, &
-                          xlow, xhigh, ylow, yhigh, OL, num_procs, myid)
 
     return
   end subroutine evaluate_b_iso
@@ -124,8 +122,6 @@ module bernoulli
       end do
     end do
 
-    call update_halos(b, nx, ny, layers, ilower, iupper, &
-                          xlow, xhigh, ylow, yhigh, OL, num_procs, myid)
     return
   end subroutine evaluate_b_RedGrav
 

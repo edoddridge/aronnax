@@ -35,8 +35,6 @@ module vorticity
       end do
     end do
 
-    call update_halos(zeta, nx, ny, layers, ilower, iupper, &
-                          xlow, xhigh, ylow, yhigh, OL, num_procs, myid)
     return
   end subroutine evaluate_zeta
 

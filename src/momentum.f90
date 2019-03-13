@@ -80,9 +80,6 @@ module momentum
     dudt = dudt + dudt_visc + dudt_vort + dudt_BP + dudt_sponge + &
             dudt_wind + dudt_drag
 
-    call update_halos(dudt, nx, ny, layers, ilower, iupper, &
-                          xlow, xhigh, ylow, yhigh, OL, num_procs, myid)
-
     return
   end subroutine evaluate_dudt
 
@@ -442,9 +439,6 @@ module momentum
 
     dvdt = dvdt + dvdt_visc + dvdt_vort + dvdt_BP + dvdt_sponge + &
             dvdt_wind + dvdt_drag
-
-    call update_halos(dvdt, nx, ny, layers, ilower, iupper, &
-                          xlow, xhigh, ylow, yhigh, OL, num_procs, myid)
 
     return
   end subroutine evaluate_dvdt
