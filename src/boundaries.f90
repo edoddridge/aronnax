@@ -176,11 +176,15 @@ module boundaries
     double precision, intent(inout) :: array(1-OL:nx+OL, 1-OL:ny+OL, layers)
     integer, intent(in) :: nx, ny, layers, OL
 
-    ! wrap array around for periodicity
-    array(0, :, :) = array(nx, :, :)
-    array(nx+1, :, :) = array(1, :, :)
-    array(:, 0, :) = array(:, ny, :)
-    array(:, ny+1, :) = array(:, 1, :)
+    integer :: k
+
+    do k = 1,layers
+      ! wrap array around for periodicity
+      array(1-OL:0, :, k) = array(nx-OL+1:nx, :, k)
+      array(nx+1:nx+OL, :, k) = array(1:OL, :, k)
+      array(:, 1-OL:0, k) = array(:, ny-OL+1:ny, k)
+      array(:, ny+1:ny+OL, k) = array(:, 1:OL, k)
+    end do
 
     return
   end subroutine wrap_fields_3D
@@ -195,10 +199,10 @@ module boundaries
     integer, intent(in) :: nx, ny, OL
 
     ! wrap array around for periodicity
-    array(0, :) = array(nx, :)
-    array(nx+1, :) = array(1, :)
-    array(:, 0) = array(:, ny)
-    array(:, ny+1) = array(:, 1)
+    array(1-OL:0, :) = array(nx-OL+1:nx, :)
+    array(nx+1:nx+OL, :) = array(1:OL, :)
+    array(:, 1-OL:0) = array(:, ny-OL+1:ny)
+    array(:, ny+1:ny+OL) = array(:, 1:OL)
 
     return
   end subroutine wrap_fields_2D
