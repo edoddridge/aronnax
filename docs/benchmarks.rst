@@ -25,7 +25,7 @@ floor leads to substantially more expensive simulations.
 .. figure:: ../benchmarks/beta_plane_bump/beta_plane_bump_mpi_scaling.png
    :alt: run time for n-layer mode with MPI
 
-   n-layer runtime scaling with number of processors.
+   n-layer runtime for a 480x480x2 layer simulation scaling with number of processors.
    The speed increase with additional processors is not linear, but it
    is is noticeable.
 
@@ -46,8 +46,8 @@ The reduced gravity mode is substantially faster than the n-layer mode.
 .. figure:: ../benchmarks/beta_plane_bump_red_grav/beta_plane_bump_mpi_scaling.png
    :alt: run time for reduced gravity mode with MPI
 
-   Reduced-gravity runtime scaling with number of processors. 
-   As you can see, it's not great, at least on my laptop; your mileage may vary.
+   Reduced-gravity runtime for a 480x480x1.5 layer simulation scaling with number of processors. 
+   As you can see, it's not great; your mileage may vary.
    Luckily, this mode is already very fast.
 
 
