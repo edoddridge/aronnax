@@ -118,7 +118,7 @@ module barotropic_mode
 
     double precision, intent(in)  :: a(5, nx, ny)
     double precision, intent(out) :: etanew(1-OL:nx+OL, 1-OL:ny+OL)
-    double precision, intent(in)  :: etastar(1-OL:nx+OL, 1-OL:ny+OL)
+    double precision, intent(inout)  :: etastar(1-OL:nx+OL, 1-OL:ny+OL)
     integer, intent(in) :: nx, ny, OL
     double precision, intent(in) :: dt
     double precision, intent(in) :: rjac, eps
@@ -129,6 +129,8 @@ module barotropic_mode
     double precision res(nx, ny)
     double precision norm, norm0
     double precision relax_param
+
+    call wrap_fields_2D(etastar, nx, ny, OL)
 
     rhs = -etastar(1:nx,1:ny)/dt**2
     ! first guess for etanew
