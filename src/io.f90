@@ -651,11 +651,11 @@ module io
     if (myid .eq. 0) then
       ! prepare data for file
       do k = 1, layers
-        diag_out(1+(4*(k-1))) = sum(global_array(:,:,k))/dble(size(global_array(:,:,k))) ! mean
-        diag_out(2+(4*(k-1))) = maxval(global_array(:,:,k))
-        diag_out(3+(4*(k-1))) = minval(global_array(:,:,k))
-        diag_out(4+(4*(k-1))) = sqrt( sum( (global_array(:,:,k) - diag_out(1+(4*(k-1))))**2)/ &
-                              dble(size(global_array(:,:,k))))
+        diag_out(1+(4*(k-1))) = sum(global_array(1:nx,1:ny,k))/dble(size(global_array(1:nx,1:ny,k))) ! mean
+        diag_out(2+(4*(k-1))) = maxval(global_array(1:nx,1:ny,k))
+        diag_out(3+(4*(k-1))) = minval(global_array(1:nx,1:ny,k))
+        diag_out(4+(4*(k-1))) = sqrt( sum( (global_array(1:nx,1:ny,k) - diag_out(1+(4*(k-1))))**2)/ &
+                              dble(size(global_array(1:nx,1:ny,k))))
       end do
 
       ! Output the data to a file

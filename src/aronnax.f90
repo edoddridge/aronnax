@@ -97,7 +97,7 @@ program aronnax
   kv = 0d0
 
   ! size of halo region
-  OL = 1
+  OL = 3
 
   open(unit=8, file="parameters.in", status='OLD', recl=80)
   read(unit=8, nml=NUMERICS)

@@ -75,8 +75,8 @@ module thickness
     dhdt = 0d0
 
     do k = 1, layers
-      do j = ylow, yhigh
-        do i = xlow, xhigh
+      do j = ylow-OL+1, yhigh+OL-1
+        do i = xlow-OL+1, xhigh+OL-1
           dhdt(i,j,k) = &
               dhdt_kh(i,j,k) & ! horizontal thickness diffusion
               + dhdt_kv(i,j,k) & ! vetical thickness diffusion 
@@ -91,9 +91,6 @@ module thickness
       dhdt(:, :, k) = dhdt(:, :, k) * wetmask
     end do
 
-    ! call wrap_fields_3D(dhdt, nx, ny, layers, OL)
-    call update_halos(dhdt, nx, ny, layers, ilower, iupper, &
-                          xlow, xhigh, ylow, yhigh, OL, num_procs, myid)
     return
   end subroutine evaluate_dhdt
 
@@ -124,8 +121,8 @@ module thickness
     ! Loop through all layers except lowest and calculate
     ! thickness tendency due to horizontal diffusive mass fluxes
     do k = 1, layers-1
-      do j = ylow, yhigh
-        do i = xlow, xhigh
+      do j = ylow-OL+1, yhigh+OL-1
+        do i = xlow-OL+1, xhigh+OL-1
           ! if h >> hmin, then kappa_local = kh(k)
           ! if h <~ hmin, then kappa_local is very big
           kappa_local = kh(k) + 100d0*exp(-h(i,j,k)/hmin)
@@ -151,8 +148,8 @@ module thickness
     ! using n-layer physics it is constrained to balance the layers
     ! above it.
     if (RedGrav) then
-      do j = ylow, yhigh
-        do i = xlow, xhigh
+      do j = ylow-OL+1, yhigh+OL-1
+        do i = xlow-OL+1, xhigh+OL-1
           ! if h >> hmin, then kappa_local = kh(k)
           ! if h <~ hmin, then kappa_local is very big
           kappa_local = kh(layers) + 100d0*exp(-h(i,j,layers)/hmin)

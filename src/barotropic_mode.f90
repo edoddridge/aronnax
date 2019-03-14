@@ -30,9 +30,9 @@ module barotropic_mode
     ! add free surface elevation to the upper layer
     h_temp(:, :, 1) = h(:, :, 1) + eta*freesurfFac
 
-    do i = xlow, xhigh+1
-      do j = ylow, yhigh
-        do k = 1, layers
+    do k = 1, layers
+      do j = ylow-OL+1, yhigh+OL-1
+        do i = xlow-OL+1, xhigh+OL
           ub(i,j) = ub(i,j) + u(i,j,k)*(h_temp(i,j,k)+h_temp(i-1,j,k))/2d0
         end do
       end do
@@ -63,9 +63,9 @@ module barotropic_mode
     ! add free surface elevation to the upper layer
     h_temp(:, :, 1) = h(:, :, 1) + eta*freesurfFac
 
-    do i = xlow, xhigh
-      do j = ylow, yhigh+1
-        do k = 1, layers
+    do k = 1, layers
+      do j = ylow-OL+1, yhigh+OL
+        do i = xlow-OL+1, xhigh+OL-1
           vb(i,j) = vb(i,j) + v(i,j,k)*(h_temp(i,j,k)+h_temp(i,j-1,k))/2d0
         end do
       end do
@@ -95,8 +95,8 @@ module barotropic_mode
 
     etastar = 0d0
 
-    do i = xlow, xhigh
-      do j = ylow, yhigh
+    do j = ylow-OL+1, yhigh+OL-1
+      do i = xlow-OL+1, xhigh+OL-1
         etastar(i,j) = freesurfFac*eta(i,j) - &
             dt*((ub(i+1,j) - ub(i,j))/dx + (vb(i,j+1) - vb(i,j))/dy)
       end do
@@ -118,7 +118,7 @@ module barotropic_mode
 
     double precision, intent(in)  :: a(5, nx, ny)
     double precision, intent(out) :: etanew(1-OL:nx+OL, 1-OL:ny+OL)
-    double precision, intent(in)  :: etastar(1-OL:nx+OL, 1-OL:ny+OL)
+    double precision, intent(inout)  :: etastar(1-OL:nx+OL, 1-OL:ny+OL)
     integer, intent(in) :: nx, ny, OL
     double precision, intent(in) :: dt
     double precision, intent(in) :: rjac, eps
@@ -129,6 +129,8 @@ module barotropic_mode
     double precision res(nx, ny)
     double precision norm, norm0
     double precision relax_param
+
+    call wrap_fields_2D(etastar, nx, ny, OL)
 
     rhs = -etastar(1:nx,1:ny)/dt**2
     ! first guess for etanew
@@ -492,9 +494,10 @@ module barotropic_mode
 
     ! TODO Assert that xstep and ystep are either 1, 0 or 0, 1.
 
-    do i = xlow-OL+xstep, xhigh
-      do j = ylow-OL+ystep, yhigh
-        do k = 1, layers
+    do k = 1, layers
+      do j = ylow-OL+ystep, yhigh+OL-1
+        do i = xlow-OL+xstep, xhigh+OL-1
+
           baro_contrib = &
               -g_vec(1)*(etanew(i,j) - etanew(i-xstep,j-ystep))/(dspace)
           array(i,j,k) = array(i,j,k) + dt*baro_contrib
@@ -646,13 +649,14 @@ module barotropic_mode
       etanew, nx, ny, xlow, xhigh, ylow, yhigh, OL, dt, maxits, eps, ierr)
 #endif
 
+    etanew = etanew*wetmask
+
     if (debug_level .ge. 4) then
       call write_output_3d(etanew, nx, ny, 1, ilower, iupper, &
                           xlow, xhigh, ylow, yhigh, OL, 0, 0, &
                           n, 'output/snap.eta_new.', num_procs, myid)
     end if
 
-    etanew = etanew*wetmask
 
     call update_halos(etanew, nx, ny, 1, ilower, iupper, &
                           xlow, xhigh, ylow, yhigh, OL, num_procs, myid)
