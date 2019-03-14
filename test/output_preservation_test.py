@@ -24,11 +24,16 @@ def array_relative_error(a1, a2):
     """Return the elementwise absolute difference between the inputs,
 scaled by the maximum value that occurs in the input."""
     denom = max(np.amax(np.absolute(a1)), np.amax(np.absolute(a2)))
-    if denom == 0:
+    difference = np.amax(np.absolute(a1 - a2))
+    if denom < 1e-15:
         # Both input arrays are all zeros, so there is no relative error.
         return 0
     else:
-        return np.absolute(a1 - a2) / denom
+        if difference < 1e-15:
+            # absolute difference between arrays is ~ machine precision
+            return 0
+        else:
+            return difference / denom
 
 def assert_outputs_close(nx, ny, layers, rtol):
 
