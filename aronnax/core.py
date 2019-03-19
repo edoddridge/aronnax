@@ -197,31 +197,31 @@ def open_mfdataarray(files, grid):
 
     if dx ==1 and dy == 1:
         # variable at vorticity location
-        ds = xr.DataArray(ds, coords=dict(time=timestamps,
+        ds = xr.DataArray(ds, coords=dict(iter=timestamps,
                                         layers=np.arange(layers),
                                         yp1=grid.yp1, xp1=grid.xp1),
-                        dims=['time','layers','yp1','xp1'],
+                        dims=['iter','layers','yp1','xp1'],
                         name=output_variables[0])
     elif dx == 1:
         # variable at u location
-        ds = xr.DataArray(ds, coords=dict(time=timestamps,
+        ds = xr.DataArray(ds, coords=dict(iter=timestamps,
                                         layers=np.arange(layers),
                                         y=grid.y, xp1=grid.xp1),
-                        dims=['time','layers','y','xp1'],
+                        dims=['iter','layers','y','xp1'],
                         name=output_variables[0])
     elif dy == 1:
         # variable at v location
-        ds = xr.DataArray(ds, coords=dict(time=timestamps,
+        ds = xr.DataArray(ds, coords=dict(iter=timestamps,
                                         layers=np.arange(layers),
                                         yp1=grid.yp1, x=grid.x),
-                        dims=['time','layers','yp1','x'],
+                        dims=['iter','layers','yp1','x'],
                         name=output_variables[0])
     elif dx == 0 and dy ==0:
         # variable at h location
-        ds = xr.DataArray(ds, coords=dict(time=timestamps,
+        ds = xr.DataArray(ds, coords=dict(iter=timestamps,
                                         layers=np.arange(layers),
                                         y=grid.y, x=grid.x),
-                        dims=['time','layers','y','x'],
+                        dims=['iter','layers','y','x'],
                         name=output_variables[0])
     else:
         # not able to determine where we are
