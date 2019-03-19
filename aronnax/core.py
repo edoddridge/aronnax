@@ -155,7 +155,7 @@ def interpret_raw_file_delayed(name, nx, ny, layers, dx, dy):
     variable_name = '.'.join(variable_name.split('.')[:-1])
 
     d = dsa.from_delayed(delayed(interpret_raw_file)(name, nx, ny, layers),
-                            (layers, ny+dy, nx+dx), float, name=variable_name)
+                            (layers, ny+dy, nx+dx), float)
     return d
 
 
