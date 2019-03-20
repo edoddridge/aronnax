@@ -151,8 +151,6 @@ def interpret_raw_file_delayed(name, nx, ny, layers, dx, dy):
     Use Dask.delayed to lazily load a single output file. While this can be
     used as is, it is intended to be an internal function called by `open_mfdataset`.
     """
-    variable_name = p.basename(name)
-    variable_name = '.'.join(variable_name.split('.')[:-1])
 
     d = dsa.from_delayed(delayed(interpret_raw_file)(name, nx, ny, layers),
                             (layers, ny+dy, nx+dx), float)
