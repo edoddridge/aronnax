@@ -17,7 +17,7 @@ self_path = p.dirname(p.abspath(__file__))
 
 
 def test_open_mfdataarray_u_location():
-    '''Open a number of files and assert that the length of the time
+    '''Open a number of files and assert that the length of the iter
         dimension is the same as the number of files, and that the
         correct x and y variables have been used.'''
 
@@ -32,12 +32,12 @@ def test_open_mfdataarray_u_location():
         output_files = glob.glob('output/snap.u*')
         ds = aro.open_mfdataarray(output_files, grid)
 
-        assert len(output_files) == ds.time.shape[0]
+        assert len(output_files) == ds.iter.shape[0]
         assert nx+1 == ds.xp1.shape[0]
         assert ny == ds.y.shape[0]
 
 def test_open_mfdataarray_v_location():
-    '''Open a number of files and assert that the length of the time
+    '''Open a number of files and assert that the length of the iter
         dimension is the same as the number of files, and that the
         correct x and y variables have been used.'''
 
@@ -52,12 +52,12 @@ def test_open_mfdataarray_v_location():
         output_files = glob.glob('output/snap.v*')
         ds = aro.open_mfdataarray(output_files, grid)
 
-        assert len(output_files) == ds.time.shape[0]
+        assert len(output_files) == ds.iter.shape[0]
         assert nx == ds.x.shape[0]
         assert ny+1 == ds.yp1.shape[0]
 
 def test_open_mfdataarray_h_location():
-    '''Open a number of files and assert that the length of the time
+    '''Open a number of files and assert that the length of the iter
         dimension is the same as the number of files, and that the
         correct x and y variables have been used.'''
 
@@ -71,7 +71,7 @@ def test_open_mfdataarray_h_location():
         output_files = glob.glob('output/snap.h*')
         ds = aro.open_mfdataarray(output_files, grid)
 
-        assert len(output_files) == ds.time.shape[0]
+        assert len(output_files) == ds.iter.shape[0]
         assert nx == ds.x.shape[0]
         assert ny == ds.y.shape[0]
     

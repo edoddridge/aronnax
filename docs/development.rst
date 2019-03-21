@@ -5,6 +5,10 @@ Development
 Since latest release
 --------------------
 
+- open_mfdataarray bugfix. Was loading copies of last array, now loads all timestamps as expected `GH223 <https://github.com/edoddridge/aronnax/pull/223>`_ (20 March 2019)
+- Halos. Improve parallel performance by making better use of tile halos to reduce number of exchange calls `GH220 <https://github.com/edoddridge/aronnax/pull/220>`_ (14 March 2019)
+- Benchmarking. Add figure with runtime for 1.5 and 2 layer configurations on 1-64 processors `GH216 <https://github.com/edoddridge/aronnax/pull/216>`_ (13 March 2019)
+- Docs improvements by @navidcy and @edoddridge `GH215 <https://github.com/edoddridge/aronnax/pull/215>`_ and GH217 <https://github.com/edoddridge/aronnax/pull/217>`_ (13 March 2019)
 - Checkpointing bugfix. Subroutine was using global array indicies for local array `GH214 <https://github.com/edoddridge/aronnax/pull/214>`_ (12 March 2019)
 
 Version 0.3.0 (12 March 2019)
