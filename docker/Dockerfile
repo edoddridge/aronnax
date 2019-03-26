@@ -4,7 +4,8 @@ RUN apt-get update && apt-get install -y \
     gfortran \
     libopenmpi-dev \
     openmpi-bin \
-    python3.6
+    python3.6 \
+    python3-pip
 
 RUN pip3 install \
     scipy \
