@@ -3,7 +3,8 @@ FROM ubuntu:18.04
 RUN apt-get update && apt-get install -y \
     gfortran \
     libopenmpi-dev \
-    openmpi-bin
+    openmpi-bin \
+    python3.6
 
 RUN pip3 install \
     scipy \
