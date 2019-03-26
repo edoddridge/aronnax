@@ -5,7 +5,7 @@ RUN apt-get update && apt-get install -y \
     libopenmpi-dev \
     openmpi-bin
 
-RUN pip install \
+RUN pip3 install \
     scipy \
     numpy \
     pandas \
