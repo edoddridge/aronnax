@@ -4,6 +4,7 @@ RUN apt-get update && apt-get install -y \
     gfortran \
     libopenmpi-dev \
     openmpi-bin \
+    git \
     python3.6 \
     python3-pip
 
