@@ -18,6 +18,10 @@ RUN pip3 install \
     matplotlib \
     pytest
 
-RUN cd /lib/hypre/src && ./configure && make install
+RUN pwd
+
+RUN ls
+
+RUN cd /root/lib/hypre/src && ./configure && make install
 
 RUN cd ../../../ && pip install -e .
