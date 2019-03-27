@@ -23,4 +23,4 @@ RUN git clone --recursive https://github.com/edoddridge/aronnax.git
 
 RUN cd aronnax/lib/hypre/src && ./configure && make install
 
-RUN cd ../../../ && pip3 install -e .
+RUN cd aronnax/ && pip3 install -e .
