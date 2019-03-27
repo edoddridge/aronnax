@@ -18,10 +18,10 @@ RUN pip3 install \
     matplotlib \
     pytest
 
-RUN pwd
+RUN git clone --recursive https://github.com/edoddridge/aronnax.git
 
 RUN ls
 
-RUN cd /root/lib/hypre/src && ./configure && make install
+RUN cd aronnax/lib/hypre/src && ./configure && make install
 
 RUN cd ../../../ && pip install -e .
