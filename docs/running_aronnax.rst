@@ -85,7 +85,7 @@ This parameter allows a simulation to be restarted from the given timestep. It r
 
 wetMaskFile
 -----------
-The wetmask defines which grid points within the computational domain contain fluid. The wetmask is defined on the tracer points, and a value of 1 defines fluid, while a value of 0 defines land. The domain is doubly periodic in `x` and `y` by default. To produce a closed domain the wetmaks should be set to 0 along the edges of the domain. To close the domain it is sufficient to place a strip of land along either the northern or southern boundary and either the western or eastern boundary. You may find it conceptually easier to close both edges.
+The wetmask defines which grid points within the computational domain contain fluid. The wetmask is defined on the tracer points, and a value of 1 defines fluid, while a value of 0 defines land. The domain is doubly periodic in `x` and `y` by default. To produce a closed domain the wetmask should be set to 0 along the edges of the domain. Placing a barrier at either the southern or the northern boundary will remove periodicity in the meridional direction. Similarly, a barrier along either the eastern or western boundary will prevent the model from being periodic in the zonal direction.
 
 RelativeWind
 ------------
