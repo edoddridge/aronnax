@@ -351,6 +351,85 @@ module io
     return
   end subroutine read_input_fileV
 
+! ---------------------------------------------------------------------------
+
+  subroutine read_forcing_fileU(name, array, default, nrecords, nx, ny, layers, OL, &
+                              xlow, xhigh, ylow, yhigh, myid)
+    implicit none
+
+    character(60), intent(in) :: name
+    double precision, intent(out) :: array(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, &
+                                            layers, nrecords)
+    double precision, intent(in) :: default
+    integer, intent(in) :: nrecords, nx, ny, layers, OL
+    integer, intent(in) :: xlow, xhigh, ylow, yhigh
+    integer, intent(in) :: myid
+
+    double precision global_array(1-OL:nx+OL, 1-OL:ny+OL, layers, nrecords)
+    double precision array_small(nx+1, ny, layers, nrecords)
+    integer i, j, k, l
+
+    if (name.ne.'') then
+      open(unit=10, form='unformatted', file=name)
+      read(10) array_small
+      close(10)
+      global_array(1:nx+1, 1:ny, :, :) = array_small
+      do l = 1,nrecords
+        ! wrap array around for periodicity
+        call wrap_fields_3D(global_array(:,:,:,l), nx, ny, layers, OL)
+      end do
+    else
+      global_array = default
+    end if
+
+    do i = xlow-OL, xhigh+OL
+      do j = ylow-OL, yhigh+OL
+        array(i,j,:,:) = global_array(i,j,:,:)
+      end do
+    end do
+
+    return
+  end subroutine read_forcing_fileU
+
+  ! ---------------------------------------------------------------------------
+
+  subroutine read_forcing_fileV(name, array, default, nrecords, nx, ny, layers, OL, &
+                              xlow, xhigh, ylow, yhigh, myid)
+    implicit none
+
+    character(60), intent(in) :: name
+    double precision, intent(out) :: array(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, &
+                                            layers, nrecords)
+    double precision, intent(in) :: default
+    integer, intent(in) :: nrecords, nx, ny, layers, OL
+    integer, intent(in) :: xlow, xhigh, ylow, yhigh
+    integer, intent(in) :: myid
+
+    double precision global_array(1-OL:nx+OL, 1-OL:ny+OL, layers, nrecords)
+    double precision array_small(nx, ny+1, layers, nrecords)
+    integer i, j, k, l
+
+    if (name.ne.'') then
+      open(unit=10, form='unformatted', file=name)
+      read(10) array_small
+      close(10)
+      global_array(1:nx, 1:ny+1, :, :) = array_small
+      do l = 1,nrecords
+        call wrap_fields_3D(global_array(:,:,:,l), nx, ny, layers, OL)
+      end do
+    else
+      global_array = default
+    end if
+
+    do i = xlow-OL, xhigh+OL
+      do j = ylow-OL, yhigh+OL
+        array(i,j,:,:) = global_array(i,j,:,:)
+      end do
+    end do
+
+    return
+  end subroutine read_forcing_fileV
+
   ! ---------------------------------------------------------------------------
 
   subroutine read_input_file_time_series(name, array, default, nTimeSteps)

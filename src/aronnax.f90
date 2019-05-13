@@ -60,8 +60,8 @@ program aronnax
   namelist /INITIAL_CONDITIONS/ initUfile, initVfile, initHfile, initEtaFile
 
   namelist /EXTERNAL_FORCING/ zonalWindFile, meridionalWindFile, &
-      RelativeWind, Cd, &
-      DumpWind, wind_mag_time_series_file, wind_depth
+      RelativeWind, Cd, DumpWind, wind_mag_time_series_file, wind_depth, &
+      wind_n_records, wind_period, wind_loop_fields, wind_interpolate
 
   start_time = time()
 
@@ -83,6 +83,10 @@ program aronnax
 
   ! wind forcing only in the top layer
   wind_depth = 0d0
+  wind_n_records = 1
+  wind_period = 0d0
+  wind_loop_fields = .FALSE.
+  wind_interpolate = .TRUE.
 
   ! use first-order centred differencing
   hAdvecScheme = 1
@@ -207,9 +211,9 @@ program aronnax
   allocate(zeros(layers))
 
   allocate(base_wind_x(ilower(myid,1)-OL:iupper(myid,1)+OL, &
-             ilower(myid,2)-OL:iupper(myid,2)+OL))
+             ilower(myid,2)-OL:iupper(myid,2)+OL, wind_n_records))
   allocate(base_wind_y(ilower(myid,1)-OL:iupper(myid,1)+OL, &
-             ilower(myid,2)-OL:iupper(myid,2)+OL))
+             ilower(myid,2)-OL:iupper(myid,2)+OL, wind_n_records))
   allocate(wind_mag_time_series(nTimeSteps))
 
   allocate(spongeHTimeScale(ilower(myid,1)-OL:iupper(myid,1)+OL, &
@@ -247,12 +251,12 @@ program aronnax
                               ilower(myid,1), iupper(myid,1), &
                               ilower(myid,2), iupper(myid,2), myid)
 
-  call read_input_fileU(zonalWindFile, base_wind_x, 0.d0, nx, ny, 1, &
-                        OL, &
+  call read_forcing_fileU(zonalWindFile, base_wind_x, 0.d0, &
+                              wind_n_records, nx, ny, 1, OL, &
                               ilower(myid,1), iupper(myid,1), &
                               ilower(myid,2), iupper(myid,2), myid)
-  call read_input_fileV(meridionalWindFile, base_wind_y, 0.d0, nx, ny, &
-                        1, OL, &
+  call read_forcing_fileV(meridionalWindFile, base_wind_y, 0.d0, &
+                              wind_n_records, nx, ny, 1, OL, &
                               ilower(myid,1), iupper(myid,1), &
                               ilower(myid,2), iupper(myid,2), myid)
 
@@ -315,7 +319,9 @@ program aronnax
       dumpFreq, avFreq, checkpointFreq, diagFreq, &
       maxits, eps, freesurfFac, thickness_error, &
       debug_level, g_vec, rho0, &
-      base_wind_x, base_wind_y, wind_mag_time_series, wind_depth, &
+      base_wind_x, base_wind_y, wind_mag_time_series, &
+      wind_n_records, wind_period, wind_loop_fields, wind_interpolate, &
+      wind_depth, &
       spongeHTimeScale, spongeUTimeScale, spongeVTimeScale, &
       spongeH, spongeU, spongeV, &
       nx, ny, layers, OL, &

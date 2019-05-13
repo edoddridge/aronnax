@@ -21,7 +21,9 @@ module model_main
       dumpFreq, avFreq, checkpointFreq, diagFreq, &
       maxits, eps, freesurfFac, thickness_error, &
       debug_level, g_vec, rho0, &
-      base_wind_x, base_wind_y, wind_mag_time_series, wind_depth, &
+      base_wind_x, base_wind_y, wind_mag_time_series, &
+      wind_n_records, wind_period, wind_loop_fields, wind_interpolate, &
+      wind_depth, &
       spongeHTimeScale, spongeUTimeScale, spongeVTimeScale, &
       spongeH, spongeU, spongeV, &
       nx, ny, layers, OL, xlow, xhigh, ylow, yhigh, &
@@ -64,9 +66,15 @@ module model_main
     double precision, intent(in) :: g_vec(layers)
     double precision, intent(in) :: rho0
     ! Wind
-    double precision, intent(in) :: base_wind_x(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
-    double precision, intent(in) :: base_wind_y(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(in) :: base_wind_x(xlow-OL:xhigh+OL, &
+                                                ylow-OL:yhigh+OL, wind_n_records)
+    double precision, intent(in) :: base_wind_y(xlow-OL:xhigh+OL, &
+                                                ylow-OL:yhigh+OL, wind_n_records)
     double precision, intent(in) :: wind_mag_time_series(nTimeSteps)
+    integer         , intent(in) :: wind_n_records
+    double precision, intent(in) :: wind_period
+    logical         , intent(in) :: wind_loop_fields
+    logical         , intent(in) :: wind_interpolate
     double precision, intent(in) :: wind_depth
     ! Sponge regions
     double precision, intent(in) :: spongeHTimeScale(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
@@ -138,6 +146,7 @@ module model_main
     ! Wind
     double precision :: wind_x(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
     double precision :: wind_y(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    integer          ::  wind_n
 
     ! Time
     integer*8 :: last_report_time, cur_time
@@ -174,8 +183,8 @@ module model_main
     pi = 3.1415926535897932384
 
     ! Initialize wind fields
-    wind_x = base_wind_x*wind_mag_time_series(1)
-    wind_y = base_wind_y*wind_mag_time_series(1)
+    wind_x = base_wind_x(:,:,1)*wind_mag_time_series(1)
+    wind_y = base_wind_y(:,:,1)*wind_mag_time_series(1)
 
     if (myid .eq. 0) then
       ! Initialise the diagnostic files
@@ -284,8 +293,9 @@ module model_main
 
     do n = niter0+1, niter0+nTimeSteps
 
-      wind_x = base_wind_x*wind_mag_time_series(n-niter0)
-      wind_y = base_wind_y*wind_mag_time_series(n-niter0)
+    ! calculate wind_n
+      wind_x = base_wind_x(:,:,1)*wind_mag_time_series(n-niter0)
+      wind_y = base_wind_y(:,:,1)*wind_mag_time_series(n-niter0)
 
       call timestep(h_new, u_new, v_new, dhdt, dudt, dvdt, &
           h, u, v, depth, &
