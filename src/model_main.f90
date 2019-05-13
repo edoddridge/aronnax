@@ -294,8 +294,18 @@ module model_main
     do n = niter0+1, niter0+nTimeSteps
 
     ! calculate wind_n
-      wind_x = base_wind_x(:,:,1)*wind_mag_time_series(n-niter0)
-      wind_y = base_wind_y(:,:,1)*wind_mag_time_series(n-niter0)
+    if (wind_period .eq. 0) then
+      wind_n = 1
+    else
+      wind_n = FLOOR(n*dt/wind_period)
+    end if
+
+    if (wind_loop_fields) then
+      wind_n = MOD(wind_n, wind_n_records)
+    end if
+
+      wind_x = base_wind_x(:,:,wind_n)*wind_mag_time_series(n-niter0)
+      wind_y = base_wind_y(:,:,wind_n)*wind_mag_time_series(n-niter0)
 
       call timestep(h_new, u_new, v_new, dhdt, dudt, dvdt, &
           h, u, v, depth, &
