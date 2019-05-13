@@ -287,6 +287,41 @@ def time_series_variable(nTimeSteps, dt, func):
             ts_variable[:] = f(nTimeSteps, dt)
     return ts_variable
 
+def u_wind(grid, wind_n_records, f):
+    """Input generator for a wind field at the u location of the grid. If passed a function, then that function can depend only on `X` and `Y`."""
+    X,Y = np.meshgrid(grid.xp1, grid.y)
+    u_variable = np.ones((wind_n_records, grid.ny, grid.nx+1))
+
+
+    if isinstance(f, (int, float)):
+        u_variable = u_variable*f
+    else:
+        if wind_n_records == 1:
+            u_variable[0,:,:] = f(X, Y)
+        elif wind_n_records > 1:
+            u_variable = f(X, Y, wind_n_records)
+        else:
+            raise ValueError('wind_n_records should be 1 or greater')
+    return u_variable
+
+def v_wind(grid, wind_n_records, f):
+    """Input generator for a variable at the v location of the grid. If passed a function, then that function can depend only on `X` and `Y`."""
+    X,Y = np.meshgrid(grid.x, grid.yp1)
+    v_variable = np.ones((wind_n_records, grid.ny+1, grid.nx))
+
+    if isinstance(f, (int, float)):
+        v_variable = v_variable*f
+    else:
+        if wind_n_records == 1:
+            v_variable[0,:,:] = f(X, Y)
+        elif wind_n_records > 1:
+            v_variable = f(X, Y, wind_n_records)
+        else:
+            raise ValueError('wind_n_records should be 1 or greater')
+
+    return v_variable
+
+
 ### Specific construction helpers
 
 def f_plane_f_u(grid, field_layers, coeff):
@@ -331,6 +366,8 @@ ok_generators = {
     'u_point_variable': u_point_variable,
     'v_point_variable': v_point_variable,
     'time_series_variable': time_series_variable,
+    'u_wind': u_wind,
+    'v_wind': v_wind,
     'beta_plane_f_u': beta_plane_f_u,
     'beta_plane_f_v': beta_plane_f_v,
     'f_plane_f_u': f_plane_f_u,
@@ -382,6 +419,8 @@ def interpret_requested_data(requested_data, shape, config):
     grid = Grid(config.getint("grid", "nx"), config.getint("grid", "ny"),
                 config.getint("grid", "layers"),
                 config.getfloat("grid", "dx"), config.getfloat("grid", "dy"))
+    wind_n_records = config.getint("external_forcing", "wind_n_records")
+
     field_layers = find_field_layers(shape, grid)
 
     if isinstance(requested_data, string_types):
@@ -404,6 +443,10 @@ def interpret_requested_data(requested_data, shape, config):
             nTimeSteps = config.getint("numerics", "nTimeSteps")
             dt = config.getfloat("numerics", "dt")
             return time_series_variable(nTimeSteps, dt, requested_data)
+        if shape == 'windU':
+            return u_wind(grid, wind_n_records, *requested_data)
+        if shape == 'windV':
+            return v_wind(grid, wind_n_records, *requested_data)
         else:
             raise Exception("TODO implement custom generation for other input shapes")
 
