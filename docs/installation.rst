@@ -16,9 +16,11 @@ The Python components of Aronnax depend on
 
 | :bash:`numpy`
 | :bash:`scipy`
+| :bash:`tools`
+| :bash:`future`
 |
 
-We recommend installing these with your favourite package manager before installing Aronnax. While the previous dependencies will allow you to run the model, some of the functions for dealing with the output files also depend on
+The final two are required for Python 2/3 compatibility. We recommend installing these with your favourite package manager before installing Aronnax. While the previous dependencies will allow you to run the model, some of the functions for dealing with the output files also depend on
 
 | :bash:`xarray`
 | :bash:`dask`
