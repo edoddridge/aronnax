@@ -67,9 +67,9 @@ module model_main
     double precision, intent(in) :: rho0
     ! Wind
     double precision, intent(in) :: base_wind_x(xlow-OL:xhigh+OL, &
-                                                ylow-OL:yhigh+OL, wind_n_records)
+                                                ylow-OL:yhigh+OL, 0:wind_n_records-1)
     double precision, intent(in) :: base_wind_y(xlow-OL:xhigh+OL, &
-                                                ylow-OL:yhigh+OL, wind_n_records)
+                                                ylow-OL:yhigh+OL, 0:wind_n_records-1)
     double precision, intent(in) :: wind_mag_time_series(nTimeSteps)
     integer         , intent(in) :: wind_n_records
     double precision, intent(in) :: wind_period
@@ -146,7 +146,8 @@ module model_main
     ! Wind
     double precision :: wind_x(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
     double precision :: wind_y(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
-    integer          ::  wind_n
+    integer          :: wind_n, wind_np1
+    double precision :: wind_n_remainder
 
     ! Time
     integer*8 :: last_report_time, cur_time
@@ -183,8 +184,8 @@ module model_main
     pi = 3.1415926535897932384
 
     ! Initialize wind fields
-    wind_x = base_wind_x(:,:,1)*wind_mag_time_series(1)
-    wind_y = base_wind_y(:,:,1)*wind_mag_time_series(1)
+    wind_x = base_wind_x(:,:,0)*wind_mag_time_series(1)
+    wind_y = base_wind_y(:,:,0)*wind_mag_time_series(1)
 
     if (myid .eq. 0) then
       ! Initialise the diagnostic files
@@ -293,19 +294,37 @@ module model_main
 
     do n = niter0+1, niter0+nTimeSteps
 
-    ! calculate wind_n
-    if (wind_period .eq. 0) then
-      wind_n = 1
-    else
-      wind_n = FLOOR(n*dt/wind_period)
-    end if
+      ! calculate wind_n
+      if (wind_period .eq. 0) then
+        wind_n = 0
+        wind_np1 = 0
+        wind_n_remainder = 0
+      else
+        wind_n = FLOOR(n*dt/wind_period)
+        wind_np1 = wind_n + 1
+        wind_n_remainder = (n*dt/wind_period) - wind_n
+      end if
 
-    if (wind_loop_fields) then
-      wind_n = MOD(wind_n, wind_n_records)
-    end if
+      ! prevent wind_n from being too big
+      if (wind_loop_fields) then
+        wind_n = MOD(wind_n, wind_n_records)
+        wind_np1 = MOD(wind_np1, wind_n_records)
+      else
+        wind_n = MIN(wind_n, wind_n_records-1)
+        wind_np1 = MIN(wind_np1, wind_n_records-1)
+      end if
 
-      wind_x = base_wind_x(:,:,wind_n)*wind_mag_time_series(n-niter0)
-      wind_y = base_wind_y(:,:,wind_n)*wind_mag_time_series(n-niter0)
+      if (wind_interpolate) then
+        wind_x = ((1d0 - wind_n_remainder)*base_wind_x(:,:,wind_n) + &
+                    wind_n_remainder*base_wind_x(:,:,wind_np1))* &
+                    wind_mag_time_series(n-niter0)
+        wind_y = ((1d0 - wind_n_remainder)*base_wind_y(:,:,wind_n) + &
+                    wind_n_remainder*base_wind_y(:,:,wind_np1))* &
+                    wind_mag_time_series(n-niter0)
+      else
+        wind_x = base_wind_x(:,:,wind_n)*wind_mag_time_series(n-niter0)
+        wind_y = base_wind_y(:,:,wind_n)*wind_mag_time_series(n-niter0)
+      end if
 
       call timestep(h_new, u_new, v_new, dhdt, dudt, dvdt, &
           h, u, v, depth, &

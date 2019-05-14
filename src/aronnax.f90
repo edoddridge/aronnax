@@ -207,9 +207,9 @@ program aronnax
   allocate(zeros(layers))
 
   allocate(base_wind_x(ilower(myid,1)-OL:iupper(myid,1)+OL, &
-             ilower(myid,2)-OL:iupper(myid,2)+OL, wind_n_records))
+             ilower(myid,2)-OL:iupper(myid,2)+OL, 0:wind_n_records-1))
   allocate(base_wind_y(ilower(myid,1)-OL:iupper(myid,1)+OL, &
-             ilower(myid,2)-OL:iupper(myid,2)+OL, wind_n_records))
+             ilower(myid,2)-OL:iupper(myid,2)+OL, 0:wind_n_records-1))
   allocate(wind_mag_time_series(nTimeSteps))
 
   allocate(spongeHTimeScale(ilower(myid,1)-OL:iupper(myid,1)+OL, &
