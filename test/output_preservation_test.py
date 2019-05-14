@@ -627,3 +627,137 @@ def test_outcropping_Hypre():
                 dt=10, nTimeSteps=1000)
         assert_outputs_close(nx, ny, layers, 3e-12)
         assert_volume_conservation(nx, ny, layers, 3e-5)
+
+def test_Hypre_spatial_wind():
+    nx = 16
+    ny = 32
+    layers = 2
+    xlen = 640e3
+    ylen = 1280e3
+    dx = xlen / nx
+    dy = ylen / ny
+
+    grid = aro.Grid(nx, ny, layers, dx, dy)
+
+    wind_n_records = 2
+
+    def wetmask(X, Y):
+        # water everywhere, doubly periodic
+        wetmask = np.ones(X.shape, dtype=np.float64)
+        wetmask[0,:]  = 0
+        wetmask[-1,:] = 0
+        # wetmask[:,0] = 0
+        # wetmask[:,-1] = 0
+        return wetmask
+
+
+    def wind_x(X, Y, wind_n_records):
+        tau_x = np.zeros((wind_n_records, X.shape[0], X.shape[1]))
+
+        rMx=300e3     # radius of circle where Max wind stress
+
+        for i in range(wind_n_records):
+            X0 = 640e3*i/(wind_n_records-1)
+            r = np.sqrt((Y-640e3)**2 + (X-X0)**2)
+            theta = np.arctan2(Y-640e3, X-X0)
+            tau = np.sin(np.pi*r/rMx/2.)
+            tau_x[i,:,:] = tau*np.sin(theta)
+            r = np.sqrt((Y-640e3)**2 + (X-640e3)**2)
+            tau_x[i, r>2.*rMx] = 0
+
+        return tau_x
+
+    def wind_y(X, Y, wind_n_records):
+        tau_y = np.zeros((wind_n_records, X.shape[0], X.shape[1]))
+        rMx=300e3     # radius of circle where Max wind stress
+
+        for i in range(wind_n_records):
+            X0 = 640e3*i/(wind_n_records-1)
+            r = np.sqrt((Y-640e3)**2 + (X-X0)**2)
+            theta = np.arctan2(Y-640e3, X-X0)
+            tau = np.sin(np.pi*r/rMx/2.)
+            tau_y[i,:,:] = -tau*np.cos(theta)
+            r = np.sqrt((Y-640e3)**2 + (X-640e3)**2)
+            tau_y[i, r>2.*rMx] = 0
+        return tau_y
+
+    with working_directory(p.join(self_path,
+        "shifting_wind")):
+        drv.simulate(
+                initHfile=[400, 400],
+                depthFile=[800],
+                wind_n_records=3,
+                zonalWindFile=[wind_x], meridionalWindFile=[wind_y],
+                wind_mag_time_series_file=[0.1],
+                exe=test_executable, wetMaskFile=[wetmask],
+                nx=nx, ny=ny, dx=dx, dy=dy)
+        assert_outputs_close(nx, ny, layers, 3e-12)
+        assert_volume_conservation(nx, ny, layers, 1e-5)
+        assert_diagnostics_similar(['h', 'u', 'v'], 1e-10)
+
+def test_Hypre_spatial_wind_interp():
+    nx = 16
+    ny = 32
+    layers = 2
+    xlen = 640e3
+    ylen = 1280e3
+    dx = xlen / nx
+    dy = ylen / ny
+
+    grid = aro.Grid(nx, ny, layers, dx, dy)
+
+    wind_n_records = 2
+
+    def wetmask(X, Y):
+        # water everywhere, doubly periodic
+        wetmask = np.ones(X.shape, dtype=np.float64)
+        wetmask[0,:]  = 0
+        wetmask[-1,:] = 0
+        # wetmask[:,0] = 0
+        # wetmask[:,-1] = 0
+        return wetmask
+
+
+    def wind_x(X, Y, wind_n_records):
+        tau_x = np.zeros((wind_n_records, X.shape[0], X.shape[1]))
+
+        rMx=300e3     # radius of circle where Max wind stress
+
+        for i in range(wind_n_records):
+            X0 = 640e3*i/(wind_n_records-1)
+            r = np.sqrt((Y-640e3)**2 + (X-X0)**2)
+            theta = np.arctan2(Y-640e3, X-X0)
+            tau = np.sin(np.pi*r/rMx/2.)
+            tau_x[i,:,:] = tau*np.sin(theta)
+            r = np.sqrt((Y-640e3)**2 + (X-640e3)**2)
+            tau_x[i, r>2.*rMx] = 0
+
+        return tau_x
+
+    def wind_y(X, Y, wind_n_records):
+        tau_y = np.zeros((wind_n_records, X.shape[0], X.shape[1]))
+        rMx=300e3     # radius of circle where Max wind stress
+
+        for i in range(wind_n_records):
+            X0 = 640e3*i/(wind_n_records-1)
+            r = np.sqrt((Y-640e3)**2 + (X-X0)**2)
+            theta = np.arctan2(Y-640e3, X-X0)
+            tau = np.sin(np.pi*r/rMx/2.)
+            tau_y[i,:,:] = -tau*np.cos(theta)
+            r = np.sqrt((Y-640e3)**2 + (X-640e3)**2)
+            tau_y[i, r>2.*rMx] = 0
+        return tau_y
+
+    with working_directory(p.join(self_path,
+        "shifting_wind_interp")):
+        drv.simulate(
+                initHfile=[400, 400],
+                depthFile=[800],
+                wind_n_records=3,
+                zonalWindFile=[wind_x], meridionalWindFile=[wind_y],
+                wind_mag_time_series_file=[0.1],
+                exe=test_executable, wetMaskFile=[wetmask],
+                nx=nx, ny=ny, dx=dx, dy=dy)
+        assert_outputs_close(nx, ny, layers, 3e-12)
+        assert_volume_conservation(nx, ny, layers, 1e-5)
+        assert_diagnostics_similar(['h', 'u', 'v'], 1e-10)
