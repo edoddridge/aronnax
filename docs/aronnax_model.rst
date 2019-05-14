@@ -1,6 +1,8 @@
 The Aronnax Model
 ********************
 
+Aronnax is a highly idealised model for simulating large-scale (100-1000km) flows in the ocean. Aronnax is intended for theoretical and empirical oceanographers, as a (relatively) fast and easy-to-use simulation model, bridging the gap between pencil-and-paper on one hand, and more faithful (and complex) computational models on the other. The numerical core is written in Fortran to improve performance, and wrapped in Python to improve usability. The model domain can be closed at the edges, or may bhorizontally periodic in one or two dimensions, and may include arbitrary bathymetry. This flexibility makes Aronnax a useful tool for theoretical physical oceanographers.
+
 The Physics
 ============
 
