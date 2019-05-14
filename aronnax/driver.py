@@ -90,6 +90,9 @@ def default_configuration():
     config.set("executable", "perf", "False")
 
     config.set("external_forcing", "wind_n_records", "1")
+    config.set("external_forcing", "wind_loop_fields", "False")
+    config.set("external_forcing", "wind_interpolate", "False")
+
 
     config.optionxform = str
     return config
@@ -234,7 +237,8 @@ def fortran_option_string(section, name, config):
             return "'%s'" % (p.join("input", name + '.bin'),)
         else:
             return "''"
-    if name in ["RedGrav", "DumpWind", "RelativeWind"]:
+    if name in ["RedGrav", "DumpWind", "RelativeWind",
+                "wind_loop_fields","wind_interpolate"]:
         if config.getboolean(section, name):
             return ".TRUE."
         else:

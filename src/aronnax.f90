@@ -83,10 +83,6 @@ program aronnax
 
   ! wind forcing only in the top layer
   wind_depth = 0d0
-  wind_n_records = 1
-  wind_period = 0d0
-  wind_loop_fields = .FALSE.
-  wind_interpolate = .TRUE.
 
   ! use first-order centred differencing
   hAdvecScheme = 1
