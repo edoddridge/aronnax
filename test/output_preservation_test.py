@@ -55,24 +55,30 @@ def assert_outputs_close(nx, ny, layers, rtol):
             # print good_ans
             test_passes = False
 
-            plt.figure()
+            fig = plt.figure()
+            ax = fig.add_subplot(111)
             plt.pcolormesh(ans[0,:,:])
             plt.colorbar()
             plt.title(outfile)
+            ax.set_aspect('equal', 'datalim')
             plt.savefig('current_output_{0}.png'.format(outfile[12:]))
             plt.close()
 
-            plt.figure()
+            fig = plt.figure()
+            ax = fig.add_subplot(111)
             plt.pcolormesh(good_ans[0,:,:])
             plt.colorbar()
             plt.title(outfile)
+            ax.set_aspect('equal', 'datalim')
             plt.savefig('blessed_output_{0}.png'.format(outfile[12:]))
             plt.close()
 
-            plt.figure()
+            fig = plt.figure()
+            ax = fig.add_subplot(111)
             plt.pcolormesh(ans[0,:,:] - good_ans[0,:,:], cmap='RdBu_r')
             plt.colorbar()
             plt.title('current - blessed at {0}'.format(outfile[12:]))
+            ax.set_aspect('equal', 'datalim')
             plt.savefig('difference_{0}.png'.format(outfile[12:]))
             plt.close()
 
