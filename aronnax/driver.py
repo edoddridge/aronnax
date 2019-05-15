@@ -88,6 +88,12 @@ def default_configuration():
         config.add_section(section)
     config.set("executable", "valgrind", "False")
     config.set("executable", "perf", "False")
+
+    config.set("external_forcing", "wind_n_records", "1")
+    config.set("external_forcing", "wind_loop_fields", "False")
+    config.set("external_forcing", "wind_interpolate", "False")
+
+
     config.optionxform = str
     return config
 
@@ -150,6 +156,10 @@ section_map = {
     "wind_depth"           : "external_forcing",
     "RelativeWind"         : "external_forcing",
     "Cd"                   : "external_forcing",
+    "wind_n_records"       : "external_forcing",
+    "wind_period"          : "external_forcing",
+    "wind_loop_fields"     : "external_forcing",
+    "wind_interpolate"     : "external_forcing",
     "exe"                  : "executable",
     "valgrind"             : "executable",
     "perf"                 : "executable",
@@ -191,8 +201,8 @@ data_types = {
     "initVfile"            : "3dV",
     "initHfile"            : "3dT",
     "initEtaFile"          : "2dT",
-    "zonalWindFile"        : "2dU",
-    "meridionalWindFile"   : "2dV",
+    "zonalWindFile"        : "windU",
+    "meridionalWindFile"   : "windV",
     "wind_mag_time_series_file" : "time",
 }
 
@@ -227,7 +237,8 @@ def fortran_option_string(section, name, config):
             return "'%s'" % (p.join("input", name + '.bin'),)
         else:
             return "''"
-    if name in ["RedGrav", "DumpWind", "RelativeWind"]:
+    if name in ["RedGrav", "DumpWind", "RelativeWind",
+                "wind_loop_fields","wind_interpolate"]:
         if config.getboolean(section, name):
             return ".TRUE."
         else:
