@@ -38,13 +38,15 @@ def calc_KE (u,v,h, rho0=1028):
 
     return KE
 
-def calc_streamfunction(h, u, grid):
+def calc_streamfunction(h, u, xgcm_grid):
     """
-    Calculate the streamfunction. Located at the tracer point.
+    Calculate the streamfunction. Located at the vorticity point.
     """
-    u_on_h = (u[...,1:].rename({'xp1':'x'}).assign_coords(x=h['x']) +
-           u[...,:-1].rename({'xp1':'x'}).assign_coords(x=h['x']))/2
-    psi = (grid.dy*u_on_h*h).cumsum(dim='y')
+
+    h_on_u = xgcm_grid.interp(h, 'X', boundary='extend')
+
+    psi = xgcm_grid.cumint(h_on_u*u, 'Y', to='outer', boundary='extend')
+
 
     psi.name = 'psi'
     return psi
