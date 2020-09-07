@@ -5,21 +5,15 @@ Analysis functions for Aronnax.
 
 import xarray as xr
 
-def calc_zeta (u,v):
+def calc_zeta (u,v, grid, xgcm_grid):
     """
     Calculate relative vorticity from given velocity fields.
     Located at the vorticity point.
     Velocity fields must be generated with the 'open_mfdataarray' function.
     """
-    dvdy = v.diff(dim='x')[:,:,1:-1,:]/(v.x[2] - v.x[1])
-    dvdy = dvdy.rename({'x': 'xp1'})
-    dvdy = dvdy.assign_coords(xp1= u['xp1'][1:-1])
 
-    dudx = u.diff(dim='y')[:,:,:,1:-1]/(u.y[2] - u.y[1])
-    dudx = dudx.rename({'y': 'yp1'})
-    dudx = dudx.assign_coords(yp1= v['yp1'][1:-1])
-
-    zeta = dvdy - dudx
+    zeta = (xgcm_grid.diff(v, 'X', boundary='extend')/grid.dx
+        - xgcm_grid.diff(u, 'Y', boundary='extend')/grid.dy)
 
     zeta.name = 'zeta'
 
