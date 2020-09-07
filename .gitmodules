@@ -1,3 +1,4 @@
 [submodule "lib/hypre"]
 	path = lib/hypre
-	url = https://github.com/LLNL/hypre.git
+	url = https://github.com/hypre-space/hypre
+
