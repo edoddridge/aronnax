@@ -61,6 +61,18 @@ class Grid(object):
         self.dx = dx
         self.dy = dy
 
+
+def create_xr_grid(nx,ny,layers,dx,dy,x0=0,y0=0):
+
+    grid = Grid(nx,ny,layers,dx,dy,x0=0,y0=0)
+
+    xr_grid = xr.Dataset(coords={'x': (['x',], grid.x),
+                                'xp1': (['xp1',], grid.xp1),
+                                'y': (['y',], grid.y),
+                                'yp1': (['yp1',], grid.yp1),
+                                'layers': (['layers',], np.arange(grid.layers))})
+    return xr_grid
+
 @contextmanager
 def fortran_file(*args, **kwargs):
     f = FortranFile(*args, **kwargs)
