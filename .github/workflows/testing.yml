@@ -1,0 +1,100 @@
+name: build
+
+on:
+  push:
+  pull_request:
+
+jobs:
+ numerics:
+   runs-on: ubuntu-latest
+
+   continue-on-error: true
+
+   steps:
+
+     - name: Checkout
+       uses: actions/checkout@v2.2.0
+       with:
+        submodules: 'true'
+
+     - name: Set up compilers and libraries
+       run: |
+         sudo apt-get update
+         sudo apt-get -qq install gfortran
+         sudo apt-get install libopenmpi-dev
+         sudo apt-get install openmpi-bin
+         sudo apt-get install imagemagick
+         pip install scipy
+         pip install numpy
+         pip install pandas
+         pip install xarray
+         pip install toolz
+         pip install dask
+         pip install future
+         pip install sphinx
+         pip install sphinx_rtd_theme
+         pip install recommonmark
+         pip install matplotlib
+         pip install pytest-cov
+         pip install codecov
+         cd lib/hypre/src
+         ./configure
+         make install
+         cd ../../..
+
+     - name: install
+       run: |
+         . pip install -e .
+
+     - name: Run Hypre tests
+       run: |
+         . pytest --cov=aronnax -k 'Hypre'
+         . codecov
+
+     - name: Run non-Hypre tests
+       run: |
+         . pytest --cov=aronnax -k 'not Hypre'
+         . codecov
+
+ doc_html:
+   runs-on: ubuntu-latest
+
+   continue-on-error: true
+
+   steps:
+     - name: Checkout
+       uses: actions/checkout@v2.2.0
+
+     - name: Set up Python
+       uses: actions/setup-python@v2
+       with:
+         python-version: 3.6
+
+     - name: install dependencies
+       run: ./.github/workflows/install_doc_dependencies.sh
+
+     - name: build docs
+       run: |
+         cd docs
+         sphinx-build -Wa -b html -d _build_doctrees . _build/html
+ doc_latex:
+   runs-on: ubuntu-latest
+
+   continue-on-error: true
+
+   steps:
+     - name: Checkout
+       uses: actions/checkout@v2.2.0
+
+     - name: Set up Python
+       uses: actions/setup-python@v2
+       with:
+         python-version: 3.6
+
+     - name: install dependencies
+       run: ./.github/workflows/install_doc_dependencies.sh
+
+     - name: build docs
+       run: |
+         cd docs
+         make clean latexpdf LATEXOPTS="-interaction=nonstopmode -halt-on-error"
