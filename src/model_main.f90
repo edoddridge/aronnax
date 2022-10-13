@@ -416,7 +416,7 @@ module model_main
       print "(A, I0, A, I0, A)", "Run finished at time step ", &
           n, ", in ", cur_time - start_time, " seconds."
     end if
-    
+
     ! save checkpoint at end of every simulation
     call write_checkpoint_output(h, nx, ny, layers, ilower, iupper, &
                       xlow, xhigh, ylow, yhigh, OL, 1, &
@@ -443,7 +443,7 @@ module model_main
                       xlow, xhigh, ylow, yhigh, OL, 1, &
                       n, 'checkpoints/eta.', num_procs, myid)
     end if
-    
+
 
     return
   end subroutine model_run

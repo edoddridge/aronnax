@@ -292,12 +292,12 @@ module momentum
               forc_frac = 0d0
             end if
 
-            if (relative_wind) then 
+            if (relative_wind) then
               dudt_wind(i,j,k) = forc_frac*(2d0*Cd* &
-                   (wind_x(i,j) - u(i,j,k))* & 
+                   (wind_x(i,j) - u(i,j,k))* &
                 sqrt((wind_x(i,j) - u(i,j,k))**2 + &
                      (wind_y(i,j) - v(i,j,k))**2))/((h(i,j,k) + h(i-1,j,k)))
-            else 
+            else
               dudt_wind(i,j,k) = forc_frac*2d0*wind_x(i,j)/(rho0*(h(i,j,k) &
                                   + h(i-1,j,k)))
             end if

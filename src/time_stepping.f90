@@ -7,7 +7,7 @@ module time_stepping
 
   contains
 
-  
+
   ! ---------------------------------------------------------------------------
   !> Parse the ts_algorithm parameter to determine whether multiple tendency
   !! arrays need to be stored
@@ -54,7 +54,7 @@ module time_stepping
 
   end subroutine set_AB_order
 
-  
+
   ! ---------------------------------------------------------------------------
   !> Initialise tendencies for linear multi-step timestepping algorithms
 

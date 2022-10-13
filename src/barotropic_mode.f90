@@ -3,7 +3,7 @@ module barotropic_mode
   use vorticity
   use boundaries
   use enforce_thickness
-  
+
   implicit none
 
   contains
@@ -351,7 +351,7 @@ module barotropic_mode
 
           i_local = i - xlow
           j_local = j - ylow
-     
+
      ! the 2D array is being laid out like
      ! [x1y1, x2y1, x3y1, x1y2, x2y2, x3y2, x1y3, x2y3, x3y3]
 
@@ -446,7 +446,7 @@ module barotropic_mode
         ! etanew(i,j) = final_values( ((j-1)*nx_tile + i) )
           i_local = i - xlow
           j_local = j - ylow
-     
+
      ! the 2D array is being laid out like
      ! [x1y1, x2y1, x3y1, x1y2, x2y2, x3y2, x1y3, x2y3, x3y3]
 
@@ -605,7 +605,7 @@ module barotropic_mode
                       layers, OL)
     call calc_baro_v(vb, vnew, hnew, eta, freesurf_fac, xlow, xhigh, ylow, yhigh, &
                       layers, OL)
-    
+
     if (debug_level .ge. 4) then
       ! Output the data to a file
       call write_output_3d(ub, nx, ny, 1, ilower, iupper, &

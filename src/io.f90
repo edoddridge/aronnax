@@ -53,8 +53,8 @@ module io
       dump_output = .FALSE.
     end if
 
-    if (dump_output) then 
-      
+    if (dump_output) then
+
       call write_output_3d(h, nx, ny, layers, ilower, iupper, &
                           xlow, xhigh, ylow, yhigh, OL, 0, 0, &
                           n, 'output/snap.h.', num_procs, myid)
@@ -107,7 +107,7 @@ module io
 
       if (n .eq. 1) then
         ! pass, since dumping averages after first timestep isn't helpful
-      else 
+      else
         hav = hav/real(avwrite)
         uav = uav/real(avwrite)
         vav = vav/real(avwrite)
@@ -137,7 +137,7 @@ module io
         ! call break_if_NaN(u, nx, ny, layers, n)
         ! call break_if_NaN(v, nx, ny, layers, n)
       end if
-      
+
       ! Reset average quantities
       hav = 0.0
       uav = 0.0
@@ -625,7 +625,7 @@ module io
     character(*),     intent(in) :: name
 
     character(10)  :: num
-    
+
     write(num, '(i10.10)') n
 
     ! Output the data to a file
