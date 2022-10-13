@@ -10,4 +10,4 @@ Doddridge, E. W., & Radul, A. (2018). Aronnax: An idealised isopycnal ocean mode
 Publications using Aronnax
 ==========================
 
-None published yet - check back once the reviews are finished.
+Doddridge, E. W., Meneghello, G., Marshall, J., Scott, J., & Lique, C. (2019). A Three-way balance in the Beaufort Gyre: The Ice-Ocean Governor, wind stress, and eddy diffusivity. *Journal of Geophysical Research: Oceans*, 124, 3107– 3124. https://doi.org/10.1029/2018JC014897
