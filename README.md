@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/edoddridge/aronnax.svg?branch=master)](https://travis-ci.org/edoddridge/aronnax)
+![Build Status](https://github.com/edoddridge/aronnax/actions/workflows/testing.yml/badge.svg)
 [![codecov](https://codecov.io/gh/edoddridge/aronnax/branch/master/graph/badge.svg)](https://codecov.io/gh/edoddridge/aronnax)
 [![Documentation Status](http://readthedocs.org/projects/aronnax/badge/?version=latest)](http://aronnax.readthedocs.io/en/latest/?badge=latest)
 [![DOI](http://joss.theoj.org/papers/10.21105/joss.00592/status.svg)](https://doi.org/10.21105/joss.00592)
