@@ -49,11 +49,15 @@ jobs:
        run: pytest --cov=aronnax -k 'Hypre and not 2X_2Y'
      - name: Upload coverage to Codecov
        uses: codecov/codecov-action@v3
+       with:
+        gcov: true
 
      - name: Run non-Hypre tests
        run: pytest --cov=aronnax -k 'not Hypre and not 2X_2Y'
      - name: Upload coverage to Codecov
        uses: codecov/codecov-action@v3
+       with:
+        gcov: true
 
  doc_html:
    runs-on: ubuntu-latest
