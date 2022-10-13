@@ -43,18 +43,17 @@ jobs:
          cd ../../..
 
      - name: install
-       run: |
-         . pip install -e .
+       run: pip install -e .
 
      - name: Run Hypre tests
-       run: |
-         . pytest --cov=aronnax -k 'Hypre'
-         . codecov
+       run: pytest --cov=aronnax -k 'Hypre and not 2X_2Y'
+     - name: Upload coverage to Codecov
+       uses: codecov/codecov-action@v3
 
      - name: Run non-Hypre tests
-       run: |
-         . pytest --cov=aronnax -k 'not Hypre'
-         . codecov
+       run: pytest --cov=aronnax -k 'not Hypre and not 2X_2Y'
+     - name: Upload coverage to Codecov
+       uses: codecov/codecov-action@v3
 
  doc_html:
    runs-on: ubuntu-latest
@@ -71,12 +70,14 @@ jobs:
          python-version: 3.6
 
      - name: install dependencies
-       run: ./.github/workflows/install_doc_dependencies.sh
+       run:  |
+         ./.github/workflows/install_doc_dependencies.sh
+         pip install -e .
 
      - name: build docs
        run: |
          cd docs
-         sphinx-build -Wa -b html -d _build_doctrees . _build/html
+         sphinx-build -b html -d _build_doctrees . _build/html
  doc_latex:
    runs-on: ubuntu-latest
 
