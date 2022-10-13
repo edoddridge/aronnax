@@ -3,13 +3,13 @@ module adams_bashforth
 
   contains
 
-  
+
   ! ---------------------------------------------------------------------------
   !> A first-order Forward Euler algorithm
   !! This is not a good algorithm. Don't use it, except to show how
   !! how bad it is.
 
-  subroutine ForwardEuler(X_new, dXdt, X, dt, xlow, xhigh, ylow, yhigh, layers, OL, AB_order)
+  subroutine forward_euler(X_new, dXdt, X, dt, xlow, xhigh, ylow, yhigh, layers, OL, AB_order)
     implicit none
 
     double precision, intent(out) :: X_new(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
@@ -20,7 +20,7 @@ module adams_bashforth
 
     X_new = X + dt*dXdt(:,:,:,1)
 
-  end subroutine ForwardEuler
+  end subroutine forward_euler
 
 ! ---------------------------------------------------------------------------
   !> A second-order Adams-Bashforth algorithm
@@ -37,7 +37,7 @@ module adams_bashforth
 
     ! Cycle tendencies
     dXdt(:,:,:,2) = dXdt(:,:,:,1)
-    
+
   end subroutine AB2
 
 ! ---------------------------------------------------------------------------
@@ -57,7 +57,7 @@ module adams_bashforth
     ! Cycle tendencies
     dXdt(:,:,:,3) = dXdt(:,:,:,2)
     dXdt(:,:,:,2) = dXdt(:,:,:,1)
-    
+
   end subroutine AB3
 
 ! ---------------------------------------------------------------------------
@@ -78,7 +78,7 @@ module adams_bashforth
     dXdt(:,:,:,4) = dXdt(:,:,:,3)
     dXdt(:,:,:,3) = dXdt(:,:,:,2)
     dXdt(:,:,:,2) = dXdt(:,:,:,1)
-    
+
   end subroutine AB4
 
 
@@ -102,7 +102,7 @@ module adams_bashforth
     dXdt(:,:,:,4) = dXdt(:,:,:,3)
     dXdt(:,:,:,3) = dXdt(:,:,:,2)
     dXdt(:,:,:,2) = dXdt(:,:,:,1)
-    
+
   end subroutine AB5
 
 end module adams_bashforth

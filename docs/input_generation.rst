@@ -23,7 +23,7 @@ Pre-existing Fortran files
 
 Fortran unformatted files (often called Fortran binary files) can be used as input. To do this, they should be placed in the 'input' folder, and the name of the file given either in the `aronnax.conf` file, or passed as a keyword argument in the call to `aronnax.driver.simulate`.
 
-The fields need to be the correct shape and size. If they aren't the error messages may be difficult to comprehend or nonexistent depending on whether the field is too big, too small, or the wrong shape. The parameter `DumpWind` can be helpful for ensuring that the wind stress has been set correctly.
+The fields need to be the correct shape and size. If they aren't the error messages may be difficult to comprehend or nonexistent depending on whether the field is too big, too small, or the wrong shape. The parameter `dump_wind` can be helpful for ensuring that the wind stress has been set correctly.
 
 
 Generator functions
@@ -48,7 +48,7 @@ When using generator functions to create the inputs through the call to :meth:`a
 If a function is passed to the generator functions it must depend on:
 
  - `X` and `Y`, created from a `np.meshgrid` call with the appropriate axis, if it is for a 2D field; or
- - `nTimeSteps` and `dt` if it is for a time series.
+ - `n_time_steps` and `dt` if it is for a time series.
 
 All other values used within the function must be set in a namespace that the function has access to, or be hard-coded.
 

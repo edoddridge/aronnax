@@ -145,7 +145,7 @@ def test_gaussian_bump_red_grav():
     xlen = 1e6
     ylen = 1e6
     with working_directory(p.join(self_path, "beta_plane_bump_red_grav")):
-        drv.simulate(initHfile=[bump], exe=test_executable,
+        drv.simulate(init_h_file=[bump], exe=test_executable,
                      nx=10, ny=10, dx=xlen/10, dy=ylen/10)
         assert_outputs_close(10, 10, 1, 1.5e-13)
         assert_volume_conservation(10, 10, 1, 1e-5)
@@ -155,9 +155,9 @@ def test_gaussian_bump_red_grav_continuation_of_single_core_MPI_2X():
     xlen = 1e6
     ylen = 1e6
     with working_directory(p.join(self_path, "beta_plane_bump_red_grav")):
-        drv.simulate(initHfile=[bump], exe=test_executable,
+        drv.simulate(init_h_file=[bump], exe=test_executable,
                      nx=10, ny=10, dx=xlen/10, dy=ylen/10,
-                     niter0=101, nTimeSteps=400, nProcX=2)
+                     niter0=101, n_time_steps=400, n_proc_x=2)
         assert_outputs_close(10, 10, 1, 1.5e-13)
         assert_volume_conservation(10, 10, 1, 1e-5)
         assert_diagnostics_similar(['h', 'u', 'v'], 1e-10)
@@ -167,9 +167,9 @@ def test_gaussian_bump_red_grav_MPI_2X():
     xlen = 1e6
     ylen = 1e6
     with working_directory(p.join(self_path, "beta_plane_bump_red_grav")):
-        drv.simulate(initHfile=[bump], exe=test_executable,
+        drv.simulate(init_h_file=[bump], exe=test_executable,
                      nx=10, ny=10, dx=xlen/10, dy=ylen/10,
-                     nProcX=2)
+                     n_proc_x=2)
         assert_outputs_close(10, 10, 1, 1.5e-13)
         assert_volume_conservation(10, 10, 1, 1e-5)
         # assert_diagnostics_similar(['h', 'u', 'v'], 1e-10)
@@ -178,9 +178,9 @@ def test_gaussian_bump_red_grav_continuation_MPI_2X():
     xlen = 1e6
     ylen = 1e6
     with working_directory(p.join(self_path, "beta_plane_bump_red_grav")):
-        drv.simulate(initHfile=[bump], exe=test_executable,
+        drv.simulate(init_h_file=[bump], exe=test_executable,
                      nx=10, ny=10, dx=xlen/10, dy=ylen/10,
-                     niter0=101, nTimeSteps=400, nProcX=2)
+                     niter0=101, n_time_steps=400, n_proc_x=2)
         assert_outputs_close(10, 10, 1, 1.5e-13)
         assert_volume_conservation(10, 10, 1, 1e-5)
         assert_diagnostics_similar(['h', 'u', 'v'], 1e-10)
@@ -190,7 +190,7 @@ def test_gaussian_bump():
     xlen = 1e6
     ylen = 1e6
     with working_directory(p.join(self_path, "beta_plane_bump")):
-        drv.simulate(initHfile=[bump, lambda X, Y: 2000. - bump(X, Y)],
+        drv.simulate(init_h_file=[bump, lambda X, Y: 2000. - bump(X, Y)],
                      nx=10, ny=10, exe=test_executable, dx=xlen/10, dy=ylen/10)
         assert_outputs_close(10, 10, 2, 2e-13)
         assert_volume_conservation(10, 10, 2, 1e-5)
@@ -199,10 +199,10 @@ def test_gaussian_bump_continuation():
     xlen = 1e6
     ylen = 1e6
     with working_directory(p.join(self_path, "beta_plane_bump")):
-        drv.simulate(initHfile=[bump, lambda X, Y: 2000. - bump(X, Y)],
+        drv.simulate(init_h_file=[bump, lambda X, Y: 2000. - bump(X, Y)],
                      nx=10, ny=10, exe=test_executable, 
                      dx=xlen/10, dy=ylen/10,
-                     niter0=201, nTimeSteps=200)
+                     niter0=201, n_time_steps=200)
         assert_outputs_close(10, 10, 2, 2e-13)
         assert_volume_conservation(10, 10, 2, 1e-5)
         assert_diagnostics_similar(['h', 'u', 'v', 'eta'], 1e-10)
@@ -211,7 +211,7 @@ def test_gaussian_bump_debug_test():
     xlen = 1e6
     ylen = 1e6
     with working_directory(p.join(self_path, "beta_plane_bump_debug_test")):
-        drv.simulate(initHfile=[bump, lambda X, Y: 2000. - bump(X, Y)],
+        drv.simulate(init_h_file=[bump, lambda X, Y: 2000. - bump(X, Y)],
                      nx=10, ny=10, exe=test_executable, dx=xlen/10, dy=ylen/10)
         assert_outputs_close(10, 10, 2, 2e-13)
         assert_volume_conservation(10, 10, 2, 1e-5)
@@ -221,9 +221,9 @@ def test_gaussian_bump_red_grav_debug_test():
     xlen = 1e6
     ylen = 1e6
     with working_directory(p.join(self_path, "beta_plane_bump_red_grav_debug_test")):
-        drv.simulate(initHfile=[bump], exe=test_executable,
+        drv.simulate(init_h_file=[bump], exe=test_executable,
                      nx=10, ny=10, dx=xlen/10, dy=ylen/10,
-                     nProcY=2
+                     n_proc_y=2
                      )
         assert_outputs_close(10, 10, 1, 1.5e-13)
         assert_volume_conservation(10, 10, 1, 1e-5)
@@ -238,9 +238,9 @@ def test_beta_plane_gyre_red_grav():
     def wind(_, Y):
         return 0.05 * (1 - np.cos(2*np.pi * Y/np.max(grid.y)))
     with working_directory(p.join(self_path, "beta_plane_gyre_red_grav")):
-        drv.simulate(zonalWindFile=[wind], valgrind=False,
+        drv.simulate(zonal_wind_file=[wind], valgrind=False,
                      nx=nx, ny=ny, exe=test_executable, dx=xlen/nx, dy=ylen/ny,
-                     nProcX=2)
+                     n_proc_x=2)
         assert_outputs_close(nx, ny, layers, 4e-13)
         assert_volume_conservation(nx, ny, layers, 1e-5)
         assert_diagnostics_similar(['h', 'u', 'v'], 1e-10)
@@ -254,7 +254,7 @@ def test_beta_plane_gyre():
     def wind(_, Y):
         return 0.05 * (1 - np.cos(2*np.pi * Y/np.max(grid.y)))
     with working_directory(p.join(self_path, "beta_plane_gyre")):
-        drv.simulate(zonalWindFile=[wind], valgrind=False,
+        drv.simulate(zonal_wind_file=[wind], valgrind=False,
                      nx=nx, ny=ny, exe="aronnax_test", dx=xlen/nx, dy=ylen/ny)
         assert_outputs_close(nx, ny, layers, 3e-12)
         assert_volume_conservation(nx, ny, layers, 1e-5)
@@ -269,13 +269,13 @@ def test_beta_plane_gyre_free_surf():
     def wind(_, Y):
         return 0.05 * (1 - np.cos(2*np.pi * Y/np.max(grid.y)))
     with working_directory(p.join(self_path, "beta_plane_gyre_free_surf")):
-        drv.simulate(zonalWindFile=[wind], valgrind=False,
+        drv.simulate(zonal_wind_file=[wind], valgrind=False,
                      nx=nx, ny=ny, exe=test_executable, dx=xlen/nx, dy=ylen/ny)
         assert_outputs_close(nx, ny, layers, 3e-12)
         assert_volume_conservation(nx, ny, layers, 1e-5)
         assert_diagnostics_similar(['h', 'u', 'v', 'eta'], 1e-8)
 
-def test_beta_plane_gyre_free_surf_Hypre_MPI(nProcX=1, nProcY=1):
+def test_beta_plane_gyre_free_surf_Hypre_MPI(n_proc_x=1, n_proc_y=1):
     xlen = 1e6
     ylen = 2e6
     nx = 10; ny = 20
@@ -286,38 +286,38 @@ def test_beta_plane_gyre_free_surf_Hypre_MPI(nProcX=1, nProcY=1):
         return 0.05 * (1 - np.cos(2*np.pi * Y/np.max(grid.y)))
 
     with working_directory(p.join(self_path, "beta_plane_gyre_free_surf_hypre")):
-        if (nProcX == 1 and nProcY == 1):
-            drv.simulate(zonalWindFile=[wind], valgrind=False,
+        if (n_proc_x == 1 and n_proc_y == 1):
+            drv.simulate(zonal_wind_file=[wind], valgrind=False,
                          nx=nx, ny=ny, exe='aronnax_external_solver_test',
                          dx=xlen/nx, dy=ylen/ny)
-        elif (nProcX != 1 and nProcY == 1):
-            drv.simulate(zonalWindFile=[wind], valgrind=False,
+        elif (n_proc_x != 1 and n_proc_y == 1):
+            drv.simulate(zonal_wind_file=[wind], valgrind=False,
                          nx=nx, ny=ny, exe='aronnax_external_solver_test',
                          dx=xlen/nx, dy=ylen/ny,
-                         nProcX=nProcX)
-        elif (nProcX == 1 and nProcY != 1):
-            drv.simulate(zonalWindFile=[wind], valgrind=False,
+                         n_proc_x=n_proc_x)
+        elif (n_proc_x == 1 and n_proc_y != 1):
+            drv.simulate(zonal_wind_file=[wind], valgrind=False,
                          nx=nx, ny=ny, exe='aronnax_external_solver_test',
                          dx=xlen/nx, dy=ylen/ny,
-                         nProcY=nProcY)
+                         n_proc_y=n_proc_y)
         else:
-            drv.simulate(zonalWindFile=[wind], valgrind=False,
+            drv.simulate(zonal_wind_file=[wind], valgrind=False,
                          nx=nx, ny=ny, exe='aronnax_external_solver_test',
                          dx=xlen/nx, dy=ylen/ny,
-                         nProcX=nProcX, nProcY=nProcY)
+                         n_proc_x=n_proc_x, n_proc_y=n_proc_y)
 
         assert_outputs_close(nx, ny, layers, 3e-12)
         assert_volume_conservation(nx, ny, layers, 1e-5)
         assert_diagnostics_similar(['h', 'u', 'v', 'eta'], 1e-8)
 
 def test_beta_plane_gyre_free_surf_Hypre_MPI_2X():
-    test_beta_plane_gyre_free_surf_Hypre_MPI(nProcX=2)
+    test_beta_plane_gyre_free_surf_Hypre_MPI(n_proc_x=2)
 
 def test_beta_plane_gyre_free_surf_Hypre_MPI_2Y():
-    test_beta_plane_gyre_free_surf_Hypre_MPI(nProcY=2)
+    test_beta_plane_gyre_free_surf_Hypre_MPI(n_proc_y=2)
 
 def test_beta_plane_gyre_free_surf_Hypre_MPI_2X_2Y():
-    test_beta_plane_gyre_free_surf_Hypre_MPI(nProcX=2, nProcY=2)
+    test_beta_plane_gyre_free_surf_Hypre_MPI(n_proc_x=2, n_proc_y=2)
 
 
 def test_periodic_BC_red_grav():
@@ -343,13 +343,13 @@ def test_periodic_BC_red_grav():
         return 1000. - layer_1(X, Y)
 
     with working_directory(p.join(self_path, "periodic_BC_red_grav")):
-        drv.simulate(initHfile=[layer_1, layer_2],
+        drv.simulate(init_h_file=[layer_1, layer_2],
                      nx=nx, ny=ny, layers=layers, dx=dx, dy=dy,
-                     exe=test_executable, wetMaskFile=[wetmask], 
-                     fUfile=[-1e-4],
-                     fVfile=[-1e-4],
-                     nTimeSteps=801,
-                     dumpFreq=10000, nProcY=2)
+                     exe=test_executable, wet_mask_file=[wetmask], 
+                     f_u_file=[-1e-4],
+                     f_v_file=[-1e-4],
+                     n_time_steps=801,
+                     dump_freq=10000, n_proc_y=2)
         assert_outputs_close(nx, ny, layers, 3e-12)
         assert_volume_conservation(nx, ny, layers, 1e-5)
         assert_diagnostics_similar(['h', 'u', 'v'], 1e-10)
@@ -394,10 +394,10 @@ def test_relative_wind():
     with working_directory(p.join(self_path, 
         "relative_wind")):
         drv.simulate(
-                initHfile=[400],
-                zonalWindFile=[wind_x], meridionalWindFile=[wind_y],
+                init_h_file=[400],
+                zonal_wind_file=[wind_x], meridional_wind_file=[wind_y],
                 wind_mag_time_series_file=[0.08],
-                exe=test_executable, wetMaskFile=[wetmask],
+                exe=test_executable, wet_mask_file=[wetmask],
                 nx=nx, ny=ny, dx=dx, dy=dy)
         assert_outputs_close(nx, ny, layers, 3e-12)
         assert_volume_conservation(nx, ny, layers, 1e-5)
@@ -442,11 +442,11 @@ def test_relative_wind_upwind_advection():
     with working_directory(p.join(self_path, 
         "relative_wind")):
         drv.simulate(
-                initHfile=[400],
-                zonalWindFile=[wind_x], meridionalWindFile=[wind_y],
+                init_h_file=[400],
+                zonal_wind_file=[wind_x], meridional_wind_file=[wind_y],
                 wind_mag_time_series_file=[0.08],
-                exe=test_executable, wetMaskFile=[wetmask],
-                nx=nx, ny=ny, dx=dx, dy=dy, hAdvecScheme=2)
+                exe=test_executable, wet_mask_file=[wetmask],
+                nx=nx, ny=ny, dx=dx, dy=dy, h_advec_scheme=2)
         assert_outputs_close(nx, ny, layers, 3e-11)
         assert_volume_conservation(nx, ny, layers, 1e-5)
         assert_diagnostics_similar(['h', 'u', 'v'], 1e-10)
@@ -471,15 +471,15 @@ def test_periodic_BC_Hypre():
         return 0. + 1.*np.exp(-((6e5-X)**2 + (5e5-Y)**2)/(2*1e5**2))
 
     with working_directory(p.join(self_path, "periodic_BC")):
-        drv.simulate(initHfile=[500.,500.],
+        drv.simulate(init_h_file=[500.,500.],
                      nx=nx, ny=ny, layers=layers, dx=dx, dy=dy,
                      exe="aronnax_external_solver_test",
-                     wetMaskFile=[wetmask],
-                     fUfile=[-1e-4],
-                     fVfile=[-1e-4],
-                     initEtaFile=[eta],
-                     depthFile=[1000.], nTimeSteps=801,
-                     dumpFreq=10000)
+                     wet_mask_file=[wetmask],
+                     f_u_file=[-1e-4],
+                     f_v_file=[-1e-4],
+                     init_eta_file=[eta],
+                     depth_file=[1000.], n_time_steps=801,
+                     dump_freq=10000)
         assert_outputs_close(nx, ny, layers, 3e-12)
         assert_volume_conservation(nx, ny, layers, 3e-5)
 
@@ -501,22 +501,22 @@ def test_vertical_thickness_diffusion():
 
     # 2 years
     dt = 200.
-    nTimeSteps = int(0.25*365*86400/dt)
-    diagFreq = nTimeSteps*dt/50.
+    n_time_steps = int(0.25*365*86400/dt)
+    diag_freq = n_time_steps*dt/50.
 
 
     with working_directory(p.join(self_path, "vertical_diffusion")):
-        drv.simulate(initHfile=[initH],
+        drv.simulate(init_h_file=[initH],
                      nx=nx, ny=ny, dx=dx, dy=dy,
                      exe="aronnax_test",
-                     wetMaskFile=[wetmask],
-                     fUfile=[-1e-4],
-                     fVfile=[-1e-4],
+                     wet_mask_file=[wetmask],
+                     f_u_file=[-1e-4],
+                     f_v_file=[-1e-4],
                      kv=kv,
                      dt=dt,
-                     nTimeSteps=nTimeSteps,
-                     diagFreq=diagFreq,
-                     dumpFreq=1e9)
+                     n_time_steps=n_time_steps,
+                     diag_freq=diag_freq,
+                     dump_freq=1e9)
 
         simuated_h_evo = np.loadtxt('output/diagnostic.h.csv',
                 delimiter=',', skiprows=1, usecols=(0,2))
@@ -543,25 +543,25 @@ def test_vertical_thickness_diffusion_Hypre_3_layers():
 
     # 2 years
     dt = 200.
-    nTimeSteps = int(0.25*365*86400/dt)
-    diagFreq = nTimeSteps*dt/50.
+    n_time_steps = int(0.25*365*86400/dt)
+    diag_freq = n_time_steps*dt/50.
 
 
     with working_directory(p.join(self_path, "vertical_diffusion")):
-        drv.simulate(initHfile=[10., 100., 10.],
+        drv.simulate(init_h_file=[10., 100., 10.],
                      nx=nx, ny=ny, dx=dx, dy=dy,
                      layers=3,
                      exe="aronnax_external_solver_test",
-                     wetMaskFile=[wetmask],
-                     depthFile=[120.],
-                     fUfile=[-1e-4],
-                     fVfile=[-1e-4],
+                     wet_mask_file=[wetmask],
+                     depth_file=[120.],
+                     f_u_file=[-1e-4],
+                     f_v_file=[-1e-4],
                      kv=kv,
                      dt=dt,
-                     nTimeSteps=nTimeSteps,
-                     diagFreq=diagFreq,
-                     dumpFreq=1e9,
-                     RedGrav=0)
+                     n_time_steps=n_time_steps,
+                     diag_freq=diag_freq,
+                     dump_freq=1e9,
+                     red_grav=0)
 
         simuated_h_evo = np.loadtxt('output/diagnostic.h.csv',
                 delimiter=',', skiprows=1, usecols=(0,2,6,10))
@@ -623,14 +623,14 @@ def test_outcropping_Hypre():
 
     with working_directory(p.join(self_path, 'outcropping')):
         drv.simulate(
-                initHfile=[init_h1, init_h2],
-                zonalWindFile=[0.1], meridionalWindFile=[0],
+                init_h_file=[init_h1, init_h2],
+                zonal_wind_file=[0.1], meridional_wind_file=[0],
                 wind_depth=40,
-                wetMaskFile=[wetmask],
-                depthFile=[bathymetry],
+                wet_mask_file=[wetmask],
+                depth_file=[bathymetry],
                 nx=nx, ny=ny, layers=layers, dx=dx, dy=dy,
                 exe='aronnax_external_solver_test',
-                dt=10, nTimeSteps=1000)
+                dt=10, n_time_steps=1000)
         assert_outputs_close(nx, ny, layers, 3e-12)
         assert_volume_conservation(nx, ny, layers, 3e-5)
 
@@ -690,12 +690,12 @@ def test_Hypre_spatial_wind():
     with working_directory(p.join(self_path,
         "shifting_wind")):
         drv.simulate(
-                initHfile=[400, 400],
-                depthFile=[800],
+                init_h_file=[400, 400],
+                depth_file=[800],
                 wind_n_records=3,
-                zonalWindFile=[wind_x], meridionalWindFile=[wind_y],
+                zonal_wind_file=[wind_x], meridional_wind_file=[wind_y],
                 wind_mag_time_series_file=[0.1],
-                exe=test_executable, wetMaskFile=[wetmask],
+                exe=test_executable, wet_mask_file=[wetmask],
                 nx=nx, ny=ny, dx=dx, dy=dy)
         assert_outputs_close(nx, ny, layers, 3e-12)
         assert_volume_conservation(nx, ny, layers, 1e-5)
@@ -757,12 +757,12 @@ def test_Hypre_spatial_wind_interp():
     with working_directory(p.join(self_path,
         "shifting_wind_interp")):
         drv.simulate(
-                initHfile=[400, 400],
-                depthFile=[800],
+                init_h_file=[400, 400],
+                depth_file=[800],
                 wind_n_records=3,
-                zonalWindFile=[wind_x], meridionalWindFile=[wind_y],
+                zonal_wind_file=[wind_x], meridional_wind_file=[wind_y],
                 wind_mag_time_series_file=[0.1],
-                exe=test_executable, wetMaskFile=[wetmask],
+                exe=test_executable, wet_mask_file=[wetmask],
                 nx=nx, ny=ny, dx=dx, dy=dy)
         assert_outputs_close(nx, ny, layers, 3e-12)
         assert_volume_conservation(nx, ny, layers, 1e-5)

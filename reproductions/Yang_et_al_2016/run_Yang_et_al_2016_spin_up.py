@@ -79,7 +79,7 @@ def Yang_et_al_spin_up():
 
         # creating slope near southern boundary
         depth = np.minimum(4000*np.ones(X.shape), 15250 - 0.03*r)
-        # set minimum depth to 250 m (also the model won't run if depthFile
+        # set minimum depth to 250 m (also the model won't run if depth_file
         #   contains negative numbers)
         depth = np.maximum(depth, 250)
 
@@ -108,16 +108,16 @@ def Yang_et_al_spin_up():
     with working_directory(p.join(self_path, 'spin_up')):
         drv.simulate(
                 # give it flat layers and let it squash them to fit
-                initHfile=[400, 3600],
-                zonalWindFile=[wind_x], meridionalWindFile=[wind_y],
+                init_h_file=[400, 3600],
+                zonal_wind_file=[wind_x], meridional_wind_file=[wind_y],
                 wind_depth=30,
-                wetMaskFile=[wetmask],
-                depthFile=[bathymetry],
-                fUfile=[coriolis],
-                fVfile=[coriolis],
+                wet_mask_file=[wetmask],
+                depth_file=[bathymetry],
+                f_u_file=[coriolis],
+                f_v_file=[coriolis],
                 nx=nx, ny=ny, layers=layers, dx=dx, dy=dy,
                 exe='aronnax_external_solver', 
-                dt=50, nTimeSteps=12441600)
+                dt=50, n_time_steps=12441600)
 
 if __name__ == '__main__':
     Yang_et_al_spin_up()

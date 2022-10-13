@@ -15,7 +15,7 @@ As described above, it is possible to define functions that can be passed to `ar
           return 0.05 * (1 - np.cos(2*np.pi * Y/np.max(grid.y)))
 
       with working_directory(p.join(self_path, "beta_plane_gyre_red_grav")):
-          drv.simulate(zonalWindFile=[wind],
+          drv.simulate(zonal_wind_file=[wind],
                        nx=10, ny=10, exe="aronnax_test", dx=xlen/10, dy=ylen/10)
 
 
@@ -72,10 +72,10 @@ debug_level
 -----------
 This parameter determines whether the model produces additional outputs. It should be set to an integer value greater than or equal to zero. The different values have the following effects:
 
- - 0: no additional outputs. Output frequency controlled by `DumpFreq` and `AvFreq`
- - 1: output tendencies at frequency given by `DumpFreq`
- - 2: output tendencies and convergence diagnostics from the linear solve at frequency given by `DumpFreq` (not implemented)
- - 3: output convergence diagnostics and tendencies before and after applying some or all of sponges, barotropic correction, winds, and boundary conditions at frequency controlled by `DumpFreq` (not implemented)
+ - 0: no additional outputs. Output frequency controlled by `dump_freq` and `av_freq`
+ - 1: output tendencies at frequency given by `dump_freq`
+ - 2: output tendencies and convergence diagnostics from the linear solve at frequency given by `dump_freq` (not implemented)
+ - 3: output convergence diagnostics and tendencies before and after applying some or all of sponges, barotropic correction, winds, and boundary conditions at frequency controlled by `dump_freq` (not implemented)
  - 4: dump all of the above fields every time step (mostly implemented)
  - 5: dump everything every time step including the two initial RK4 steps (not implemented)
 
@@ -83,33 +83,33 @@ niter0
 ------
 This parameter allows a simulation to be restarted from the given timestep. It requires that the appropriate files are in the 'checkpoints' directory. All parameters, except for the number of grid points in the domain, may be altered when restarting a simulation. This is intended for breaking long simulations into shorter, more manageable chunks, and for running perturbation experiments. 
 
-wetMaskFile
+wet_mask_file
 -----------
 The wetmask defines which grid points within the computational domain contain fluid. The wetmask is defined on the tracer points, and a value of 1 defines fluid, while a value of 0 defines land. The domain is doubly periodic in `x` and `y` by default. To produce a closed domain the wetmask should be set to 0 along the edges of the domain. Placing a barrier at either the southern or the northern boundary will remove periodicity in the meridional direction. Similarly, a barrier along either the eastern or western boundary will prevent the model from being periodic in the zonal direction.
 
-RelativeWind
+relative_wind
 ------------
 If this is false, then the wind input file is given in N m\ :sup:`--2`. If true, then the wind input file is in m s\ :sup:`--1` and a quadratic drag law is used to accelerate the fluid with `Cd` as the quadratic drag coefficient. 
 
-hAdvecScheme
+h_advec_scheme
 ------------
-`hAdvecScheme` is an integer that selects the advection scheme used for thickness in the continuity equation. Currently two options are implemented:
+`h_advec_scheme` is an integer that selects the advection scheme used for thickness in the continuity equation. Currently two options are implemented:
 
-- `hAdvecScheme` = 1 (default) uses a first-order centered stencil
-- `hAdvecScheme` = 2 uses a first-order upwind stencil
+- `h_advec_scheme` = 1 (default) uses a first-order centered stencil
+- `h_advec_scheme` = 2 uses a first-order upwind stencil
 
-TS_algorithm
+ts_algorithm
 ------------
-`TS_algorithm` is an integer that selects the timestepping algorithm used by the model. The default behaviour is to use a third-order Adams-Bashforth scheme (`TS_algorithm` = 3), with the initialisation performed by a second-order Runge-Kutta method (`TS_algorithm` = 12).
+`ts_algorithm` is an integer that selects the timestepping algorithm used by the model. The default behaviour is to use a third-order Adams-Bashforth scheme (`ts_algorithm` = 3), with the initialisation performed by a second-order Runge-Kutta method (`ts_algorithm` = 12).
 
- - TS_algorithm = 1:  Forward Euler
- - TS_algorithm = 2: Second-order Adams-Bashfort
- - TS_algorithm = 3: Third-order Adams-Bashfort (default)
- - TS_algorithm = 4: Fourth-order Adams-Bashfort
- - TS_algorithm = 5: Fifth-order Adams-Bashfort
- - TS_algorithm = 12: Second-order Runge-Kutta
- - TS_algorithm = 13: Third-order Runge-Kutta (not implemented)
- - TS_algorithm = 14: Fourth-order Runge-Kutta (not implemented)
+ - ts_algorithm = 1:  Forward Euler
+ - ts_algorithm = 2: Second-order Adams-Bashfort
+ - ts_algorithm = 3: Third-order Adams-Bashfort (default)
+ - ts_algorithm = 4: Fourth-order Adams-Bashfort
+ - ts_algorithm = 5: Fifth-order Adams-Bashfort
+ - ts_algorithm = 12: Second-order Runge-Kutta
+ - ts_algorithm = 13: Third-order Runge-Kutta (not implemented)
+ - ts_algorithm = 14: Fourth-order Runge-Kutta (not implemented)
 
 
 More complicated forcing fields
@@ -119,7 +119,7 @@ It is possible to use surface forcing fields that vary both in space and time.
 
 If the pattern of the surface forcing is always the same, the `wind_mag_time_series_file` parameter can be used to make the magnitude of the forcing vary. The provided `wind_mag_time_series_file` needs an entry for each timestep of the simulation. Like all inputs, this can be specified as a Python function that will be evaluated when the model initialises and the output saved to disk so that the Fortran core can obtain the input.
 
-Spatially varying forcing is slightly more complex. In this situation `zonalWindFile` and `meridionalWindFile` will now point to three-dimensional arrays. These arrays can be generated by the Python wrapper if a function is passed in the call to :meth:`aronnax.driver.simulate`. This function must depend only on  `X, Y, wind_n_records`. The parameters that must be specified are:
+Spatially varying forcing is slightly more complex. In this situation `zonal_wind_file` and `meridional_wind_file` will now point to three-dimensional arrays. These arrays can be generated by the Python wrapper if a function is passed in the call to :meth:`aronnax.driver.simulate`. This function must depend only on  `X, Y, wind_n_records`. The parameters that must be specified are:
 
  - `wind_n_records`: the number of time slices in the provided wind field. An integer.
  - `wind_period`: the time (in seconds) between subsequent wind forcing patterns. A float.

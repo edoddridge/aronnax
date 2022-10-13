@@ -37,7 +37,7 @@ module exchange
           i_local = i - xlow
           j_local = j - ylow
           k_local = k - 1
-     
+
      ! the 3D array is being laid out like
      ! [x1y1z1, x2y1z1, x3y1z1, x1y2z1, x2y2z1, x3y2z1, x1y3z1, x2y3z1, x3y3z1,
      !  x1y1z2, x2y1z2, x3y1z2, x1y2z2, x2y2z2, x3y2z2, x1y3z2, x2y3z2, x3y3z2]
@@ -138,7 +138,7 @@ module exchange
           i_local = i - xlow
           j_local = j - ylow
           k_local = k - 1
-     
+
      ! the 3D array is being laid out like
      ! [x1y1z1, x2y1z1, x3y1z1, x1y2z1, x2y2z1, x3y2z1, x1y3z1, x2y3z1, x3y3z1,
      !  x1y1z2, x2y1z2, x3y1z2, x1y2z2, x2y2z2, x3y2z2, x1y3z2, x2y3z2, x3y3z2]

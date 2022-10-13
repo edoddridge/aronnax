@@ -68,12 +68,12 @@ def f_plane_init_u_test(physics, aro_exec, dt):
     with working_directory(p.join(self_path, "physics_tests/f_plane_{0}_init_u".format(physics))):
 
         sub.check_call(["rm", "-rf", "output/"])
-        drv.simulate(initHfile=[400.], 
-            initUfile=[init_U],
-            # initVfile=[init_V], valgrind=False,
-            wetMaskFile=[dbl_periodic_wetmask],
+        drv.simulate(init_h_file=[400.], 
+            init_u_file=[init_U],
+            # init_v_file=[init_V], valgrind=False,
+            wet_mask_file=[dbl_periodic_wetmask],
                      nx=nx, ny=ny, exe=aro_exec, dx=dx, dy=dy,
-                     nTimeSteps=40000)
+                     n_time_steps=40000)
 
         hfiles = sorted(glob.glob("output/snap.h.*"))
         ufiles = sorted(glob.glob("output/snap.u.*"))
@@ -188,7 +188,7 @@ def f_plane_init_u_test(physics, aro_exec, dt):
 
 
 
-def f_plane_wind_test(physics, aro_exec, nx, ny, dx, dy, dt, nTimeSteps):
+def f_plane_wind_test(physics, aro_exec, nx, ny, dx, dy, dt, n_time_steps):
 
     layers = 1
     grid = aro.Grid(nx, ny, layers, dx, dy)
@@ -226,11 +226,11 @@ def f_plane_wind_test(physics, aro_exec, nx, ny, dx, dy, dt, nTimeSteps):
     with opt.working_directory(p.join(self_path, "physics_tests/f_plane_{0}_wind".format(physics))):
 
         sub.check_call(["rm", "-rf", "output/"])
-        drv.simulate(initHfile=[400.],
-            zonalWindFile=[wind_x], meridionalWindFile=[wind_y], valgrind=False,
+        drv.simulate(init_h_file=[400.],
+            zonal_wind_file=[wind_x], meridional_wind_file=[wind_y], valgrind=False,
                      nx=nx, ny=ny, exe=aro_exec, dx=dx, dy=dy, 
-                     wetMaskFile=[dbl_periodic_wetmask],
-                     dt=dt, dumpFreq=int(dt*nTimeSteps/50), nTimeSteps=nTimeSteps)
+                     wet_mask_file=[dbl_periodic_wetmask],
+                     dt=dt, dump_freq=int(dt*n_time_steps/50), n_time_steps=n_time_steps)
 
 
         hfiles = sorted(glob.glob("output/snap.h.*"))
@@ -341,20 +341,20 @@ def truncation_error(physics, aro_exec, nx, ny, grid_resolution, integration_tim
         dx = grid_resolution
         dt = 30. #np.min([dx/10., 1000.])
 
-        nTimeSteps = int(integration_time/dt)
+        n_time_steps = int(integration_time/dt)
 
         error = f_plane_wind_test(physics, aro_exec, 
-            nx, ny, dx, dx, dt, nTimeSteps)
+            nx, ny, dx, dx, dt, n_time_steps)
     else:
         error = np.zeros(len(grid_resolution))
 
         for i, dx in enumerate(grid_resolution):
             dt = 30. #np.min([dx/10., 300.])
 
-            nTimeSteps = int(integration_time/dt)
+            n_time_steps = int(integration_time/dt)
 
             error[i] = f_plane_wind_test(physics, aro_exec, 
-                nx, ny, dx, dx, dt, nTimeSteps)
+                nx, ny, dx, dx, dt, n_time_steps)
 
     with opt.working_directory(p.join(self_path, "physics_tests/f_plane_{0}_wind".format(physics))):
         plt.figure()
@@ -392,9 +392,9 @@ if __name__ == '__main__':
 
     # run two experiments again to produce temporal evolution curves
     f_plane_wind_test('red_grav', aro_exec="aronnax_core", 
-                nx=50, ny=50, dx=8e3, dy=8e3, dt=30., nTimeSteps=105120)
+                nx=50, ny=50, dx=8e3, dy=8e3, dt=30., n_time_steps=105120)
     f_plane_wind_test('n_layer', aro_exec="aronnax_external_solver", 
-                nx=50, ny=50, dx=8e3, dy=8e3, dt=30., nTimeSteps=10512)
+                nx=50, ny=50, dx=8e3, dy=8e3, dt=30., n_time_steps=10512)
 
     #f_plane_wind_test('red_grav', aro_exec = "aronnax_core",
     #    nx = 200, ny = 200, dt = 600.)

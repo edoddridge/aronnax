@@ -17,61 +17,61 @@ module declarations
   ! Free surface (eta)
   double precision, dimension(:,:),   allocatable :: eta
   ! Bathymetry
-  character(60) :: depthFile
+  character(60) :: depth_file
   double precision, dimension(:,:),   allocatable :: depth
-  double precision :: H0 ! default depth in no file specified
+  double precision :: h0 ! default depth in no file specified
   ! Grid
   double precision :: dx, dy
   double precision, dimension(:,:),   allocatable :: wetmask
-  double precision, dimension(:,:),   allocatable :: hfacW
-  double precision, dimension(:,:),   allocatable :: hfacE
-  double precision, dimension(:,:),   allocatable :: hfacS
-  double precision, dimension(:,:),   allocatable :: hfacN
+  double precision, dimension(:,:),   allocatable :: hfac_w
+  double precision, dimension(:,:),   allocatable :: hfac_e
+  double precision, dimension(:,:),   allocatable :: hfac_s
+  double precision, dimension(:,:),   allocatable :: hfac_n
 
   ! Coriolis parameter at u and v grid-points respectively
   double precision, dimension(:,:),   allocatable :: fu
   double precision, dimension(:,:),   allocatable :: fv
   ! File names to read them from
-  character(60) :: fUfile, fVfile
-  character(60) :: wetMaskFile
+  character(60) :: f_u_file, f_v_file
+  character(60) :: wet_mask_file
   ! Numerics
   double precision :: dt ! delta_t in seconds
   double precision :: au ! viscosity
   double precision :: ar ! linear drag between layers
-  double precision :: botDrag ! linear bottom drag
+  double precision :: bot_drag ! linear bottom drag
   double precision :: kh(layerwise_input_length) ! horizontal thickness diffusivity
   double precision :: kv ! vertical thickness diffusivity
   double precision :: slip ! tangential momentum boundary condition
   double precision :: hmin ! minimum layer thickness
-  integer          :: niter0 ! timestep to start from 
-  integer          :: nTimeSteps ! timesteps to simulate
-  double precision :: dumpFreq ! time period between snapshot outputs
-  double precision :: avFreq ! time period between averaged outputs
-  double precision :: checkpointFreq ! time period between checkpoint outputs
-  double precision :: diagFreq ! time period between diagnostic outputs
+  integer          :: niter0 ! timestep to start from
+  integer          :: n_time_steps ! timesteps to simulate
+  double precision :: dump_freq ! time period between snapshot outputs
+  double precision :: av_freq ! time period between averaged outputs
+  double precision :: checkpoint_freq ! time period between checkpoint outputs
+  double precision :: diag_freq ! time period between diagnostic outputs
   double precision, dimension(:), allocatable :: zeros
   integer          :: maxits ! maximum iterations for pressure solver
   double precision :: eps ! tolerance for pressure solver
-  double precision :: freesurfFac ! controls rigid lid or free surface
+  double precision :: freesurf_fac ! controls rigid lid or free surface
   double precision :: thickness_error ! max error between layer thickness
   ! and depth before a warning is printed
   integer          :: debug_level ! how much output should there be?
-  integer          :: hAdvecScheme ! selects thickness advection scheme
-  integer          :: TS_algorithm ! selects timestepping algorithm
+  integer          :: h_advec_scheme ! selects thickness advection scheme
+  integer          :: ts_algorithm ! selects timestepping algorithm
   integer          :: AB_order ! used to construct tendency arrays
 
   ! Model
   ! shortcut for flat initial conditions
-  double precision :: hmean(layerwise_input_length) 
+  double precision :: hmean(layerwise_input_length)
   ! Switch for using n + 1/2 layer physics, or using n layer physics
-  logical :: RedGrav
+  logical :: red_grav
   ! Physics
   double precision :: g_vec(layerwise_input_length) ! gravity between layers
   double precision :: rho0 ! background density
   ! Wind
   double precision, dimension(:,:,:),   allocatable :: base_wind_x
   double precision, dimension(:,:,:),   allocatable :: base_wind_y
-  logical          :: DumpWind
+  logical          :: dump_wind
   character(60)    :: wind_mag_time_series_file
   double precision :: wind_depth ! depth over which the wind forcing is spread
   double precision, dimension(:),     allocatable :: wind_mag_time_series
@@ -81,28 +81,28 @@ module declarations
   logical          :: wind_interpolate
 
   ! Sponge regions
-  double precision, dimension(:,:,:), allocatable :: spongeHTimeScale
-  double precision, dimension(:,:,:), allocatable :: spongeUTimeScale
-  double precision, dimension(:,:,:), allocatable :: spongeVTimeScale
-  double precision, dimension(:,:,:), allocatable :: spongeH
-  double precision, dimension(:,:,:), allocatable :: spongeU
-  double precision, dimension(:,:,:), allocatable :: spongeV
-  character(60) :: spongeHTimeScaleFile
-  character(60) :: spongeUTimeScaleFile
-  character(60) :: spongeVTimeScaleFile
-  character(60) :: spongeHfile
-  character(60) :: spongeUfile
-  character(60) :: spongeVfile
+  double precision, dimension(:,:,:), allocatable :: sponge_h_time_scale
+  double precision, dimension(:,:,:), allocatable :: sponge_u_time_scale
+  double precision, dimension(:,:,:), allocatable :: sponge_v_time_scale
+  double precision, dimension(:,:,:), allocatable :: sponge_h
+  double precision, dimension(:,:,:), allocatable :: sponge_u
+  double precision, dimension(:,:,:), allocatable :: sponge_v
+  character(60) :: sponge_h_time_scale_file
+  character(60) :: sponge_u_time_scale_file
+  character(60) :: sponge_v_time_scale_file
+  character(60) :: sponge_h_file
+  character(60) :: sponge_u_file
+  character(60) :: sponge_v_file
   ! Main input files
-  character(60) :: initUfile, initVfile, initHfile, initEtaFile
-  character(60) :: zonalWindFile, meridionalWindFile
-  logical       :: RelativeWind
+  character(60) :: init_u_file, init_v_file, init_h_file, init_eta_file
+  character(60) :: zonal_wind_file, meridional_wind_file
+  logical       :: relative_wind
   double precision :: Cd
 
   integer*8 :: start_time
 
   ! External pressure solver variables
-  integer :: nProcX, nProcY
+  integer :: n_proc_x, n_proc_y
 
 
   integer :: ierr

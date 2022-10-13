@@ -27,7 +27,7 @@ module advection_schemes
     do k = 1, layers
       do j = ylow-OL+1, yhigh+OL-1
         do i = xlow-OL+1, xhigh+OL-1
-          dhdt_advec(i,j,k) = & 
+          dhdt_advec(i,j,k) = &
               - ((h(i,j,k)+h(i+1,j,k))*u(i+1,j,k) &
                - (h(i-1,j,k)+h(i,j,k))*u(i,j,k))/(dx*2d0) & ! d(hu)/dx
               - ((h(i,j,k)+h(i,j+1,k))*v(i,j+1,k) &

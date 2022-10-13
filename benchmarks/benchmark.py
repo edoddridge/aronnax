@@ -26,12 +26,12 @@ def benchmark_gaussian_bump_red_grav_save(grid_points):
         aro_exec = "aronnax_test"
         for counter, nx in enumerate(grid_points):
             run_time_O1[counter] = aro.simulate(
-                exe=aro_exec, initHfile=[bump], nx=nx, ny=nx)
+                exe=aro_exec, init_h_file=[bump], nx=nx, ny=nx)
 
         aro_exec = "aronnax_core"
         for counter, nx in enumerate(grid_points):
             run_time_Ofast[counter] = aro.simulate(
-                exe=aro_exec, initHfile=[bump], nx=nx, ny=nx)
+                exe=aro_exec, init_h_file=[bump], nx=nx, ny=nx)
 
         with open("times.pkl", "wb") as f:
             pkl.dump((grid_points, run_time_O1, run_time_Ofast), f)
@@ -74,22 +74,22 @@ def benchmark_gaussian_bump_save(grid_points):
         aro_exec = "aronnax_test"
         for counter, nx in enumerate(grid_points):
             run_time_O1[counter] = aro.simulate(
-                exe=aro_exec, initHfile=[bump, lambda X, Y: 2000. - bump(X, Y)], nx=nx, ny=nx)
+                exe=aro_exec, init_h_file=[bump, lambda X, Y: 2000. - bump(X, Y)], nx=nx, ny=nx)
 
         aro_exec = "aronnax_core"
         for counter, nx in enumerate(grid_points):
             run_time_Ofast[counter] = aro.simulate(
-                exe=aro_exec, initHfile=[bump, lambda X, Y: 2000. - bump(X, Y)], nx=nx, ny=nx)
+                exe=aro_exec, init_h_file=[bump, lambda X, Y: 2000. - bump(X, Y)], nx=nx, ny=nx)
 
         aro_exec = "aronnax_external_solver_test"
         for counter, nx in enumerate(grid_points[:9]):
             run_time_hypre_test[counter] = aro.simulate(
-                exe=aro_exec, initHfile=[bump, lambda X, Y: 2000. - bump(X, Y)], nx=nx, ny=nx)
+                exe=aro_exec, init_h_file=[bump, lambda X, Y: 2000. - bump(X, Y)], nx=nx, ny=nx)
 
         aro_exec = "aronnax_external_solver"
         for counter, nx in enumerate(grid_points[:9]):
             run_time_hypre[counter] = aro.simulate(
-                exe=aro_exec, initHfile=[bump, lambda X, Y: 2000. - bump(X, Y)], nx=nx, ny=nx)
+                exe=aro_exec, init_h_file=[bump, lambda X, Y: 2000. - bump(X, Y)], nx=nx, ny=nx)
 
         with open("times.pkl", "wb") as f:
                 pkl.dump((grid_points, run_time_O1, run_time_Ofast,
@@ -139,14 +139,14 @@ def benchmark_parallel_gaussian_bump_red_grav_save(n_procs):
 
     with working_directory(p.join(self_path, "beta_plane_bump_red_grav")):
         aro_exec = "aronnax_core"
-        for counter, nProcX in enumerate(n_procs):
-            if nProcX == 1:
+        for counter, n_proc_x in enumerate(n_procs):
+            if n_proc_x == 1:
                 run_time[counter] = aro.simulate(
-                    exe=aro_exec, initHfile=[bump], nx=nx, ny=nx)
+                    exe=aro_exec, init_h_file=[bump], nx=nx, ny=nx)
             else:
                 run_time[counter] = aro.simulate(
-                    exe=aro_exec, initHfile=[bump],
-                    nx=nx, ny=nx, nProcX=nProcX)
+                    exe=aro_exec, init_h_file=[bump],
+                    nx=nx, ny=nx, n_proc_x=n_proc_x)
 
         with open("mpi_times.pkl", "wb") as f:
             pkl.dump((n_procs, run_time), f)
@@ -182,15 +182,15 @@ def benchmark_parallel_gaussian_bump_save(n_procs):
 
     with working_directory(p.join(self_path, "beta_plane_bump")):
         aro_exec = "aronnax_external_solver"
-        for counter, nProcX in enumerate(n_procs):
-            if nProcX == 1:
+        for counter, n_proc_x in enumerate(n_procs):
+            if n_proc_x == 1:
                 run_time[counter] = aro.simulate(
-                    exe=aro_exec, initHfile=[bump, lambda X, Y: 2000. - bump(X, Y)],
+                    exe=aro_exec, init_h_file=[bump, lambda X, Y: 2000. - bump(X, Y)],
                     nx=nx, ny=nx)
             else:
                 run_time[counter] = aro.simulate(
-                    exe=aro_exec, initHfile=[bump, lambda X, Y: 2000. - bump(X, Y)],
-                    nx=nx, ny=nx, nProcX=nProcX)
+                    exe=aro_exec, init_h_file=[bump, lambda X, Y: 2000. - bump(X, Y)],
+                    nx=nx, ny=nx, n_proc_x=n_proc_x)
 
         with open("mpi_times.pkl", "wb") as f:
             pkl.dump((n_procs, run_time), f)

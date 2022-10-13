@@ -14,7 +14,7 @@ module io
           wind_x, wind_y, nx, ny, layers, ilower, iupper, &
           xlow, xhigh, ylow, yhigh, OL, num_procs, myid, &
           n, nwrite, avwrite, checkpointwrite, diagwrite, &
-          RedGrav, DumpWind, debug_level)
+          red_grav, dump_wind, debug_level)
     implicit none
 
     double precision, intent(in)    :: h(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
@@ -38,7 +38,7 @@ module io
     integer,          intent(in)    :: num_procs, myid
     integer,          intent(in)    :: n
     integer,          intent(in)    :: nwrite, avwrite, checkpointwrite, diagwrite
-    logical,          intent(in)    :: RedGrav, DumpWind
+    logical,          intent(in)    :: red_grav, dump_wind
     integer,          intent(in)    :: debug_level
 
     logical       :: dump_output
@@ -53,8 +53,8 @@ module io
       dump_output = .FALSE.
     end if
 
-    if (dump_output) then 
-      
+    if (dump_output) then
+
       call write_output_3d(h, nx, ny, layers, ilower, iupper, &
                           xlow, xhigh, ylow, yhigh, OL, 0, 0, &
                           n, 'output/snap.h.', num_procs, myid)
@@ -66,13 +66,13 @@ module io
                           n, 'output/snap.v.', num_procs, myid)
 
 
-      if (.not. RedGrav) then
+      if (.not. red_grav) then
         call write_output_3d(eta, nx, ny, 1, ilower, iupper, &
                           xlow, xhigh, ylow, yhigh, OL, 0, 0, &
                           n, 'output/snap.eta.', num_procs, myid)
       end if
 
-      if (DumpWind .eqv. .true.) then
+      if (dump_wind .eqv. .true.) then
         call write_output_3d(wind_x, nx, ny, 1, ilower, iupper, &
                           xlow, xhigh, ylow, yhigh, OL, 1, 0, &
                           n, 'output/wind_x.', num_procs, myid)
@@ -107,11 +107,11 @@ module io
 
       if (n .eq. 1) then
         ! pass, since dumping averages after first timestep isn't helpful
-      else 
+      else
         hav = hav/real(avwrite)
         uav = uav/real(avwrite)
         vav = vav/real(avwrite)
-        if (.not. RedGrav) then
+        if (.not. red_grav) then
           etaav = etaav/real(avwrite)
         end if
 
@@ -126,7 +126,7 @@ module io
         n, 'output/av.v.', num_procs, myid)
 
 
-        if (.not. RedGrav) then
+        if (.not. red_grav) then
           call write_output_3d(etaav, nx, ny, 1, ilower, iupper, &
                           xlow, xhigh, ylow, yhigh, OL, 0, 0, &
                           n, 'output/av.eta.', num_procs, myid)
@@ -137,12 +137,12 @@ module io
         ! call break_if_NaN(u, nx, ny, layers, n)
         ! call break_if_NaN(v, nx, ny, layers, n)
       end if
-      
+
       ! Reset average quantities
       hav = 0.0
       uav = 0.0
       vav = 0.0
-      if (.not. RedGrav) then
+      if (.not. red_grav) then
         etaav = 0.0
       end if
       ! h2av = 0.0
@@ -173,7 +173,7 @@ module io
                         xlow, xhigh, ylow, yhigh, OL, AB_order, &
                         n, 'checkpoints/dvdt.', num_procs, myid)
 
-      if (.not. RedGrav) then
+      if (.not. red_grav) then
         call write_checkpoint_output(eta, nx, ny, 1, ilower, iupper, &
                         xlow, xhigh, ylow, yhigh, OL, 1, &
                         n, 'checkpoints/eta.', num_procs, myid)
@@ -194,7 +194,7 @@ module io
       call write_diag_output(v, nx, ny, layers, ilower, iupper, &
                                 xlow, xhigh, ylow, yhigh, OL, &
                                 n, 'output/diagnostic.v.csv', num_procs, myid)
-      if (.not. RedGrav) then
+      if (.not. red_grav) then
         call write_diag_output(eta, nx, ny, 1, ilower, iupper, &
                                 xlow, xhigh, ylow, yhigh, OL, &
                                 n, 'output/diagnostic.eta.csv', num_procs, myid)
@@ -432,13 +432,13 @@ module io
 
   ! ---------------------------------------------------------------------------
 
-  subroutine read_input_file_time_series(name, array, default, nTimeSteps)
+  subroutine read_input_file_time_series(name, array, default, n_time_steps)
     implicit none
 
     character(60), intent(in) :: name
-    double precision, intent(out) :: array(nTimeSteps)
+    double precision, intent(out) :: array(n_time_steps)
     double precision, intent(in) :: default
-    integer, intent(in) :: nTimeSteps
+    integer, intent(in) :: n_time_steps
 
     if (name.ne.'') then
       open(unit=10, form='unformatted', file=name)
@@ -531,7 +531,7 @@ module io
   !> Load in checkpoint files when restarting a simulation
 
   subroutine load_checkpoint_files(dhdt, dudt, dvdt, h, u, v, eta, &
-            RedGrav, niter0, nx, ny, layers, ilower, iupper, &
+            red_grav, niter0, nx, ny, layers, ilower, iupper, &
             xlow, xhigh, ylow, yhigh, &
             OL, num_procs, myid, AB_order)
   implicit none
@@ -543,7 +543,7 @@ module io
     double precision, intent(out) :: u(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
     double precision, intent(out) :: v(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
     double precision, intent(out) :: eta(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
-    logical,          intent(in)  :: RedGrav
+    logical,          intent(in)  :: red_grav
     integer,          intent(in)  :: niter0
     integer,          intent(in)  :: nx, ny, layers
     integer,          intent(in)  :: ilower(0:num_procs-1,2)
@@ -587,7 +587,7 @@ module io
     read(10) dvdt_global
     close(10)
 
-    if (.not. RedGrav) then
+    if (.not. red_grav) then
       open(unit=10, form='unformatted', file='checkpoints/eta.'//num)
       read(10) eta_global
       close(10)
@@ -602,7 +602,7 @@ module io
           dhdt(i,j,k,:) = dhdt_global(i,j,k,:)
           dudt(i,j,k,:) = dudt_global(i,j,k,:)
           dvdt(i,j,k,:) = dvdt_global(i,j,k,:)
-          if (.not. RedGrav) then
+          if (.not. red_grav) then
             eta(i,j) = eta_global(i,j)
           end if
         end do
@@ -625,7 +625,7 @@ module io
     character(*),     intent(in) :: name
 
     character(10)  :: num
-    
+
     write(num, '(i10.10)') n
 
     ! Output the data to a file

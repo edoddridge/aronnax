@@ -272,19 +272,19 @@ def v_point_variable(grid, field_layers, *funcs):
             v_variable[i,:,:] = f(X, Y)
     return v_variable
 
-def time_series_variable(nTimeSteps, dt, func):
-    '''Input generator for a time series variable. If passed a function, then that function can depend on the number of timesteps, `nTimeSteps`, and the timestep, `dt`.'''
+def time_series_variable(n_time_steps, dt, func):
+    '''Input generator for a time series variable. If passed a function, then that function can depend on the number of timesteps, `n_time_steps`, and the timestep, `dt`.'''
 
-    ts_variable = np.zeros((nTimeSteps))
+    ts_variable = np.zeros((n_time_steps))
 
     # number of elements in `func` list should always be one
     assert len(func) == 1
 
     for i, f in enumerate(func):
         if isinstance(f, (int, float)):
-            ts_variable[:] = np.ones(nTimeSteps) * f
+            ts_variable[:] = np.ones(n_time_steps) * f
         else:
-            ts_variable[:] = f(nTimeSteps, dt)
+            ts_variable[:] = f(n_time_steps, dt)
     return ts_variable
 
 def u_wind(grid, wind_n_records, f):
@@ -440,9 +440,9 @@ def interpret_requested_data(requested_data, shape, config):
         if shape == "2dV" or shape == "3dV":
             return v_point_variable(grid, field_layers, *requested_data)
         if shape == "time":
-            nTimeSteps = config.getint("numerics", "nTimeSteps")
+            n_time_steps = config.getint("numerics", "n_time_steps")
             dt = config.getfloat("numerics", "dt")
-            return time_series_variable(nTimeSteps, dt, requested_data)
+            return time_series_variable(n_time_steps, dt, requested_data)
         if shape == 'windU':
             return u_wind(grid, wind_n_records, *requested_data)
         if shape == 'windV':

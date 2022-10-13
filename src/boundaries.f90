@@ -12,15 +12,15 @@ module boundaries
   !! 0 means barrier
   !! 1 mean open
 
-  subroutine calc_boundary_masks(wetMaskFile, hfacW, hfacE, hfacS, hfacN, nx, ny, OL, &
+  subroutine calc_boundary_masks(wet_mask_file, hfac_w, hfac_e, hfac_s, hfac_n, nx, ny, OL, &
                                   xlow, xhigh, ylow, yhigh)
     implicit none
 
-    character(60), intent(in)     :: wetMaskFile
-    double precision, intent(out) :: hfacW(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
-    double precision, intent(out) :: hfacE(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
-    double precision, intent(out) :: hfacN(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
-    double precision, intent(out) :: hfacS(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    character(60), intent(in)     :: wet_mask_file
+    double precision, intent(out) :: hfac_w(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(out) :: hfac_e(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(out) :: hfac_n(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(out) :: hfac_s(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
     integer, intent(in) :: nx !< number of grid points in x direction
     integer, intent(in) :: ny !< number of grid points in y direction
     integer, intent(in) :: OL !< size of halo region
@@ -29,14 +29,14 @@ module boundaries
     double precision temp(1-OL:nx+OL, 1-OL:ny+OL)
     double precision wetmask_global(1-OL:nx+OL, 1-OL:ny+OL)
     double precision wetmask_global_small(nx, ny)
-    double precision hfacW_global(1-OL:nx+OL, 1-OL:ny+OL)
-    double precision hfacE_global(1-OL:nx+OL, 1-OL:ny+OL)
-    double precision hfacN_global(1-OL:nx+OL, 1-OL:ny+OL)
-    double precision hfacS_global(1-OL:nx+OL, 1-OL:ny+OL)
+    double precision hfac_w_global(1-OL:nx+OL, 1-OL:ny+OL)
+    double precision hfac_e_global(1-OL:nx+OL, 1-OL:ny+OL)
+    double precision hfac_n_global(1-OL:nx+OL, 1-OL:ny+OL)
+    double precision hfac_s_global(1-OL:nx+OL, 1-OL:ny+OL)
     integer i, j
 
-    if (wetMaskFile.ne.'') then
-      open(unit=10, form='unformatted', file=wetMaskFile)
+    if (wet_mask_file.ne.'') then
+      open(unit=10, form='unformatted', file=wet_mask_file)
       read(10) wetmask_global_small
       close(10)
       wetmask_global(1:nx, 1:ny) = wetmask_global_small
@@ -45,7 +45,7 @@ module boundaries
       wetmask_global = 1d0
     end if
 
-    hfacW_global = 1d0
+    hfac_w_global = 1d0
 
     temp = 0d0
     do j = 0, ny+1
@@ -57,15 +57,15 @@ module boundaries
     do j = 0, ny+1
       do i = 1, nx+1
         if (temp(i, j) .ne. 0.0) then
-          hfacW_global(i, j) = 0d0
+          hfac_w_global(i, j) = 0d0
         end if
       end do
     end do
 
     ! and now for all  western cells
-    hfacW_global(0, :) = hfacW_global(nx, :)
+    hfac_w_global(0, :) = hfac_w_global(nx, :)
 
-    hfacE_global = 1d0
+    hfac_e_global = 1d0
 
     temp = 0d0
     do j = 0, ny+1
@@ -77,15 +77,15 @@ module boundaries
     do j = 0, ny+1
       do i = 0, nx
         if (temp(i, j) .ne. 0.0) then
-          hfacE_global(i, j) = 0d0
+          hfac_e_global(i, j) = 0d0
         end if
       end do
     end do
 
     ! and now for all  eastern cells
-    hfacE_global(nx+1, :) = hfacE_global(1, :)
+    hfac_e_global(nx+1, :) = hfac_e_global(1, :)
 
-    hfacS_global = 1d0
+    hfac_s_global = 1d0
 
     temp = 0d0
     do j = 1, ny+1
@@ -97,15 +97,15 @@ module boundaries
     do j = 1, ny+1
       do i = 0, nx+1
         if (temp(i, j) .ne. 0.0) then
-          hfacS_global(i, j) = 0d0
+          hfac_s_global(i, j) = 0d0
         end if
       end do
     end do
 
     ! all southern cells
-    hfacS_global(:, 0) = hfacS_global(:, ny)
+    hfac_s_global(:, 0) = hfac_s_global(:, ny)
 
-    hfacN_global = 1d0
+    hfac_n_global = 1d0
     temp = 0d0
     do j = 0, ny
       do i = 0, nx+1
@@ -116,20 +116,20 @@ module boundaries
     do j = 0, ny
       do i = 0, nx+1
         if (temp(i, j) .ne. 0.0) then
-          hfacN_global(i, j) = 0d0
+          hfac_n_global(i, j) = 0d0
         end if
       end do
     end do
     ! all northern cells
-    hfacN_global(:, ny+1) = hfacN_global(:, 1)
+    hfac_n_global(:, ny+1) = hfac_n_global(:, 1)
 
     ! set tile sized arrays
     do j = ylow-OL, yhigh+OL
       do i = xlow-OL, xhigh+OL
-        hfacW(i,j) = hfacW_global(i,j)
-        hfacE(i,j) = hfacE_global(i,j)
-        hfacS(i,j) = hfacS_global(i,j)
-        hfacN(i,j) = hfacN_global(i,j)
+        hfac_w(i,j) = hfac_w_global(i,j)
+        hfac_e(i,j) = hfac_e_global(i,j)
+        hfac_s(i,j) = hfac_s_global(i,j)
+        hfac_n(i,j) = hfac_n_global(i,j)
       end do
     end do
 
@@ -156,7 +156,7 @@ module boundaries
     ! - Enforce no normal flow boundary condition
     !   and no flow in dry cells.
     ! - no/free-slip is done inside the dudt and dvdt subroutines.
-    ! - hfacW and hfacS are zero where the transition between
+    ! - hfac_w and hfac_s are zero where the transition between
     !   wet and dry cells occurs.
     ! - wetmask is 1 in wet cells, and zero in dry cells.
 

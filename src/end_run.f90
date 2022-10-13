@@ -2,7 +2,7 @@ module end_run
   implicit none
 
   contains
-  
+
   ! ---------------------------------------------------------------------------
   !> Check to see if there are any NaNs in the data field and stop the
   !! calculation if any are found.
@@ -39,7 +39,7 @@ module end_run
 
     integer, intent(in) :: n
     logical, intent(in) :: happy
-    
+
     integer :: ierr
 
     if (happy) then
