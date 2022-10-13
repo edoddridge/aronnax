@@ -160,9 +160,9 @@ def davis_sponge_h(X, Y):
     return sponge_h
 
 
-def davis_wind_time_series(nTimeSteps, dt):
-    wind_time_series = 0.02375*np.ones(nTimeSteps, dtype=np.float64)
-    time = np.arange(nTimeSteps)*dt
+def davis_wind_time_series(n_time_steps, dt):
+    wind_time_series = 0.02375*np.ones(n_time_steps, dtype=np.float64)
+    time = np.arange(n_time_steps)*dt
     wind_time_series[(np.mod(time,12.*30.*86400.)>8.*30.*86400.)] = 0.0125
 
     plt.figure()
@@ -175,7 +175,7 @@ def davis_wind_time_series(nTimeSteps, dt):
 
     return wind_time_series
 
-def run_davis_2014_control(nx, ny, layers, nTimeSteps, dt, simulation=None):
+def run_davis_2014_control(nx, ny, layers, n_time_steps, dt, simulation=None):
 
     #assert layers == 1
     xlen = 1530e3
@@ -187,18 +187,18 @@ def run_davis_2014_control(nx, ny, layers, nTimeSteps, dt, simulation=None):
 
     with working_directory(p.join(self_path, 
         "Davis_et_al_2014/{0}".format(simulation))):
-        drv.simulate(initHfile=[400.],
-                zonalWindFile=[davis_wind_x], meridionalWindFile=[davis_wind_y],
+        drv.simulate(init_h_file=[400.],
+                zonal_wind_file=[davis_wind_x], meridional_wind_file=[davis_wind_y],
                 wind_mag_time_series_file=[davis_wind_time_series],
-                wetMaskFile=[davis_wetmask],
-                spongeHTimeScaleFile=[davis_sponge_h_timescale],
-                spongeHFile=[davis_sponge_h],
+                wet_mask_file=[davis_wetmask],
+                sponge_h_time_scale_file=[davis_sponge_h_timescale],
+                sponge_h_file=[davis_sponge_h],
                 nx=nx, ny=ny, dx=dx, dy=dy, 
                 exe='aronnax_core', 
-                dt=dt, dumpFreq=int(dt*nTimeSteps/40), nTimeSteps=nTimeSteps)
+                dt=dt, dump_freq=int(dt*n_time_steps/40), n_time_steps=n_time_steps)
 
 
-def run_davis_control_final_five(nx, ny, layers, nTimeSteps, dt, simulation=None):
+def run_davis_control_final_five(nx, ny, layers, n_time_steps, dt, simulation=None):
 
     #assert layers == 1
     xlen = 1530e3
@@ -210,17 +210,17 @@ def run_davis_control_final_five(nx, ny, layers, nTimeSteps, dt, simulation=None
 
     with working_directory(p.join(self_path, 
         "Davis_et_al_2014/{0}".format(simulation))):
-        drv.simulate(initHfile='../final_state_of_control/final.h.0001244161',
-                initUfile='../final_state_of_control/final.u.0001244161',
-                initVfile='../final_state_of_control/final.v.0001244161',
-                zonalWindFile=[davis_wind_x], meridionalWindFile=[davis_wind_y],
+        drv.simulate(init_h_file='../final_state_of_control/final.h.0001244161',
+                init_u_file='../final_state_of_control/final.u.0001244161',
+                init_v_file='../final_state_of_control/final.v.0001244161',
+                zonal_wind_file=[davis_wind_x], meridional_wind_file=[davis_wind_y],
                 wind_mag_time_series_file=[davis_wind_time_series],
-                wetMaskFile=[davis_wetmask],
-                spongeHTimeScaleFile=[davis_sponge_h_timescale],
-                spongeHFile=[davis_sponge_h],
+                wet_mask_file=[davis_wetmask],
+                sponge_h_time_scale_file=[davis_sponge_h_timescale],
+                sponge_h_file=[davis_sponge_h],
                 nx=nx, ny=ny, dx=dx, dy=dy, 
                 exe='aronnax_core', 
-                dt=dt, dumpFreq=int(86400.*5.), nTimeSteps=nTimeSteps)
+                dt=dt, dump_freq=int(86400.*5.), n_time_steps=n_time_steps)
 
 
 if __name__ == '__main__':

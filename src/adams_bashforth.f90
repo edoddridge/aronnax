@@ -9,7 +9,7 @@ module adams_bashforth
   !! This is not a good algorithm. Don't use it, except to show how
   !! how bad it is.
 
-  subroutine ForwardEuler(X_new, dXdt, X, dt, xlow, xhigh, ylow, yhigh, layers, OL, AB_order)
+  subroutine forward_euler(X_new, dXdt, X, dt, xlow, xhigh, ylow, yhigh, layers, OL, AB_order)
     implicit none
 
     double precision, intent(out) :: X_new(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
@@ -20,7 +20,7 @@ module adams_bashforth
 
     X_new = X + dt*dXdt(:,:,:,1)
 
-  end subroutine ForwardEuler
+  end subroutine forward_euler
 
 ! ---------------------------------------------------------------------------
   !> A second-order Adams-Bashforth algorithm

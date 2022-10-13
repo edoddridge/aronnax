@@ -61,7 +61,7 @@ def beta_plane_bump_red_grav():
 
     with working_directory(p.join(self_path,
                             "reduced_gravity/beta_plane_bump")):
-        drv.simulate(initHfile=[bump],
+        drv.simulate(init_h_file=[bump],
                      exe=executable,
                      nx=nx, ny=ny,
                      dx=xlen/nx, dy=ylen/ny)
@@ -78,7 +78,7 @@ def beta_plane_bump_n_layer():
     grid = aro.Grid(nx, ny, layers, xlen / nx, ylen / ny)
 
     with working_directory(p.join(self_path, "n_layer/beta_plane_bump")):
-        drv.simulate(initHfile=[bump, lambda X, Y: 2000. - bump(X, Y)],
+        drv.simulate(init_h_file=[bump, lambda X, Y: 2000. - bump(X, Y)],
                      exe=executable,
                      nx=nx, ny=ny,
                      dx=xlen/nx, dy=ylen/ny)
@@ -110,7 +110,7 @@ def beta_plane_gyre_red_grav():
 
     with working_directory(p.join(self_path,
                             "reduced_gravity/beta_plane_gyre")):
-        drv.simulate(zonalWindFile=[wind],
+        drv.simulate(zonal_wind_file=[wind],
                      nx=nx, ny=ny,
                      dx=xlen/nx, dy=ylen/ny,
                      exe=executable)
@@ -141,11 +141,11 @@ def beta_plane_gyre_n_layer():
         return wind_forcing
 
     with working_directory(p.join(self_path, "n_layer/beta_plane_gyre")):
-        drv.simulate(zonalWindFile=[wind],
+        drv.simulate(zonal_wind_file=[wind],
                      exe=executable,
                      nx=nx, ny=ny, layers=layers,
                      dx=xlen/nx, dy=ylen/ny,
-                     nTimeSteps = 20001, dumpFreq = 6e5, avFreq = 48e5
+                     n_time_steps = 20001, dump_freq = 6e5, av_freq = 48e5
                      # NB: this takes quite a long time to run.
                      )
         with working_directory("figures"):

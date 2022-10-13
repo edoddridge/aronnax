@@ -19,7 +19,7 @@ import sys
 sys.path.append(p.join(root_path, 'test'))
 import output_preservation_test as opt
 
-def test_f_plane_Hypre_botDrag(botDrag=1e-5, layers=1):
+def test_f_plane_Hypre_bot_drag(bot_drag=1e-5, layers=1):
 
     test_executable = "aronnax_external_solver_test"
 
@@ -47,27 +47,27 @@ def test_f_plane_Hypre_botDrag(botDrag=1e-5, layers=1):
     with working_directory(p.join(self_path, "bot_drag")):
 
         if layers ==1:
-            drv.simulate(initHfile=[400.], 
-            initUfile=[init_U],
-            depthFile=[layers*400],
+            drv.simulate(init_h_file=[400.], 
+            init_u_file=[init_U],
+            depth_file=[layers*400],
             exe=test_executable,
-            wetMaskFile=[dbl_periodic_wetmask],
+            wet_mask_file=[dbl_periodic_wetmask],
                      nx=nx, ny=ny, dx=dx, dy=dy,
                      dt = dt,
-                     dumpFreq = 200, diagFreq = dt,
-                     botDrag=botDrag,
-                     nTimeSteps=400)
+                     dump_freq = 200, diag_freq = dt,
+                     bot_drag=bot_drag,
+                     n_time_steps=400)
         else:
-            drv.simulate(initHfile=[400. for i in range(layers)], 
-            initUfile=[init_U for i in range(layers)],
-            depthFile=[layers*400],
+            drv.simulate(init_h_file=[400. for i in range(layers)], 
+            init_u_file=[init_U for i in range(layers)],
+            depth_file=[layers*400],
             exe=test_executable,
-            wetMaskFile=[dbl_periodic_wetmask],
+            wet_mask_file=[dbl_periodic_wetmask],
                      nx=nx, ny=ny, layers=layers, dx=dx, dy=dy,
                      dt = dt,
-                     dumpFreq = 200, diagFreq = dt,
-                     botDrag=botDrag,
-                     nTimeSteps=400)
+                     dump_freq = 200, diag_freq = dt,
+                     bot_drag=bot_drag,
+                     n_time_steps=400)
 
         hfiles = sorted(glob.glob("output/snap.h.*"))
         ufiles = sorted(glob.glob("output/snap.u.*"))
@@ -101,7 +101,7 @@ def test_f_plane_Hypre_botDrag(botDrag=1e-5, layers=1):
 
         momentum_expected[:] = (nx * ny * dx * dy * rho0 * 
                                 (np.mean(init_h)*np.mean(init_u[:,:]))*
-                                    np.exp(-model_iteration*dt*botDrag))
+                                    np.exp(-model_iteration*dt*bot_drag))
 
         test_passes = True
 
@@ -141,6 +141,6 @@ def test_f_plane_Hypre_botDrag(botDrag=1e-5, layers=1):
 
         assert test_passes
 
-def test_f_plane_Hypre_botDrag_2Layers():
-    test_f_plane_Hypre_botDrag(botDrag=1e-5, layers=2)
+def test_f_plane_Hypre_bot_drag_2Layers():
+    test_f_plane_Hypre_bot_drag(bot_drag=1e-5, layers=2)
 

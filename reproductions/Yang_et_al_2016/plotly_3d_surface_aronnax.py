@@ -29,7 +29,7 @@ def bathymetry(X,Y):
 
     # creating slope near southern boundary
     depth = np.minimum(4000*np.ones(X.shape), 15250 - 0.03*r)
-    # set minimum depth to 250 m (also the model won't run if depthFile
+    # set minimum depth to 250 m (also the model won't run if depth_file
     #   contains negative numbers)
     depth = np.maximum(depth, 250)
     depth[r>=499e3] = 0

@@ -15,12 +15,12 @@ def bump(X, Y):
 
 def do_red_grav(nx, aro_build, perf):
     with working_directory(p.join(self_path, "beta_plane_bump_red_grav")):
-        aro.simulate(exe=aro_build, initHfile=[bump], nx=nx, ny=nx, perf=perf)
+        aro.simulate(exe=aro_build, init_h_file=[bump], nx=nx, ny=nx, perf=perf)
 
 def do_n_layer(nx, aro_build, perf):
     with working_directory(p.join(self_path, "beta_plane_bump")):
         aro.simulate(exe=aro_build, nx=nx, ny=nx, perf=perf,
-                     initHfile=[bump, lambda X, Y: 2000. - bump(X, Y)])
+                     init_h_file=[bump, lambda X, Y: 2000. - bump(X, Y)])
 
 def main():
     aro_build = "aronnax_prof"

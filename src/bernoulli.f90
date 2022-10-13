@@ -77,7 +77,7 @@ module bernoulli
 
   ! ---------------------------------------------------------------------------
 
-  subroutine evaluate_b_RedGrav(b, h, u, v, gr, nx, ny, layers, xlow, xhigh, ylow, yhigh, OL, &
+  subroutine evaluate_b_red_grav(b, h, u, v, gr, nx, ny, layers, xlow, xhigh, ylow, yhigh, OL, &
                                  ilower, iupper, num_procs, myid)
     implicit none
 
@@ -123,6 +123,6 @@ module bernoulli
     end do
 
     return
-  end subroutine evaluate_b_RedGrav
+  end subroutine evaluate_b_red_grav
 
 end module bernoulli

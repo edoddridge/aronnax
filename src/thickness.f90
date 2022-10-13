@@ -11,7 +11,7 @@ module thickness
   !> Calculate the tendency of layer thickness for each of the active layers
   !! dh/dt is in the centre of each grid point.
   subroutine evaluate_dhdt(dhdt, h, u, v, kh, hmin, kv, dx, dy, xlow, xhigh, ylow, yhigh, &
-      nx, ny, layers, OL, spongeTimeScale, spongeH, wetmask, RedGrav, hAdvecScheme, n, &
+      nx, ny, layers, OL, spongeTimeScale, sponge_h, wetmask, red_grav, h_advec_scheme, n, &
       ilower, iupper, num_procs, myid)
     implicit none
 
@@ -26,10 +26,10 @@ module thickness
     integer,          intent(in)  :: xlow, xhigh, ylow, yhigh
     integer,          intent(in)  :: nx, ny, layers, OL
     double precision, intent(in)  :: spongeTimeScale(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
-    double precision, intent(in)  :: spongeH(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in)  :: sponge_h(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
     double precision, intent(in)  :: wetmask(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
-    logical,          intent(in)  :: RedGrav
-    integer,          intent(in)  :: hAdvecScheme
+    logical,          intent(in)  :: red_grav
+    integer,          intent(in)  :: h_advec_scheme
     integer,          intent(in)  :: n
     integer,          intent(in)  :: ilower(0:num_procs-1,2)
     integer,          intent(in)  :: iupper(0:num_procs-1,2)
@@ -51,20 +51,20 @@ module thickness
     dhdt_kh = 0d0
 
     call dhdt_hor_diff(dhdt_kh, h, kh, hmin, dx, dy, xlow, xhigh, ylow, yhigh, layers, &
-      OL, wetmask, RedGrav)
+      OL, wetmask, red_grav)
 
     ! Calculate thickness tendency due to vertical diffusion
     dhdt_kv = 0d0
-    call dhdt_vert_diff(dhdt_kv, h, kv, xlow, xhigh, ylow, yhigh, layers, OL, RedGrav)
+    call dhdt_vert_diff(dhdt_kv, h, kv, xlow, xhigh, ylow, yhigh, layers, OL, red_grav)
 
 
     ! Calculate the thickness tendency due to the flow field
     dhdt_advec = 0d0
 
-    if (hAdvecScheme .eq. 1) then
+    if (h_advec_scheme .eq. 1) then
       ! first-order centered
       call h_advec_1_centered(dhdt_advec, h, u, v, dx, dy, xlow, xhigh, ylow, yhigh, layers, OL)
-    else if (hAdvecScheme .eq. 2) then
+    else if (h_advec_scheme .eq. 2) then
       ! first-order upwind
       call h_advec_1_upwind(dhdt_advec, h, u, v, dx, dy, xlow, xhigh, ylow, yhigh, layers, OL)
     else
@@ -81,7 +81,7 @@ module thickness
               dhdt_kh(i,j,k) & ! horizontal thickness diffusion
               + dhdt_kv(i,j,k) & ! vetical thickness diffusion 
               + dhdt_advec(i,j,k) & ! thickness advection
-              + spongeTimeScale(i,j,k)*(spongeH(i,j,k)-h(i,j,k)) ! forced relaxtion in the sponge regions.
+              + spongeTimeScale(i,j,k)*(sponge_h(i,j,k)-h(i,j,k)) ! forced relaxtion in the sponge regions.
         end do
       end do
     end do
@@ -98,7 +98,7 @@ module thickness
   !> Calculate the tendency of layer thickness for each of the active layers
   !! due to horizontal thickness diffusion
   subroutine dhdt_hor_diff(dhdt_GM, h, kh, hmin, dx, dy, xlow, xhigh, ylow, yhigh, layers, &
-      OL, wetmask, RedGrav)
+      OL, wetmask, red_grav)
     implicit none
 
     ! dhdt is evaluated at the centre of the grid box
@@ -109,7 +109,7 @@ module thickness
     double precision, intent(in)  :: dx, dy
     integer, intent(in) :: xlow, xhigh, ylow, yhigh, layers, OL
     double precision, intent(in)  :: wetmask(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
-    logical, intent(in) :: RedGrav
+    logical, intent(in) :: red_grav
 
     integer i, j, k
     double precision :: kappa_local
@@ -147,7 +147,7 @@ module thickness
     ! gravity physics, this is unconstrained and calculated as above. If
     ! using n-layer physics it is constrained to balance the layers
     ! above it.
-    if (RedGrav) then
+    if (red_grav) then
       do j = ylow-OL+1, yhigh+OL-1
         do i = xlow-OL+1, xhigh+OL-1
           ! if h >> hmin, then kappa_local = kh(k)
@@ -167,7 +167,7 @@ module thickness
                 - 2*h(i,j,layers))/(dy*dy) ! y-component horizontal diffusion
         end do
       end do
-    else if (.not. RedGrav) then ! using n-layer physics
+    else if (.not. red_grav) then ! using n-layer physics
       ! Calculate bottom layer thickness tendency to balance layers above.
       ! In the flat-bottomed case this will give the same answer.
       dhdt_GM(:,:,layers) = -sum(dhdt_GM(:,:,:layers-1), 3)
@@ -179,7 +179,7 @@ module thickness
   ! ---------------------------------------------------------------------------
   !> Calculate the tendency of layer thickness for each of the active layers
   !! due to vertical thickness diffusion
-  subroutine dhdt_vert_diff(dhdt_kv, h, kv, xlow, xhigh, ylow, yhigh, layers, OL, RedGrav)
+  subroutine dhdt_vert_diff(dhdt_kv, h, kv, xlow, xhigh, ylow, yhigh, layers, OL, red_grav)
     implicit none
 
     ! dhdt is evaluated at the centre of the grid box
@@ -187,7 +187,7 @@ module thickness
     double precision, intent(in)  :: h(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
     double precision, intent(in)  :: kv
     integer, intent(in) :: xlow, xhigh, ylow, yhigh, layers, OL
-    logical, intent(in) :: RedGrav
+    logical, intent(in) :: red_grav
 
     integer i, j, k
 
@@ -196,7 +196,7 @@ module thickness
     ! calculate vertical diffusive mass fluxes
     ! only evaluate vertical mass diff flux if more than 1 layer, or reduced gravity
     if (layers .eq. 1) then
-      if (RedGrav) then
+      if (red_grav) then
         do j = ylow, yhigh
           do i = xlow, xhigh
             dhdt_kv(i,j,1) = kv/h(i,j,1)

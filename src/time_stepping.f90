@@ -9,7 +9,7 @@ module time_stepping
 
   
   ! ---------------------------------------------------------------------------
-  !> Parse the TS_algorithm parameter to determine whether multiple tendency
+  !> Parse the ts_algorithm parameter to determine whether multiple tendency
   !! arrays need to be stored
   !! 1 is Forward Euler (part of both AB and RK families)
   !! 2-9 are AB family algorithms
@@ -17,38 +17,38 @@ module time_stepping
   !! hence AB_order = 1)
 
 
-  subroutine set_AB_order(TS_algorithm, AB_order)
+  subroutine set_AB_order(ts_algorithm, AB_order)
     implicit none
 
-    integer,          intent(in)  :: TS_algorithm
+    integer,          intent(in)  :: ts_algorithm
     integer,          intent(out) :: AB_order
 
-    if (TS_algorithm .eq. 1) then
+    if (ts_algorithm .eq. 1) then
       ! Forward Euler
       AB_order = 1
-    else if (TS_algorithm .eq. 2) then
+    else if (ts_algorithm .eq. 2) then
       ! Second-order AB
       AB_order = 2
-    else if (TS_algorithm .eq. 3) then
+    else if (ts_algorithm .eq. 3) then
       ! Third-order AB
       AB_order = 3
-    else if (TS_algorithm .eq. 4) then
+    else if (ts_algorithm .eq. 4) then
       ! Fourth-order AB
       AB_order = 4
-    else if (TS_algorithm .eq. 5) then
+    else if (ts_algorithm .eq. 5) then
       ! Fifth-order AB
       AB_order = 5
-    else if (TS_algorithm .eq. 12) then
+    else if (ts_algorithm .eq. 12) then
       ! Second-order RK
       AB_order = 1
-    else if (TS_algorithm .eq. 13) then
+    else if (ts_algorithm .eq. 13) then
       ! Third-order RK
       AB_order = 1
-    else if (TS_algorithm .eq. 14) then
+    else if (ts_algorithm .eq. 14) then
       ! Fourth-order RK
       AB_order = 1
     else
-      ! TS_algorithm not set correctly
+      ! ts_algorithm not set correctly
       call clean_stop(0, .FALSE.)
     end if
 
@@ -59,13 +59,13 @@ module time_stepping
   !> Initialise tendencies for linear multi-step timestepping algorithms
 
   subroutine initialise_tendencies(dhdt, dudt, dvdt, h, u, v, depth, &
-          dx, dy, dt, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
-          au, ar, botDrag, kh, kv, hmin, slip, &
-          RedGrav, hAdvecScheme, AB_order, g_vec, rho0, wind_x, wind_y, &
-          wind_depth, RelativeWind, Cd, &
-          spongeHTimeScale, spongeH, &
-          spongeUTimeScale, spongeU, &
-          spongeVTimeScale, spongeV, &
+          dx, dy, dt, wetmask, hfac_w, hfac_e, hfac_n, hfac_s, fu, fv, &
+          au, ar, bot_drag, kh, kv, hmin, slip, &
+          red_grav, h_advec_scheme, AB_order, g_vec, rho0, wind_x, wind_y, &
+          wind_depth, relative_wind, Cd, &
+          sponge_h_time_scale, sponge_h, &
+          sponge_u_time_scale, sponge_u, &
+          sponge_v_time_scale, sponge_v, &
           nx, ny, layers, ilower, iupper, xlow, xhigh, ylow, yhigh, &
           OL, num_procs, myid, debug_level)
     implicit none
@@ -80,32 +80,32 @@ module time_stepping
     double precision, intent(in) :: depth(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
     double precision, intent(in) :: dx, dy, dt
     double precision, intent(in) :: wetmask(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
-    double precision, intent(in) :: hfacW(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
-    double precision, intent(in) :: hfacE(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
-    double precision, intent(in) :: hfacN(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
-    double precision, intent(in) :: hfacS(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(in) :: hfac_w(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(in) :: hfac_e(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(in) :: hfac_n(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(in) :: hfac_s(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
     double precision, intent(in) :: fu(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
     double precision, intent(in) :: fv(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
-    double precision, intent(in) :: au, ar, botDrag
+    double precision, intent(in) :: au, ar, bot_drag
     double precision, intent(in) :: kh(layers), kv
     double precision, intent(in) :: hmin
     double precision, intent(in) :: slip
-    logical,          intent(in) :: RedGrav
-    integer,          intent(in) :: hAdvecScheme
+    logical,          intent(in) :: red_grav
+    integer,          intent(in) :: h_advec_scheme
     integer,          intent(in) :: AB_order
     double precision, intent(in) :: g_vec(layers)
     double precision, intent(in) :: rho0
     double precision, intent(in) :: wind_x(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
     double precision, intent(in) :: wind_y(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
     double precision, intent(in) :: wind_depth
-    logical,          intent(in) :: RelativeWind
+    logical,          intent(in) :: relative_wind
     double precision, intent(in) :: Cd
-    double precision, intent(in) :: spongeHTimeScale(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
-    double precision, intent(in) :: spongeH(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
-    double precision, intent(in) :: spongeUTimeScale(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
-    double precision, intent(in) :: spongeU(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
-    double precision, intent(in) :: spongeVTimeScale(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
-    double precision, intent(in) :: spongeV(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in) :: sponge_h_time_scale(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in) :: sponge_h(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in) :: sponge_u_time_scale(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in) :: sponge_u(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in) :: sponge_v_time_scale(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in) :: sponge_v(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
     integer,          intent(in) :: nx, ny, layers
     integer,          intent(in) :: ilower(0:num_procs-1,2)
     integer,          intent(in) :: iupper(0:num_procs-1,2)
@@ -128,20 +128,20 @@ module time_stepping
       call RK2(h_new, u_new, v_new, &
           dhdt(:,:,:,AB_order-t), dudt(:,:,:,AB_order-t), dvdt(:,:,:,AB_order-t), &
           h, u, v, depth, &
-          dx, dy, dt, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
-          au, ar, botDrag, kh, kv, hmin, slip, &
-          RedGrav, hAdvecScheme, g_vec, rho0, wind_x, wind_y, &
-          wind_depth, RelativeWind, Cd, &
-          spongeHTimeScale, spongeH, &
-          spongeUTimeScale, spongeU, &
-          spongeVTimeScale, spongeV, &
+          dx, dy, dt, wetmask, hfac_w, hfac_e, hfac_n, hfac_s, fu, fv, &
+          au, ar, bot_drag, kh, kv, hmin, slip, &
+          red_grav, h_advec_scheme, g_vec, rho0, wind_x, wind_y, &
+          wind_depth, relative_wind, Cd, &
+          sponge_h_time_scale, sponge_h, &
+          sponge_u_time_scale, sponge_u, &
+          sponge_v_time_scale, sponge_v, &
           nx, ny, layers, ilower, iupper, xlow, xhigh, ylow, yhigh, &
           OL, num_procs, myid, 0, debug_level)
 
             ! Apply the boundary conditions
-      call apply_boundary_conditions(u_new, hfacW, wetmask, &
+      call apply_boundary_conditions(u_new, hfac_w, wetmask, &
                                 xlow, xhigh, ylow, yhigh, layers, OL)
-      call apply_boundary_conditions(v_new, hfacS, wetmask, &
+      call apply_boundary_conditions(v_new, hfac_s, wetmask, &
                                 xlow, xhigh, ylow, yhigh, layers, OL)
 
       ! update global and tile halos with new values
@@ -165,18 +165,18 @@ module time_stepping
 
   ! ---------------------------------------------------------------------------
   !> Step the model forward one timestep. The timestepping scheme is set by the 
-  !! TS_algorithm parameter
+  !! ts_algorithm parameter
 
   subroutine timestep(h_new, u_new, v_new, dhdt, dudt, dvdt, &
       h, u, v, depth, &
-      dx, dy, dt, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
-      au, ar, botDrag, kh, kv, hmin, slip, &
-      RedGrav, hAdvecScheme, TS_algorithm, AB_order, &
+      dx, dy, dt, wetmask, hfac_w, hfac_e, hfac_n, hfac_s, fu, fv, &
+      au, ar, bot_drag, kh, kv, hmin, slip, &
+      red_grav, h_advec_scheme, ts_algorithm, AB_order, &
       g_vec, rho0, wind_x, wind_y, &
-      wind_depth, RelativeWind, Cd, &
-      spongeHTimeScale, spongeH, &
-      spongeUTimeScale, spongeU, &
-      spongeVTimeScale, spongeV, &
+      wind_depth, relative_wind, Cd, &
+      sponge_h_time_scale, sponge_h, &
+      sponge_u_time_scale, sponge_u, &
+      sponge_v_time_scale, sponge_v, &
       nx, ny, layers, ilower, iupper, xlow, xhigh, ylow, yhigh, &
       OL, num_procs, myid, n, debug_level)
     implicit none
@@ -193,31 +193,31 @@ module time_stepping
     double precision, intent(in)    :: depth(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
     double precision, intent(in)    :: dx, dy, dt
     double precision, intent(in)    :: wetmask(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
-    double precision, intent(in)    :: hfacW(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
-    double precision, intent(in)    :: hfacE(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
-    double precision, intent(in)    :: hfacN(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
-    double precision, intent(in)    :: hfacS(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(in)    :: hfac_w(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(in)    :: hfac_e(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(in)    :: hfac_n(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(in)    :: hfac_s(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
     double precision, intent(in)    :: fu(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
     double precision, intent(in)    :: fv(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
-    double precision, intent(in)    :: au, ar, botDrag
+    double precision, intent(in)    :: au, ar, bot_drag
     double precision, intent(in)    :: kh(layers), kv
     double precision, intent(in)    :: hmin
     double precision, intent(in)    :: slip
-    logical,          intent(in)    :: RedGrav
-    integer,          intent(in)    :: hAdvecScheme, TS_algorithm, AB_order
+    logical,          intent(in)    :: red_grav
+    integer,          intent(in)    :: h_advec_scheme, ts_algorithm, AB_order
     double precision, intent(in)    :: g_vec(layers)
     double precision, intent(in)    :: rho0
     double precision, intent(in)    :: wind_x(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
     double precision, intent(in)    :: wind_y(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
     double precision, intent(in)    :: wind_depth
-    logical,          intent(in)    :: RelativeWind
+    logical,          intent(in)    :: relative_wind
     double precision, intent(in)    :: Cd
-    double precision, intent(in)    :: spongeHTimeScale(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
-    double precision, intent(in)    :: spongeH(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
-    double precision, intent(in)    :: spongeUTimeScale(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
-    double precision, intent(in)    :: spongeU(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
-    double precision, intent(in)    :: spongeVTimeScale(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
-    double precision, intent(in)    :: spongeV(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in)    :: sponge_h_time_scale(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in)    :: sponge_h(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in)    :: sponge_u_time_scale(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in)    :: sponge_u(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in)    :: sponge_v_time_scale(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in)    :: sponge_v(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
     integer,          intent(in)    :: nx, ny, layers
     integer,          intent(in)    :: ilower(0:num_procs-1,2)
     integer,          intent(in)    :: iupper(0:num_procs-1,2)
@@ -228,35 +228,35 @@ module time_stepping
 
 
 
-    if (TS_algorithm .eq. 1) then
+    if (ts_algorithm .eq. 1) then
       ! Forward Euler
       call state_derivative(dhdt(:,:,:,1), dudt(:,:,:,1), dvdt(:,:,:,1), h, u, v, depth, &
-          dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
-          au, ar, botDrag, kh, kv, hmin, slip, &
-          RedGrav, hAdvecScheme, g_vec, rho0, wind_x, wind_y, &
-          wind_depth, RelativeWind, Cd, &
-          spongeHTimeScale, spongeH, &
-          spongeUTimeScale, spongeU, &
-          spongeVTimeScale, spongeV, &
+          dx, dy, wetmask, hfac_w, hfac_e, hfac_n, hfac_s, fu, fv, &
+          au, ar, bot_drag, kh, kv, hmin, slip, &
+          red_grav, h_advec_scheme, g_vec, rho0, wind_x, wind_y, &
+          wind_depth, relative_wind, Cd, &
+          sponge_h_time_scale, sponge_h, &
+          sponge_u_time_scale, sponge_u, &
+          sponge_v_time_scale, sponge_v, &
           nx, ny, layers, ilower, iupper, xlow, xhigh, ylow, yhigh, &
           OL, num_procs, myid, n, debug_level)
 
       ! Use dh/dt, du/dt and dv/dt to step h, u and v forward in time
-      call ForwardEuler(h_new, dhdt, h, dt, xlow, xhigh, ylow, yhigh, layers, OL, AB_order)
-      call ForwardEuler(u_new, dudt, u, dt, xlow, xhigh, ylow, yhigh, layers, OL, AB_order)
-      call ForwardEuler(v_new, dvdt, v, dt, xlow, xhigh, ylow, yhigh, layers, OL, AB_order)
+      call forward_euler(h_new, dhdt, h, dt, xlow, xhigh, ylow, yhigh, layers, OL, AB_order)
+      call forward_euler(u_new, dudt, u, dt, xlow, xhigh, ylow, yhigh, layers, OL, AB_order)
+      call forward_euler(v_new, dvdt, v, dt, xlow, xhigh, ylow, yhigh, layers, OL, AB_order)
 
 
-    else if (TS_algorithm .eq. 2) then
+    else if (ts_algorithm .eq. 2) then
       ! Second-order AB
       call state_derivative(dhdt(:,:,:,1), dudt(:,:,:,1), dvdt(:,:,:,1), h, u, v, depth, &
-          dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
-          au, ar, botDrag, kh, kv, hmin, slip, &
-          RedGrav, hAdvecScheme, g_vec, rho0, wind_x, wind_y, &
-          wind_depth, RelativeWind, Cd, &
-          spongeHTimeScale, spongeH, &
-          spongeUTimeScale, spongeU, &
-          spongeVTimeScale, spongeV, &
+          dx, dy, wetmask, hfac_w, hfac_e, hfac_n, hfac_s, fu, fv, &
+          au, ar, bot_drag, kh, kv, hmin, slip, &
+          red_grav, h_advec_scheme, g_vec, rho0, wind_x, wind_y, &
+          wind_depth, relative_wind, Cd, &
+          sponge_h_time_scale, sponge_h, &
+          sponge_u_time_scale, sponge_u, &
+          sponge_v_time_scale, sponge_v, &
           nx, ny, layers, ilower, iupper, xlow, xhigh, ylow, yhigh, &
           OL, num_procs, myid, n, debug_level)
 
@@ -265,16 +265,16 @@ module time_stepping
       call AB2(u_new, dudt, u, dt, xlow, xhigh, ylow, yhigh, layers, OL, AB_order)
       call AB2(v_new, dvdt, v, dt, xlow, xhigh, ylow, yhigh, layers, OL, AB_order)
 
-    else if (TS_algorithm .eq. 3) then
+    else if (ts_algorithm .eq. 3) then
       ! Third-order AB
       call state_derivative(dhdt(:,:,:,1), dudt(:,:,:,1), dvdt(:,:,:,1), h, u, v, depth, &
-          dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
-          au, ar, botDrag, kh, kv, hmin, slip, &
-          RedGrav, hAdvecScheme, g_vec, rho0, wind_x, wind_y, &
-          wind_depth, RelativeWind, Cd, &
-          spongeHTimeScale, spongeH, &
-          spongeUTimeScale, spongeU, &
-          spongeVTimeScale, spongeV, &
+          dx, dy, wetmask, hfac_w, hfac_e, hfac_n, hfac_s, fu, fv, &
+          au, ar, bot_drag, kh, kv, hmin, slip, &
+          red_grav, h_advec_scheme, g_vec, rho0, wind_x, wind_y, &
+          wind_depth, relative_wind, Cd, &
+          sponge_h_time_scale, sponge_h, &
+          sponge_u_time_scale, sponge_u, &
+          sponge_v_time_scale, sponge_v, &
           nx, ny, layers, ilower, iupper, xlow, xhigh, ylow, yhigh, &
           OL, num_procs, myid, n, debug_level)
 
@@ -284,17 +284,17 @@ module time_stepping
       call AB3(u_new, dudt, u, dt, xlow, xhigh, ylow, yhigh, layers, OL, AB_order)
       call AB3(v_new, dvdt, v, dt, xlow, xhigh, ylow, yhigh, layers, OL, AB_order)
 
-    else if (TS_algorithm .eq. 4) then
+    else if (ts_algorithm .eq. 4) then
       ! Fourth-order AB
 
       call state_derivative(dhdt(:,:,:,1), dudt(:,:,:,1), dvdt(:,:,:,1), h, u, v, depth, &
-          dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
-          au, ar, botDrag, kh, kv, hmin, slip, &
-          RedGrav, hAdvecScheme, g_vec, rho0, wind_x, wind_y, &
-          wind_depth, RelativeWind, Cd, &
-          spongeHTimeScale, spongeH, &
-          spongeUTimeScale, spongeU, &
-          spongeVTimeScale, spongeV, &
+          dx, dy, wetmask, hfac_w, hfac_e, hfac_n, hfac_s, fu, fv, &
+          au, ar, bot_drag, kh, kv, hmin, slip, &
+          red_grav, h_advec_scheme, g_vec, rho0, wind_x, wind_y, &
+          wind_depth, relative_wind, Cd, &
+          sponge_h_time_scale, sponge_h, &
+          sponge_u_time_scale, sponge_u, &
+          sponge_v_time_scale, sponge_v, &
           nx, ny, layers, ilower, iupper, xlow, xhigh, ylow, yhigh, &
           OL, num_procs, myid, n, debug_level)
 
@@ -303,17 +303,17 @@ module time_stepping
       call AB4(u_new, dudt, u, dt, xlow, xhigh, ylow, yhigh, layers, OL, AB_order)
       call AB4(v_new, dvdt, v, dt, xlow, xhigh, ylow, yhigh, layers, OL, AB_order)
 
-    else if (TS_algorithm .eq. 5) then
+    else if (ts_algorithm .eq. 5) then
       ! Fifth-order AB
 
       call state_derivative(dhdt(:,:,:,1), dudt(:,:,:,1), dvdt(:,:,:,1), h, u, v, depth, &
-          dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
-          au, ar, botDrag, kh, kv, hmin, slip, &
-          RedGrav, hAdvecScheme, g_vec, rho0, wind_x, wind_y, &
-          wind_depth, RelativeWind, Cd, &
-          spongeHTimeScale, spongeH, &
-          spongeUTimeScale, spongeU, &
-          spongeVTimeScale, spongeV, &
+          dx, dy, wetmask, hfac_w, hfac_e, hfac_n, hfac_s, fu, fv, &
+          au, ar, bot_drag, kh, kv, hmin, slip, &
+          red_grav, h_advec_scheme, g_vec, rho0, wind_x, wind_y, &
+          wind_depth, relative_wind, Cd, &
+          sponge_h_time_scale, sponge_h, &
+          sponge_u_time_scale, sponge_u, &
+          sponge_v_time_scale, sponge_v, &
           nx, ny, layers, ilower, iupper, xlow, xhigh, ylow, yhigh, &
           OL, num_procs, myid, n, debug_level)
 
@@ -322,29 +322,29 @@ module time_stepping
       call AB5(u_new, dudt, u, dt, xlow, xhigh, ylow, yhigh, layers, OL, AB_order)
       call AB5(v_new, dvdt, v, dt, xlow, xhigh, ylow, yhigh, layers, OL, AB_order)
 
-    else if (TS_algorithm .eq. 12) then
+    else if (ts_algorithm .eq. 12) then
       ! Second-order RK
       call RK2(h_new, u_new, v_new, dhdt, dudt, dvdt, h, u, v, depth, &
-          dx, dy, dt, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
-          au, ar, botDrag, kh, kv, hmin, slip, &
-          RedGrav, hAdvecScheme, g_vec, rho0, wind_x, wind_y, &
-          wind_depth, RelativeWind, Cd, &
-          spongeHTimeScale, spongeH, &
-          spongeUTimeScale, spongeU, &
-          spongeVTimeScale, spongeV, &
+          dx, dy, dt, wetmask, hfac_w, hfac_e, hfac_n, hfac_s, fu, fv, &
+          au, ar, bot_drag, kh, kv, hmin, slip, &
+          red_grav, h_advec_scheme, g_vec, rho0, wind_x, wind_y, &
+          wind_depth, relative_wind, Cd, &
+          sponge_h_time_scale, sponge_h, &
+          sponge_u_time_scale, sponge_u, &
+          sponge_v_time_scale, sponge_v, &
           nx, ny, layers, ilower, iupper, xlow, xhigh, ylow, yhigh, &
           OL, num_procs, myid, n, debug_level)
 
-    else if (TS_algorithm .eq. 13) then
+    else if (ts_algorithm .eq. 13) then
       ! Third-order RK
       call clean_stop(0, .FALSE.)
 
-    else if (TS_algorithm .eq. 14) then
+    else if (ts_algorithm .eq. 14) then
       ! Fourth-order RK
       call clean_stop(0, .FALSE.)
 
     else
-      ! TS_algorithm not set correctly
+      ! ts_algorithm not set correctly
       call clean_stop(0, .FALSE.)
     end if
 
@@ -356,13 +356,13 @@ module time_stepping
   !! the linear multi-step methods (Adams-Bashforth algorithms)
 
   subroutine RK2(h_new, u_new, v_new, dhdt, dudt, dvdt, h, u, v, depth, &
-          dx, dy, dt, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
-          au, ar, botDrag, kh, kv, hmin, slip, &
-          RedGrav, hAdvecScheme, g_vec, rho0, wind_x, wind_y, &
-          wind_depth, RelativeWind, Cd, &
-          spongeHTimeScale, spongeH, &
-          spongeUTimeScale, spongeU, &
-          spongeVTimeScale, spongeV, &
+          dx, dy, dt, wetmask, hfac_w, hfac_e, hfac_n, hfac_s, fu, fv, &
+          au, ar, bot_drag, kh, kv, hmin, slip, &
+          red_grav, h_advec_scheme, g_vec, rho0, wind_x, wind_y, &
+          wind_depth, relative_wind, Cd, &
+          sponge_h_time_scale, sponge_h, &
+          sponge_u_time_scale, sponge_u, &
+          sponge_v_time_scale, sponge_v, &
           nx, ny, layers, ilower, iupper, xlow, xhigh, ylow, yhigh, &
           OL, num_procs, myid, n, debug_level)
     implicit none
@@ -379,31 +379,31 @@ module time_stepping
     double precision, intent(in) :: depth(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
     double precision, intent(in) :: dx, dy, dt
     double precision, intent(in) :: wetmask(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
-    double precision, intent(in) :: hfacW(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
-    double precision, intent(in) :: hfacE(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
-    double precision, intent(in) :: hfacN(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
-    double precision, intent(in) :: hfacS(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(in) :: hfac_w(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(in) :: hfac_e(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(in) :: hfac_n(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
+    double precision, intent(in) :: hfac_s(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
     double precision, intent(in) :: fu(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
     double precision, intent(in) :: fv(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
-    double precision, intent(in) :: au, ar, botDrag
+    double precision, intent(in) :: au, ar, bot_drag
     double precision, intent(in) :: kh(layers), kv
     double precision, intent(in) :: hmin
     double precision, intent(in) :: slip
-    logical,          intent(in) :: RedGrav
-    integer,          intent(in) :: hAdvecScheme
+    logical,          intent(in) :: red_grav
+    integer,          intent(in) :: h_advec_scheme
     double precision, intent(in) :: g_vec(layers)
     double precision, intent(in) :: rho0
     double precision, intent(in) :: wind_x(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
     double precision, intent(in) :: wind_y(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
     double precision, intent(in) :: wind_depth
-    logical,          intent(in) :: RelativeWind
+    logical,          intent(in) :: relative_wind
     double precision, intent(in) :: Cd
-    double precision, intent(in) :: spongeHTimeScale(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
-    double precision, intent(in) :: spongeH(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
-    double precision, intent(in) :: spongeUTimeScale(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
-    double precision, intent(in) :: spongeU(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
-    double precision, intent(in) :: spongeVTimeScale(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
-    double precision, intent(in) :: spongeV(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in) :: sponge_h_time_scale(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in) :: sponge_h(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in) :: sponge_u_time_scale(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in) :: sponge_u(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in) :: sponge_v_time_scale(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in) :: sponge_v(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
     integer,          intent(in) :: nx, ny, layers
     integer,          intent(in) :: ilower(0:num_procs-1,2)
     integer,          intent(in) :: iupper(0:num_procs-1,2)
@@ -420,13 +420,13 @@ module time_stepping
 
       call state_derivative(dhdt, dudt, dvdt, &
           h, u, v, depth, &
-          dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
-          au, ar, botDrag, kh, kv, hmin, slip, &
-          RedGrav, hAdvecScheme, g_vec, rho0, wind_x, wind_y, &
-          wind_depth, RelativeWind, Cd, &
-          spongeHTimeScale, spongeH, &
-          spongeUTimeScale, spongeU, &
-          spongeVTimeScale, spongeV, &
+          dx, dy, wetmask, hfac_w, hfac_e, hfac_n, hfac_s, fu, fv, &
+          au, ar, bot_drag, kh, kv, hmin, slip, &
+          red_grav, h_advec_scheme, g_vec, rho0, wind_x, wind_y, &
+          wind_depth, relative_wind, Cd, &
+          sponge_h_time_scale, sponge_h, &
+          sponge_u_time_scale, sponge_u, &
+          sponge_v_time_scale, sponge_v, &
           nx, ny, layers, ilower, iupper, xlow, xhigh, ylow, yhigh, &
           OL, num_procs, myid, n, debug_level)
 
@@ -437,13 +437,13 @@ module time_stepping
 
       call state_derivative(dhdt, dudt, dvdt, &
           hhalf, uhalf, vhalf, depth, &
-          dx, dy, wetmask, hfacW, hfacE, hfacN, hfacS, fu, fv, &
-          au, ar, botDrag, kh, kv, hmin, slip, &
-          RedGrav, hAdvecScheme, g_vec, rho0, wind_x, wind_y, &
-          wind_depth, RelativeWind, Cd, &
-          spongeHTimeScale, spongeH, &
-          spongeUTimeScale, spongeU, &
-          spongeVTimeScale, spongeV, &
+          dx, dy, wetmask, hfac_w, hfac_e, hfac_n, hfac_s, fu, fv, &
+          au, ar, bot_drag, kh, kv, hmin, slip, &
+          red_grav, h_advec_scheme, g_vec, rho0, wind_x, wind_y, &
+          wind_depth, relative_wind, Cd, &
+          sponge_h_time_scale, sponge_h, &
+          sponge_u_time_scale, sponge_u, &
+          sponge_v_time_scale, sponge_v, &
           nx, ny, layers, ilower, iupper, xlow, xhigh, ylow, yhigh, &
           OL, num_procs, myid, n, debug_level)
 
