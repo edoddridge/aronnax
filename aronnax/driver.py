@@ -89,6 +89,8 @@ def default_configuration():
     config.set("executable", "valgrind", "False")
     config.set("executable", "perf", "False")
 
+    config.set("model", "active_lower_layer", "False")
+
     config.set("external_forcing", "wind_n_records", "1")
     config.set("external_forcing", "wind_loop_fields", "False")
     config.set("external_forcing", "wind_interpolate", "False")
@@ -126,6 +128,7 @@ section_map = {
     "depth_file"            : "model",
     "h0"                   : "model",
     "red_grav"              : "model",
+    "active_lower_layer"              : "model",
     "n_proc_x"               : "pressure_solver",
     "n_proc_y"               : "pressure_solver",
     "sponge_h_time_scale_file" : "sponge",
@@ -237,8 +240,8 @@ def fortran_option_string(section, name, config):
             return "'%s'" % (p.join("input", name + '.bin'),)
         else:
             return "''"
-    if name in ["red_grav", "dump_wind", "relative_wind",
-                "wind_loop_fields","wind_interpolate"]:
+    if name in ["red_grav", "active_lower_layer", "dump_wind",
+                "relative_wind", "wind_loop_fields","wind_interpolate"]:
         if config.getboolean(section, name):
             return ".TRUE."
         else:

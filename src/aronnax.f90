@@ -46,7 +46,7 @@ program aronnax
       dump_freq, av_freq, checkpoint_freq, diag_freq, hmin, maxits, &
       freesurf_fac, eps, thickness_error, debug_level
 
-  namelist /MODEL/ hmean, depth_file, h0, red_grav
+  namelist /MODEL/ hmean, depth_file, h0, red_grav, active_lower_layer
 
   namelist /PRESSURE_SOLVER/ n_proc_x, n_proc_y
 
