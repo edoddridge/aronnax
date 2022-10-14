@@ -74,7 +74,7 @@ program aronnax
   diag_freq = 0d0
 
   debug_level = 0
-  
+
   ! start from t = 0
   niter0 = 0
 
