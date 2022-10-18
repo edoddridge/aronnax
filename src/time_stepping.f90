@@ -61,8 +61,8 @@ module time_stepping
   subroutine initialise_tendencies(dhdt, dudt, dvdt, h, u, v, depth, &
           dx, dy, dt, wetmask, hfac_w, hfac_e, hfac_n, hfac_s, fu, fv, &
           au, ar, bot_drag, kh, kv, hmin, slip, &
-          red_grav, h_advec_scheme, AB_order, g_vec, rho0, wind_x, wind_y, &
-          wind_depth, relative_wind, Cd, &
+          red_grav, active_lower_layer, h_advec_scheme, AB_order, g_vec, rho0, &
+          wind_x, wind_y, wind_depth, relative_wind, Cd, &
           sponge_h_time_scale, sponge_h, &
           sponge_u_time_scale, sponge_u, &
           sponge_v_time_scale, sponge_v, &
@@ -91,6 +91,7 @@ module time_stepping
     double precision, intent(in) :: hmin
     double precision, intent(in) :: slip
     logical,          intent(in) :: red_grav
+    logical,          intent(in) :: active_lower_layer
     integer,          intent(in) :: h_advec_scheme
     integer,          intent(in) :: AB_order
     double precision, intent(in) :: g_vec(layers)
@@ -130,8 +131,8 @@ module time_stepping
           h, u, v, depth, &
           dx, dy, dt, wetmask, hfac_w, hfac_e, hfac_n, hfac_s, fu, fv, &
           au, ar, bot_drag, kh, kv, hmin, slip, &
-          red_grav, h_advec_scheme, g_vec, rho0, wind_x, wind_y, &
-          wind_depth, relative_wind, Cd, &
+          red_grav, active_lower_layer, h_advec_scheme, g_vec, rho0, &
+          wind_x, wind_y, wind_depth, relative_wind, Cd, &
           sponge_h_time_scale, sponge_h, &
           sponge_u_time_scale, sponge_u, &
           sponge_v_time_scale, sponge_v, &
@@ -171,7 +172,7 @@ module time_stepping
       h, u, v, depth, &
       dx, dy, dt, wetmask, hfac_w, hfac_e, hfac_n, hfac_s, fu, fv, &
       au, ar, bot_drag, kh, kv, hmin, slip, &
-      red_grav, h_advec_scheme, ts_algorithm, AB_order, &
+      red_grav, active_lower_layer, h_advec_scheme, ts_algorithm, AB_order, &
       g_vec, rho0, wind_x, wind_y, &
       wind_depth, relative_wind, Cd, &
       sponge_h_time_scale, sponge_h, &
@@ -204,6 +205,7 @@ module time_stepping
     double precision, intent(in)    :: hmin
     double precision, intent(in)    :: slip
     logical,          intent(in)    :: red_grav
+    logical,          intent(in)    :: active_lower_layer
     integer,          intent(in)    :: h_advec_scheme, ts_algorithm, AB_order
     double precision, intent(in)    :: g_vec(layers)
     double precision, intent(in)    :: rho0
@@ -233,8 +235,8 @@ module time_stepping
       call state_derivative(dhdt(:,:,:,1), dudt(:,:,:,1), dvdt(:,:,:,1), h, u, v, depth, &
           dx, dy, wetmask, hfac_w, hfac_e, hfac_n, hfac_s, fu, fv, &
           au, ar, bot_drag, kh, kv, hmin, slip, &
-          red_grav, h_advec_scheme, g_vec, rho0, wind_x, wind_y, &
-          wind_depth, relative_wind, Cd, &
+          red_grav, active_lower_layer, h_advec_scheme, g_vec, rho0, &
+          wind_x, wind_y, wind_depth, relative_wind, Cd, &
           sponge_h_time_scale, sponge_h, &
           sponge_u_time_scale, sponge_u, &
           sponge_v_time_scale, sponge_v, &
@@ -252,8 +254,8 @@ module time_stepping
       call state_derivative(dhdt(:,:,:,1), dudt(:,:,:,1), dvdt(:,:,:,1), h, u, v, depth, &
           dx, dy, wetmask, hfac_w, hfac_e, hfac_n, hfac_s, fu, fv, &
           au, ar, bot_drag, kh, kv, hmin, slip, &
-          red_grav, h_advec_scheme, g_vec, rho0, wind_x, wind_y, &
-          wind_depth, relative_wind, Cd, &
+          red_grav, active_lower_layer, h_advec_scheme, g_vec, rho0, &
+          wind_x, wind_y, wind_depth, relative_wind, Cd, &
           sponge_h_time_scale, sponge_h, &
           sponge_u_time_scale, sponge_u, &
           sponge_v_time_scale, sponge_v, &
@@ -270,8 +272,8 @@ module time_stepping
       call state_derivative(dhdt(:,:,:,1), dudt(:,:,:,1), dvdt(:,:,:,1), h, u, v, depth, &
           dx, dy, wetmask, hfac_w, hfac_e, hfac_n, hfac_s, fu, fv, &
           au, ar, bot_drag, kh, kv, hmin, slip, &
-          red_grav, h_advec_scheme, g_vec, rho0, wind_x, wind_y, &
-          wind_depth, relative_wind, Cd, &
+          red_grav, active_lower_layer, h_advec_scheme, g_vec, rho0, &
+          wind_x, wind_y, wind_depth, relative_wind, Cd, &
           sponge_h_time_scale, sponge_h, &
           sponge_u_time_scale, sponge_u, &
           sponge_v_time_scale, sponge_v, &
@@ -290,8 +292,8 @@ module time_stepping
       call state_derivative(dhdt(:,:,:,1), dudt(:,:,:,1), dvdt(:,:,:,1), h, u, v, depth, &
           dx, dy, wetmask, hfac_w, hfac_e, hfac_n, hfac_s, fu, fv, &
           au, ar, bot_drag, kh, kv, hmin, slip, &
-          red_grav, h_advec_scheme, g_vec, rho0, wind_x, wind_y, &
-          wind_depth, relative_wind, Cd, &
+          red_grav, active_lower_layer, h_advec_scheme, g_vec, rho0, &
+          wind_x, wind_y, wind_depth, relative_wind, Cd, &
           sponge_h_time_scale, sponge_h, &
           sponge_u_time_scale, sponge_u, &
           sponge_v_time_scale, sponge_v, &
@@ -309,8 +311,8 @@ module time_stepping
       call state_derivative(dhdt(:,:,:,1), dudt(:,:,:,1), dvdt(:,:,:,1), h, u, v, depth, &
           dx, dy, wetmask, hfac_w, hfac_e, hfac_n, hfac_s, fu, fv, &
           au, ar, bot_drag, kh, kv, hmin, slip, &
-          red_grav, h_advec_scheme, g_vec, rho0, wind_x, wind_y, &
-          wind_depth, relative_wind, Cd, &
+          red_grav, active_lower_layer, h_advec_scheme, g_vec, rho0, &
+          wind_x, wind_y, wind_depth, relative_wind, Cd, &
           sponge_h_time_scale, sponge_h, &
           sponge_u_time_scale, sponge_u, &
           sponge_v_time_scale, sponge_v, &
@@ -327,8 +329,8 @@ module time_stepping
       call RK2(h_new, u_new, v_new, dhdt, dudt, dvdt, h, u, v, depth, &
           dx, dy, dt, wetmask, hfac_w, hfac_e, hfac_n, hfac_s, fu, fv, &
           au, ar, bot_drag, kh, kv, hmin, slip, &
-          red_grav, h_advec_scheme, g_vec, rho0, wind_x, wind_y, &
-          wind_depth, relative_wind, Cd, &
+          red_grav, active_lower_layer, h_advec_scheme, g_vec, rho0, &
+          wind_x, wind_y, wind_depth, relative_wind, Cd, &
           sponge_h_time_scale, sponge_h, &
           sponge_u_time_scale, sponge_u, &
           sponge_v_time_scale, sponge_v, &
@@ -358,8 +360,8 @@ module time_stepping
   subroutine RK2(h_new, u_new, v_new, dhdt, dudt, dvdt, h, u, v, depth, &
           dx, dy, dt, wetmask, hfac_w, hfac_e, hfac_n, hfac_s, fu, fv, &
           au, ar, bot_drag, kh, kv, hmin, slip, &
-          red_grav, h_advec_scheme, g_vec, rho0, wind_x, wind_y, &
-          wind_depth, relative_wind, Cd, &
+          red_grav, active_lower_layer, h_advec_scheme, g_vec, rho0, &
+          wind_x, wind_y, wind_depth, relative_wind, Cd, &
           sponge_h_time_scale, sponge_h, &
           sponge_u_time_scale, sponge_u, &
           sponge_v_time_scale, sponge_v, &
@@ -390,6 +392,7 @@ module time_stepping
     double precision, intent(in) :: hmin
     double precision, intent(in) :: slip
     logical,          intent(in) :: red_grav
+    logical,          intent(in) :: active_lower_layer
     integer,          intent(in) :: h_advec_scheme
     double precision, intent(in) :: g_vec(layers)
     double precision, intent(in) :: rho0
@@ -422,8 +425,8 @@ module time_stepping
           h, u, v, depth, &
           dx, dy, wetmask, hfac_w, hfac_e, hfac_n, hfac_s, fu, fv, &
           au, ar, bot_drag, kh, kv, hmin, slip, &
-          red_grav, h_advec_scheme, g_vec, rho0, wind_x, wind_y, &
-          wind_depth, relative_wind, Cd, &
+          red_grav, active_lower_layer, h_advec_scheme, g_vec, rho0, &
+          wind_x, wind_y, wind_depth, relative_wind, Cd, &
           sponge_h_time_scale, sponge_h, &
           sponge_u_time_scale, sponge_u, &
           sponge_v_time_scale, sponge_v, &
@@ -439,8 +442,8 @@ module time_stepping
           hhalf, uhalf, vhalf, depth, &
           dx, dy, wetmask, hfac_w, hfac_e, hfac_n, hfac_s, fu, fv, &
           au, ar, bot_drag, kh, kv, hmin, slip, &
-          red_grav, h_advec_scheme, g_vec, rho0, wind_x, wind_y, &
-          wind_depth, relative_wind, Cd, &
+          red_grav, active_lower_layer, h_advec_scheme, g_vec, rho0, &
+          wind_x, wind_y, wind_depth, relative_wind, Cd, &
           sponge_h_time_scale, sponge_h, &
           sponge_u_time_scale, sponge_u, &
           sponge_v_time_scale, sponge_v, &
