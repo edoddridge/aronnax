@@ -5,6 +5,9 @@ Development
 Since latest release
 --------------------
 
+- Add capacity to simulate an "upside down" reduced gravity model with a quiescent abyss and an active lower layer `GH241 <https://github.com/edoddridge/aronnax/pull/241>`_ (18 October 2022)
+- Implement snake case for parameter and subroutine names `GH239 <https://github.com/edoddridge/aronnax/pull/239>`_ (14 October 2022)
+- Update continuous integration to GitHub actions `GH234 <https://github.com/edoddridge/aronnax/pull/234>`_ (13 October 2022)
 - open_mfdataarray bugfix. Was loading copies of last array, now loads all timestamps as expected `GH223 <https://github.com/edoddridge/aronnax/pull/223>`_ (20 March 2019)
 - Halos. Improve parallel performance by making better use of tile halos to reduce number of exchange calls `GH220 <https://github.com/edoddridge/aronnax/pull/220>`_ (14 March 2019)
 - Benchmarking. Add figure with runtime for 1.5 and 2 layer configurations on 1-64 processors `GH216 <https://github.com/edoddridge/aronnax/pull/216>`_ (13 March 2019)
