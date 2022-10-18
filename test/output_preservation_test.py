@@ -229,6 +229,34 @@ def test_gaussian_bump_red_grav_debug_test():
         assert_volume_conservation(10, 10, 1, 1e-5)
         assert_diagnostics_similar(['h', 'u', 'v'], 1e-10)
 
+def test_red_grav_active_lower_layer_flat_interface():
+    xlen = 1e6
+    ylen = 1e6
+    with working_directory(p.join(self_path, "red_grav_active_lower_layer_flat_interface_test")):
+        drv.simulate(init_h_file=[lambda X, Y: bump(X, Y)],
+                     depth_file=[lambda X, Y: 1000. + bump(X, Y)], exe=test_executable,
+                     nx=10, ny=10, dx=xlen/10, dy=ylen/10,
+                     )
+        assert_outputs_close(10, 10, 1, 1.5e-13)
+        assert_volume_conservation(10, 10, 1, 1e-5)
+        assert_diagnostics_similar(['h'], 1e-10)
+
+def slope(X,Y):
+    return 1500. + 5e-4*Y
+
+def test_red_grav_active_lower_layer():
+    xlen = 1e6
+    ylen = 1e6
+    with working_directory(p.join(self_path, "red_grav_active_lower_layer_test")):
+        drv.simulate(init_h_file=[500],
+                     depth_file=[slope], exe=test_executable,
+                     nx=10, ny=10, dx=xlen/10, dy=ylen/10,
+                     n_proc_y=2
+                     )
+        assert_outputs_close(10, 10, 1, 1.5e-13)
+        assert_volume_conservation(10, 10, 1, 1e-5)
+        assert_diagnostics_similar(['h', 'u', 'v'], 1e-10)
+
 def test_beta_plane_gyre_red_grav():
     xlen = 1e6
     ylen = 2e6
