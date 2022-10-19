@@ -46,7 +46,7 @@ program aronnax
       dump_freq, av_freq, checkpoint_freq, diag_freq, hmin, maxits, &
       freesurf_fac, eps, thickness_error, debug_level
 
-  namelist /MODEL/ hmean, depth_file, h0, red_grav
+  namelist /MODEL/ hmean, depth_file, h0, red_grav, active_lower_layer
 
   namelist /PRESSURE_SOLVER/ n_proc_x, n_proc_y
 
@@ -74,7 +74,7 @@ program aronnax
   diag_freq = 0d0
 
   debug_level = 0
-  
+
   ! start from t = 0
   niter0 = 0
 
@@ -292,7 +292,19 @@ program aronnax
                               ilower(myid,1), iupper(myid,1), &
                               ilower(myid,2), iupper(myid,2))
 
+  ! read bathymetry if using reduced gravity AND active lower layer
+  if (active_lower_layer .and. red_grav) then
+    call read_input_fileH_2D(depth_file, depth, h0, nx, ny, OL, &
+                              ilower(myid,1), iupper(myid,1), &
+                              ilower(myid,2), iupper(myid,2), myid)
+    ! Check that depth is positive - it must be greater than zero
+    if (minval(depth) .lt. 0) then
+      write(17, "(A)") "Depths must be positive."
+      call clean_stop(0, .FALSE.)
+    end if
+  end if
 
+  ! read bathymetry and free surface if using n-layer physics
   if (.not. red_grav) then
     call read_input_fileH_2D(depth_file, depth, h0, nx, ny, OL, &
                               ilower(myid,1), iupper(myid,1), &
@@ -323,7 +335,7 @@ program aronnax
       nx, ny, layers, OL, &
       ilower(myid,1), iupper(myid,1), &
       ilower(myid,2), iupper(myid,2), &
-      red_grav, h_advec_scheme, ts_algorithm, AB_order, &
+      red_grav, active_lower_layer, h_advec_scheme, ts_algorithm, AB_order, &
       dump_wind, relative_wind, Cd, start_time, &
       MPI_COMM_WORLD, myid, num_procs, ilower, iupper, &
       hypre_grid)

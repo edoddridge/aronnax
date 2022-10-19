@@ -65,6 +65,8 @@ module declarations
   double precision :: hmean(layerwise_input_length)
   ! Switch for using n + 1/2 layer physics, or using n layer physics
   logical :: red_grav
+  ! Switch for using active lower layer, or upper layer in 1.5 layer physics
+  logical :: active_lower_layer
   ! Physics
   double precision :: g_vec(layerwise_input_length) ! gravity between layers
   double precision :: rho0 ! background density

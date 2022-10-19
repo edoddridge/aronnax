@@ -1,4 +1,5 @@
 module bernoulli
+  use end_run
   use boundaries
   use exchange
   implicit none
@@ -77,8 +78,9 @@ module bernoulli
 
   ! ---------------------------------------------------------------------------
 
-  subroutine evaluate_b_red_grav(b, h, u, v, gr, nx, ny, layers, xlow, xhigh, ylow, yhigh, OL, &
-                                 ilower, iupper, num_procs, myid)
+  subroutine evaluate_b_red_grav(b, h, u, v, gr, nx, ny, layers, &
+                                  xlow, xhigh, ylow, yhigh, OL, &
+                                  ilower, iupper, num_procs, myid)
     implicit none
 
     ! Evaluate Bernoulli Potential at centre of grid box
@@ -124,5 +126,58 @@ module bernoulli
 
     return
   end subroutine evaluate_b_red_grav
+
+! ---------------------------------------------------------------------------
+
+  subroutine evaluate_b_red_grav_active_lower_layer(b, h, u, v, depth, &
+                                 gr, nx, ny, layers, xlow, xhigh, ylow, yhigh, OL, &
+                                 ilower, iupper, num_procs, myid)
+    implicit none
+
+    ! Evaluate Bernoulli Potential at centre of grid box
+    double precision, intent(out) :: b(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in)  :: h(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in)  :: u(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in)  :: v(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in)  :: depth(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
+    double precision, intent(in)  :: gr(layers)
+    integer,          intent(in)  :: nx, ny, layers
+    integer,          intent(in)  :: xlow, xhigh, ylow, yhigh, OL
+    integer,          intent(in)  :: ilower(0:num_procs-1,2)
+    integer,          intent(in)  :: iupper(0:num_procs-1,2)
+    integer,          intent(in)  :: num_procs, myid
+
+    integer i, j, k, l, m
+    double precision h_temp, b_proto
+
+    b = 0d0
+
+    ! currently only implemented for one active layer
+    if (layers .gt. 1) then
+      write(17, "(A)") "Active lower layer only implemented for one active layer."
+      call clean_stop(0, .FALSE.)
+    end if
+
+    do k = 1, layers ! move through the different layers of the model
+      do j = ylow-OL+1, yhigh+OL-1 ! move through longitude
+        do i = xlow-OL+1, xhigh+OL-1 ! move through latitude
+          ! The following loops are to get the pressure term in the
+          ! Bernoulli Potential
+          b_proto = 0d0
+
+          ! Can add a loop in here to deal with multiple active layers
+          h_temp = -depth(i,j,k) + h(i,j,k)
+          b_proto = b_proto + gr(k)*h_temp
+
+          ! Add the (u^2 + v^2)/2 term to the pressure componenet of the
+          ! Bernoulli Potential
+          b(i,j,k) = b_proto &
+              + (u(i,j,k)**2+u(i+1,j,k)**2+v(i,j,k)**2+v(i,j+1,k)**2)/4.0d0
+        end do
+      end do
+    end do
+
+    return
+  end subroutine evaluate_b_red_grav_active_lower_layer
 
 end module bernoulli

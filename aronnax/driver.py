@@ -89,6 +89,9 @@ def default_configuration():
     config.set("executable", "valgrind", "False")
     config.set("executable", "perf", "False")
 
+    config.set("model", "active_lower_layer", "False")
+    config.set("model", "red_grav", "True")
+
     config.set("external_forcing", "wind_n_records", "1")
     config.set("external_forcing", "wind_loop_fields", "False")
     config.set("external_forcing", "wind_interpolate", "False")
@@ -120,20 +123,21 @@ section_map = {
     "freesurf_fac"         : "numerics",
     "thickness_error"      : "numerics",
     "debug_level"          : "numerics",
-    "h_advec_scheme"         : "numerics",
+    "h_advec_scheme"       : "numerics",
     "ts_algorithm"         : "numerics",
     "hmean"                : "model",
-    "depth_file"            : "model",
+    "depth_file"           : "model",
     "h0"                   : "model",
-    "red_grav"              : "model",
-    "n_proc_x"               : "pressure_solver",
-    "n_proc_y"               : "pressure_solver",
+    "red_grav"             : "model",
+    "active_lower_layer"   : "model",
+    "n_proc_x"             : "pressure_solver",
+    "n_proc_y"             : "pressure_solver",
     "sponge_h_time_scale_file" : "sponge",
     "sponge_u_time_scale_file" : "sponge",
     "sponge_v_time_scale_file" : "sponge",
-    "sponge_h_file"          : "sponge",
-    "sponge_u_file"          : "sponge",
-    "sponge_v_file"          : "sponge",
+    "sponge_h_file"        : "sponge",
+    "sponge_u_file"        : "sponge",
+    "sponge_v_file"        : "sponge",
     "g_vec"                : "physics",
     "rho0"                 : "physics",
     "nx"                   : "grid",
@@ -142,19 +146,19 @@ section_map = {
     "OL"                   : "grid",
     "dx"                   : "grid",
     "dy"                   : "grid",
-    "f_u_file"               : "grid",
-    "f_v_file"               : "grid",
-    "wet_mask_file"          : "grid",
-    "init_u_file"            : "initial_conditions",
-    "init_v_file"            : "initial_conditions",
-    "init_h_file"            : "initial_conditions",
-    "init_eta_file"          : "initial_conditions",
-    "zonal_wind_file"        : "external_forcing",
-    "meridional_wind_file"   : "external_forcing",
-    "dump_wind"             : "external_forcing",
+    "f_u_file"             : "grid",
+    "f_v_file"             : "grid",
+    "wet_mask_file"        : "grid",
+    "init_u_file"          : "initial_conditions",
+    "init_v_file"          : "initial_conditions",
+    "init_h_file"          : "initial_conditions",
+    "init_eta_file"        : "initial_conditions",
+    "zonal_wind_file"      : "external_forcing",
+    "meridional_wind_file" : "external_forcing",
+    "dump_wind"            : "external_forcing",
     "wind_mag_time_series_file" : "external_forcing",
     "wind_depth"           : "external_forcing",
-    "relative_wind"         : "external_forcing",
+    "relative_wind"        : "external_forcing",
     "Cd"                   : "external_forcing",
     "wind_n_records"       : "external_forcing",
     "wind_period"          : "external_forcing",
@@ -237,8 +241,8 @@ def fortran_option_string(section, name, config):
             return "'%s'" % (p.join("input", name + '.bin'),)
         else:
             return "''"
-    if name in ["red_grav", "dump_wind", "relative_wind",
-                "wind_loop_fields","wind_interpolate"]:
+    if name in ["red_grav", "active_lower_layer", "dump_wind",
+                "relative_wind", "wind_loop_fields","wind_interpolate"]:
         if config.getboolean(section, name):
             return ".TRUE."
         else:

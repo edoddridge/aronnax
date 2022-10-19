@@ -27,7 +27,7 @@ module model_main
       sponge_h_time_scale, sponge_u_time_scale, sponge_v_time_scale, &
       sponge_h, sponge_u, sponge_v, &
       nx, ny, layers, OL, xlow, xhigh, ylow, yhigh, &
-      red_grav, h_advec_scheme, ts_algorithm, AB_order, &
+      red_grav, active_lower_layer, h_advec_scheme, ts_algorithm, AB_order, &
       dump_wind, relative_wind, Cd, start_time, &
       MPI_COMM_WORLD, myid, num_procs, ilower, iupper, &
       hypre_grid)
@@ -88,6 +88,7 @@ module model_main
     integer,          intent(in) :: xlow, xhigh, ylow, yhigh
     ! Reduced gravity vs n-layer physics
     logical,          intent(in) :: red_grav
+    logical,          intent(in) :: active_lower_layer
     integer,          intent(in) :: h_advec_scheme
     integer,          intent(in) :: ts_algorithm
     integer,          intent(in) :: AB_order
@@ -254,8 +255,8 @@ module model_main
       call initialise_tendencies(dhdt, dudt, dvdt, h, u, v, depth, &
           dx, dy, dt, wetmask, hfac_w, hfac_e, hfac_n, hfac_s, fu, fv, &
           au, ar, bot_drag, kh, kv, hmin, slip, &
-          red_grav, h_advec_scheme, AB_order, g_vec, rho0, wind_x, wind_y, &
-          wind_depth, relative_wind, Cd, &
+          red_grav, active_lower_layer, h_advec_scheme, AB_order, g_vec, rho0, &
+          wind_x, wind_y, wind_depth, relative_wind, Cd, &
           sponge_h_time_scale, sponge_h, &
           sponge_u_time_scale, sponge_u, &
           sponge_v_time_scale, sponge_v, &
@@ -330,7 +331,7 @@ module model_main
           h, u, v, depth, &
           dx, dy, dt, wetmask, hfac_w, hfac_e, hfac_n, hfac_s, fu, fv, &
           au, ar, bot_drag, kh, kv, hmin, slip, &
-          red_grav, h_advec_scheme, ts_algorithm, AB_order, &
+          red_grav, active_lower_layer, h_advec_scheme, ts_algorithm, AB_order, &
           g_vec, rho0, wind_x, wind_y, &
           wind_depth, relative_wind, Cd, &
           sponge_h_time_scale, sponge_h, &

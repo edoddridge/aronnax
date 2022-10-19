@@ -15,8 +15,8 @@ module state_deriv
   subroutine state_derivative(dhdt, dudt, dvdt, h, u, v, depth, &
       dx, dy, wetmask, hfac_w, hfac_e, hfac_n, hfac_s, fu, fv, &
       au, ar, bot_drag, kh, kv, hmin, slip, &
-      red_grav, h_advec_scheme, g_vec, rho0, wind_x, wind_y, &
-      wind_depth, relative_wind, Cd, &
+      red_grav, active_lower_layer, h_advec_scheme, g_vec, rho0, &
+      wind_x, wind_y, wind_depth, relative_wind, Cd, &
       sponge_h_time_scale, sponge_h, &
       sponge_u_time_scale, sponge_u, &
       sponge_v_time_scale, sponge_v, &
@@ -44,6 +44,7 @@ module state_deriv
     double precision, intent(in) :: hmin
     double precision, intent(in) :: slip
     logical,          intent(in) :: red_grav
+    logical,          intent(in) :: active_lower_layer
     integer,          intent(in) :: h_advec_scheme
     double precision, intent(in) :: g_vec(layers)
     double precision, intent(in) :: rho0
@@ -73,8 +74,15 @@ module state_deriv
 
     ! Calculate Bernoulli potential
     if (red_grav) then
-      call evaluate_b_red_grav(b, h, u, v, g_vec, nx, ny, layers, xlow, xhigh, ylow, yhigh, OL, &
+      if (active_lower_layer) then
+        call evaluate_b_red_grav_active_lower_layer(b, h, u, v, depth, g_vec, &
+                                 nx, ny, layers, xlow, xhigh, ylow, yhigh, OL, &
                                  ilower, iupper, num_procs, myid)
+      else
+        call evaluate_b_red_grav(b, h, u, v, g_vec, nx, ny, layers, &
+                                  xlow, xhigh, ylow, yhigh, OL, &
+                                  ilower, iupper, num_procs, myid)
+      endif
       if (debug_level .ge. 4) then
         call write_output_3d(b, nx, ny, layers, ilower, iupper, &
                           xlow, xhigh, ylow, yhigh, OL, 0, 0, &
