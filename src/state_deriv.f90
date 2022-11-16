@@ -118,13 +118,13 @@ module state_deriv
         fu, au, ar, slip, dx, dy, hfac_n, hfac_s, xlow, xhigh, ylow, yhigh, &
         nx, ny, layers, OL, rho0, &
         relative_wind, Cd, sponge_u_time_scale, sponge_u, red_grav, bot_drag, &
-        ilower, iupper, num_procs, myid)
+        active_lower_layer, ilower, iupper, num_procs, myid)
 
     call evaluate_dvdt(dvdt, h, u, v, b, zeta, wind_x, wind_y, wind_depth, &
         fv, au, ar, slip, dx, dy, hfac_w, hfac_e, xlow, xhigh, ylow, yhigh, &
         nx, ny, layers, OL, rho0, &
         relative_wind, Cd, sponge_v_time_scale, sponge_v, red_grav, bot_drag, &
-        ilower, iupper, num_procs, myid)
+        active_lower_layer, ilower, iupper, num_procs, myid)
 
     return
   end subroutine state_derivative

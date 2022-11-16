@@ -13,7 +13,7 @@ module momentum
       wind_depth, fu, au, ar, slip, dx, dy, hfac_n, hfac_s, xlow, xhigh, ylow, yhigh, &
       nx, ny, layers, &
       OL, rho0, relative_wind, Cd, spongeTimeScale, sponge_u, red_grav, bot_drag, &
-      ilower, iupper, num_procs, myid)
+      active_lower_layer, ilower, iupper, num_procs, myid)
     implicit none
 
     ! dudt(i, j) is evaluated at the centre of the left edge of the grid
@@ -40,6 +40,7 @@ module momentum
     double precision, intent(in)  :: sponge_u(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
     logical,          intent(in)  :: red_grav
     double precision, intent(in)  :: bot_drag
+    logical,          intent(in)  :: active_lower_layer
     integer,          intent(in)  :: ilower(0:num_procs-1,2)
     integer,          intent(in)  :: iupper(0:num_procs-1,2)
     integer,          intent(in)  :: num_procs, myid
@@ -75,7 +76,7 @@ module momentum
       wind_depth, xlow, xhigh, ylow, yhigh, layers, OL, rho0, relative_wind, Cd)
 
     call evaluate_dudt_drag(dudt_drag, u, ar, xlow, xhigh, ylow, yhigh, layers, OL, red_grav, &
-      bot_drag)
+      bot_drag, active_lower_layer)
 
     dudt = dudt + dudt_visc + dudt_vort + dudt_BP + dudt_sponge + &
             dudt_wind + dudt_drag
@@ -322,7 +323,7 @@ module momentum
   !> Calculate the tendency of zonal velocity for each of the active layers
 
   subroutine evaluate_dudt_drag(dudt_drag, u, ar, xlow, xhigh, ylow, yhigh, layers, OL, red_grav, &
-      bot_drag)
+      bot_drag, active_lower_layer)
     implicit none
 
     ! dudt_drag(i, j) is evaluated at the centre of the left edge of the grid
@@ -333,6 +334,7 @@ module momentum
     integer,          intent(in)  :: xlow, xhigh, ylow, yhigh, layers, OL
     logical,          intent(in)  :: red_grav
     double precision, intent(in)  :: bot_drag
+    logical,          intent(in)  :: active_lower_layer
 
     integer  :: i, j, k
 
@@ -341,6 +343,7 @@ module momentum
     do k = 1, layers
       do j = ylow-OL+1, yhigh+OL-1
         do i = xlow-OL+1, xhigh+OL-1
+          ! vertical momentum diffusivity (ar)
           if (layers .gt. 1) then ! only evaluate vertical momentum diffusivity if more than 1 layer
             if (k .eq. 1) then ! adapt vertical momentum diffusivity for 2+ layer model -> top layer
               dudt_drag(i,j,k) = - 1.0d0*ar*(u(i,j,k) - 1.0d0*u(i,j,k+1))
@@ -351,9 +354,16 @@ module momentum
                   1.0d0*ar*(2.0d0*u(i,j,k) - 1.0d0*u(i,j,k-1) - 1.0d0*u(i,j,k+1))
             end if
           end if
-          if (k .eq. layers) then ! add bottom drag if not reduced gravity
+          ! bottom drag (bot_drag)
+          if (k .eq. layers) then ! potentially add bottom drag in bottom layer
+            if (red_grav) then
+              if (active_lower_layer) then
+                ! add bottom drag in reduced gravity version with active lower layer
+                dudt_drag(i,j,k) = dudt_drag(i,j,k) - 1.0d0*bot_drag*(u(i,j,k))
+              end if
+            end if
             if (.not. red_grav) then
-                ! add bottom drag here in isopycnal version
+                ! add bottom drag in isopycnal version
                 dudt_drag(i,j,k) = dudt_drag(i,j,k) - 1.0d0*bot_drag*(u(i,j,k))
             end if
           end if
@@ -372,7 +382,7 @@ module momentum
       wind_depth, fv, au, ar, slip, dx, dy, hfac_w, hfac_e, xlow, xhigh, ylow, yhigh, &
       nx, ny, layers, &
       OL, rho0, relative_wind, Cd, spongeTimeScale, sponge_v, red_grav, bot_drag, &
-      ilower, iupper, num_procs, myid)
+      active_lower_layer, ilower, iupper, num_procs, myid)
     implicit none
 
     ! dvdt(i, j) is evaluated at the centre of the bottom edge of the
@@ -400,6 +410,7 @@ module momentum
     double precision, intent(in)  :: sponge_v(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL, layers)
     logical,          intent(in)  :: red_grav
     double precision, intent(in)  :: bot_drag
+    logical,          intent(in)  :: active_lower_layer
     integer,          intent(in)  :: ilower(0:num_procs-1,2)
     integer,          intent(in)  :: iupper(0:num_procs-1,2)
     integer,          intent(in)  :: num_procs, myid
@@ -435,7 +446,7 @@ module momentum
       wind_depth, xlow, xhigh, ylow, yhigh, layers, OL, rho0, relative_wind, Cd)
 
     call evaluate_dvdt_drag(dvdt_drag, v, ar, xlow, xhigh, ylow, yhigh, layers, OL, red_grav, &
-      bot_drag)
+      bot_drag, active_lower_layer)
 
     dvdt = dvdt + dvdt_visc + dvdt_vort + dvdt_BP + dvdt_sponge + &
             dvdt_wind + dvdt_drag
@@ -682,7 +693,7 @@ module momentum
   !   velocity for each of the active layers
 
   subroutine evaluate_dvdt_drag(dvdt_drag, v, ar, xlow, xhigh, ylow, yhigh, layers, OL, red_grav, &
-      bot_drag)
+      bot_drag, active_lower_layer)
     implicit none
 
     ! dvdt_drag(i, j) is evaluated at the centre of the bottom edge of the
@@ -693,6 +704,7 @@ module momentum
     integer,          intent(in)  :: xlow, xhigh, ylow, yhigh, layers, OL
     logical,          intent(in)  :: red_grav
     double precision, intent(in)  :: bot_drag
+    logical,          intent(in)  :: active_lower_layer
 
     integer :: i, j, k
 
@@ -701,6 +713,7 @@ module momentum
     do k = 1, layers
       do j = ylow-OL+1, yhigh+OL-1
         do i = xlow-OL+1, xhigh+OL-1
+          ! vertical momentum diffusivity (ar)
           if (layers .gt. 1) then ! only evaluate vertical momentum diffusivity if more than 1 layer
             if (k .eq. 1) then ! adapt vertical momentum diffusivity for 2+ layer model -> top layer
               dvdt_drag(i,j,k) =  - 1.0d0*ar*(v(i,j,k) - 1.0d0*v(i,j,k+1))
@@ -711,10 +724,18 @@ module momentum
                   1.0d0*ar*(2.0d0*v(i,j,k) - 1.0d0*v(i,j,k-1) - 1.0d0*v(i,j,k+1))
             end if
           end if
-          if (k .eq. layers) then ! add bottom drag if not reduced gravity
+
+          ! bottom drag (bot_drag)
+          if (k .eq. layers) then ! potentially add bottom drag in bottom layer
+            if (red_grav) then
+              if (active_lower_layer) then
+                ! add bottom drag in reduced gravity version with active lower layer
+                dvdt_drag(i,j,k) = dvdt_drag(i,j,k) - 1.0d0*bot_drag*(v(i,j,k))
+              end if
+            end if
             if (.not. red_grav) then
-              ! add bottom drag here in isopycnal version
-              dvdt_drag(i,j,k) = dvdt_drag(i,j,k) - 1.0d0*bot_drag*(v(i,j,k))
+                ! add bottom drag in isopycnal version
+                dvdt_drag(i,j,k) = dvdt_drag(i,j,k) - 1.0d0*bot_drag*(v(i,j,k))
             end if
           end if
         end do

@@ -19,9 +19,8 @@ import sys
 sys.path.append(p.join(root_path, 'test'))
 import output_preservation_test as opt
 
-def test_f_plane_Hypre_bot_drag(bot_drag=1e-5, layers=1):
+def f_plane_bot_drag(test_executable, test_dir, bot_drag=1e-5, layers=1):
 
-    test_executable = "aronnax_external_solver_test"
 
     dt = 100
 
@@ -44,7 +43,7 @@ def test_f_plane_Hypre_bot_drag(bot_drag=1e-5, layers=1):
     def dbl_periodic_wetmask(X, Y):
         return np.ones(X.shape,dtype=np.float64)
 
-    with working_directory(p.join(self_path, "bot_drag")):
+    with working_directory(p.join(self_path, test_dir)):
 
         if layers ==1:
             drv.simulate(init_h_file=[400.], 
@@ -141,6 +140,15 @@ def test_f_plane_Hypre_bot_drag(bot_drag=1e-5, layers=1):
 
         assert test_passes
 
+def test_f_plane_Hypre_bot_drag_1Layer1():
+    f_plane_bot_drag(test_executable = "aronnax_external_solver_test", test_dir="bot_drag",
+                            bot_drag=1e-5)
+
 def test_f_plane_Hypre_bot_drag_2Layers():
-    test_f_plane_Hypre_bot_drag(bot_drag=1e-5, layers=2)
+    f_plane_bot_drag(test_executable = "aronnax_external_solver_test", test_dir="bot_drag",
+                            bot_drag=1e-5, layers=2)
+
+def test_f_plane_red_grav_active_lower_layer_bot_drag():
+    f_plane_bot_drag(test_executable = "aronnax_test", test_dir="bot_drag_red_grav_active_lower_layer",
+                            bot_drag=1e-5)
 
