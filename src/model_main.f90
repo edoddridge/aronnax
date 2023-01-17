@@ -242,7 +242,7 @@ module model_main
       ! If they are not, then scale the layer thicknesses to make
       ! them consistent.
       call enforce_depth_thickness_consistency(h, eta, depth, &
-          freesurf_fac, thickness_error, &
+          freesurf_fac, thickness_error, hmin, &
           xlow, xhigh, ylow, yhigh, layers, OL)
     end if
 
@@ -350,7 +350,7 @@ module model_main
       if (.not. red_grav) then
         call barotropic_correction(h_new, u_new, v_new, eta, etanew, depth, a, &
             dx, dy, wetmask, hfac_w, hfac_s, dt, &
-            maxits, eps, rjac, freesurf_fac, thickness_error, &
+            maxits, eps, rjac, freesurf_fac, thickness_error, hmin, &
             debug_level, g_vec, nx, ny, layers, OL, &
             xlow, xhigh, ylow, yhigh, n, &
             MPI_COMM_WORLD, myid, num_procs, ilower, iupper, &

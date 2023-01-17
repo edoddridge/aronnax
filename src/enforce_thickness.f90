@@ -8,14 +8,14 @@ module enforce_thickness
   !> Check that the free surface anomaly and layer thicknesses are consistent with the depth field. If they're not, then scale the layer thicnkesses to make them fit.
 
   subroutine enforce_depth_thickness_consistency(h, eta, depth, &
-      freesurf_fac, thickness_error, xlow, xhigh, ylow, yhigh, layers, OL)
+      freesurf_fac, thickness_error, hmin, xlow, xhigh, ylow, yhigh, layers, OL)
     implicit none
 
     double precision, intent(inout) :: h(xlow-OL:xhigh+OL, &
                                           ylow-OL:yhigh+OL, layers)
     double precision, intent(in) :: eta(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
     double precision, intent(in) :: depth(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
-    double precision, intent(in) :: freesurf_fac, thickness_error
+    double precision, intent(in) :: freesurf_fac, thickness_error, hmin
     integer, intent(in) :: xlow, xhigh, ylow, yhigh, layers, OL
 
     integer k
@@ -30,6 +30,10 @@ module enforce_thickness
       write(17, "(A, F6.3, A)") 'Inconsistency between h and eta: ', &
           maxval(abs(h_norming - 1d0))*100d0, '%'
     end if
+
+    where (h < hmin)
+        h = hmin
+    end where
 
     return
   end subroutine enforce_depth_thickness_consistency
