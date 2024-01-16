@@ -5,4 +5,4 @@ pandas
 toolz
 dask
 xarray
-
+sphinx-rtd-theme
