@@ -559,7 +559,7 @@ module barotropic_mode
 
   subroutine barotropic_correction(hnew, unew, vnew, eta, etanew, depth, a, &
       dx, dy, wetmask, hfac_w, hfac_s, dt, &
-      maxits, eps, rjac, freesurf_fac, thickness_error, &
+      maxits, eps, rjac, freesurf_fac, thickness_error, hmin, &
       debug_level, g_vec, nx, ny, layers, OL, &
       xlow, xhigh, ylow, yhigh, &
       n, MPI_COMM_WORLD, myid, num_procs, ilower, iupper, &
@@ -580,7 +580,7 @@ module barotropic_mode
     double precision, intent(in)    :: hfac_s(xlow-OL:xhigh+OL, ylow-OL:yhigh+OL)
     double precision, intent(in)    :: dt
     integer,          intent(in)    :: maxits
-    double precision, intent(in)    :: eps, rjac, freesurf_fac, thickness_error
+    double precision, intent(in)    :: eps, rjac, freesurf_fac, thickness_error, hmin
     integer,          intent(in)    :: debug_level
     double precision, intent(in)    :: g_vec(layers)
     integer,          intent(in)    :: nx, ny, layers, OL
@@ -674,7 +674,7 @@ module barotropic_mode
     ! between layer thicknesses and ocean depth by scaling
     ! thicknesses to agree with free surface.
     call enforce_depth_thickness_consistency(hnew, etanew, depth, &
-        freesurf_fac, thickness_error, xlow, xhigh, ylow, yhigh, layers, OL)
+        freesurf_fac, thickness_error, hmin, xlow, xhigh, ylow, yhigh, layers, OL)
 
     ! Apply the boundary conditions
     call apply_boundary_conditions(unew, hfac_w, wetmask, &
