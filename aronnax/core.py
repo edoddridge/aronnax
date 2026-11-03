@@ -76,7 +76,10 @@ def interpret_raw_file(name, nx, ny, layers):
     exactly, is in it, and on the resolution of the simulation.
     Hence, the parameters nx, ny, and layers, as well as the file
     naming convetion, suffice to interpret the content (assuming it
-    was generated on the same system)."""
+    was generated on the same system).
+
+    Raises ValueError if the file name does not belong to a known output
+    variable."""
     # Note: This depends on inspection of the output writing code in
     # the Aronnax core, to align array sizes and dimensions.  In
     # particular, Fortran arrays are indexed in decreasing order of
@@ -140,8 +143,9 @@ def __find_grid_offsets(name, nx, ny, layers):
     elif file_part.startswith("debug.dvdt."):
         dy = 1
     else:
-        print('File not recognised - no output returned')
-        return
+        raise ValueError(
+            "Unrecognised output file name '%s'; cannot determine the "
+            "location of the variable on the grid." % file_part)
 
     return dx, dy, layers
 
@@ -170,6 +174,8 @@ def open_mfdataarray(files, grid):
     """
 
     files = sorted(files)
+    if len(files) == 0:
+        raise ValueError('open_mfdataarray needs at least one file to load.')
 
     output_variables = set()
     timestamps = []
