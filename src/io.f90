@@ -44,14 +44,12 @@ module io
     logical       :: dump_output
 
 
-    ! Write snapshot to file?
-    if (mod(n-1, nwrite) .eq. 0) then
-      dump_output = .TRUE.
-    else if (debug_level .ge. 4) then
-      dump_output = .TRUE.
-    else
-      dump_output = .FALSE.
+    ! Write snapshot to file? A zero interval disables regular snapshots.
+    dump_output = .FALSE.
+    if (nwrite .ne. 0) then
+      if (mod(n-1, nwrite) .eq. 0) dump_output = .TRUE.
     end if
+    if (debug_level .ge. 4) dump_output = .TRUE.
 
     if (dump_output) then
 
@@ -203,6 +201,31 @@ module io
 
     return
   end subroutine maybe_dump_output
+
+  ! ---------------------------------------------------------------------------
+  !> Stop the model if an output frequency is negative or non-zero but shorter
+  !! than one timestep. Such values would be truncated to zero timesteps, which
+  !! is either silently ignored or divides by zero, depending on the output.
+  !! A frequency of exactly zero disables that output.
+
+  subroutine check_output_frequency(name, freq, dt, myid)
+    implicit none
+
+    character(*),     intent(in) :: name
+    double precision, intent(in) :: freq, dt
+    integer,          intent(in) :: myid
+
+    if (freq .lt. 0d0 .or. (freq .gt. 0d0 .and. freq .lt. dt)) then
+      if (myid .eq. 0) then
+        write(17, "(A, A, ES12.4, A, ES12.4, A)") name, " = ", freq, &
+            " is invalid: it must be zero or at least one timestep, dt = ", &
+            dt, " s"
+      end if
+      call clean_stop(0, .FALSE.)
+    end if
+
+    return
+  end subroutine check_output_frequency
 
   ! ---------------------------------------------------------------------------
 

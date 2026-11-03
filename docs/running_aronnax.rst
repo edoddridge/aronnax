@@ -19,8 +19,8 @@ As described above, it is possible to define functions that can be passed to `ar
                        nx=10, ny=10, exe="aronnax_test", dx=xlen/10, dy=ylen/10)
 
 
-.. warning::
-    Parameters cannot be set to 0 or 1 in the call to `drv.simulate` because the Python wrapper gets confused between numerical and logical variables, as described in https://github.com/edoddridge/aronnax/issues/132
+.. note::
+    Python booleans (`True` and `False`) are written to the configuration as `yes` and `no`; numbers, including `0` and `1`, are passed through unchanged.
 
 Executables
 ===========

@@ -33,6 +33,7 @@
 program aronnax
 
   use model_main
+  use io
   use declarations
   use mpi
 
@@ -132,6 +133,11 @@ program aronnax
     end if
     call clean_stop(0, .FALSE.)
   end if
+
+  call check_output_frequency('dump_freq', dump_freq, dt, myid)
+  call check_output_frequency('av_freq', av_freq, dt, myid)
+  call check_output_frequency('checkpoint_freq', checkpoint_freq, dt, myid)
+  call check_output_frequency('diag_freq', diag_freq, dt, myid)
 
   ! myid starts at zero, so index these variables from zero.
   ! i__(:,1) = indicies for x locations

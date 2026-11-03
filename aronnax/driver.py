@@ -5,6 +5,7 @@ except ImportError:
 
 import os
 import os.path as p
+import numbers
 import subprocess as sub
 import time
 
@@ -60,6 +61,7 @@ def simulate(work_dir=".", config_path="aronnax.conf", **options):
     config = default_configuration()
     config.read(config_file)
     merge_config(config, options)
+    validate_output_frequencies(config)
     with working_directory(work_dir):
         compile_core(config)
         # XXX Try to avoid overwriting the input configuration
@@ -178,11 +180,34 @@ def merge_config(config, options):
             section = section_map[k]
             if not config.has_section(section):
                 config.add_section(section)
-            if v == True: v = "yes"
-            if v == False: v = "no"
+            if isinstance(v, bool):
+                v = "yes" if v else "no"
+            elif isinstance(v, numbers.Number):
+                v = str(v)
             config.set(section, k, v)
         else:
             raise Exception("Unrecognized option", k)
+
+output_frequency_options = ["dump_freq", "av_freq", "checkpoint_freq",
+                            "diag_freq"]
+
+def validate_output_frequencies(config):
+    """Check that the output frequencies are compatible with the timestep.
+
+    Each frequency is a time in seconds. It must be zero (which disables that
+    output) or at least one timestep, since the core converts it into a whole
+    number of timesteps.  Raises ValueError otherwise."""
+    if not config.has_option("numerics", "dt"):
+        return
+    dt = config.getfloat("numerics", "dt")
+    for name in output_frequency_options:
+        if not config.has_option("numerics", name):
+            continue
+        freq = config.getfloat("numerics", name)
+        if freq < 0 or (0 < freq < dt):
+            raise ValueError(
+                "%s = %g is invalid: it must be zero or at least one "
+                "timestep, dt = %g s" % (name, freq, dt))
 
 def compile_core(config):
     """Compile the Aronnax core, if needed."""
