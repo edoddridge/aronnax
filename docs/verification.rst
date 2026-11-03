@@ -37,7 +37,7 @@ All of the simulations are integrated for one model year using the same value fo
 Reduced gravity mode
 +++++++++++++++++++++++++++++++++
 
-The figures in this subsection show the sum of the absolute value of the momentum, which includes momentum carried by radiated gravity waves and so overstates the momentum error. The magnitude of the error varies with :math:`\delta x`, suggesting it is likely due to truncation error - the error induced by solving a continuous set of equations on a discrete grid.
+The magnitude of the error varies with :math:`\delta x`, suggesting it is likely due to truncation error - the error induced by solving a continuous set of equations on a discrete grid.
 
 .. figure:: ../test/physics_tests/f_plane_red_grav_wind/error_by_resolution_semilogx.png
    :alt: momentum error as a function of grid size
@@ -55,8 +55,6 @@ The evolution of momentum in the 8 km resolution test simulation using reduced g
 
 n-layer mode
 +++++++++++++++++++++++++++++++++
-The momentum diagnostic is the signed momentum, not the sum of absolute values: the latter also counts momentum carried away from the forcing point by radiated gravity waves, which are much faster in the n-layer mode than in the reduced gravity mode (`issue #100 <https://github.com/edoddridge/aronnax/issues/100>`_).
-
 The signed momentum summed over all layers and over a doubly periodic domain obeys :math:`dM/dt = F + f\,\hat{k}\times M`, where :math:`F` is the total wind force, because pressure forces and the transfer of momentum between layers integrate to zero. This has a closed-form solution, and :code:`test/physics_test.py` compares the model with it, in the automated test suite, for 1, 2, 3 and 4 layers at three horizontal resolutions (20, 10 and 5 km). Without rotation the n-layer mode reproduces the expected momentum to better than 1 part in :math:`10^{7}`. With rotation the relative error is about :math:`3\times10^{-5}` and does not depend on the number of layers or on :math:`\delta x`; it is the time-truncation error of the Coriolis term.
 
 
