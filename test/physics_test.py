@@ -75,14 +75,14 @@ relative_wind = no
 """
 
 
-def write_config(work_dir, layers, dx, red_grav):
+def write_config(work_dir, layers, dx, red_grav, n_dumps=5):
     thickness = 400.
     g_vec = ", ".join(["9.8"] + ["0.01"] * (layers - 1))
     if red_grav:
         g_vec = ", ".join(["0.01"] * layers)
     with open(p.join(str(work_dir), "aronnax.conf"), "w") as conf:
         conf.write(CONFIG_TEMPLATE.format(
-            dt=DT, n_time_steps=N_TIME_STEPS, dump_freq=DT * N_TIME_STEPS / 5,
+            dt=DT, n_time_steps=N_TIME_STEPS, dump_freq=DT * N_TIME_STEPS / n_dumps,
             hmean=thickness * layers, h0=thickness * layers,
             red_grav="yes" if red_grav else "no", g_vec=g_vec, nx=NX,
             layers=layers, dx=dx))
@@ -105,10 +105,10 @@ def read_momentum(work_dir, hfile, layers, dx):
     return mx + 1j * my
 
 
-def run_wind_forcing(work_dir, layers, dx, f, red_grav=False):
+def run_wind_forcing(work_dir, layers, dx, f, red_grav=False, n_dumps=5):
     """Run the forced simulation and return times, simulated and exact Z."""
     nx = NX
-    thickness = write_config(work_dir, layers, dx, red_grav)
+    thickness = write_config(work_dir, layers, dx, red_grav, n_dumps)
 
     def wind(X, Y):
         w = np.zeros(Y.shape)
@@ -180,26 +180,36 @@ def test_n_layer_matches_reduced_gravity_momentum(tmp_path):
     assert np.max(np.abs(n_layer - red_grav)) / np.max(np.abs(red_grav)) < 1e-3
 
 
-@pytest.mark.parametrize("layers", [1, 2, 3, 4])
-@pytest.mark.parametrize("red_grav", [False, True])
-def test_unforced_momentum_is_conserved(tmp_path, layers, red_grav):
-    if red_grav and layers == 1:
-        pytest.skip("covered by the n-layer case")
+def run_unforced(work_dir, layers, red_grav=False):
+    """Run with an initial Gaussian zonal flow in the top layer.
+
+    Returns the iteration numbers and the signed momentum at each output.
+    """
     dx = 10e3
-    thickness = write_config(tmp_path, layers, dx, red_grav)
+    thickness = write_config(work_dir, layers, dx, red_grav)
 
     def init_u(X, Y):
         return 3e-5 * np.exp(-((X - X.mean()) ** 2 + (Y - Y.mean()) ** 2)
                              / (2 * (3 * dx) ** 2))
 
-    drv.simulate(work_dir=str(tmp_path), exe="aronnax_test",
+    drv.simulate(work_dir=str(work_dir), exe="aronnax_test",
                  init_h_file=[thickness] * layers,
                  init_u_file=[init_u] + [0.] * (layers - 1),
                  wet_mask_file=[wet_mask],
                  f_u_file=[0.], f_v_file=[0.],
                  nx=NX, ny=NX, dx=dx, dy=dx)
-    hfiles = sorted(glob.glob(p.join(str(tmp_path), "output/snap.h.*")))
-    momentum = np.array([read_momentum(tmp_path, hf, layers, dx)
+    hfiles = sorted(glob.glob(p.join(str(work_dir), "output/snap.h.*")))
+    iterations = np.array([int(hf[-10:]) for hf in hfiles])
+    momentum = np.array([read_momentum(work_dir, hf, layers, dx)
                          for hf in hfiles])
+    return iterations, momentum
+
+
+@pytest.mark.parametrize("layers", [1, 2, 3, 4])
+@pytest.mark.parametrize("red_grav", [False, True])
+def test_unforced_momentum_is_conserved(tmp_path, layers, red_grav):
+    if red_grav and layers == 1:
+        pytest.skip("covered by the n-layer case")
+    _, momentum = run_unforced(tmp_path, layers, red_grav)
     assert len(momentum) > 3
     assert np.max(np.abs(momentum - momentum[0])) / np.abs(momentum[0]) < 1e-10
