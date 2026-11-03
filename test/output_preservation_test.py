@@ -42,7 +42,16 @@ def assert_outputs_close(nx, ny, layers, rtol):
     outfiles = sorted(glob.glob("output/*.0*"))
     good_outfiles = sorted(glob.glob("good-output/*.0*"))
 
-    # assert p.basename(outfiles) == p.basename(good_outfiles)
+    # The same files must exist in both directories; otherwise a run that
+    # silently fails to write some outputs would only be compared against
+    # whichever blessed files happen to share its position in the list.
+    out_names = [p.basename(f) for f in outfiles]
+    good_names = [p.basename(f) for f in good_outfiles]
+    assert out_names == good_names, \
+        'output files differ from blessed files: missing {0}, unexpected {1}'\
+        .format(sorted(set(good_names) - set(out_names)),
+                sorted(set(out_names) - set(good_names)))
+
     test_passes = True
     for i, outfile in enumerate(outfiles):
         ans = aro.interpret_raw_file(outfile, nx, ny, layers)
