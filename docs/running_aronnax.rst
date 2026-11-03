@@ -81,7 +81,7 @@ This parameter determines whether the model produces additional outputs. It shou
 
 niter0
 ------
-This parameter allows a simulation to be restarted from the given timestep. It requires that the appropriate files are in the 'checkpoints' directory. All parameters, except for the number of grid points in the domain, may be altered when restarting a simulation. This is intended for breaking long simulations into shorter, more manageable chunks, and for running perturbation experiments. 
+This parameter allows a simulation to be restarted from the given timestep. It requires that the appropriate files are in the 'checkpoints' directory. Output and checkpoint files from earlier runs with a later iteration number than `niter0` are deleted when the simulation starts, so a new run (`niter0` = 0) never mixes its results with those of a previous run in the same directory. All parameters, except for the number of grid points in the domain, may be altered when restarting a simulation. This is intended for breaking long simulations into shorter, more manageable chunks, and for running perturbation experiments. 
 
 wet_mask_file
 -----------

@@ -5,6 +5,7 @@ except ImportError:
 
 import os
 import os.path as p
+import re
 import subprocess as sub
 import time
 
@@ -42,9 +43,11 @@ def simulate(work_dir=".", config_path="aronnax.conf", **options):
         1. Compute the configuration
         2. Recompile the Fortran core if necessary
         3. Save the computed configuration in aronnax-merged.conf
-        4. Write raw-format input fields into input/
-        5. Write parameters.in
-        6. Execute the Fortran core, which writes progress messages
+        4. Remove output and checkpoint files from earlier runs that are later
+           than the starting iteration `niter0` (all of them, for a new run)
+        5. Write raw-format input fields into input/
+        6. Write parameters.in
+        7. Execute the Fortran core, which writes progress messages
            to standard output and raw-format output fields into output/
 
     All the simulation parameters can be controlled from the
@@ -65,9 +68,9 @@ def simulate(work_dir=".", config_path="aronnax.conf", **options):
         # XXX Try to avoid overwriting the input configuration
         with open('aronnax-merged.conf', 'w') as f:
             config.write(f)
-        # sub.check_call(["rm", "-rf", "output/"])
         sub.check_call(["mkdir", "-p", "output/"])
         sub.check_call(["mkdir", "-p", "checkpoints/"])
+        remove_stale_output(config)
         with working_directory("input"):
             generate_input_data_files(config)
         generate_parameters_file(config)
@@ -78,6 +81,30 @@ def simulate(work_dir=".", config_path="aronnax.conf", **options):
         sub.check_call(["mkdir", "-p", "netcdf-output/"])
         convert_output_to_netcdf(config)
         return core_run_time
+
+numbered_file_rx = re.compile(r'^.+\.(\d{10})$')
+
+def remove_stale_output(config, directories=("output", "checkpoints")):
+    """Delete results left over from an earlier run in this directory.
+
+    Output and checkpoint files are named `<variable>.<iteration>`, with the
+    iteration zero-padded to ten digits.  A run that starts at iteration
+    `niter0` (zero for a new run) replaces everything after that point, so any
+    such file from an earlier run with a later iteration would otherwise be
+    mistaken for part of the new results.  Files up to and including `niter0`
+    are kept, because a restart continues from them. Other files, such as the
+    csv diagnostics (which the core manages itself), are left alone."""
+    if config.has_option("numerics", "niter0"):
+        niter0 = config.getint("numerics", "niter0")
+    else:
+        niter0 = 0
+    for directory in directories:
+        if not p.isdir(directory):
+            continue
+        for name in os.listdir(directory):
+            m = numbered_file_rx.match(name)
+            if m and int(m.group(1)) > niter0:
+                os.remove(p.join(directory, name))
 
 def default_configuration():
     """Configuration defaults before parsing aronnax.conf.
