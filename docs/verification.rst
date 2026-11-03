@@ -37,7 +37,7 @@ All of the simulations are integrated for one model year using the same value fo
 Reduced gravity mode
 +++++++++++++++++++++++++++++++++
 
-The magnitude of the error varies with :math:`\delta x`, suggesting it is likely due to truncation error - the error induced by solving a continuous set of equations on a discrete grid.
+The figures in this subsection use the absolute-value momentum metric described under the n-layer mode below, so they overstate the true momentum error. The magnitude of the error varies with :math:`\delta x`, suggesting it is likely due to truncation error - the error induced by solving a continuous set of equations on a discrete grid.
 
 .. figure:: ../test/physics_tests/f_plane_red_grav_wind/error_by_resolution_semilogx.png
    :alt: momentum error as a function of grid size
@@ -55,19 +55,12 @@ The evolution of momentum in the 8 km resolution test simulation using reduced g
 
 n-layer mode
 +++++++++++++++++++++++++++++++++
-When running in the n-layer mode the momentum discrepancy is much larger and exhibits different variation with :math:`\delta x`. 
+Earlier versions of this verification summed the absolute value of the momentum in every grid cell. That quantity is not momentum: it also counts the momentum carried away from the forcing point by radiated gravity waves. The barotropic gravity waves of the n-layer mode are much faster than the internal waves of the reduced gravity mode, so the metric exaggerated the n-layer "error" and gave it a different dependence on :math:`\delta x` (`issue #100 <https://github.com/edoddridge/aronnax/issues/100>`_).
 
-.. figure:: ../test/physics_tests/f_plane_n_layer_wind/error_by_resolution_semilogx.png
-   :alt: momentum error as a function of grid size
+The signed momentum summed over all layers and over a doubly periodic domain obeys :math:`dM/dt = F + f\,\hat{k}\times M`, where :math:`F` is the total wind force, because pressure forces and the transfer of momentum between layers integrate to zero. This has a closed-form solution, and :code:`test/physics_test.py` compares the model with it, in the automated test suite, for 1, 2, 3 and 4 layers at three horizontal resolutions (20, 10 and 5 km). Without rotation the n-layer mode reproduces the expected momentum to better than 1 part in :math:`10^{7}`. With rotation the relative error is about :math:`3\times10^{-5}` and does not depend on the number of layers or on :math:`\delta x`; it is the time-truncation error of the Coriolis term.
 
-   Momentum error as a function grid size for simulations using the n-layer mode.
+The momentum evolution figures that were previously shown here used the absolute-value metric and have been removed.
 
-The evolution of momentum in the 8 km resolution test simulation using n-layer physics. The simulated momentum increases linearly, as expected, but the slope is much too large - the model obtains more momentum from the wind forcing than expected. This is undesirable, and is discussed in `issue #100 <https://github.com/edoddridge/aronnax/issues/100>`_.
-
-.. figure:: ../test/physics_tests/f_plane_n_layer_wind/f_plane_momentum_test.png
-   :alt: momentum evolution as a function of time
-
-   Momentum evolution as a function of time at 8 km resolution in the n-layer configuration.
 
 
 Momentum convservation
@@ -75,7 +68,7 @@ Momentum convservation
 
 The verification suite also runs simulations to assess how well the model conserves momentum. Once again all explicit drag parameters have been set to zero. The Coriolis parameter has also been set to zero to remove inertial oscillations and allow for a cleaner test.
 
-In both the n-layer and reduced gravity modes the model conseres the initial momentum, as shown in :numref:`fig_n_layer_init_u_momentum` and :numref:`fig_red_grav_init_u_momentum`.
+In both the n-layer and reduced gravity modes the model conseres the initial momentum, as shown in :numref:`fig_n_layer_init_u_momentum` and :numref:`fig_red_grav_init_u_momentum`. The automated tests in :code:`test/physics_test.py` check this for 1 to 4 layers, in both modes, and find the signed momentum is conserved to round-off.
 
 .. figure:: ../test/physics_tests/f_plane_n_layer_init_u/f_plane_momentum_test.png
    :alt: momentum time series from an unforced n-layer simulation
