@@ -38,7 +38,7 @@ jobs:
          pip install pytest-cov
          pip install codecov
          cd lib/hypre/src
-         ./configure
+         CFLAGS="-O2 -std=gnu17" ./configure
          make install
          cd ../../..
 
