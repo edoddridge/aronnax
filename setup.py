@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='aronnax',
-      version='0.1',
+      version='0.3.0',
       description='An idealized isopycnal model with n layers and variable bathymetry.',
       url='http://github.com/edoddridge/aronnax',
       author='Ed Doddridge',
@@ -11,5 +11,12 @@ setup(name='aronnax',
       scripts = ['aronnax/aronnax'],
       install_requires=[
           'numpy',
-          'scipy',],
+          'scipy',
+          'future',
+          'six',],
+      extras_require={
+          'analysis': ['xarray', 'dask[array]'],
+          'test': ['pytest', 'pytest-cov', 'matplotlib', 'xarray',
+                   'dask[array]'],
+      },
       zip_safe=False)

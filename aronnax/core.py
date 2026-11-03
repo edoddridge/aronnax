@@ -17,9 +17,19 @@ from builtins import int
 import numpy as np
 from scipy.io import FortranFile
 
-from dask import delayed
-import dask.array as dsa
-import xarray as xr
+def _import_analysis_libraries():
+    """Import the optional dependencies needed to lazily load output.
+
+    dask and xarray are only needed by `open_mfdataarray`, so they are
+    imported on demand rather than when Aronnax is imported."""
+    try:
+        import dask.array as dsa
+        import xarray as xr
+    except ImportError:
+        raise ImportError(
+            "Loading output with open_mfdataarray requires dask and xarray. "
+            "Install them with `pip install aronnax[analysis]`.")
+    return dsa, xr
 
 class Grid(object):
     """Make a grid object containing all of the axes.
@@ -152,6 +162,9 @@ def interpret_raw_file_delayed(name, nx, ny, layers, dx, dy):
     used as is, it is intended to be an internal function called by `open_mfdataset`.
     """
 
+    from dask import delayed
+    dsa, _ = _import_analysis_libraries()
+
     d = dsa.from_delayed(delayed(interpret_raw_file)(name, nx, ny, layers),
                             (layers, ny+dy, nx+dx), float)
     return d
@@ -168,6 +181,8 @@ def open_mfdataarray(files, grid):
 
     :return: xarray.DataArray of the desired variable
     """
+
+    dsa, xr = _import_analysis_libraries()
 
     files = sorted(files)
 

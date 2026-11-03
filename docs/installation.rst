@@ -10,21 +10,23 @@ While we aspire for the installation process for Aronnax to be as simple as :cod
 Dependencies
 ============
 
-Aronnax is tested with Python 2.7 and 3.6, and depends on several external libraries. 
+Aronnax is tested with Python 3, and depends on several external libraries.
 
-The Python components of Aronnax depend on 
+The Python components of Aronnax depend on
 
 | :bash:`numpy`
 | :bash:`scipy`
-| :bash:`tools`
 | :bash:`future`
+| :bash:`six`
 |
 
-The final two are required for Python 2/3 compatibility. We recommend installing these with your favourite package manager before installing Aronnax. While the previous dependencies will allow you to run the model, some of the functions for dealing with the output files also depend on
+These are installed automatically by :code:`pip install -e ./`. The functions for lazily loading output files (:code:`aronnax.open_mfdataarray`) additionally depend on
 
 | :bash:`xarray`
 | :bash:`dask`
 |
+
+These are optional, and can be installed with :code:`pip install -e ./[analysis]`. Calling :code:`open_mfdataarray` without them raises an :code:`ImportError` explaining what is missing.
 
 Additionally, the Fortran core requires
 
@@ -35,7 +37,7 @@ Additionally, the Fortran core requires
 
 In particular, Aronnax will need the :bash:`mpif90` command in order for it to compile its Fortran core. You will need to manually ensure that you have a working installation of each of these.
 
-In addition to these dependencies, the automated tests also depend on :bash:`pytest` and :bash:`matplotlib`.
+In addition to these dependencies, the automated tests also depend on :bash:`pytest` and :bash:`matplotlib`, which can be installed with :code:`pip install -e ./[test]`.
 
 Installation instructions
 =========================
